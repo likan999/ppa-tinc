@@ -1,7 +1,7 @@
 /*
     subnet.h -- header for subnet.c
-    Copyright (C) 2000,2001 Guus Sliepen <guus@sliepen.warande.net>,
-                  2000,2001 Ivo Timmermans <itimmermans@bigfoot.com>
+    Copyright (C) 2000-2004 Guus Sliepen <guus@tinc-vpn.org>,
+                  2000-2004 Ivo Timmermans <ivo@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: subnet.h,v 1.1.2.18 2002/04/09 11:42:48 guus Exp $
+    $Id: subnet.h 1374 2004-03-21 14:21:22Z guus $
 */
 
 #ifndef __TINC_SUBNET_H__
@@ -25,64 +25,61 @@
 
 #include "net.h"
 
-enum
-{
-  SUBNET_MAC = 0,
-  SUBNET_IPV4,
-  SUBNET_IPV6,
-  SUBNET_TYPES				/* Guardian */
-};
+typedef enum subnet_type_t {
+	SUBNET_MAC = 0,
+	SUBNET_IPV4,
+	SUBNET_IPV6,
+	SUBNET_TYPES				/* Guardian */
+} subnet_type_t;
 
-typedef struct subnet_mac_t
-{
-  mac_t address;
-  time_t lastseen;
+typedef struct subnet_mac_t {
+	mac_t address;
 } subnet_mac_t;
 
-typedef struct subnet_ipv4_t
-{
-  ipv4_t address;
-  int prefixlength;
+typedef struct subnet_ipv4_t {
+	ipv4_t address;
+	int prefixlength;
 } subnet_ipv4_t;
 
-typedef struct subnet_ipv6_t
-{
-  ipv6_t address;
-  int prefixlength;
+typedef struct subnet_ipv6_t {
+	ipv6_t address;
+	int prefixlength;
 } subnet_ipv6_t;
 
 #include "node.h"
 
 typedef struct subnet_t {
-  struct node_t *owner;			/* the owner of this subnet */
-  struct node_t *uplink;		/* the uplink which we should send packets to for this subnet */
+	struct node_t *owner;		/* the owner of this subnet */
 
-  int type;				/* subnet type (IPv4? IPv6? MAC? something even weirder?) */
+	subnet_type_t type;		/* subnet type (IPv4? IPv6? MAC? something even weirder?) */
+	time_t expires;			/* expiry time */
 
-  /* And now for the actual subnet: */
+	/* And now for the actual subnet: */
 
-  union net
-    {
-      subnet_mac_t mac;
-      subnet_ipv4_t ipv4;
-      subnet_ipv6_t ipv6;
-    } net;
+	union net {
+		subnet_mac_t mac;
+		subnet_ipv4_t ipv4;
+		subnet_ipv6_t ipv6;
+	} net;
 } subnet_t;
 
-extern subnet_t *new_subnet(void);
+#define MAXNETSTR 64
+
+extern int subnet_compare(const struct subnet_t *, const struct subnet_t *);
+extern subnet_t *new_subnet(void) __attribute__ ((__malloc__));
 extern void free_subnet(subnet_t *);
 extern void init_subnets(void);
 extern void exit_subnets(void);
-extern avl_tree_t *new_subnet_tree(void);
+extern avl_tree_t *new_subnet_tree(void) __attribute__ ((__malloc__));
 extern void free_subnet_tree(avl_tree_t *);
 extern void subnet_add(struct node_t *, subnet_t *);
 extern void subnet_del(struct node_t *, subnet_t *);
-extern char *net2str(subnet_t *);
-extern subnet_t *str2net(char *);
-extern subnet_t *lookup_subnet(struct node_t *, subnet_t *);
-extern subnet_t *lookup_subnet_mac(mac_t *);
-extern subnet_t *lookup_subnet_ipv4(ipv4_t *);
-extern subnet_t *lookup_subnet_ipv6(ipv6_t *);
+extern bool net2str(char *, int, const subnet_t *);
+extern bool str2net(subnet_t *, const char *);
+extern subnet_t *lookup_subnet(const struct node_t *, const subnet_t *);
+extern subnet_t *lookup_subnet_mac(const mac_t *);
+extern subnet_t *lookup_subnet_ipv4(const ipv4_t *);
+extern subnet_t *lookup_subnet_ipv6(const ipv6_t *);
 extern void dump_subnets(void);
 
-#endif /* __TINC_SUBNET_H__ */
+#endif							/* __TINC_SUBNET_H__ */

@@ -3,4 +3,5 @@ usr/share
 etc
 etc/init.d
 usr/share/locale
-
+usr/share/doc/tinc
+etc/tinc

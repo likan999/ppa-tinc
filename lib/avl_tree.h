@@ -1,9 +1,9 @@
 /*
     avl_tree.h -- header file for avl_tree.c
     Copyright (C) 1998 Michael H. Buselli
-                  2000,2001 Ivo Timmermans <itimmermans@bigfoot.com>,
-                  2000,2001 Guus Sliepen <guus@sliepen.warande.net>
-                  2000,2001 Wessel Dankers <wsl@nl.linux.org>
+                  2000-2004 Ivo Timmermans <ivo@tinc-vpn.org>,
+                  2000-2004 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2004 Wessel Dankers <wsl@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -21,15 +21,15 @@
 
     Original AVL tree library by Michael H. Buselli <cosine@cosine.org>.
 
-    Modified 2000-11-28 by Wessel Dankers <wsl@nl.linux.org> to use counts
+    Modified 2000-11-28 by Wessel Dankers <wsl@tinc-vpn.org> to use counts
     instead of depths, to add the ->next and ->prev and to generally obfuscate
     the code. Mail me if you found a bug.
 
     Cleaned up and incorporated some of the ideas from the red-black tree
-    library for inclusion into tinc (http://tinc.nl.linux.org/) by
-    Guus Sliepen <guus@sliepen.warande.net>.
+    library for inclusion into tinc (http://www.tinc-vpn.org/) by
+    Guus Sliepen <guus@tinc-vpn.org>.
 
-    $Id: avl_tree.h,v 1.1.2.4 2001/02/06 10:13:22 guus Exp $
+    $Id: avl_tree.h 1374 2004-03-21 14:21:22Z guus $
 */
 
 
@@ -37,54 +37,54 @@
 #define __AVL_TREE_H__
 
 #ifndef AVL_DEPTH
- #ifndef AVL_COUNT
-  #define AVL_DEPTH
- #endif
+#ifndef AVL_COUNT
+#define AVL_DEPTH
+#endif
 #endif
 
 typedef struct avl_node_t {
 
-  /* Linked list part */
+	/* Linked list part */
 
-  struct avl_node_t *next;
-  struct avl_node_t *prev;
+	struct avl_node_t *next;
+	struct avl_node_t *prev;
 
-  /* Tree part */
+	/* Tree part */
 
-  struct avl_node_t *parent;
-  struct avl_node_t *left;
-  struct avl_node_t *right;
+	struct avl_node_t *parent;
+	struct avl_node_t *left;
+	struct avl_node_t *right;
 
 #ifdef AVL_COUNT
-  unsigned int count;
+	unsigned int count;
 #endif
 #ifdef AVL_DEPTH
-  unsigned char depth;
+	unsigned char depth;
 #endif
 
-  /* Payload */
+	/* Payload */
 
-  void *data;
+	void *data;
 
 } avl_node_t;
 
-typedef int (*avl_compare_t) (const void *, const void *);
-typedef void (*avl_action_t) (const void *);
-typedef void (*avl_action_node_t) (const avl_node_t *);
+typedef int (*avl_compare_t)(const void *, const void *);
+typedef void (*avl_action_t)(const void *);
+typedef void (*avl_action_node_t)(const avl_node_t *);
 
 typedef struct avl_tree_t {
 
-  /* Linked list part */
+	/* Linked list part */
 
-  avl_node_t *head;
-  avl_node_t *tail;
+	avl_node_t *head;
+	avl_node_t *tail;
 
-  /* Tree part */
+	/* Tree part */
 
-  avl_node_t *root;
+	avl_node_t *root;
 
-  avl_compare_t compare;
-  avl_action_t delete;
+	avl_compare_t compare;
+	avl_action_t delete;
 
 } avl_tree_t;
 
@@ -128,18 +128,18 @@ extern avl_node_t *avl_search_closest_greater_node(const avl_tree_t *, const voi
 
 /* Tree walking */
 
-extern void avl_foreach(avl_tree_t *, avl_action_t);
-extern void avl_foreach_node(avl_tree_t *, avl_action_t);
+extern void avl_foreach(const avl_tree_t *, avl_action_t);
+extern void avl_foreach_node(const avl_tree_t *, avl_action_t);
 
 /* Indexing */
 
 #ifdef AVL_COUNT
-extern unsigned int avl_count(avl_tree_t *);
+extern unsigned int avl_count(const avl_tree_t *);
 extern avl_node_t *avl_get_node(const avl_tree_t *, unsigned int);
 extern unsigned int avl_index(const avl_node_t *);
 #endif
 #ifdef AVL_DEPTH
-extern unsigned int avl_depth(avl_tree_t *);
+extern unsigned int avl_depth(const avl_tree_t *);
 #endif
 
-#endif /* __AVL_TREE_H__ */
+#endif							/* __AVL_TREE_H__ */

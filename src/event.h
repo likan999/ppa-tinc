@@ -1,7 +1,7 @@
 /*
     event.h -- header for event.c
-    Copyright (C) 2002 Guus Sliepen <guus@sliepen.warande.net>,
-                  2002 Ivo Timmermans <itimmermans@bigfoot.com>
+    Copyright (C) 2002-2004 Guus Sliepen <guus@tinc-vpn.org>,
+                  2002-2004 Ivo Timmermans <ivo@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,32 +17,31 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: event.h,v 1.1.4.1 2002/02/11 10:05:58 guus Exp $
+    $Id: event.h 1374 2004-03-21 14:21:22Z guus $
 */
 
 #ifndef __TINC_EVENT_H__
 #define __TINC_EVENT_H__
 
-#include <time.h>
-#include <avl_tree.h>
+#include "avl_tree.h"
 
-avl_tree_t *event_tree;
+extern avl_tree_t *event_tree;
 
 typedef void (*event_handler_t)(void *);
 
 typedef struct {
-  time_t time;
-  int id;
-  event_handler_t handler;
-  void *data;
+	time_t time;
+	int id;
+	event_handler_t handler;
+	void *data;
 } event_t;
 
 extern void init_events(void);
 extern void exit_events(void);
-extern event_t *new_event(void);
+extern event_t *new_event(void) __attribute__ ((__malloc__));
 extern void free_event(event_t *);
 extern void event_add(event_t *);
 extern void event_del(event_t *);
 extern event_t *get_expired_event(void);
 
-#endif /* __TINC_EVENT_H__ */
+#endif							/* __TINC_EVENT_H__ */
