@@ -1,0 +1,20 @@
+This package was debianized by Ivo Timmermans <ivo@debian.org> on
+Fri, 21 Apr 2000 17:07:50 +0200.
+
+It was downloaded from http://tinc.nl.linux.org/
+
+Upstream Author(s):
+ Guus Sliepen <guus@sliepen.warande.net>
+ Ivo Timmermans <ivo@debian.org>
+
+Copyright: GPL version 2. On Debian GNU/Linux systems, the complete
+text of the GNU General Public License can be found in
+/usr/share/common-licenses/GPL.
+
+
+The following is the text from /usr/share/doc/tinc/COPYING.README:
+
+This program is released under the GPL with the additional exemption
+that compiling, linking, and/or using OpenSSL is allowed.  You may
+provide binary packages linked to the OpenSSL libraries, provided that
+all other requirements of the GPL are met.

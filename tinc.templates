@@ -1,0 +1,14 @@
+Template: tinc/restart_on_upgrade
+Type: boolean
+Default: true
+Description: Restart tinc on each upgrade?
+ You may choose if you want me to restart the tinc daemon every time
+ you install a new version of this package.
+ .
+ Sometimes you don't want to do this, for example if you are doing the
+ upgrade over a tunnel that is created with tinc.  Stopping the daemon
+ would probably leave you with a dead connection, and tinc may not be
+ started again.
+ .
+ If you say no, you have to restart tinc yourself if you upgraded,
+ by typing `/etc/init.d/tinc restart' whenever it suits you.
