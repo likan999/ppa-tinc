@@ -6,11 +6,11 @@ if [ -x "/etc/init.d/tinc" ]; then
 	. /usr/share/debconf/confmodule
 	db_get tinc/restart_on_upgrade
 	if [ "$RET" = "true" ] ; then
-	    /etc/init.d/tinc stop
+	    invoke-rc.d tinc stop
 	fi
 	db_stop
     else
-	/etc/init.d/tinc stop
+	invoke-rc.d tinc stop
     fi
 fi
 # End automatically added section

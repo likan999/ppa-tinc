@@ -15,11 +15,12 @@ DAEMON="/usr/sbin/tincd"
 NAME="tinc"
 DESC="tinc daemons"
 TCONF="/etc/tinc"
-EXTRA=""
 NETSFILE="$TCONF/nets.boot"
 NETS=""
 
 test -f $DAEMON || exit 0
+
+[ -r /etc/default/tinc ] && . /etc/default/tinc
 
 find_nets () {
   if [ ! -f $NETSFILE ] ; then
@@ -48,16 +49,16 @@ case "$1" in
     done
     echo "."
   ;;
-  reload)
+  reload|force-reload)
     find_nets
     echo -n "Reloading $DESC configuration:"
     for n in $NETS ; do
       echo -n " $n"
-      $DAEMON -n $n $EXTRA -k1
+      $DAEMON -n $n $EXTRA -kHUP
     done
     echo "."
   ;;
-  restart|force-reload)
+  restart)
     find_nets
     echo -n "Restarting $DESC:"
     for n in $NETS ; do

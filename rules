@@ -1,81 +1,19 @@
 #!/usr/bin/make -f
-# Sample debian/rules that uses debhelper.
-# GNU copyright 1997 to 1999 by Joey Hess.
 
-# Uncomment this to turn on verbose mode.
-#export DH_VERBOSE=1
+include /usr/share/cdbs/1/rules/debhelper.mk
+#include /usr/share/cdbs/1/rules/simple-patchsys.mk
+include /usr/share/cdbs/1/class/autotools.mk
 
-# This is the debhelper compatability version to use.
-export DH_COMPAT=3
+DEB_CONFIGURE_EXTRA_FLAGS = --enable-tracing
 
-build: build-stamp
-build-stamp:
-	dh_testdir
+# A bit of a kludge, we have our own init.d handling in postinst, but
+# cdbs calls dh_installinit anyway.
+DEB_DH_INSTALLINIT_ARGS = -n
 
-#	# If the Makefile.in.in file in po/ already contains DESTDIR support, skip the patching.
-	cd `pwd`/po ; ( \
-	  if ! grep DESTDIR Makefile.in.in > /dev/null ; then \
-	    patch -Ns -p0 < `pwd`/../debian/po-Makefile.in.in.diff || true ;\
-	  fi ;\
-	)
-	./configure --prefix=/usr --mandir=\$${prefix}/share/man \
-		--infodir=\$${prefix}/share/info --sysconfdir=/etc \
-		--localstatedir=/var
-	$(MAKE)
-#	cd doc && texi2html -split=chapter tinc.texi
-
-	touch build-stamp
-
-clean:
-	dh_testdir
-	dh_testroot
-	rm -f build-stamp
-
-	-$(MAKE) distclean
+clean::
 	rm -f src/device.c
-
-	dh_clean
-
-install: build
-	dh_testdir
-	dh_testroot
-	dh_clean -k
-	dh_installdirs
-
-	$(MAKE) install DESTDIR=`pwd`/debian/tmp
-	mkdir -p `pwd`/debian/tmp/etc/tinc/example
-#	cp doc/tinc.conf.sample `pwd`/debian/tmp/etc/tinc/example/tinc.conf
-	mkdir -p `pwd`/debian/tmp/usr/share/doc/tinc/examples
-	cd `pwd`/debian/tmp/usr/share/doc/tinc/examples/ && tar xfz $(PWD)/doc/sample-config.tar.gz
-	cp COPYING.README `pwd`/debian/tmp/usr/share/doc/tinc/
-	ln -s /usr/share/doc/tinc/README.Debian `pwd`/debian/tmp/etc/tinc/example/README
-	p="`pwd`" ; cd $$p/debian/tmp/usr/share/doc/tinc ; texi2html -split=chapter $$p/doc/tinc.texi
-
-# Build architecture-independent files here.
-binary-indep: build install
-# We have nothing to do by default.
-
-# Build architecture-dependent files here.
-binary-arch: build install
-	dh_testdir
-	dh_testroot
-	dh_movefiles
-	dh_installdocs
-	dh_installexamples
-	install -o root -g root -m 755 debian/init.d debian/tinc/etc/init.d/tinc
-	dh_installmanpages
-	dh_installinfo
-	dh_installchangelogs ChangeLog
-	dh_link
-	dh_strip
-	dh_installdebconf
-	dh_compress
-	dh_fixperms
-	dh_installdeb
-	dh_shlibdeps
-	dh_gencontrol
-	dh_md5sums
-	dh_builddeb
-
-binary: binary-indep binary-arch
-.PHONY: build clean binary-indep binary-arch binary install
+build/tinc::
+	cd doc && $(MAKE) texi2html
+binary-post-install/tinc::
+	mv -v doc/*.html debian/$(cdbs_curpkg)/usr/share/doc/$(cdbs_curpkg)/
+	cd debian/$(cdbs_curpkg)/usr/share/doc/$(cdbs_curpkg)/ && tar xzf ../../../../../../doc/sample-config.tar.gz && mv sample-config examples && rm -rf examples/CVS examples/hosts/CVS

@@ -1,0 +1,63 @@
+#
+#    Translators, if you are not familiar with the PO format, gettext
+#    documentation is worth reading, especially sections dedicated to
+#    this format, e.g. by running:
+#         info -n '(gettext)PO Files'
+#         info -n '(gettext)Header Entry'
+#    Some information specific to po-debconf are available at
+#            /usr/share/doc/po-debconf/README-trans
+#         or http://www.debian.org/intl/l10n/po-debconf/README-trans#
+#    Developers do not need to manually edit POT or PO files.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: tinc_1.0pre8-4\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2004-11-11 20:06+0000\n"
+"PO-Revision-Date: 2003-07-10 13:14+0200\n"
+"Last-Translator: Michel Grentzinger <mic.grentz@online.fr>\n"
+"Language-Team: French <debian-l10n-french@lists.debian.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=ISO-8859-15\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#. Type: boolean
+#. Description
+#: ../tinc.templates:4
+msgid "Restart tinc on each upgrade?"
+msgstr "Redémarrer tinc à chaque mise à jour ?"
+
+#. Type: boolean
+#. Description
+#: ../tinc.templates:4
+msgid ""
+"You may choose if you want me to restart the tinc daemon every time you "
+"install a new version of this package."
+msgstr ""
+"Vous pouvez choisir de redémarrer le démon tinc à chaque fois que vous "
+"installez une nouvelle version de ce paquet."
+
+#. Type: boolean
+#. Description
+#: ../tinc.templates:4
+msgid ""
+"Sometimes you don't want to do this, for example if you are doing the "
+"upgrade over a tunnel that is created with tinc.  Stopping the daemon would "
+"probably leave you with a dead connection, and tinc may not be started again."
+msgstr ""
+"Dans certains cas, vous devrez éviter de le faire, par exemple si vous "
+"mettez à jour à travers un tunnel créé avec tinc. Arrêter le démon vous "
+"laisserait sans doute une connexion inactive et tinc ne pourra pas être "
+"redémarré."
+
+#. Type: boolean
+#. Description
+#: ../tinc.templates:4
+#, fuzzy
+msgid ""
+"If you refuse, you have to restart tinc yourself if you upgraded, by typing "
+"`invoke-rc.d tinc restart' whenever it suits you."
+msgstr ""
+"Si vous refusez, vous devrez redémarrer tinc vous-même en cas de mise à "
+"jour, en entrant la commande : « /etc/init.d/tinc restart », au moment où "
+"cela vous conviendra."
