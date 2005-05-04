@@ -1,7 +1,7 @@
 /*
     subnet.c -- handle subnet lookups and lists
-    Copyright (C) 2000-2004 Guus Sliepen <guus@tinc-vpn.org>,
-                  2000-2004 Ivo Timmermans <ivo@tinc-vpn.org>
+    Copyright (C) 2000-2005 Guus Sliepen <guus@tinc-vpn.org>,
+                  2000-2005 Ivo Timmermans <ivo@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,16 +17,18 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: subnet.c 1396 2004-11-01 15:16:12Z guus $
+    $Id: subnet.c 1439 2005-05-04 18:09:30Z guus $
 */
 
 #include "system.h"
 
 #include "avl_tree.h"
+#include "device.h"
 #include "logger.h"
 #include "net.h"
 #include "netutl.h"
 #include "node.h"
+#include "process.h"
 #include "subnet.h"
 #include "utils.h"
 #include "xalloc.h"
@@ -245,6 +247,11 @@ bool net2str(char *netstr, int len, const subnet_t *subnet)
 {
 	cp();
 
+	if(!netstr || !subnet) {
+		logger(LOG_ERR, _("net2str() was called with netstr=%p, subnet=%p!\n"), netstr, subnet);
+		return false;
+	}
+
 	switch (subnet->type) {
 		case SUBNET_MAC:
 			snprintf(netstr, len, "%hx:%hx:%hx:%hx:%hx:%hx",
@@ -383,6 +390,52 @@ subnet_t *lookup_subnet_ipv6(const ipv6_t *address)
 	} while(p);
 
 	return p;
+}
+
+void subnet_update(node_t *owner, subnet_t *subnet, bool up) {
+	avl_node_t *node;
+	int i;
+	char *envp[8];
+	char netstr[MAXNETSTR + 7] = "SUBNET=";
+	char *name, *address, *port;
+
+	asprintf(&envp[0], "NETNAME=%s", netname ? : "");
+	asprintf(&envp[1], "DEVICE=%s", device ? : "");
+	asprintf(&envp[2], "INTERFACE=%s", iface ? : "");
+	asprintf(&envp[3], "NODE=%s", owner->name);
+
+	if(owner != myself) {
+		sockaddr2str(&owner->address, &address, &port);
+		asprintf(&envp[4], "REMOTEADDRESS=%s", address);
+		asprintf(&envp[5], "REMOTEPORT=%s", port);
+		envp[6] = netstr;
+		envp[7] = NULL;
+	} else {
+		envp[4] = netstr;
+		envp[5] = NULL;
+	}
+
+	name = up ? "subnet-up" : "subnet-down";
+
+	if(!subnet) {
+		for(node = owner->subnet_tree->head; node; node = node->next) {
+			subnet = node->data;
+			if(!net2str(netstr + 7, sizeof netstr - 7, subnet))
+				continue;
+			execute_script(name, envp);
+		}
+	} else {
+		if(net2str(netstr + 7, sizeof netstr - 7, subnet))
+			execute_script(name, envp);
+	}
+
+	for(i = 0; i < (owner != myself ? 6 : 4); i++)
+		free(envp[i]);
+
+	if(owner != myself) {
+		free(address);
+		free(port);
+	}
 }
 
 void dump_subnets(void)

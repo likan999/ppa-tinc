@@ -1,7 +1,7 @@
 /*
     net_packet.c -- Handles in- and outgoing VPN packets
-    Copyright (C) 1998-2004 Ivo Timmermans <ivo@tinc-vpn.org>,
-                  2000-2004 Guus Sliepen <guus@tinc-vpn.org>
+    Copyright (C) 1998-2005 Ivo Timmermans <ivo@tinc-vpn.org>,
+                  2000-2005 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_packet.c 1407 2004-11-09 09:51:35Z guus $
+    $Id: net_packet.c 1439 2005-05-04 18:09:30Z guus $
 */
 
 #include "system.h"
@@ -456,6 +456,12 @@ void broadcast_packet(const node_t *from, vpn_packet_t *packet)
 
 	ifdebug(TRAFFIC) logger(LOG_INFO, _("Broadcasting packet of %d bytes from %s (%s)"),
 			   packet->len, from->name, from->hostname);
+
+	if(from != myself) {
+		if(overwrite_mac)
+			 memcpy(packet->data, mymac.x, ETH_ALEN);
+		write_packet(packet);
+	}
 
 	for(node = connection_tree->head; node; node = node->next) {
 		c = node->data;

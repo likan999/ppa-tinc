@@ -1,7 +1,7 @@
 /*
     connection.c -- connection list management
-    Copyright (C) 2000-2004 Guus Sliepen <guus@tinc-vpn.org>,
-                  2000-2004 Ivo Timmermans <ivo@tinc-vpn.org>
+    Copyright (C) 2000-2005 Guus Sliepen <guus@tinc-vpn.org>,
+                  2000-2005 Ivo Timmermans <ivo@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connection.c 1374 2004-03-21 14:21:22Z guus $
+    $Id: connection.c 1439 2005-05-04 18:09:30Z guus $
 */
 
 #include "system.h"
@@ -44,7 +44,7 @@ void init_connections(void)
 {
 	cp();
 
-	connection_tree = avl_alloc_tree((avl_compare_t) connection_compare, NULL);
+	connection_tree = avl_alloc_tree((avl_compare_t) connection_compare, (avl_action_t) free_connection);
 	broadcast = new_connection();
 	broadcast->name = xstrdup(_("everyone"));
 	broadcast->hostname = xstrdup(_("BROADCAST"));

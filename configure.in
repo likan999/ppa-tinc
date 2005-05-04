@@ -5,7 +5,7 @@ dnl $Id: configure.in 1415 2004-11-10 23:20:59Z guus $
 AC_PREREQ(2.59)
 AC_INIT
 AC_CONFIG_SRCDIR([src/tincd.c])
-AM_INIT_AUTOMAKE(tinc, 1.0.3)
+AM_INIT_AUTOMAKE(tinc, 1.0.4)
 AC_CONFIG_HEADERS([config.h])
 AM_MAINTAINER_MODE
 

@@ -1,7 +1,7 @@
 /*
     process.c -- process management functions
-    Copyright (C) 1999-2004 Ivo Timmermans <ivo@tinc-vpn.org>,
-                  2000-2004 Guus Sliepen <guus@tinc-vpn.org>
+    Copyright (C) 1999-2005 Ivo Timmermans <ivo@tinc-vpn.org>,
+                  2000-2005 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.c 1397 2004-11-01 15:18:22Z guus $
+    $Id: process.c 1439 2005-05-04 18:09:30Z guus $
 */
 
 #include "system.h"
@@ -81,25 +81,25 @@ bool install_service(void) {
 	}
 
 	if(!strchr(program_name, '\\')) {
-		GetCurrentDirectory(sizeof(command) - 1, command + 1);
-		strncat(command, "\\", sizeof(command));
+		GetCurrentDirectory(sizeof command - 1, command + 1);
+		strncat(command, "\\", sizeof command - strlen(command));
 	}
 
-	strncat(command, program_name, sizeof(command));
+	strncat(command, program_name, sizeof command - strlen(command));
 
-	strncat(command, "\"", sizeof(command));
+	strncat(command, "\"", sizeof command - strlen(command));
 
 	for(argp = g_argv + 1; *argp; argp++) {
 		space = strchr(*argp, ' ');
-		strncat(command, " ", sizeof(command));
+		strncat(command, " ", sizeof command - strlen(command));
 		
 		if(space)
-			strncat(command, "\"", sizeof(command));
+			strncat(command, "\"", sizeof command - strlen(command));
 		
-		strncat(command, *argp, sizeof(command));
+		strncat(command, *argp, sizeof command - strlen(command));
 
 		if(space)
-			strncat(command, "\"", sizeof(command));
+			strncat(command, "\"", sizeof command - strlen(command));
 	}
 
 	service = CreateService(manager, identname, identname,

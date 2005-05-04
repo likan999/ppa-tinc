@@ -1,7 +1,7 @@
 /*
     ipv4.h -- missing IPv4 related definitions
-    Copyright (C) 2004 Ivo Timmermans <ivo@tinc-vpn.org>
-                  2004 Guus Sliepen <guus@tinc-vpn.org>
+    Copyright (C) 2005 Ivo Timmermans <ivo@tinc-vpn.org>
+                  2005 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: ipv4.h 1412 2004-11-10 21:14:08Z guus $
+    $Id: ipv4.h 1439 2005-05-04 18:09:30Z guus $
 */
 
 #ifndef __TINC_IPV4_H__

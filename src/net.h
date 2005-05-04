@@ -1,7 +1,7 @@
 /*
     net.h -- header for net.c
-    Copyright (C) 1998-2004 Ivo Timmermans <zarq@iname.com>
-                  2000-2004 Guus Sliepen <guus@tinc-vpn.org>
+    Copyright (C) 1998-2005 Ivo Timmermans <zarq@iname.com>
+                  2000-2005 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.h 1413 2004-11-10 21:56:31Z guus $
+    $Id: net.h 1439 2005-05-04 18:09:30Z guus $
 */
 
 #ifndef __TINC_NET_H__

@@ -1,7 +1,7 @@
 /*
     subnet.h -- header for subnet.c
-    Copyright (C) 2000-2004 Guus Sliepen <guus@tinc-vpn.org>,
-                  2000-2004 Ivo Timmermans <ivo@tinc-vpn.org>
+    Copyright (C) 2000-2005 Guus Sliepen <guus@tinc-vpn.org>,
+                  2000-2005 Ivo Timmermans <ivo@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: subnet.h 1374 2004-03-21 14:21:22Z guus $
+    $Id: subnet.h 1439 2005-05-04 18:09:30Z guus $
 */
 
 #ifndef __TINC_SUBNET_H__
@@ -74,6 +74,7 @@ extern avl_tree_t *new_subnet_tree(void) __attribute__ ((__malloc__));
 extern void free_subnet_tree(avl_tree_t *);
 extern void subnet_add(struct node_t *, subnet_t *);
 extern void subnet_del(struct node_t *, subnet_t *);
+extern void subnet_update(struct node_t *, subnet_t *, bool);
 extern bool net2str(char *, int, const subnet_t *);
 extern bool str2net(subnet_t *, const char *);
 extern subnet_t *lookup_subnet(const struct node_t *, const subnet_t *);

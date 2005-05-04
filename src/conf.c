@@ -1,8 +1,8 @@
 /*
     conf.c -- configuration code
     Copyright (C) 1998 Robert van der Meulen
-                  1998-2004 Ivo Timmermans <ivo@tinc-vpn.org>
-                  2000-2004 Guus Sliepen <guus@tinc-vpn.org>
+                  1998-2005 Ivo Timmermans <ivo@tinc-vpn.org>
+                  2000-2005 Guus Sliepen <guus@tinc-vpn.org>
 		  2000 Cris van Pelt <tribbel@arise.dhs.org>
 
     This program is free software; you can redistribute it and/or modify
@@ -19,7 +19,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.c 1374 2004-03-21 14:21:22Z guus $
+    $Id: conf.c 1439 2005-05-04 18:09:30Z guus $
 */
 
 #include "system.h"
@@ -99,7 +99,7 @@ void config_add(avl_tree_t *config_tree, config_t *cfg)
 	avl_insert(config_tree, cfg);
 }
 
-config_t *lookup_config(const avl_tree_t *config_tree, char *variable)
+config_t *lookup_config(avl_tree_t *config_tree, char *variable)
 {
 	config_t cfg, *found;
 
@@ -120,7 +120,7 @@ config_t *lookup_config(const avl_tree_t *config_tree, char *variable)
 	return found;
 }
 
-config_t *lookup_config_next(const avl_tree_t *config_tree, const config_t *cfg)
+config_t *lookup_config_next(avl_tree_t *config_tree, const config_t *cfg)
 {
 	avl_node_t *node;
 	config_t *found;
