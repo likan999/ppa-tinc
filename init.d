@@ -27,7 +27,7 @@ find_nets () {
     echo "Please create $NETSFILE."
     exit 0
   fi
-  NETS="`egrep '^[ ]*[a-zA-Z0-9_]+[ ]*$' $NETSFILE`"
+  NETS="`egrep '^[ ]*[a-zA-Z0-9_-]+[ ]*$' $NETSFILE`"
 }
 
 case "$1" in

@@ -1,3 +1,11 @@
+tinc (1.0.4-1) unstable; urgency=low
+
+  * New upstream release. Closes: #294819
+  * Update french translation of debconf template. Closes: #293371, #296148
+  * Allow dashes in nets.boot. Closes: #296281
+
+ -- Guus Sliepen <guus@debian.org>  Wed,  4 May 2005 21:56:22 +0200
+
 tinc (1.0.3-4) unstable; urgency=low
 
   * Call debconf early in postinst so it won't get confused by output
