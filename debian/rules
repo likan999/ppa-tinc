@@ -15,5 +15,5 @@ clean::
 build/tinc::
 	cd doc && $(MAKE) texi2html
 binary-post-install/tinc::
-	mv -v doc/*.html debian/$(cdbs_curpkg)/usr/share/doc/$(cdbs_curpkg)/
+	mv -v doc/tinc/*.html debian/$(cdbs_curpkg)/usr/share/doc/$(cdbs_curpkg)/
 	cd debian/$(cdbs_curpkg)/usr/share/doc/$(cdbs_curpkg)/ && tar xzf ../../../../../../doc/sample-config.tar.gz && mv sample-config examples && rm -rf examples/CVS examples/hosts/CVS
