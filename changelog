@@ -1,3 +1,10 @@
+tinc (1.0.4-2) unstable; urgency=low
+
+  * Compensate for change in texinfo's output directory. Closes: #318562
+  * Include Czech translation of the debconf questions. Closes: #312982
+
+ -- Guus Sliepen <guus@debian.org>  Sat, 16 Jul 2005 11:42:04 +0200
+
 tinc (1.0.4-1) unstable; urgency=low
 
   * New upstream release. Closes: #294819
