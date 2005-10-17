@@ -1,3 +1,10 @@
+tinc (1.0.4-4) unstable; urgency=low
+
+  * Include swedish debconf translation. Closes: #332963
+  * Remove nets.boot on purge. Closes: #333303
+
+ -- Guus Sliepen <guus@debian.org>  Mon, 17 Oct 2005 12:34:32 +0200
+
 tinc (1.0.4-3) unstable; urgency=low
 
   * Depend on debconf | debconf-2.0.
