@@ -1,7 +1,7 @@
 /*
     edge.h -- header for edge.c
-    Copyright (C) 2001-2005 Guus Sliepen <guus@tinc-vpn.org>,
-                  2001-2005 Ivo Timmermans <ivo@tinc-vpn.org>
+    Copyright (C) 2001-2006 Guus Sliepen <guus@tinc-vpn.org>,
+                  2001-2005 Ivo Timmermans
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: edge.h 1439 2005-05-04 18:09:30Z guus $
+    $Id: edge.h 1452 2006-04-26 13:52:58Z guus $
 */
 
 #ifndef __TINC_EDGE_H__

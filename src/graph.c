@@ -1,7 +1,7 @@
 /*
     graph.c -- graph algorithms
-    Copyright (C) 2001-2005 Guus Sliepen <guus@tinc-vpn.org>,
-                  2001-2005 Ivo Timmermans <ivo@tinc-vpn.org>
+    Copyright (C) 2001-2006 Guus Sliepen <guus@tinc-vpn.org>,
+                  2001-2005 Ivo Timmermans
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: graph.c 1439 2005-05-04 18:09:30Z guus $
+    $Id: graph.c 1464 2006-11-11 14:37:03Z guus $
 */
 
 /* We need to generate two trees from the graph:
@@ -47,6 +47,7 @@
 #include "system.h"
 
 #include "avl_tree.h"
+#include "config.h"
 #include "connection.h"
 #include "device.h"
 #include "edge.h"
@@ -56,6 +57,8 @@
 #include "process.h"
 #include "subnet.h"
 #include "utils.h"
+
+static bool graph_changed = true;
 
 /* Implementation of Kruskal's algorithm.
    Running time: O(EN)
@@ -283,6 +286,8 @@ void sssp_bfs(void)
 			asprintf(&envp[5], "REMOTEPORT=%s", port);
 			envp[6] = NULL;
 
+			execute_script(n->status.reachable ? "host-up" : "host-down", envp);
+
 			asprintf(&name,
 					 n->status.reachable ? "hosts/%s-up" : "hosts/%s-down",
 					 n->name);
@@ -304,4 +309,66 @@ void graph(void)
 {
 	mst_kruskal();
 	sssp_bfs();
+	graph_changed = true;
+}
+
+
+
+/* Dump nodes and edges to a graphviz file.
+	   
+   The file can be converted to an image with
+   dot -Tpng graph_filename -o image_filename.png -Gconcentrate=true
+*/
+
+void dump_graph(void)
+{
+	avl_node_t *node;
+	node_t *n;
+	edge_t *e;
+	char *filename = NULL, *tmpname = NULL;
+	FILE *file;
+	
+	if(!graph_changed || !get_config_string(lookup_config(config_tree, "GraphDumpFile"), &filename))
+		return;
+
+	graph_changed = false;
+
+	ifdebug(PROTOCOL) logger(LOG_NOTICE, "Dumping graph");
+	
+	if(filename[0] == '|') {
+		file = popen(filename + 1, "w");
+	} else {
+		asprintf(&tmpname, "%s.new", filename);
+		file = fopen(tmpname, "w");
+	}
+
+	if(!file) {
+		logger(LOG_ERR, "Unable to open graph dump file %s: %s", filename, strerror(errno));
+		free(tmpname);
+		return;
+	}
+
+	fprintf(file, "digraph {\n");
+	
+	/* dump all nodes first */
+	for(node = node_tree->head; node; node = node->next) {
+		n = node->data;
+		fprintf(file, "	%s [label = \"%s\"];\n", n->name, n->name);
+	}
+
+	/* now dump all edges */
+	for(node = edge_weight_tree->head; node; node = node->next) {
+		e = node->data;
+		fprintf(file, "	%s -> %s;\n", e->from->name, e->to->name);
+	}
+
+	fprintf(file, "}\n");	
+	
+	if(filename[0] == '|') {
+		pclose(file);
+	} else {
+		fclose(file);
+		rename(tmpname, filename);
+		free(tmpname);
+	}
 }

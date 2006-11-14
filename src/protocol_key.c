@@ -1,7 +1,7 @@
 /*
     protocol_key.c -- handle the meta-protocol, key exchange
-    Copyright (C) 1999-2005 Ivo Timmermans <ivo@tinc-vpn.org>,
-                  2000-2005 Guus Sliepen <guus@tinc-vpn.org>
+    Copyright (C) 1999-2005 Ivo Timmermans,
+                  2000-2006 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_key.c 1439 2005-05-04 18:09:30Z guus $
+    $Id: protocol_key.c 1452 2006-04-26 13:52:58Z guus $
 */
 
 #include "system.h"
@@ -142,10 +142,11 @@ bool req_key_h(connection_t *c)
 
 bool send_ans_key(connection_t *c, const node_t *from, const node_t *to)
 {
-	char key[MAX_STRING_SIZE];
+	char *key;
 
 	cp();
 
+	key = alloca(2 * from->keylength + 1);
 	bin2hex(from->key, key, from->keylength);
 	key[from->keylength * 2] = '\0';
 
@@ -261,7 +262,7 @@ bool ans_key_h(connection_t *c)
 	from->compression = compression;
 
 	if(from->cipher)
-		if(!EVP_EncryptInit_ex(&from->packet_ctx, from->cipher, NULL, from->key, from->key + from->cipher->key_len)) {
+		if(!EVP_EncryptInit_ex(&from->packet_ctx, from->cipher, NULL, (unsigned char *)from->key, (unsigned char *)from->key + from->cipher->key_len)) {
 			logger(LOG_ERR, _("Error during initialisation of key from %s (%s): %s"),
 					from->name, from->hostname, ERR_error_string(ERR_get_error(), NULL));
 			return false;

@@ -1,7 +1,7 @@
 /*
     net_packet.c -- Handles in- and outgoing VPN packets
-    Copyright (C) 1998-2005 Ivo Timmermans <ivo@tinc-vpn.org>,
-                  2000-2005 Guus Sliepen <guus@tinc-vpn.org>
+    Copyright (C) 1998-2005 Ivo Timmermans,
+                  2000-2006 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_packet.c 1439 2005-05-04 18:09:30Z guus $
+    $Id: net_packet.c 1469 2006-11-11 22:44:15Z guus $
 */
 
 #include "system.h"
@@ -29,7 +29,12 @@
 #include <openssl/hmac.h>
 
 #include <zlib.h>
+#ifdef HAVE_LZO_LZO1X_H
+#include <lzo/lzo1x.h>
+#endif
+#ifdef HAVE_LZO1X_H
 #include <lzo1x.h>
+#endif
 
 #include "avl_tree.h"
 #include "conf.h"
@@ -96,7 +101,7 @@ void send_mtu_probe(node_t *n)
 		send_udppacket(n, &packet);
 	}
 
-	n->mtuevent = xmalloc(sizeof(*n->mtuevent));
+	n->mtuevent = new_event();
 	n->mtuevent->handler = (event_handler_t)send_mtu_probe;
 	n->mtuevent->data = n;
 	n->mtuevent->time = now + 1;
@@ -174,7 +179,7 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt)
 	int nextpkt = 0;
 	vpn_packet_t *outpkt = pkt[0];
 	int outlen, outpad;
-	char hmac[EVP_MAX_MD_SIZE];
+	unsigned char hmac[EVP_MAX_MD_SIZE];
 	int i;
 
 	cp();
@@ -192,7 +197,7 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt)
 	if(myself->digest && myself->maclength) {
 		inpkt->len -= myself->maclength;
 		HMAC(myself->digest, myself->key, myself->keylength,
-			 (char *) &inpkt->seqno, inpkt->len, hmac, NULL);
+			 (unsigned char *) &inpkt->seqno, inpkt->len, (unsigned char *)hmac, NULL);
 
 		if(memcmp(hmac, (char *) &inpkt->seqno + inpkt->len, myself->maclength)) {
 			ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Got unauthenticated packet from %s (%s)"),
@@ -207,9 +212,9 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt)
 		outpkt = pkt[nextpkt++];
 
 		if(!EVP_DecryptInit_ex(&packet_ctx, NULL, NULL, NULL, NULL)
-				|| !EVP_DecryptUpdate(&packet_ctx, (char *) &outpkt->seqno, &outlen,
-					(char *) &inpkt->seqno, inpkt->len)
-				|| !EVP_DecryptFinal_ex(&packet_ctx, (char *) &outpkt->seqno + outlen, &outpad)) {
+				|| !EVP_DecryptUpdate(&packet_ctx, (unsigned char *) &outpkt->seqno, &outlen,
+					(unsigned char *) &inpkt->seqno, inpkt->len)
+				|| !EVP_DecryptFinal_ex(&packet_ctx, (unsigned char *) &outpkt->seqno + outlen, &outpad)) {
 			ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Error decrypting packet from %s (%s): %s"),
 						n->name, n->hostname, ERR_error_string(ERR_get_error(), NULL));
 			return;
@@ -285,10 +290,11 @@ void receive_tcppacket(connection_t *c, char *buffer, int len)
 	receive_packet(c->node, &outpkt);
 }
 
-static void send_udppacket(node_t *n, vpn_packet_t *inpkt)
+static void send_udppacket(node_t *n, vpn_packet_t *origpkt)
 {
 	vpn_packet_t pkt1, pkt2;
 	vpn_packet_t *pkt[] = { &pkt1, &pkt2, &pkt1, &pkt2 };
+	vpn_packet_t *inpkt = origpkt;
 	int nextpkt = 0;
 	vpn_packet_t *outpkt;
 	int origlen;
@@ -352,9 +358,9 @@ static void send_udppacket(node_t *n, vpn_packet_t *inpkt)
 		outpkt = pkt[nextpkt++];
 
 		if(!EVP_EncryptInit_ex(&n->packet_ctx, NULL, NULL, NULL, NULL)
-				|| !EVP_EncryptUpdate(&n->packet_ctx, (char *) &outpkt->seqno, &outlen,
-					(char *) &inpkt->seqno, inpkt->len)
-				|| !EVP_EncryptFinal_ex(&n->packet_ctx, (char *) &outpkt->seqno + outlen, &outpad)) {
+				|| !EVP_EncryptUpdate(&n->packet_ctx, (unsigned char *) &outpkt->seqno, &outlen,
+					(unsigned char *) &inpkt->seqno, inpkt->len)
+				|| !EVP_EncryptFinal_ex(&n->packet_ctx, (unsigned char *) &outpkt->seqno + outlen, &outpad)) {
 			ifdebug(TRAFFIC) logger(LOG_ERR, _("Error while encrypting packet to %s (%s): %s"),
 						n->name, n->hostname, ERR_error_string(ERR_get_error(), NULL));
 			goto end;
@@ -367,8 +373,8 @@ static void send_udppacket(node_t *n, vpn_packet_t *inpkt)
 	/* Add the message authentication code */
 
 	if(n->digest && n->maclength) {
-		HMAC(n->digest, n->key, n->keylength, (char *) &inpkt->seqno,
-			 inpkt->len, (char *) &inpkt->seqno + inpkt->len, &outlen);
+		HMAC(n->digest, n->key, n->keylength, (unsigned char *) &inpkt->seqno,
+			 inpkt->len, (unsigned char *) &inpkt->seqno + inpkt->len, NULL);
 		inpkt->len += n->maclength;
 	}
 
@@ -404,7 +410,7 @@ static void send_udppacket(node_t *n, vpn_packet_t *inpkt)
 	}
 
 end:
-	inpkt->len = origlen;
+	origpkt->len = origlen;
 }
 
 /*
@@ -457,11 +463,8 @@ void broadcast_packet(const node_t *from, vpn_packet_t *packet)
 	ifdebug(TRAFFIC) logger(LOG_INFO, _("Broadcasting packet of %d bytes from %s (%s)"),
 			   packet->len, from->name, from->hostname);
 
-	if(from != myself) {
-		if(overwrite_mac)
-			 memcpy(packet->data, mymac.x, ETH_ALEN);
-		write_packet(packet);
-	}
+	if(from != myself)
+		send_packet(myself, packet);
 
 	for(node = connection_tree->head; node; node = node->next) {
 		c = node->data;

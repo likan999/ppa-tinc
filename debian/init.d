@@ -1,15 +1,22 @@
 #! /bin/sh
 #
-# System startup script for tinc
-# $Id: init.d,v 1.14.2.4 2000/12/05 09:03:41 zarq Exp $
+### BEGIN INIT INFO
+# Provides:          tinc
+# Required-Start:    $network
+# Required-Stop:     $network
+# Should-Start:      $syslog $named
+# Should-Stop:       $syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Start tinc daemons
+# Description:       Create a file $NETSFILE (/etc/tinc/nets.boot),
+#                    and put all the names of the networks in there.
+#                    These names must be valid directory names under
+#                    $TCONF (/etc/tinc). Lines starting with a # will be
+#                    ignored in this file.
+### END INIT INFO
 #
 # Based on Lubomir Bulej's Redhat init script.
-#
-# Create a file $NETSFILE (/etc/tinc/nets.boot), and put all the names of
-# the networks in there.  These names must be valid directory names under
-# $TCONF (/etc/tinc).  Lines starting with a # will be ignored in this
-# file.
-#
 
 DAEMON="/usr/sbin/tincd"
 NAME="tinc"

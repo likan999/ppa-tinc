@@ -1,7 +1,7 @@
 /*
     net.c -- most of the network code
-    Copyright (C) 1998-2005 Ivo Timmermans <ivo@tinc-vpn.org>,
-                  2000-2005 Guus Sliepen <guus@tinc-vpn.org>
+    Copyright (C) 1998-2005 Ivo Timmermans,
+                  2000-2006 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c 1439 2005-05-04 18:09:30Z guus $
+    $Id: net.c 1469 2006-11-11 22:44:15Z guus $
 */
 
 #include "system.h"
@@ -112,7 +112,7 @@ static void purge(void)
   put all file descriptors in an fd_set array
   While we're at it, purge stuff that needs to be removed.
 */
-static int build_fdset(fd_set * fs)
+static int build_fdset(fd_set *readset, fd_set *writeset)
 {
 	avl_node_t *node, *next;
 	connection_t *c;
@@ -120,7 +120,8 @@ static int build_fdset(fd_set * fs)
 
 	cp();
 
-	FD_ZERO(fs);
+	FD_ZERO(readset);
+	FD_ZERO(writeset);
 
 	for(node = connection_tree->head; node; node = next) {
 		next = node->next;
@@ -131,22 +132,24 @@ static int build_fdset(fd_set * fs)
 			if(!connection_tree->head)
 				purge();
 		} else {
-			FD_SET(c->socket, fs);
+			FD_SET(c->socket, readset);
+			if(c->outbuflen > 0)
+				FD_SET(c->socket, writeset);
 			if(c->socket > max)
 				max = c->socket;
 		}
 	}
 
 	for(i = 0; i < listen_sockets; i++) {
-		FD_SET(listen_socket[i].tcp, fs);
+		FD_SET(listen_socket[i].tcp, readset);
 		if(listen_socket[i].tcp > max)
 			max = listen_socket[i].tcp;
-		FD_SET(listen_socket[i].udp, fs);
+		FD_SET(listen_socket[i].udp, readset);
 		if(listen_socket[i].udp > max)
 			max = listen_socket[i].udp;
 	}
 
-	FD_SET(device_fd, fs);
+	FD_SET(device_fd, readset);
 	if(device_fd > max)
 		max = device_fd;
 	
@@ -208,6 +211,12 @@ void terminate_connection(connection_t *c, bool report)
 		retry_outgoing(c->outgoing);
 		c->outgoing = NULL;
 	}
+
+	free(c->outbuf);
+	c->outbuf = NULL;
+	c->outbuflen = 0;
+	c->outbufsize = 0;
+	c->outbufstart = 0;
 }
 
 /*
@@ -232,17 +241,17 @@ static void check_dead_connections(void)
 		if(c->last_ping_time + pingtimeout < now) {
 			if(c->status.active) {
 				if(c->status.pinged) {
-					ifdebug(CONNECTIONS) logger(LOG_INFO, _("%s (%s) didn't respond to PING"),
-							   c->name, c->hostname);
+					ifdebug(CONNECTIONS) logger(LOG_INFO, _("%s (%s) didn't respond to PING in %ld seconds"),
+							   c->name, c->hostname, now - c->last_ping_time);
 					c->status.timeout = true;
 					terminate_connection(c, true);
-				} else {
+				} else if(c->last_ping_time + pinginterval < now) {
 					send_ping(c);
 				}
 			} else {
 				if(c->status.remove) {
 					logger(LOG_WARNING, _("Old connection_t for %s (%s) status %04x still lingering, deleting..."),
-						   c->name, c->hostname, *(uint32_t *)&c->status);
+						   c->name, c->hostname, c->status.value);
 					connection_del(c);
 					continue;
 				}
@@ -257,6 +266,16 @@ static void check_dead_connections(void)
 				}
 			}
 		}
+
+		if(c->outbuflen > 0 && c->last_flushed_time + pingtimeout < now) {
+			if(c->status.active) {
+				ifdebug(CONNECTIONS) logger(LOG_INFO,
+						_("%s (%s) could not flush for %ld seconds (%d bytes remaining)"),
+						c->name, c->hostname, now - c->last_flushed_time, c->outbuflen);
+				c->status.timeout = true;
+				terminate_connection(c, true);
+			}
+		}
 	}
 }
 
@@ -264,28 +283,30 @@ static void check_dead_connections(void)
   check all connections to see if anything
   happened on their sockets
 */
-static void check_network_activity(fd_set * f)
+static void check_network_activity(fd_set * readset, fd_set * writeset)
 {
 	connection_t *c;
 	avl_node_t *node;
 	int result, i;
-	int len = sizeof(result);
+	socklen_t len = sizeof(result);
 	vpn_packet_t packet;
 
 	cp();
 
-	if(FD_ISSET(device_fd, f)) {
+	/* check input from kernel */
+	if(FD_ISSET(device_fd, readset)) {
 		if(read_packet(&packet))
 			route(myself, &packet);
 	}
 
+	/* check meta connections */
 	for(node = connection_tree->head; node; node = node->next) {
 		c = node->data;
 
 		if(c->status.remove)
 			continue;
 
-		if(FD_ISSET(c->socket, f)) {
+		if(FD_ISSET(c->socket, readset)) {
 			if(c->status.connecting) {
 				c->status.connecting = false;
 				getsockopt(c->socket, SOL_SOCKET, SO_ERROR, &result, &len);
@@ -307,13 +328,20 @@ static void check_network_activity(fd_set * f)
 				continue;
 			}
 		}
+
+		if(FD_ISSET(c->socket, writeset)) {
+			if(!flush_meta(c)) {
+				terminate_connection(c, c->status.active);
+				continue;
+			}
+		}
 	}
 
 	for(i = 0; i < listen_sockets; i++) {
-		if(FD_ISSET(listen_socket[i].udp, f))
+		if(FD_ISSET(listen_socket[i].udp, readset))
 			handle_incoming_vpn_data(listen_socket[i].udp);
 
-		if(FD_ISSET(listen_socket[i].tcp, f))
+		if(FD_ISSET(listen_socket[i].tcp, readset))
 			handle_new_meta_connection(listen_socket[i].tcp);
 	}
 }
@@ -323,16 +351,18 @@ static void check_network_activity(fd_set * f)
 */
 int main_loop(void)
 {
-	fd_set fset;
+	fd_set readset, writeset;
 	struct timeval tv;
 	int r, maxfd;
-	time_t last_ping_check, last_config_check;
+	time_t last_ping_check, last_config_check, last_graph_dump;
 	event_t *event;
 
 	cp();
 
 	last_ping_check = now;
 	last_config_check = now;
+	last_graph_dump = now;
+	
 	srand(now);
 
 	running = true;
@@ -344,9 +374,9 @@ int main_loop(void)
 		tv.tv_sec = 1;
 		tv.tv_usec = 0;
 
-		maxfd = build_fdset(&fset);
+		maxfd = build_fdset(&readset, &writeset);
 
-		r = select(maxfd + 1, &fset, NULL, NULL, &tv);
+		r = select(maxfd + 1, &readset, &writeset, NULL, &tv);
 
 		if(r < 0) {
 			if(errno != EINTR && errno != EAGAIN) {
@@ -360,7 +390,7 @@ int main_loop(void)
 			continue;
 		}
 
-		check_network_activity(&fset);
+		check_network_activity(&readset, &writeset);
 
 		if(do_purge) {
 			purge();
@@ -383,9 +413,9 @@ int main_loop(void)
 			if(keyexpires < now) {
 				ifdebug(STATUS) logger(LOG_INFO, _("Regenerating symmetric key"));
 
-				RAND_pseudo_bytes(myself->key, myself->keylength);
+				RAND_pseudo_bytes((unsigned char *)myself->key, myself->keylength);
 				if(myself->cipher)
-					EVP_DecryptInit_ex(&packet_ctx, myself->cipher, NULL, myself->key, myself->key + myself->cipher->key_len);
+					EVP_DecryptInit_ex(&packet_ctx, myself->cipher, NULL, (unsigned char *)myself->key, (unsigned char *)myself->key + myself->cipher->key_len);
 				send_key_changed(broadcast, myself);
 				keyexpires = now + keylifetime;
 			}
@@ -394,7 +424,7 @@ int main_loop(void)
 
 		while((event = get_expired_event())) {
 			event->handler(event->data);
-			free(event);
+			free_event(event);
 		}
 
 		if(sigalrm) {
@@ -449,6 +479,13 @@ int main_loop(void)
 			/* Try to make outgoing connections */
 			
 			try_outgoing_connections();
+		}
+		
+		/* Dump graph if wanted every 60 seconds*/
+
+		if(last_graph_dump + 60 < now) {
+			dump_graph();
+			last_graph_dump = now;
 		}
 	}
 

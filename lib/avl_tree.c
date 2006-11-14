@@ -1,8 +1,8 @@
 /*
     avl_tree.c -- avl_ tree and linked list convenience
     Copyright (C) 1998 Michael H. Buselli
-                  2000-2005 Ivo Timmermans <ivo@tinc-vpn.org>,
-                  2000-2005 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2005 Ivo Timmermans,
+                  2000-2006 Guus Sliepen <guus@tinc-vpn.org>
                   2000-2005 Wessel Dankers <wsl@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
@@ -29,7 +29,7 @@
     library for inclusion into tinc (http://www.tinc-vpn.org/) by
     Guus Sliepen <guus@tinc-vpn.org>.
 
-    $Id: avl_tree.c 1439 2005-05-04 18:09:30Z guus $
+    $Id: avl_tree.c 1470 2006-11-11 22:45:45Z guus $
 */
 
 #include "system.h"
@@ -656,7 +656,7 @@ void avl_delete_tree(avl_tree_t *tree)
 {
 	avl_node_t *node, *next;
 
-	for(node = tree->root; node; node = next) {
+	for(node = tree->head; node; node = next) {
 		next = node->next;
 		avl_free_node(tree, node);
 	}

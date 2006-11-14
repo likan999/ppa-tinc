@@ -1,7 +1,7 @@
 /*
     connection.c -- connection list management
-    Copyright (C) 2000-2005 Guus Sliepen <guus@tinc-vpn.org>,
-                  2000-2005 Ivo Timmermans <ivo@tinc-vpn.org>
+    Copyright (C) 2000-2006 Guus Sliepen <guus@tinc-vpn.org>,
+                  2000-2005 Ivo Timmermans
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connection.c 1439 2005-05-04 18:09:30Z guus $
+    $Id: connection.c 1456 2006-08-08 13:21:08Z guus $
 */
 
 #include "system.h"
@@ -121,8 +121,9 @@ void dump_connections(void)
 
 	for(node = connection_tree->head; node; node = node->next) {
 		c = node->data;
-		logger(LOG_DEBUG, _(" %s at %s options %lx socket %d status %04x"),
-			   c->name, c->hostname, c->options, c->socket, *(uint32_t *)&c->status);
+		logger(LOG_DEBUG, _(" %s at %s options %lx socket %d status %04x outbuf %d/%d/%d"),
+			   c->name, c->hostname, c->options, c->socket, c->status.value,
+			   c->outbufsize, c->outbufstart, c->outbuflen);
 	}
 
 	logger(LOG_DEBUG, _("End of connections."));

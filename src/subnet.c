@@ -1,7 +1,7 @@
 /*
     subnet.c -- handle subnet lookups and lists
-    Copyright (C) 2000-2005 Guus Sliepen <guus@tinc-vpn.org>,
-                  2000-2005 Ivo Timmermans <ivo@tinc-vpn.org>
+    Copyright (C) 2000-2006 Guus Sliepen <guus@tinc-vpn.org>,
+                  2000-2005 Ivo Timmermans
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: subnet.c 1439 2005-05-04 18:09:30Z guus $
+    $Id: subnet.c 1459 2006-08-08 13:44:37Z guus $
 */
 
 #include "system.h"
@@ -342,7 +342,7 @@ subnet_t *lookup_subnet_ipv4(const ipv4_t *address)
 				break;
 			}
 
-			if(!maskcmp(address, &p->net.ipv4.address, p->net.ipv4.prefixlength, sizeof(ipv4_t)))
+			if(!maskcmp(address, &p->net.ipv4.address, p->net.ipv4.prefixlength))
 				break;
 			else {
 				/* Otherwise, see if there is a bigger enclosing subnet */
@@ -378,7 +378,7 @@ subnet_t *lookup_subnet_ipv6(const ipv6_t *address)
 			if(p->type != SUBNET_IPV6)
 				return NULL;
 
-			if(!maskcmp(address, &p->net.ipv6.address, p->net.ipv6.prefixlength, sizeof(ipv6_t)))
+			if(!maskcmp(address, &p->net.ipv6.address, p->net.ipv6.prefixlength))
 				break;
 			else {
 				/* Otherwise, see if there is a bigger enclosing subnet */

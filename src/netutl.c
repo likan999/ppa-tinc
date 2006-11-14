@@ -1,7 +1,7 @@
 /*
     netutl.c -- some supporting network utility code
-    Copyright (C) 1998-2005 Ivo Timmermans <ivo@tinc-vpn.org>
-                  2000-2005 Guus Sliepen <guus@tinc-vpn.org>
+    Copyright (C) 1998-2005 Ivo Timmermans
+                  2000-2006 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: netutl.c 1439 2005-05-04 18:09:30Z guus $
+    $Id: netutl.c 1459 2006-08-08 13:44:37Z guus $
 */
 
 #include "system.h"
@@ -78,7 +78,7 @@ sockaddr_t str2sockaddr(const char *address, const char *port)
 		return result;
 	}
 
-	result = *(sockaddr_t *) ai->ai_addr;
+	memcpy(&result, ai->ai_addr, ai->ai_addrlen);
 	freeaddrinfo(ai);
 
 	return result;
@@ -225,7 +225,7 @@ void sockaddrunmap(sockaddr_t *sa)
 
 /* Subnet mask handling */
 
-int maskcmp(const void *va, const void *vb, int masklen, int len)
+int maskcmp(const void *va, const void *vb, int masklen)
 {
 	int i, m, result;
 	const char *a = va;
@@ -257,7 +257,7 @@ void mask(void *va, int masklen, int len)
 	masklen %= 8;
 
 	if(masklen)
-		a[i++] &= (0x100 - (1 << masklen));
+		a[i++] &= (0x100 - (1 << (8 - masklen)));
 
 	for(; i < len; i++)
 		a[i] = 0;
@@ -275,7 +275,7 @@ void maskcpy(void *va, const void *vb, int masklen, int len)
 		a[i] = b[i];
 
 	if(m) {
-		a[i] = b[i] & (0x100 - (1 << m));
+		a[i] = b[i] & (0x100 - (1 << (8 - m)));
 		i++;
 	}
 

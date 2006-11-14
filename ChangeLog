@@ -1,4 +1,180 @@
 ------------------------------------------------------------------------
+r1471 | guus | 2006-11-14 13:28:04 +0100 (di, 14 nov 2006) | 2 lines
+
+EWOULDBLOCK does not exist on platforms without O_NONBLOCK
+
+------------------------------------------------------------------------
+r1470 | guus | 2006-11-11 23:45:45 +0100 (za, 11 nov 2006) | 2 lines
+
+When deleting an entire tree, start at head, not at root.
+
+------------------------------------------------------------------------
+r1469 | guus | 2006-11-11 23:44:15 +0100 (za, 11 nov 2006) | 1 line
+
+Nodes use events, so event system should be initialised first and destroyed last.
+------------------------------------------------------------------------
+r1468 | guus | 2006-11-11 22:37:22 +0100 (za, 11 nov 2006) | 2 lines
+
+Update Dutch translation.
+
+------------------------------------------------------------------------
+r1467 | guus | 2006-11-11 21:37:58 +0100 (za, 11 nov 2006) | 2 lines
+
+Document GraphDumpFile option.
+
+------------------------------------------------------------------------
+r1466 | guus | 2006-11-11 21:10:46 +0100 (za, 11 nov 2006) | 2 lines
+
+Support and autodetect LZO version 2.0 and later.
+
+------------------------------------------------------------------------
+r1465 | guus | 2006-11-11 21:06:14 +0100 (za, 11 nov 2006) | 2 lines
+
+Support and autodetect LZO version 2.0 and later.
+
+------------------------------------------------------------------------
+r1464 | guus | 2006-11-11 15:37:03 +0100 (za, 11 nov 2006) | 2 lines
+
+popen() requires pclose().
+
+------------------------------------------------------------------------
+r1463 | guus | 2006-11-11 15:11:16 +0100 (za, 11 nov 2006) | 2 lines
+
+Added graph dumping ability based on Markus Goetz's patch.
+
+------------------------------------------------------------------------
+r1462 | guus | 2006-11-11 14:43:00 +0100 (za, 11 nov 2006) | 2 lines
+
+The "active" bit in node.status is not used.
+
+------------------------------------------------------------------------
+r1461 | guus | 2006-08-10 00:31:10 +0200 (do, 10 aug 2006) | 3 lines
+
+memcpy() addresses from packet headers before calling the lookup functions.
+This probably fixes a problem on the ARM architecture that causes tinc to fail to lookup IPv4 addresses.
+
+------------------------------------------------------------------------
+r1460 | guus | 2006-08-08 15:50:58 +0200 (di, 08 aug 2006) | 2 lines
+
+Remove unused variable.
+
+------------------------------------------------------------------------
+r1459 | guus | 2006-08-08 15:44:37 +0200 (di, 08 aug 2006) | 2 lines
+
+Remove unused parameter from maskcmp().
+
+------------------------------------------------------------------------
+r1458 | guus | 2006-08-08 15:44:19 +0200 (di, 08 aug 2006) | 2 lines
+
+Remove unused variables.
+
+------------------------------------------------------------------------
+r1457 | guus | 2006-08-08 15:29:17 +0200 (di, 08 aug 2006) | 2 lines
+
+Fix format string warnings.
+
+------------------------------------------------------------------------
+r1456 | guus | 2006-08-08 15:21:08 +0200 (di, 08 aug 2006) | 2 lines
+
+Do not break strict aliasing of status_t structs.
+
+------------------------------------------------------------------------
+r1455 | guus | 2006-06-12 23:45:39 +0200 (ma, 12 jun 2006) | 3 lines
+
+Add generic host-up and host-down scripts.
+Thanks to Menno Smits for a patch.
+
+------------------------------------------------------------------------
+r1454 | guus | 2006-06-11 20:53:27 +0200 (zo, 11 jun 2006) | 3 lines
+
+Use memcpy() to copy sockaddrs returned by getaddrinfo().
+Thanks to Miles Nordin for spotting this.
+
+------------------------------------------------------------------------
+r1453 | guus | 2006-04-26 18:29:47 +0200 (wo, 26 apr 2006) | 2 lines
+
+Restore length of the original packet in send_udppacket().
+
+------------------------------------------------------------------------
+r1452 | guus | 2006-04-26 15:52:58 +0200 (wo, 26 apr 2006) | 2 lines
+
+Update copyright notices, remove Ivo's email address.
+
+------------------------------------------------------------------------
+r1451 | guus | 2006-04-12 10:38:35 +0200 (wo, 12 apr 2006) | 3 lines
+
+Fix a bug in handling prefixlengths that are not a multiple of 4.
+Thanks to Sven-Haegar Koch for spotting the bug and providing the fix.
+
+------------------------------------------------------------------------
+r1450 | guus | 2006-03-19 14:06:21 +0100 (zo, 19 mrt 2006) | 2 lines
+
+Fix signedness compiler warnings.
+
+------------------------------------------------------------------------
+r1449 | guus | 2006-03-19 13:43:45 +0100 (zo, 19 mrt 2006) | 2 lines
+
+Export flush_meta().
+
+------------------------------------------------------------------------
+r1448 | guus | 2006-03-19 13:43:28 +0100 (zo, 19 mrt 2006) | 2 lines
+
+Missing #include.
+
+------------------------------------------------------------------------
+r1447 | guus | 2006-02-06 13:30:51 +0100 (ma, 06 feb 2006) | 2 lines
+
+Make sure $NAME is set correctly when executing tinc-down script.
+
+------------------------------------------------------------------------
+r1446 | guus | 2006-01-19 18:13:18 +0100 (do, 19 jan 2006) | 4 lines
+
+Apply patch from Scott Lamb adding an output buffer for the TCP sockets.
+This helps coalescing multiple send_meta() commands into one TCP packet.
+Also limit the size of the output buffer before dropping PACKETs.
+
+------------------------------------------------------------------------
+r1445 | guus | 2006-01-13 12:21:59 +0100 (vr, 13 jan 2006) | 2 lines
+
+Apply patch from Scott Lamb unifying configuration of TCP socket options.
+
+------------------------------------------------------------------------
+r1444 | guus | 2006-01-13 12:09:19 +0100 (vr, 13 jan 2006) | 2 lines
+
+EVP_Cleanup() when quitting.
+
+------------------------------------------------------------------------
+r1443 | guus | 2005-11-16 11:45:11 +0100 (wo, 16 nov 2005) | 2 lines
+
+Enable OpenSSL ENGINE, so crypto hardware gets used. Thanks to Andreas van Cranenburgh.
+
+------------------------------------------------------------------------
+r1442 | guus | 2005-06-03 12:56:02 +0200 (vr, 03 jun 2005) | 2 lines
+
+Add alloca.h to the list of necessary header files.
+
+------------------------------------------------------------------------
+r1441 | guus | 2005-06-03 12:16:03 +0200 (vr, 03 jun 2005) | 3 lines
+
+Prevent possible buffer overflows when using very large (>= 8192 bit) RSA keys.
+Thanks to Tonnerre Lombard for noticing!
+
+------------------------------------------------------------------------
+r1440 | guus | 2005-05-04 21:38:28 +0200 (wo, 04 mei 2005) | 2 lines
+
+Releasing 1.0.4.
+
+------------------------------------------------------------------------
+r1439 | guus | 2005-05-04 20:09:30 +0200 (wo, 04 mei 2005) | 2 lines
+
+Update copyright notices.
+
+------------------------------------------------------------------------
+r1438 | guus | 2005-05-04 18:53:11 +0200 (wo, 04 mei 2005) | 2 lines
+
+Describe subnet-up/down scripts in documentation.
+
+------------------------------------------------------------------------
 r1437 | guus | 2005-05-04 17:56:25 +0200 (wo, 04 mei 2005) | 2 lines
 
 Several splay tree fixes.
