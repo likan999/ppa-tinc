@@ -1,3 +1,10 @@
+tinc (1.0.5-1) unstable; urgency=low
+
+  * New upstream release. Closes: #391610
+  * Add an LSB section to the init script.
+
+ -- Guus Sliepen <guus@debian.org>  Tue, 14 Nov 2006 16:32:20 +0100
+
 tinc (1.0.4-4) unstable; urgency=low
 
   * Include swedish debconf translation. Closes: #332963
