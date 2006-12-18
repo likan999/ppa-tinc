@@ -1,4 +1,72 @@
 ------------------------------------------------------------------------
+r1489 | guus | 2006-12-18 12:41:53 +0100 (ma, 18 dec 2006) | 2 lines
+
+Prevent compiler warnings about redefinition of EAI_FAMILY on FreeBSD 6.1.
+
+------------------------------------------------------------------------
+r1488 | guus | 2006-12-16 17:53:58 +0100 (za, 16 dec 2006) | 2 lines
+
+Do a simple test for linux/if_tun.h instead of no test at all.
+
+------------------------------------------------------------------------
+r1487 | guus | 2006-12-16 17:40:09 +0100 (za, 16 dec 2006) | 5 lines
+
+Remove the test for linux/if_tun.h.
+It has been available for years on any decent Linux distribution.
+Although linux/if_tun.h is now required to compile tinc,
+you can still run it on systems which only support Ethertap.
+
+------------------------------------------------------------------------
+r1486 | guus | 2006-12-16 17:34:04 +0100 (za, 16 dec 2006) | 2 lines
+
+We do properly check for malloc and realloc.
+
+------------------------------------------------------------------------
+r1485 | guus | 2006-12-16 17:26:57 +0100 (za, 16 dec 2006) | 2 lines
+
+Use standard autoconf macros instead of our own.
+
+------------------------------------------------------------------------
+r1484 | guus | 2006-12-16 17:26:08 +0100 (za, 16 dec 2006) | 2 lines
+
+Fix rule that creates html version of manpages.
+
+------------------------------------------------------------------------
+r1483 | guus | 2006-12-15 21:44:33 +0100 (vr, 15 dec 2006) | 2 lines
+
+Remove old Spanish translation.
+
+------------------------------------------------------------------------
+r1482 | guus | 2006-12-15 21:43:39 +0100 (vr, 15 dec 2006) | 2 lines
+
+Remove unnecessary stuff from configure.in.
+
+------------------------------------------------------------------------
+r1476 | guus | 2006-12-12 15:54:39 +0100 (di, 12 dec 2006) | 2 lines
+
+Use the correct next pointer.
+
+------------------------------------------------------------------------
+r1475 | guus | 2006-12-12 15:49:09 +0100 (di, 12 dec 2006) | 2 lines
+
+When building the minimum spanning tree, make sure we start from a reachable node.
+
+------------------------------------------------------------------------
+r1474 | guus | 2006-11-29 18:18:39 +0100 (wo, 29 nov 2006) | 2 lines
+
+Search for lzo/lzo1x.h, lzo2/lzo1x.h and lzo1x.h.
+
+------------------------------------------------------------------------
+r1473 | guus | 2006-11-29 17:57:46 +0100 (wo, 29 nov 2006) | 2 lines
+
+Make sure resolved addressed for outgoing connections are freed, if there are any.
+
+------------------------------------------------------------------------
+r1472 | guus | 2006-11-14 16:43:28 +0100 (di, 14 nov 2006) | 2 lines
+
+Releasing 1.0.5.
+
+------------------------------------------------------------------------
 r1471 | guus | 2006-11-14 13:28:04 +0100 (di, 14 nov 2006) | 2 lines
 
 EWOULDBLOCK does not exist on platforms without O_NONBLOCK

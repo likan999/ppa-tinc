@@ -47,12 +47,6 @@
    */
 #undef HAVE_DCGETTEXT
 
-/* Needed for xmalloc.c */
-#undef HAVE_DONE_WORKING_MALLOC_CHECK
-
-/* Needed for xmalloc.c */
-#undef HAVE_DONE_WORKING_REALLOC_CHECK
-
 /* Define to 1 if you have the `EVP_EncryptInit_ex' function. */
 #undef HAVE_EVP_ENCRYPTINIT_EX
 
@@ -110,11 +104,21 @@
 /* Linux */
 #undef HAVE_LINUX
 
+/* Define to 1 if you have the <linux/if_tun.h> header file. */
+#undef HAVE_LINUX_IF_TUN_H
+
 /* Define to 1 if you have the <lzo1x.h> header file. */
 #undef HAVE_LZO1X_H
 
+/* Define to 1 if you have the <lzo2/lzo1x.h> header file. */
+#undef HAVE_LZO2_LZO1X_H
+
 /* Define to 1 if you have the <lzo/lzo1x.h> header file. */
 #undef HAVE_LZO_LZO1X_H
+
+/* Define to 1 if your system has a GNU libc compatible `malloc' function, and
+   to 0 otherwise. */
+#undef HAVE_MALLOC
 
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
@@ -208,6 +212,10 @@
 
 /* Define to 1 if you have the `RAND_pseudo_bytes' function. */
 #undef HAVE_RAND_PSEUDO_BYTES
+
+/* Define to 1 if your system has a GNU libc compatible `realloc' function,
+   and to 0 otherwise. */
+#undef HAVE_REALLOC
 
 /* Define to 1 if you have the `select' function. */
 #undef HAVE_SELECT
@@ -320,9 +328,6 @@
 /* Define to 1 if you have the <sys/wait.h> header file. */
 #undef HAVE_SYS_WAIT_H
 
-/* Universal tun/tap driver present */
-#undef HAVE_TUNTAP
-
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
 
@@ -338,8 +343,8 @@
 /* Define to 1 if you have the <zlib.h> header file. */
 #undef HAVE_ZLIB_H
 
-/* Location of if_tun.h */
-#undef LINUX_IF_TUN_H
+/* Location of lzo1x.h */
+#undef LZO1X_H
 
 /* Name of package */
 #undef PACKAGE
@@ -382,8 +387,10 @@
 /* Version number of package */
 #undef VERSION
 
-/* Enable GNU extenstions */
-#undef _GNU_SOURCE
+/* Enable GNU extensions on systems that have them.  */
+#ifndef _GNU_SOURCE
+# undef _GNU_SOURCE
+#endif
 
 /* Enable BSD extensions */
 #undef __USE_BSD
@@ -394,13 +401,13 @@
 /* Define to empty if `const' does not conform to ANSI C. */
 #undef const
 
-/* Replacement malloc() */
+/* Define to rpl_malloc if the replacement function should be used. */
 #undef malloc
 
 /* Define to `int' if <sys/types.h> does not define. */
 #undef pid_t
 
-/* Replacement realloc() */
+/* Define to rpl_realloc if the replacement function should be used. */
 #undef realloc
 
 /* Define to `unsigned int' if <sys/types.h> does not define. */

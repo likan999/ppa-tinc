@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_setup.c 1469 2006-11-11 22:44:15Z guus $
+    $Id: net_setup.c 1473 2006-11-29 16:57:46Z guus $
 */
 
 #include "system.h"
@@ -572,8 +572,14 @@ void close_network_connections(void)
 		next = node->next;
 		c = node->data;
 
-		if(c->outgoing)
-			free(c->outgoing->name), free(c->outgoing), c->outgoing = NULL;
+		if(c->outgoing) {
+			if(c->outgoing->ai)
+				freeaddrinfo(c->outgoing->ai);
+			free(c->outgoing->name);
+			free(c->outgoing);
+			c->outgoing = NULL;
+		}
+
 		terminate_connection(c, false);
 	}
 

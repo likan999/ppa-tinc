@@ -1,24 +1,21 @@
 dnl Process this file with autoconf to produce a configure script.
 
-dnl $Id: configure.in 1415 2004-11-10 23:20:59Z guus $
+dnl $Id: configure.in 1488 2006-12-16 16:53:58Z guus $
 
-AC_PREREQ(2.59)
+AC_PREREQ(2.61)
 AC_INIT
 AC_CONFIG_SRCDIR([src/tincd.c])
-AM_INIT_AUTOMAKE(tinc, 1.0.5)
+AM_INIT_AUTOMAKE(tinc, 1.0.6)
 AC_CONFIG_HEADERS([config.h])
 AM_MAINTAINER_MODE
 
-dnl Include the macros from the m4/ directory
-AM_ACLOCAL_INCLUDE(m4)
-
 AM_GNU_GETTEXT([external])
-AM_GNU_GETTEXT_VERSION(0.12.1)
+AM_GNU_GETTEXT_VERSION(0.14.1)
 
 # Enable GNU extensions.
 # Define this here, not in acconfig's @TOP@ section, since definitions
 # in the latter don't make it into the configure-time tests.
-AC_DEFINE([_GNU_SOURCE], 1, [Enable GNU extenstions])
+AC_GNU_SOURCE
 AC_DEFINE([__USE_BSD], 1, [Enable BSD extensions])
 
 ALL_LINGUAS="nl"
@@ -26,14 +23,9 @@ ALL_LINGUAS="nl"
 dnl Checks for programs.
 AC_PROG_CC
 AC_PROG_CPP
-AC_PROG_GCC_TRADITIONAL
-AC_PROG_AWK
 AC_PROG_INSTALL
 AC_PROG_LN_S
-AC_PROG_MAKE_SET
 AC_PROG_RANLIB
-
-AC_ISC_POSIX
 
 dnl Check and set OS
 
@@ -99,7 +91,7 @@ dnl We do this in multiple stages, because unlike Linux all the other operating 
 
 AC_HEADER_STDC
 AC_CHECK_HEADERS([stdbool.h syslog.h sys/file.h sys/ioctl.h sys/mman.h sys/param.h sys/socket.h sys/time.h sys/uio.h sys/wait.h netdb.h arpa/inet.h])
-AC_CHECK_HEADERS([net/if.h net/if_types.h net/if_tun.h net/if_tap.h net/ethernet.h net/if_arp.h netinet/in_systm.h netinet/in.h netinet/in6.h],
+AC_CHECK_HEADERS([net/if.h net/if_types.h linux/if_tun.h net/if_tun.h net/if_tap.h net/ethernet.h net/if_arp.h netinet/in_systm.h netinet/in.h netinet/in6.h],
   [], [], [#include "have.h"]
 )
 AC_CHECK_HEADERS([netinet/if_ether.h netinet/ip.h netinet/ip6.h],
@@ -130,8 +122,8 @@ AC_TYPE_SIGNAL
 AC_CHECK_FUNCS([asprintf daemon fchmod flock ftime fork get_current_dir_name gettimeofday mlockall putenv random select strdup strerror strsignal strtol system unsetenv vsyslog writev],
   [], [], [#include "have.h"]
 )
-jm_FUNC_MALLOC
-jm_FUNC_REALLOC
+AC_FUNC_MALLOC
+AC_FUNC_REALLOC
 
 dnl Support for SunOS
 
@@ -149,12 +141,6 @@ AC_CHECK_FUNCS([freeaddrinfo gai_strerror getaddrinfo getnameinfo inet_aton],
 AC_CACHE_SAVE
 
 dnl These are defined in files in m4/
-
-case $host_os in
-  *linux*)
-    tinc_TUNTAP
-  ;;
-esac
 
 tinc_OPENSSL
 tinc_ZLIB

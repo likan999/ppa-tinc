@@ -17,17 +17,13 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: device.c 1452 2006-04-26 13:52:58Z guus $
+    $Id: device.c 1488 2006-12-16 16:53:58Z guus $
 */
 
 #include "system.h"
 
-#ifdef HAVE_TUNTAP
-#ifdef LINUX_IF_TUN_H
-#include LINUX_IF_TUN_H
-#else
+#ifdef HAVE_LINUX_IF_TUN_H
 #include <linux/if_tun.h>
-#endif
 #define DEFAULT_DEVICE "/dev/net/tun"
 #else
 #define DEFAULT_DEVICE "/dev/tap0"
@@ -65,7 +61,7 @@ bool setup_device(void)
 		device = DEFAULT_DEVICE;
 
 	if(!get_config_string(lookup_config(config_tree, "Interface"), &iface))
-#ifdef HAVE_TUNTAP
+#ifdef HAVE_LINUX_IF_TUN_H
 		iface = netname;
 #else
 		iface = rindex(device, '/') ? rindex(device, '/') + 1 : device;
@@ -77,7 +73,7 @@ bool setup_device(void)
 		return false;
 	}
 
-#ifdef HAVE_TUNTAP
+#ifdef HAVE_LINUX_IF_TUN_H
 	/* Ok now check if this is an old ethertap or a new tun/tap thingie */
 
 	memset(&ifr, 0, sizeof(ifr));

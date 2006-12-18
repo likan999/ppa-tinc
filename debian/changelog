@@ -1,3 +1,9 @@
+tinc (1.0.6-1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- Guus Sliepen <guus@debian.org>  Mon, 18 Dec 2006 15:41:03 +0100
+
 tinc (1.0.5-1) unstable; urgency=low
 
   * New upstream release. Closes: #391610
