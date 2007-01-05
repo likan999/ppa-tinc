@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: graph.c 1476 2006-12-12 14:54:39Z guus $
+    $Id: graph.c 1494 2007-01-05 05:44:01Z guus $
 */
 
 /* We need to generate two trees from the graph:
@@ -374,6 +374,9 @@ void dump_graph(void)
 		pclose(file);
 	} else {
 		fclose(file);
+#ifdef HAVE_MINGW
+		unlink(filename);
+#endif
 		rename(tmpname, filename);
 		free(tmpname);
 	}

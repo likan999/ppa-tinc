@@ -1,13 +1,13 @@
 # Dutch messages for tinc
-# Copyright (C) 1999-2006 Ivo Timmermans, Guus Sliepen.
+# Copyright (C) 1999-2007 Ivo Timmermans, Guus Sliepen.
 # Ivo Timmermans <ivo@tinc-vpn.org>, 1999-2006.
-# Guus Sliepen <guus@tinc-vpn.org>, 2000-2006.
+# Guus Sliepen <guus@tinc-vpn.org>, 2000-2007.
 msgid ""
 msgstr ""
 "Project-Id-Version: tinc 1.0-svn\n"
 "Report-Msgid-Bugs-To: tinc-devel@tinc-vpn.org\n"
-"POT-Creation-Date: 2006-12-18 13:32+0100\n"
-"PO-Revision-Date: 2006-11-11 16:26+0100\n"
+"POT-Creation-Date: 2007-01-05 14:14+0100\n"
+"PO-Revision-Date: 2007-01-05 14:14+0100\n"
 "Last-Translator: Guus Sliepen <guus@tinc-vpn.org>\n"
 "Language-Team: Dutch\n"
 "MIME-Version: 1.0\n"
@@ -291,9 +291,9 @@ msgstr "Instellen prioriteit uitgaand pakket op %d"
 #: src/net_socket.c:158 src/tincd.c:435 src/tincd.c:472 src/process.c:198
 #: src/process.c:231 src/process.c:428 src/bsd/device.c:93
 #: src/bsd/device.c:112 src/cygwin/device.c:140 src/cygwin/device.c:171
-#: src/mingw/device.c:66 src/mingw/device.c:75 src/mingw/device.c:80
-#: src/mingw/device.c:236 src/mingw/device.c:243 src/mingw/device.c:248
-#: src/mingw/device.c:255 src/mingw/device.c:264 src/mingw/device.c:271
+#: src/mingw/device.c:73 src/mingw/device.c:82 src/mingw/device.c:87
+#: src/mingw/device.c:256 src/mingw/device.c:263 src/mingw/device.c:268
+#: src/mingw/device.c:275 src/mingw/device.c:284 src/mingw/device.c:291
 #: src/uml_socket/device.c:89 src/uml_socket/device.c:103
 #: src/uml_socket/device.c:130 src/uml_socket/device.c:194
 #, c-format
@@ -982,14 +982,14 @@ msgstr "%s versie %s (gemaakt %s %s, protocol %d)\n"
 #: src/tincd.c:411
 #, c-format
 msgid ""
-"Copyright (C) 1998-2006 Ivo Timmermans, Guus Sliepen and others.\n"
+"Copyright (C) 1998-2007 Ivo Timmermans, Guus Sliepen and others.\n"
 "See the AUTHORS file for a complete list.\n"
 "\n"
 "tinc comes with ABSOLUTELY NO WARRANTY.  This is free software,\n"
 "and you are welcome to redistribute it under certain conditions;\n"
 "see the file COPYING for details.\n"
 msgstr ""
-"Copyright (C) 1998-2006 Ivo Timmermans, Guus Sliepen en anderen.\n"
+"Copyright (C) 1998-2007 Ivo Timmermans, Guus Sliepen en anderen.\n"
 "Zie het bestand AUTHORS voor een volledige lijst.\n"
 "\n"
 "tinc wordt gedistribueerd ZONDER ENIGE GARANTIE.  Dit is vrije "
@@ -1368,22 +1368,22 @@ msgstr "%s is een %s"
 
 #: src/linux/device.c:133 src/linux/device.c:144 src/linux/device.c:155
 #: src/solaris/device.c:125 src/bsd/device.c:152 src/bsd/device.c:181
-#: src/bsd/device.c:210 src/cygwin/device.c:239 src/mingw/device.c:103
-#: src/mingw/device.c:303 src/raw_socket/device.c:102
+#: src/bsd/device.c:210 src/cygwin/device.c:239 src/mingw/device.c:110
+#: src/mingw/device.c:323 src/raw_socket/device.c:102
 #: src/uml_socket/device.c:239
 #, c-format
 msgid "Error while reading from %s %s: %s"
 msgstr "Fout tijdens lezen van %s %s: %s"
 
 #: src/linux/device.c:166 src/solaris/device.c:150 src/bsd/device.c:224
-#: src/cygwin/device.c:248 src/mingw/device.c:312 src/raw_socket/device.c:111
+#: src/cygwin/device.c:248 src/mingw/device.c:333 src/raw_socket/device.c:111
 #: src/uml_socket/device.c:249
 #, c-format
 msgid "Read packet of %d bytes from %s"
 msgstr "Pakket van %d bytes gelezen van %s"
 
 #: src/linux/device.c:176 src/solaris/device.c:160 src/bsd/device.c:234
-#: src/cygwin/device.c:260 src/mingw/device.c:325 src/raw_socket/device.c:121
+#: src/cygwin/device.c:260 src/mingw/device.c:346 src/raw_socket/device.c:121
 #: src/uml_socket/device.c:267
 #, c-format
 msgid "Writing packet of %d bytes to %s"
@@ -1397,21 +1397,21 @@ msgid "Can't write to %s %s: %s"
 msgstr "Kan niet schrijven naar %s %s: %s"
 
 #: src/linux/device.c:215 src/solaris/device.c:178 src/bsd/device.c:296
-#: src/cygwin/device.c:277 src/mingw/device.c:342 src/raw_socket/device.c:139
+#: src/cygwin/device.c:277 src/mingw/device.c:363 src/raw_socket/device.c:139
 #: src/uml_socket/device.c:288
 #, c-format
 msgid "Statistics for %s %s:"
 msgstr "Statistieken voor %s %s:"
 
 #: src/linux/device.c:216 src/solaris/device.c:179 src/bsd/device.c:297
-#: src/cygwin/device.c:278 src/mingw/device.c:343 src/raw_socket/device.c:140
+#: src/cygwin/device.c:278 src/mingw/device.c:364 src/raw_socket/device.c:140
 #: src/uml_socket/device.c:289
 #, c-format
 msgid " total bytes in:  %10d"
 msgstr " totaal aantal bytes in:  %10d"
 
 #: src/linux/device.c:217 src/solaris/device.c:180 src/bsd/device.c:298
-#: src/cygwin/device.c:279 src/mingw/device.c:344 src/raw_socket/device.c:141
+#: src/cygwin/device.c:279 src/mingw/device.c:365 src/raw_socket/device.c:141
 #: src/uml_socket/device.c:290
 #, c-format
 msgid " total bytes out: %10d"
@@ -1475,7 +1475,7 @@ msgid "Unknown address family %x while reading packet from %s %s"
 msgstr "Onbekende adresfamilie %x tijdens ontvangst pakket van %s %s"
 
 #: src/bsd/device.c:240 src/bsd/device.c:277 src/cygwin/device.c:264
-#: src/mingw/device.c:329
+#: src/mingw/device.c:350
 #, c-format
 msgid "Error while writing to %s %s: %s"
 msgstr "Fout tijdens schrijven naar %s %s: %s"
@@ -1485,12 +1485,12 @@ msgstr "Fout tijdens schrijven naar %s %s: %s"
 msgid "Unknown address family %x while writing packet to %s %s"
 msgstr "Onbekende adresfamiliy %x tijdens versturen pakket naar %s %s"
 
-#: src/cygwin/device.c:71 src/mingw/device.c:147
+#: src/cygwin/device.c:71 src/mingw/device.c:157
 #, c-format
 msgid "Unable to read registry: %s"
 msgstr "Kon registry niet lezen: %s"
 
-#: src/cygwin/device.c:123 src/mingw/device.c:198
+#: src/cygwin/device.c:123 src/mingw/device.c:208
 msgid "No Windows tap device found!"
 msgstr "Geen Windows tap apparaat gevonden!"
 
@@ -1499,7 +1499,7 @@ msgstr "Geen Windows tap apparaat gevonden!"
 msgid "Could not open Windows tap device %s (%s) for writing: %s"
 msgstr "Kon Windows tap apparaat %s (%s) niet openen om te schrijven: %s"
 
-#: src/cygwin/device.c:158 src/mingw/device.c:223
+#: src/cygwin/device.c:158 src/mingw/device.c:233
 #, c-format
 msgid "Could not get MAC address from Windows tap device %s (%s): %s"
 msgstr "Kon MAC adres niet achterhalen van Windows tap apparaat %s (%s): %s"
@@ -1517,20 +1517,20 @@ msgstr "Taplezer is geforked en draait."
 msgid "Tap reader failed!"
 msgstr "Taplezer faalde!"
 
-#: src/cygwin/device.c:214 src/mingw/device.c:282
+#: src/cygwin/device.c:214 src/mingw/device.c:302
 msgid "Windows tap device"
 msgstr "Windows tap apparaat"
 
-#: src/cygwin/device.c:216 src/mingw/device.c:284
+#: src/cygwin/device.c:216 src/mingw/device.c:304
 #, c-format
 msgid "%s (%s) is a %s"
 msgstr "%s (%s) is een %s"
 
-#: src/mingw/device.c:84
+#: src/mingw/device.c:91
 msgid "Tap reader running"
 msgstr "Taplezer draait"
 
-#: src/mingw/device.c:216
+#: src/mingw/device.c:226
 #, c-format
 msgid "%s (%s) is not a usable Windows tap device: %s"
 msgstr "%s (%s) is geen bruikbaar Windows tap apparaat: %s"
