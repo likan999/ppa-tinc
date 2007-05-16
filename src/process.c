@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.c 1452 2006-04-26 13:52:58Z guus $
+    $Id: process.c 1499 2007-02-14 09:21:34Z guus $
 */
 
 #include "system.h"
@@ -379,8 +379,10 @@ bool execute_script(const char *name, char **envp)
 
 	/* First check if there is a script */
 
-	if(stat(scriptname + 1, &s))
+	if(stat(scriptname + 1, &s)) {
+		free(scriptname);
 		return true;
+	}
 
 	ifdebug(STATUS) logger(LOG_INFO, _("Executing script %s"), name);
 

@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c 1473 2006-11-29 16:57:46Z guus $
+    $Id: net.c 1498 2007-02-14 09:20:20Z guus $
 */
 
 #include "system.h"
@@ -429,12 +429,7 @@ int main_loop(void)
 
 		if(sigalrm) {
 			logger(LOG_INFO, _("Flushing event queue"));
-
-			while(event_tree->head) {
-				event = event_tree->head->data;
-				event->handler(event->data);
-				event_del(event);
-			}
+			flush_events();
 			sigalrm = false;
 		}
 

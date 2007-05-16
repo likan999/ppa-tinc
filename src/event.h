@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: event.h 1452 2006-04-26 13:52:58Z guus $
+    $Id: event.h 1498 2007-02-14 09:20:20Z guus $
 */
 
 #ifndef __TINC_EVENT_H__
@@ -38,6 +38,7 @@ typedef struct {
 
 extern void init_events(void);
 extern void exit_events(void);
+extern void flush_events(void);
 extern event_t *new_event(void) __attribute__ ((__malloc__));
 extern void free_event(event_t *);
 extern void event_add(event_t *);

@@ -84,8 +84,12 @@ pid_t write_pid (char *pidfile)
   int fd;
   pid_t pid;
 
-  if ( ((fd = open(pidfile, O_RDWR|O_CREAT, 0644)) == -1)
-       || ((f = fdopen(fd, "r+")) == NULL) ) {
+  if ((fd = open(pidfile, O_RDWR|O_CREAT, 0644)) == -1) {
+      return 0;
+  }
+
+  if ((f = fdopen(fd, "r+")) == NULL) {
+      close(fd);
       return 0;
   }
   
@@ -98,18 +102,18 @@ pid_t write_pid (char *pidfile)
 
   pid = getpid();
   if (!fprintf(f,"%ld\n", (long)pid)) {
-      close(fd);
+      fclose(f);
       return 0;
   }
   fflush(f);
 
 #ifdef HAVE_FLOCK
   if (flock(fd, LOCK_UN) == -1) {
-      close(fd);
+      fclose(f);
       return 0;
   }
 #endif
-  close(fd);
+  fclose(f);
 
   return pid;
 }

@@ -1,4 +1,54 @@
 ------------------------------------------------------------------------
+r1510 | guus | 2007-05-16 16:46:25 +0200 (wo, 16 mei 2007) | 2 lines
+
+Don't free struct addrinfo too early. Spotted by Christian Cier-Zniewski.
+
+------------------------------------------------------------------------
+r1509 | guus | 2007-05-16 16:42:41 +0200 (wo, 16 mei 2007) | 2 lines
+
+Update dutch translation.
+
+------------------------------------------------------------------------
+r1508 | guus | 2007-05-16 16:42:08 +0200 (wo, 16 mei 2007) | 2 lines
+
+Make sure connection->name is never NULL.
+
+------------------------------------------------------------------------
+r1507 | guus | 2007-05-14 11:21:09 +0200 (ma, 14 mei 2007) | 2 lines
+
+Apply patch from "dnk" making sockets non-blocking under Windows.
+
+------------------------------------------------------------------------
+r1500 | guus | 2007-02-14 10:32:16 +0100 (wo, 14 feb 2007) | 2 lines
+
+Close the proper filedescriptor (if it exists).
+
+------------------------------------------------------------------------
+r1499 | guus | 2007-02-14 10:21:34 +0100 (wo, 14 feb 2007) | 2 lines
+
+Apply patch from Scott Lamb fixing some memory and resource leaks.
+
+------------------------------------------------------------------------
+r1498 | guus | 2007-02-14 10:20:20 +0100 (wo, 14 feb 2007) | 2 lines
+
+Apply patch from Scott Lamb preventing an infinite loop when sending SIGALRM.
+
+------------------------------------------------------------------------
+r1497 | guus | 2007-01-05 16:03:07 +0100 (vr, 05 jan 2007) | 2 lines
+
+Releasing 1.0.7.
+
+------------------------------------------------------------------------
+r1496 | guus | 2007-01-05 14:18:36 +0100 (vr, 05 jan 2007) | 2 lines
+
+Update copyright notices.
+
+------------------------------------------------------------------------
+r1495 | guus | 2007-01-05 14:17:33 +0100 (vr, 05 jan 2007) | 2 lines
+
+No things to do for the 1.0 branch except bugfixing.
+
+------------------------------------------------------------------------
 r1494 | guus | 2007-01-05 06:44:01 +0100 (vr, 05 jan 2007) | 2 lines
 
 rename() cannot replace existing files on Windows.
