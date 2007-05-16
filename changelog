@@ -1,3 +1,11 @@
+tinc (1.0.8-1) unstable; urgency=low
+
+  * New upstream release. Closes: #173987
+  * Include german debconf translation. Closes: #412351
+  * Build-Depend on texinfo. Closes: #424209
+
+ -- Guus Sliepen <guus@debian.org>  Wed, 16 May 2007 17:59:16 +0200
+
 tinc (1.0.7-1) unstable; urgency=low
 
   * New upstream release.
