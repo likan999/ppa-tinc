@@ -1,3 +1,9 @@
+tinc (1.0.8-2) unstable; urgency=low
+
+  * Include Portugese debconf translation. Closes: #434191
+
+ -- Guus Sliepen <guus@debian.org>  Tue, 14 Aug 2007 13:50:27 +0200
+
 tinc (1.0.8-1) unstable; urgency=low
 
   * New upstream release. Closes: #173987
