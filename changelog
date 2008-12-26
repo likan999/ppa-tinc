@@ -1,3 +1,11 @@
+tinc (1.0.9-1) unstable; urgency=low
+
+  * New upstream release.
+    - Binds IPv6 sockets only to IPv6. Closes: #440150
+  * Update copyright file. Closes: #482566
+
+ -- Guus Sliepen <guus@debian.org>  Fri, 26 Dec 2008 13:25:05 +0100
+
 tinc (1.0.8-2) unstable; urgency=low
 
   * Include Portugese debconf translation. Closes: #434191

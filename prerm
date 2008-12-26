@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -e
+
 # Automatically added by dh_installinit, edited for use with debconf
 if [ -x "/etc/init.d/tinc" ]; then
     if [ -e /usr/share/debconf/confmodule ] ; then

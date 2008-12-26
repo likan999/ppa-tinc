@@ -3,7 +3,7 @@ Title: tinc Manual
 Author: Ivo Timmermans, Guus Sliepen
 Abstract: This manual describes how to set up a Virtual Private
  Network with tinc.
-Section: net
+Section: System/Security
 
 Format: HTML
 Files: /usr/share/doc/tinc/tinc*.html
