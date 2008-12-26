@@ -7,12 +7,16 @@ Upstream Authors:
  Guus Sliepen <guus@tinc-vpn.org>
  Ivo Timmermans <ivo@tinc-vpn.org>
 
-Copyright: GPL version 2. On Debian GNU/Linux systems, the complete
-text of the GNU General Public License can be found in
-/usr/share/common-licenses/GPL.
+Copyright (C) 1998-2005 Ivo Timmermans
+              1998-2008 Guus Sliepen <guus@tinc-vpn.org>
 
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
 
-The following is the text from /usr/share/doc/tinc/COPYING.README:
+On Debian GNU/Linux systems, the complete text of the GNU General Public
+License version 2 can be found in /usr/share/common-licenses/GPL-2.
 
 The following applies to tinc:
 

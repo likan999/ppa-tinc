@@ -1,6 +1,6 @@
 /*
     graph.c -- graph algorithms
-    Copyright (C) 2001-2006 Guus Sliepen <guus@tinc-vpn.org>,
+    Copyright (C) 2001-2007 Guus Sliepen <guus@tinc-vpn.org>,
                   2001-2005 Ivo Timmermans
 
     This program is free software; you can redistribute it and/or modify
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: graph.c 1494 2007-01-05 05:44:01Z guus $
+    $Id: graph.c 1595 2008-12-22 20:27:52Z guus $
 */
 
 /* We need to generate two trees from the graph:

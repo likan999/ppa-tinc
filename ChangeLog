@@ -1,4 +1,99 @@
 ------------------------------------------------------------------------
+r1600 | guus | 2008-12-24 00:14:37 +0100 (wo, 24 dec 2008) | 3 lines
+
+Apply patch from Max Rijevski fixing a memory leak when closing connections.
+It also cleans up more when stopping tinc, helping tools like valgrind.
+
+------------------------------------------------------------------------
+r1599 | guus | 2008-12-23 23:31:38 +0100 (di, 23 dec 2008) | 4 lines
+
+Handle broadcast and multicast packets in router mode.
+Multicast packets are treated as broadcast packets.
+Based on a patch from Max Rijevski.
+
+------------------------------------------------------------------------
+r1598 | guus | 2008-12-22 22:49:23 +0100 (ma, 22 dec 2008) | 2 lines
+
+Update the manpage as well, and some whitespace to make its source more legible.
+
+------------------------------------------------------------------------
+r1597 | guus | 2008-12-22 22:29:21 +0100 (ma, 22 dec 2008) | 5 lines
+
+Update documentation.
+- TCPOnly is not experimental.
+- Do not mention old Linux kernels and Ethertap anymore.
+- Document the DeviceType, PMTU and PMTUDiscovery options.
+
+------------------------------------------------------------------------
+r1596 | guus | 2008-12-22 21:35:45 +0100 (ma, 22 dec 2008) | 2 lines
+
+Enable PMTU discovery by default.
+
+------------------------------------------------------------------------
+r1595 | guus | 2008-12-22 21:27:52 +0100 (ma, 22 dec 2008) | 2 lines
+
+Update copyright information.
+
+------------------------------------------------------------------------
+r1594 | guus | 2008-12-22 20:43:49 +0100 (ma, 22 dec 2008) | 2 lines
+
+Update Dutch translation.
+
+------------------------------------------------------------------------
+r1593 | guus | 2008-12-22 20:40:40 +0100 (ma, 22 dec 2008) | 4 lines
+
+Make sure IPv6 sockets are IPv6 only.
+This will get rid of the "Can't bind to 0.0.0.0 port 655/tcp: Address already
+in use" message on Linux.
+
+------------------------------------------------------------------------
+r1592 | guus | 2008-12-22 20:33:37 +0100 (ma, 22 dec 2008) | 2 lines
+
+Use TUNIFHEAD by default on FreeBSD to make sure IPv6 works.
+
+------------------------------------------------------------------------
+r1591 | guus | 2008-12-21 17:19:31 +0100 (zo, 21 dec 2008) | 3 lines
+
+Treat virtual network device as tap if Mode = switch or hub.
+On OpenBSD, the link0 flag should still be set in tinc-up or by other means.
+
+------------------------------------------------------------------------
+r1579 | guus | 2008-12-05 15:17:39 +0100 (vr, 05 dec 2008) | 2 lines
+
+Correct debug message.
+
+------------------------------------------------------------------------
+r1578 | guus | 2008-11-18 16:11:27 +0100 (di, 18 nov 2008) | 2 lines
+
+Prevent freeing a NULL pointer when a hostname is unresolvable.
+
+------------------------------------------------------------------------
+r1577 | guus | 2008-10-25 21:54:00 +0200 (za, 25 okt 2008) | 2 lines
+
+Do not try to send REQ_KEY or ANS_KEY requests to unreachable nodes.
+
+------------------------------------------------------------------------
+r1576 | guus | 2008-10-25 20:10:08 +0200 (za, 25 okt 2008) | 2 lines
+
+Fix reading configuration files that do not end with a newline.
+
+------------------------------------------------------------------------
+r1575 | guus | 2007-12-14 22:17:08 +0100 (vr, 14 dec 2007) | 3 lines
+
+Make sure the prefixlength of subnets is sane.
+Thanks to Sven-Haegar Koch for spotting the bug and providing a fix.
+
+------------------------------------------------------------------------
+r1555 | guus | 2007-08-18 00:09:00 +0200 (za, 18 aug 2007) | 2 lines
+
+Handle SERVICE_CONTROL_INTERROGATE requests. Thanks to Carsten Ralle for noticing this.
+
+------------------------------------------------------------------------
+r1511 | guus | 2007-05-16 19:16:09 +0200 (wo, 16 mei 2007) | 2 lines
+
+Releasing 1.0.8.
+
+------------------------------------------------------------------------
 r1510 | guus | 2007-05-16 16:46:25 +0200 (wo, 16 mei 2007) | 2 lines
 
 Don't free struct addrinfo too early. Spotted by Christian Cier-Zniewski.

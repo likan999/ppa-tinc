@@ -1,7 +1,7 @@
 /*
     net_socket.c -- Handle various kinds of sockets.
     Copyright (C) 1998-2005 Ivo Timmermans,
-                  2000-2007 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2008 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_socket.c 1508 2007-05-16 14:42:08Z guus $
+    $Id: net_socket.c 1596 2008-12-22 20:35:45Z guus $
 */
 
 #include "system.h"
@@ -102,6 +102,11 @@ int setup_listen_socket(const sockaddr_t *sa)
 	option = 1;
 	setsockopt(nfd, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option));
 
+#if defined(SOL_IPV6) && defined(IPV6_V6ONLY)
+	if(sa->sa.sa_family == AF_INET6)
+		setsockopt(nfd, SOL_IPV6, IPV6_V6ONLY, &option, sizeof option);
+#endif
+
 	if(get_config_string
 	   (lookup_config(config_tree, "BindToInterface"), &iface)) {
 #if defined(SOL_SOCKET) && defined(SO_BINDTODEVICE)
@@ -181,11 +186,16 @@ int setup_vpn_in_socket(const sockaddr_t *sa)
 	option = 1;
 	setsockopt(nfd, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option));
 
+#if defined(SOL_IPV6) && defined(IPV6_V6ONLY)
+	if(sa->sa.sa_family == AF_INET6)
+		setsockopt(nfd, SOL_IPV6, IPV6_V6ONLY, &option, sizeof option);
+#endif
+
 #if defined(SOL_IP) && defined(IP_MTU_DISCOVER) && defined(IP_PMTUDISC_DO)
 	{
 		bool choice;
 
-		if(get_config_bool(lookup_config(myself->connection->config_tree, "PMTUDiscovery"), &choice) && choice) {
+		if(!get_config_bool(lookup_config(myself->connection->config_tree, "PMTUDiscovery"), &choice) || choice) {
 			option = IP_PMTUDISC_DO;
 			setsockopt(nfd, SOL_IP, IP_MTU_DISCOVER, &option, sizeof(option));
 		}
@@ -196,7 +206,7 @@ int setup_vpn_in_socket(const sockaddr_t *sa)
 	{
 		bool choice;
 
-		if(get_config_bool(lookup_config(myself->connection->config_tree, "PMTUDiscovery"), &choice) && choice) {
+		if(!get_config_bool(lookup_config(myself->connection->config_tree, "PMTUDiscovery"), &choice) || choice) {
 			option = IPV6_PMTUDISC_DO;
 			setsockopt(nfd, SOL_IPV6, IPV6_MTU_DISCOVER, &option, sizeof(option));
 		}
@@ -300,7 +310,8 @@ begin:
 	}
 
 	if(!c->outgoing->aip) {
-		freeaddrinfo(c->outgoing->ai);
+		if(c->outgoing->ai)
+			freeaddrinfo(c->outgoing->ai);
 		c->outgoing->ai = NULL;
 		goto begin;
 	}
@@ -324,6 +335,12 @@ begin:
 
 		goto begin;
 	}
+
+#if defined(SOL_IPV6) && defined(IPV6_V6ONLY)
+	int option = 1;
+	if(c->address.sa.sa_family == AF_INET6)
+		setsockopt(c->socket, SOL_IPV6, IPV6_V6ONLY, &option, sizeof option);
+#endif
 
 	/* Optimize TCP settings */
 
