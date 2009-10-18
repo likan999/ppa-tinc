@@ -2,7 +2,7 @@
     conf.c -- configuration code
     Copyright (C) 1998 Robert van der Meulen
                   1998-2005 Ivo Timmermans
-                  2000-2008 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2009 Guus Sliepen <guus@tinc-vpn.org>
 		  2000 Cris van Pelt
 
     This program is free software; you can redistribute it and/or modify
@@ -15,11 +15,9 @@
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with this program; if not, write to the Free Software
-    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-
-    $Id: conf.c 1595 2008-12-22 20:27:52Z guus $
+    You should have received a copy of the GNU General Public License along
+    with this program; if not, write to the Free Software Foundation, Inc.,
+    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
 #include "system.h"
@@ -38,8 +36,7 @@ int pingtimeout = 0;			/* seconds to wait for response */
 char *confbase = NULL;			/* directory in which all config files are */
 char *netname = NULL;			/* name of the vpn network */
 
-static int config_compare(const config_t *a, const config_t *b)
-{
+static int config_compare(const config_t *a, const config_t *b) {
 	int result;
 
 	result = strcasecmp(a->variable, b->variable);
@@ -55,32 +52,20 @@ static int config_compare(const config_t *a, const config_t *b)
 		return strcmp(a->file, b->file);
 }
 
-void init_configuration(avl_tree_t ** config_tree)
-{
-	cp();
-
+void init_configuration(avl_tree_t ** config_tree) {
 	*config_tree = avl_alloc_tree((avl_compare_t) config_compare, (avl_action_t) free_config);
 }
 
-void exit_configuration(avl_tree_t ** config_tree)
-{
-	cp();
-
+void exit_configuration(avl_tree_t ** config_tree) {
 	avl_delete_tree(*config_tree);
 	*config_tree = NULL;
 }
 
-config_t *new_config(void)
-{
-	cp();
-
+config_t *new_config(void) {
 	return xmalloc_and_zero(sizeof(config_t));
 }
 
-void free_config(config_t *cfg)
-{
-	cp();
-
+void free_config(config_t *cfg) {
 	if(cfg->variable)
 		free(cfg->variable);
 
@@ -93,18 +78,12 @@ void free_config(config_t *cfg)
 	free(cfg);
 }
 
-void config_add(avl_tree_t *config_tree, config_t *cfg)
-{
-	cp();
-
+void config_add(avl_tree_t *config_tree, config_t *cfg) {
 	avl_insert(config_tree, cfg);
 }
 
-config_t *lookup_config(avl_tree_t *config_tree, char *variable)
-{
+config_t *lookup_config(avl_tree_t *config_tree, char *variable) {
 	config_t cfg, *found;
-
-	cp();
 
 	cfg.variable = variable;
 	cfg.file = "";
@@ -121,12 +100,9 @@ config_t *lookup_config(avl_tree_t *config_tree, char *variable)
 	return found;
 }
 
-config_t *lookup_config_next(avl_tree_t *config_tree, const config_t *cfg)
-{
+config_t *lookup_config_next(avl_tree_t *config_tree, const config_t *cfg) {
 	avl_node_t *node;
 	config_t *found;
-
-	cp();
 
 	node = avl_search_node(config_tree, cfg);
 
@@ -142,10 +118,7 @@ config_t *lookup_config_next(avl_tree_t *config_tree, const config_t *cfg)
 	return NULL;
 }
 
-bool get_config_bool(const config_t *cfg, bool *result)
-{
-	cp();
-
+bool get_config_bool(const config_t *cfg, bool *result) {
 	if(!cfg)
 		return false;
 
@@ -157,32 +130,26 @@ bool get_config_bool(const config_t *cfg, bool *result)
 		return true;
 	}
 
-	logger(LOG_ERR, _("\"yes\" or \"no\" expected for configuration variable %s in %s line %d"),
+	logger(LOG_ERR, "\"yes\" or \"no\" expected for configuration variable %s in %s line %d",
 		   cfg->variable, cfg->file, cfg->line);
 
 	return false;
 }
 
-bool get_config_int(const config_t *cfg, int *result)
-{
-	cp();
-
+bool get_config_int(const config_t *cfg, int *result) {
 	if(!cfg)
 		return false;
 
 	if(sscanf(cfg->value, "%d", result) == 1)
 		return true;
 
-	logger(LOG_ERR, _("Integer expected for configuration variable %s in %s line %d"),
+	logger(LOG_ERR, "Integer expected for configuration variable %s in %s line %d",
 		   cfg->variable, cfg->file, cfg->line);
 
 	return false;
 }
 
-bool get_config_string(const config_t *cfg, char **result)
-{
-	cp();
-
+bool get_config_string(const config_t *cfg, char **result) {
 	if(!cfg)
 		return false;
 
@@ -191,11 +158,8 @@ bool get_config_string(const config_t *cfg, char **result)
 	return true;
 }
 
-bool get_config_address(const config_t *cfg, struct addrinfo **result)
-{
+bool get_config_address(const config_t *cfg, struct addrinfo **result) {
 	struct addrinfo *ai;
-
-	cp();
 
 	if(!cfg)
 		return false;
@@ -207,23 +171,20 @@ bool get_config_address(const config_t *cfg, struct addrinfo **result)
 		return true;
 	}
 
-	logger(LOG_ERR, _("Hostname or IP address expected for configuration variable %s in %s line %d"),
+	logger(LOG_ERR, "Hostname or IP address expected for configuration variable %s in %s line %d",
 		   cfg->variable, cfg->file, cfg->line);
 
 	return false;
 }
 
-bool get_config_subnet(const config_t *cfg, subnet_t ** result)
-{
+bool get_config_subnet(const config_t *cfg, subnet_t ** result) {
 	subnet_t subnet = {0};
-
-	cp();
 
 	if(!cfg)
 		return false;
 
 	if(!str2net(&subnet, cfg->value)) {
-		logger(LOG_ERR, _("Subnet expected for configuration variable %s in %s line %d"),
+		logger(LOG_ERR, "Subnet expected for configuration variable %s in %s line %d",
 			   cfg->variable, cfg->file, cfg->line);
 		return false;
 	}
@@ -234,7 +195,7 @@ bool get_config_subnet(const config_t *cfg, subnet_t ** result)
 		&& !maskcheck(&subnet.net.ipv4.address, subnet.net.ipv4.prefixlength, sizeof(ipv4_t)))
 		|| ((subnet.type == SUBNET_IPV6)
 		&& !maskcheck(&subnet.net.ipv6.address, subnet.net.ipv6.prefixlength, sizeof(ipv6_t)))) {
-		logger(LOG_ERR, _ ("Network address and prefix length do not match for configuration variable %s in %s line %d"),
+		logger(LOG_ERR, "Network address and prefix length do not match for configuration variable %s in %s line %d",
 			   cfg->variable, cfg->file, cfg->line);
 		return false;
 	}
@@ -254,8 +215,7 @@ bool get_config_subnet(const config_t *cfg, subnet_t ** result)
   given, and buf needs to be expanded, the var pointed to by buflen
   will be increased.
 */
-static char *readline(FILE * fp, char **buf, size_t *buflen)
-{
+static char *readline(FILE * fp, char **buf, size_t *buflen) {
 	char *newline = NULL;
 	char *p;
 	char *line;					/* The array that contains everything that has been read so far */
@@ -301,6 +261,8 @@ static char *readline(FILE * fp, char **buf, size_t *buflen)
 			size = newsize;
 		} else {
 			*newline = '\0';	/* kill newline */
+			if(newline > p && newline[-1] == '\r')	/* and carriage return if necessary */
+				newline[-1] = '\0';
 			break;				/* yay */
 		}
 	}
@@ -317,8 +279,7 @@ static char *readline(FILE * fp, char **buf, size_t *buflen)
   Parse a configuration file and put the results in the configuration tree
   starting at *base.
 */
-int read_config_file(avl_tree_t *config_tree, const char *fname)
-{
+int read_config_file(avl_tree_t *config_tree, const char *fname) {
 	int err = -2;				/* Parse error */
 	FILE *fp;
 	char *buffer, *line;
@@ -329,12 +290,10 @@ int read_config_file(avl_tree_t *config_tree, const char *fname)
 	config_t *cfg;
 	size_t bufsize;
 
-	cp();
-
 	fp = fopen(fname, "r");
 
 	if(!fp) {
-		logger(LOG_ERR, _("Cannot open config file %s: %s"), fname,
+		logger(LOG_ERR, "Cannot open config file %s: %s", fname,
 			   strerror(errno));
 		return -3;
 	}
@@ -388,7 +347,7 @@ int read_config_file(avl_tree_t *config_tree, const char *fname)
 
 	
 		if(!*value) {
-			logger(LOG_ERR, _("No value for variable `%s' on line %d while reading config file %s"),
+			logger(LOG_ERR, "No value for variable `%s' on line %d while reading config file %s",
 				   variable, lineno, fname);
 			break;
 		}
@@ -408,18 +367,15 @@ int read_config_file(avl_tree_t *config_tree, const char *fname)
 	return err;
 }
 
-bool read_server_config()
-{
+bool read_server_config() {
 	char *fname;
 	int x;
 
-	cp();
-
-	asprintf(&fname, "%s/tinc.conf", confbase);
+	xasprintf(&fname, "%s/tinc.conf", confbase);
 	x = read_config_file(config_tree, fname);
 
 	if(x == -1) {				/* System error: complain */
-		logger(LOG_ERR, _("Failed to read `%s': %s"), fname, strerror(errno));
+		logger(LOG_ERR, "Failed to read `%s': %s", fname, strerror(errno));
 	}
 
 	free(fname);
@@ -427,8 +383,7 @@ bool read_server_config()
 	return x == 0;
 }
 
-FILE *ask_and_open(const char *filename, const char *what, const char *mode)
-{
+FILE *ask_and_open(const char *filename, const char *what) {
 	FILE *r;
 	char *directory;
 	char *fn;
@@ -441,14 +396,14 @@ FILE *ask_and_open(const char *filename, const char *what, const char *mode)
 		fn = xstrdup(filename);
 	} else {
 		/* Ask for a file and/or directory name. */
-		fprintf(stdout, _("Please enter a file to save %s to [%s]: "),
+		fprintf(stdout, "Please enter a file to save %s to [%s]: ",
 				what, filename);
 		fflush(stdout);
 
 		fn = readline(stdin, NULL, NULL);
 
 		if(!fn) {
-			fprintf(stderr, _("Error while reading stdin: %s\n"),
+			fprintf(stderr, "Error while reading stdin: %s\n",
 					strerror(errno));
 			return NULL;
 		}
@@ -467,7 +422,7 @@ FILE *ask_and_open(const char *filename, const char *what, const char *mode)
 		char *p;
 
 		directory = get_current_dir_name();
-		asprintf(&p, "%s/%s", directory, fn);
+		xasprintf(&p, "%s/%s", directory, fn);
 		free(fn);
 		free(directory);
 		fn = p;
@@ -477,10 +432,10 @@ FILE *ask_and_open(const char *filename, const char *what, const char *mode)
 
 	/* Open it first to keep the inode busy */
 
-	r = fopen(fn, mode);
+	r = fopen(fn, "r+") ?: fopen(fn, "w+");
 
 	if(!r) {
-		fprintf(stderr, _("Error opening file `%s': %s\n"),
+		fprintf(stderr, "Error opening file `%s': %s\n",
 				fn, strerror(errno));
 		free(fn);
 		return NULL;
@@ -489,4 +444,35 @@ FILE *ask_and_open(const char *filename, const char *what, const char *mode)
 	free(fn);
 
 	return r;
+}
+
+bool disable_old_keys(FILE *f) {
+	char buf[100];
+	long pos;
+	bool disabled = false;
+
+	rewind(f);
+	pos = ftell(f);
+
+	while(fgets(buf, sizeof buf, f)) {
+		if(!strncmp(buf, "-----BEGIN RSA", 14)) {	
+			buf[11] = 'O';
+			buf[12] = 'L';
+			buf[13] = 'D';
+			fseek(f, pos, SEEK_SET);
+			fputs(buf, f);
+			disabled = true;
+		}
+		else if(!strncmp(buf, "-----END RSA", 12)) {	
+			buf[ 9] = 'O';
+			buf[10] = 'L';
+			buf[11] = 'D';
+			fseek(f, pos, SEEK_SET);
+			fputs(buf, f);
+			disabled = true;
+		}
+		pos = ftell(f);
+	}
+
+	return disabled;
 }

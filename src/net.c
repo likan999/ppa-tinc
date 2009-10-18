@@ -1,7 +1,8 @@
 /*
     net.c -- most of the network code
     Copyright (C) 1998-2005 Ivo Timmermans,
-                  2000-2007 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2009 Guus Sliepen <guus@tinc-vpn.org>
+                  2006      Scott Lamb <slamb@slamb.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -13,11 +14,9 @@
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with this program; if not, write to the Free Software
-    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-
-    $Id: net.c 1595 2008-12-22 20:27:52Z guus $
+    You should have received a copy of the GNU General Public License along
+    with this program; if not, write to the Free Software Foundation, Inc.,
+    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
 #include "system.h"
@@ -48,16 +47,13 @@ time_t now = 0;
 
 /* Purge edges and subnets of unreachable nodes. Use carefully. */
 
-static void purge(void)
-{
+static void purge(void) {
 	avl_node_t *nnode, *nnext, *enode, *enext, *snode, *snext;
 	node_t *n;
 	edge_t *e;
 	subnet_t *s;
 
-	cp();
-
-	ifdebug(PROTOCOL) logger(LOG_DEBUG, _("Purging unreachable nodes"));
+	ifdebug(PROTOCOL) logger(LOG_DEBUG, "Purging unreachable nodes");
 
 	/* Remove all edges and subnets owned by unreachable nodes. */
 
@@ -66,7 +62,7 @@ static void purge(void)
 		n = nnode->data;
 
 		if(!n->status.reachable) {
-			ifdebug(SCARY_THINGS) logger(LOG_DEBUG, _("Purging node %s (%s)"), n->name,
+			ifdebug(SCARY_THINGS) logger(LOG_DEBUG, "Purging node %s (%s)", n->name,
 					   n->hostname);
 
 			for(snode = n->subnet_tree->head; snode; snode = snext) {
@@ -112,13 +108,10 @@ static void purge(void)
   put all file descriptors in an fd_set array
   While we're at it, purge stuff that needs to be removed.
 */
-static int build_fdset(fd_set *readset, fd_set *writeset)
-{
+static int build_fdset(fd_set *readset, fd_set *writeset) {
 	avl_node_t *node, *next;
 	connection_t *c;
 	int i, max = 0;
-
-	cp();
 
 	FD_ZERO(readset);
 	FD_ZERO(writeset);
@@ -149,7 +142,8 @@ static int build_fdset(fd_set *readset, fd_set *writeset)
 			max = listen_socket[i].udp;
 	}
 
-	FD_SET(device_fd, readset);
+	if(device_fd >= 0)
+		FD_SET(device_fd, readset);
 	if(device_fd > max)
 		max = device_fd;
 	
@@ -163,14 +157,11 @@ static int build_fdset(fd_set *readset, fd_set *writeset)
   - Check if we need to retry making an outgoing connection
   - Deactivate the host
 */
-void terminate_connection(connection_t *c, bool report)
-{
-	cp();
-
+void terminate_connection(connection_t *c, bool report) {
 	if(c->status.remove)
 		return;
 
-	ifdebug(CONNECTIONS) logger(LOG_NOTICE, _("Closing connection with %s (%s)"),
+	ifdebug(CONNECTIONS) logger(LOG_NOTICE, "Closing connection with %s (%s)",
 			   c->name, c->hostname);
 
 	c->status.remove = true;
@@ -227,12 +218,9 @@ void terminate_connection(connection_t *c, bool report)
   end does not reply in time, we consider them dead
   and close the connection.
 */
-static void check_dead_connections(void)
-{
+static void check_dead_connections(void) {
 	avl_node_t *node, *next;
 	connection_t *c;
-
-	cp();
 
 	for(node = connection_tree->head; node; node = next) {
 		next = node->next;
@@ -241,7 +229,7 @@ static void check_dead_connections(void)
 		if(c->last_ping_time + pingtimeout < now) {
 			if(c->status.active) {
 				if(c->status.pinged) {
-					ifdebug(CONNECTIONS) logger(LOG_INFO, _("%s (%s) didn't respond to PING in %ld seconds"),
+					ifdebug(CONNECTIONS) logger(LOG_INFO, "%s (%s) didn't respond to PING in %ld seconds",
 							   c->name, c->hostname, now - c->last_ping_time);
 					c->status.timeout = true;
 					terminate_connection(c, true);
@@ -250,12 +238,12 @@ static void check_dead_connections(void)
 				}
 			} else {
 				if(c->status.remove) {
-					logger(LOG_WARNING, _("Old connection_t for %s (%s) status %04x still lingering, deleting..."),
-						   c->name, c->hostname, c->status.value);
+					logger(LOG_WARNING, "Old connection_t for %s (%s) status %04x still lingering, deleting...",
+						   c->name, c->hostname, bitfield_to_int(&c->status, sizeof c->status));
 					connection_del(c);
 					continue;
 				}
-				ifdebug(CONNECTIONS) logger(LOG_WARNING, _("Timeout from %s (%s) during authentication"),
+				ifdebug(CONNECTIONS) logger(LOG_WARNING, "Timeout from %s (%s) during authentication",
 						   c->name, c->hostname);
 				if(c->status.connecting) {
 					c->status.connecting = false;
@@ -270,7 +258,7 @@ static void check_dead_connections(void)
 		if(c->outbuflen > 0 && c->last_flushed_time + pingtimeout < now) {
 			if(c->status.active) {
 				ifdebug(CONNECTIONS) logger(LOG_INFO,
-						_("%s (%s) could not flush for %ld seconds (%d bytes remaining)"),
+						"%s (%s) could not flush for %ld seconds (%d bytes remaining)",
 						c->name, c->hostname, now - c->last_flushed_time, c->outbuflen);
 				c->status.timeout = true;
 				terminate_connection(c, true);
@@ -283,20 +271,19 @@ static void check_dead_connections(void)
   check all connections to see if anything
   happened on their sockets
 */
-static void check_network_activity(fd_set * readset, fd_set * writeset)
-{
+static void check_network_activity(fd_set * readset, fd_set * writeset) {
 	connection_t *c;
 	avl_node_t *node;
 	int result, i;
 	socklen_t len = sizeof(result);
 	vpn_packet_t packet;
 
-	cp();
-
 	/* check input from kernel */
-	if(FD_ISSET(device_fd, readset)) {
-		if(read_packet(&packet))
+	if(device_fd >= 0 && FD_ISSET(device_fd, readset)) {
+		if(read_packet(&packet)) {
+			packet.priority = 0;
 			route(myself, &packet);
+		}
 	}
 
 	/* check meta connections */
@@ -315,7 +302,7 @@ static void check_network_activity(fd_set * readset, fd_set * writeset)
 					finish_connecting(c);
 				else {
 					ifdebug(CONNECTIONS) logger(LOG_DEBUG,
-							   _("Error while connecting to %s (%s): %s"),
+							   "Error while connecting to %s (%s): %s",
 							   c->name, c->hostname, strerror(result));
 					closesocket(c->socket);
 					do_outgoing_connection(c);
@@ -349,15 +336,12 @@ static void check_network_activity(fd_set * readset, fd_set * writeset)
 /*
   this is where it all happens...
 */
-int main_loop(void)
-{
+int main_loop(void) {
 	fd_set readset, writeset;
 	struct timeval tv;
 	int r, maxfd;
 	time_t last_ping_check, last_config_check, last_graph_dump;
 	event_t *event;
-
-	cp();
 
 	last_ping_check = now;
 	last_config_check = now;
@@ -376,13 +360,18 @@ int main_loop(void)
 
 		maxfd = build_fdset(&readset, &writeset);
 
+#ifdef HAVE_MINGW
+		LeaveCriticalSection(&mutex);
+#endif
 		r = select(maxfd + 1, &readset, &writeset, NULL, &tv);
+#ifdef HAVE_MINGW
+		EnterCriticalSection(&mutex);
+#endif
 
 		if(r < 0) {
 			if(errno != EINTR && errno != EAGAIN) {
-				logger(LOG_ERR, _("Error while waiting for input: %s"),
+				logger(LOG_ERR, "Error while waiting for input: %s",
 					   strerror(errno));
-				cp_trace();
 				dump_connections();
 				return 1;
 			}
@@ -411,26 +400,33 @@ int main_loop(void)
 			/* Should we regenerate our key? */
 
 			if(keyexpires < now) {
-				ifdebug(STATUS) logger(LOG_INFO, _("Regenerating symmetric key"));
+				avl_node_t *node;
+				node_t *n;
 
-				RAND_pseudo_bytes((unsigned char *)myself->key, myself->keylength);
-				if(myself->cipher)
-					EVP_DecryptInit_ex(&packet_ctx, myself->cipher, NULL, (unsigned char *)myself->key, (unsigned char *)myself->key + myself->cipher->key_len);
+				ifdebug(STATUS) logger(LOG_INFO, "Expiring symmetric keys");
+
+				for(node = node_tree->head; node; node = node->next) {
+					n = node->data;
+					if(n->inkey) {
+						free(n->inkey);
+						n->inkey = NULL;
+					}
+				}
+
 				send_key_changed(broadcast, myself);
 				keyexpires = now + keylifetime;
 			}
 		}
 
+		if(sigalrm) {
+			logger(LOG_INFO, "Flushing event queue");
+			expire_events();
+			sigalrm = false;
+		}
 
 		while((event = get_expired_event())) {
 			event->handler(event->data);
 			free_event(event);
-		}
-
-		if(sigalrm) {
-			logger(LOG_INFO, _("Flushing event queue"));
-			flush_events();
-			sigalrm = false;
 		}
 
 		if(sighup) {
@@ -447,7 +443,7 @@ int main_loop(void)
 			init_configuration(&config_tree);
 
 			if(!read_server_config()) {
-				logger(LOG_ERR, _("Unable to reread configuration file, exitting."));
+				logger(LOG_ERR, "Unable to reread configuration file, exitting.");
 				return 1;
 			}
 
@@ -456,15 +452,7 @@ int main_loop(void)
 			for(node = connection_tree->head; node; node = node->next) {
 				c = node->data;
 				
-				if(c->outgoing) {
-					free(c->outgoing->name);
-					if(c->outgoing->ai)
-						freeaddrinfo(c->outgoing->ai);
-					free(c->outgoing);
-					c->outgoing = NULL;
-				}
-				
-				asprintf(&fname, "%s/hosts/%s", confbase, c->name);
+				xasprintf(&fname, "%s/hosts/%s", confbase, c->name);
 				if(stat(fname, &s) || s.st_mtime > last_config_check)
 					terminate_connection(c, c->status.active);
 				free(fname);

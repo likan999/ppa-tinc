@@ -1,7 +1,7 @@
 /*
     protocol.h -- header for protocol.c
     Copyright (C) 1999-2005 Ivo Timmermans,
-                  2000-2006 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2009 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -13,11 +13,9 @@
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with this program; if not, write to the Free Software
-    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-
-    $Id: protocol.h 1452 2006-04-26 13:52:58Z guus $
+    You should have received a copy of the GNU General Public License along
+    with this program; if not, write to the Free Software Foundation, Inc.,
+    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
 #ifndef __TINC_PROTOCOL_H__
@@ -97,9 +95,9 @@ extern bool send_add_subnet(struct connection_t *, const struct subnet_t *);
 extern bool send_del_subnet(struct connection_t *, const struct subnet_t *);
 extern bool send_add_edge(struct connection_t *, const struct edge_t *);
 extern bool send_del_edge(struct connection_t *, const struct edge_t *);
-extern bool send_key_changed(struct connection_t *, const struct node_t *);
-extern bool send_req_key(struct connection_t *, const struct node_t *, const struct node_t *);
-extern bool send_ans_key(struct connection_t *, const struct node_t *, const struct node_t *);
+extern bool send_key_changed();
+extern bool send_req_key(struct node_t *);
+extern bool send_ans_key(struct node_t *);
 extern bool send_tcppacket(struct connection_t *, struct vpn_packet_t *);
 
 /* Request handlers  */

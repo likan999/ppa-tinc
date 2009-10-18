@@ -14,9 +14,9 @@
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with this program; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111, USA
+    You should have received a copy of the GNU General Public License along
+    with this program; if not, write to the Free Software Foundation, Inc.,
+    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
 /* left unaltered for tinc -- Ivo Timmermans */
@@ -41,7 +41,8 @@ pid_t read_pid (char *pidfile)
 
   if (!(f=fopen(pidfile,"r")))
     return 0;
-  fscanf(f,"%ld", &pid);
+  if(fscanf(f,"%ld", &pid) != 1)
+    pid = 0;
   fclose(f);
   return pid;
 }

@@ -1,7 +1,7 @@
 /*
     net.h -- header for net.c
-    Copyright (C) 1998-2005 Ivo Timmermans <zarq@iname.com>
-                  2000-2006 Guus Sliepen <guus@tinc-vpn.org>
+    Copyright (C) 1998-2005 Ivo Timmermans
+                  2000-2009 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -13,11 +13,9 @@
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with this program; if not, write to the Free Software
-    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-
-    $Id: net.h 1452 2006-04-26 13:52:58Z guus $
+    You should have received a copy of the GNU General Public License along
+    with this program; if not, write to the Free Software Foundation, Inc.,
+    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
 #ifndef __TINC_NET_H__
@@ -37,8 +35,6 @@
 #define MAXBUFSIZE ((MAXSIZE > 2048 ? MAXSIZE : 2048) + 128)	/* Enough room for a request with a MAXSIZEd packet or a 8192 bits RSA key */
 
 #define MAXSOCKETS 128			/* Overkill... */
-
-#define MAXQUEUELENGTH 8		/* Maximum number of packats in a single queue */
 
 typedef struct mac_t {
 	uint8_t x[6];
@@ -87,17 +83,6 @@ typedef struct vpn_packet_t {
 	uint8_t data[MAXSIZE];
 } vpn_packet_t;
 
-typedef struct queue_element_t {
-	void *packet;
-	struct queue_element_t *prev;
-	struct queue_element_t *next;
-} queue_element_t;
-
-typedef struct packet_queue_t {
-	queue_element_t *head;
-	queue_element_t *tail;
-} packet_queue_t;
-
 typedef struct listen_socket_t {
 	int tcp;
 	int udp;
@@ -105,6 +90,7 @@ typedef struct listen_socket_t {
 } listen_socket_t;
 
 #include "conf.h"
+#include "list.h"
 
 typedef struct outgoing_t {
 	char *name;
@@ -113,6 +99,8 @@ typedef struct outgoing_t {
 	struct addrinfo *ai;
 	struct addrinfo *aip;
 } outgoing_t;
+
+extern list_t *outgoing_list;
 
 extern int maxoutbufsize;
 extern int seconds_till_retry;
@@ -126,7 +114,6 @@ extern bool do_prune;
 extern bool do_purge;
 extern char *myport;
 extern time_t now;
-extern EVP_CIPHER_CTX packet_ctx;
 
 /* Yes, very strange placement indeed, but otherwise the typedefs get all tangled up */
 #include "connection.h"
@@ -142,7 +129,7 @@ extern int setup_vpn_in_socket(const sockaddr_t *);
 extern void send_packet(const struct node_t *, vpn_packet_t *);
 extern void receive_tcppacket(struct connection_t *, char *, int);
 extern void broadcast_packet(const struct node_t *, vpn_packet_t *);
-extern bool setup_network_connections(void);
+extern bool setup_network(void);
 extern void setup_outgoing_connection(struct outgoing_t *);
 extern void try_outgoing_connections(void);
 extern void close_network_connections(void);
@@ -154,6 +141,8 @@ extern void send_mtu_probe(struct node_t *);
 
 #ifndef HAVE_MINGW
 #define closesocket(s) close(s)
+#else
+extern CRITICAL_SECTION mutex;
 #endif
 
 #endif							/* __TINC_NET_H__ */

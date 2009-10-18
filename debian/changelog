@@ -1,3 +1,10 @@
+tinc (1.0.10-1) unstable; urgency=low
+
+  * New upstream release.
+  * Include Russian debconf translation. Closes: #548759
+
+ -- Guus Sliepen <guus@debian.org>  Sun, 18 Oct 2009 16:31:49 +0200
+
 tinc (1.0.9-1) unstable; urgency=low
 
   * New upstream release.

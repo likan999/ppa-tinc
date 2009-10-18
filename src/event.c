@@ -1,6 +1,6 @@
 /*
     event.c -- event queue
-    Copyright (C) 2002-2007 Guus Sliepen <guus@tinc-vpn.org>,
+    Copyright (C) 2002-2009 Guus Sliepen <guus@tinc-vpn.org>,
                   2002-2005 Ivo Timmermans
 
     This program is free software; you can redistribute it and/or modify
@@ -13,11 +13,9 @@
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with this program; if not, write to the Free Software
-    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-
-    $Id: event.c 1595 2008-12-22 20:27:52Z guus $
+    You should have received a copy of the GNU General Public License along
+    with this program; if not, write to the Free Software Foundation, Inc.,
+    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
 #include "system.h"
@@ -32,8 +30,7 @@ extern time_t now;
 
 int id;
 
-static int event_compare(const event_t *a, const event_t *b)
-{
+static int event_compare(const event_t *a, const event_t *b) {
 	if(a->time > b->time)
 		return 1;
 
@@ -43,82 +40,66 @@ static int event_compare(const event_t *a, const event_t *b)
 	return a->id - b->id;
 }
 
-void init_events(void)
-{
-	cp();
-
-	event_tree = avl_alloc_tree((avl_compare_t) event_compare, NULL);
+void init_events(void) {
+	event_tree = avl_alloc_tree((avl_compare_t) event_compare, (avl_action_t) free_event);
 }
 
-void exit_events(void)
-{
-	cp();
-
+void exit_events(void) {
 	avl_delete_tree(event_tree);
 }
 
-void flush_events(void)
-{
-	avl_tree_t *to_flush;
+void expire_events(void) {
+	avl_node_t *node;
 	event_t *event;
+	time_t diff;
 
 	/*
-	 * Events can be inserted from event handlers, so only flush events
-	 * already in the priority queue.
+	 * Make all events appear expired by substracting the difference between
+         * the expiration time of the last event and the current time.
 	 */
 
-	cp();
+	if(!event_tree->tail)
+		return;
 
-	to_flush = event_tree;
-	init_events();
-	while (to_flush->head) {
-		event = to_flush->head->data;
-		event->handler(event->data);
-		avl_delete(to_flush, event);
+	event = event_tree->tail->data;
+	if(event->time < now)
+		return;
+
+	diff = 1 + event->time - now;
+	
+	for(node = event_tree->head; node; node = node->next) {
+		event = node->data;
+		event->time -= diff;
 	}
-	avl_delete_tree(to_flush);
 }
 
-event_t *new_event(void)
-{
-	cp();
-
+event_t *new_event(void) {
 	return xmalloc_and_zero(sizeof(event_t));
 }
 
-void free_event(event_t *event)
-{
-	cp();
-
+void free_event(event_t *event) {
 	free(event);
 }
 
-void event_add(event_t *event)
-{
-	cp();
-
+void event_add(event_t *event) {
 	event->id = ++id;
 	avl_insert(event_tree, event);
 }
 
-void event_del(event_t *event)
-{
-	cp();
-
+void event_del(event_t *event) {
 	avl_delete(event_tree, event);
 }
 
-event_t *get_expired_event(void)
-{
+event_t *get_expired_event(void) {
 	event_t *event;
-
-	cp();
 
 	if(event_tree->head) {
 		event = event_tree->head->data;
 
 		if(event->time < now) {
-			event_del(event);
+			avl_node_t *node = event_tree->head;
+			avl_unlink_node(event_tree, node);
+			free(node);
 			return event;
 		}
 	}

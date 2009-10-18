@@ -1,7 +1,7 @@
 /*
     device.c -- Interaction with Linux ethertap and tun/tap device
     Copyright (C) 2001-2005 Ivo Timmermans,
-                  2001-2006 Guus Sliepen <guus@tinc-vpn.org>
+                  2001-2009 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -13,11 +13,9 @@
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with this program; if not, write to the Free Software
-    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-
-    $Id: device.c 1488 2006-12-16 16:53:58Z guus $
+    You should have received a copy of the GNU General Public License along
+    with this program; if not, write to the Free Software Foundation, Inc.,
+    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
 #include "system.h"
@@ -34,6 +32,7 @@
 #include "net.h"
 #include "route.h"
 #include "utils.h"
+#include "xalloc.h"
 
 typedef enum device_type_t {
 	DEVICE_TYPE_ETHERTAP,
@@ -43,33 +42,31 @@ typedef enum device_type_t {
 
 int device_fd = -1;
 static device_type_t device_type;
-char *device;
-char *iface;
-char ifrname[IFNAMSIZ];
-char *device_info;
+char *device = NULL;
+char *iface = NULL;
+static char ifrname[IFNAMSIZ];
+static char *device_info;
 
 static int device_total_in = 0;
 static int device_total_out = 0;
 
-bool setup_device(void)
-{
+bool setup_device(void) {
 	struct ifreq ifr;
 
-	cp();
-
 	if(!get_config_string(lookup_config(config_tree, "Device"), &device))
-		device = DEFAULT_DEVICE;
+		device = xstrdup(DEFAULT_DEVICE);
 
 	if(!get_config_string(lookup_config(config_tree, "Interface"), &iface))
 #ifdef HAVE_LINUX_IF_TUN_H
-		iface = netname;
+		if (netname != NULL)
+			iface = xstrdup(netname);
 #else
-		iface = rindex(device, '/') ? rindex(device, '/') + 1 : device;
+		iface = xstrdup(rindex(device, '/') ? rindex(device, '/') + 1 : device);
 #endif
 	device_fd = open(device, O_RDWR | O_NONBLOCK);
 
 	if(device_fd < 0) {
-		logger(LOG_ERR, _("Could not open %s: %s"), device, strerror(errno));
+		logger(LOG_ERR, "Could not open %s: %s", device, strerror(errno));
 		return false;
 	}
 
@@ -80,11 +77,11 @@ bool setup_device(void)
 	if(routing_mode == RMODE_ROUTER) {
 		ifr.ifr_flags = IFF_TUN;
 		device_type = DEVICE_TYPE_TUN;
-		device_info = _("Linux tun/tap device (tun mode)");
+		device_info = "Linux tun/tap device (tun mode)";
 	} else {
 		ifr.ifr_flags = IFF_TAP | IFF_NO_PI;
 		device_type = DEVICE_TYPE_TAP;
-		device_info = _("Linux tun/tap device (tap mode)");
+		device_info = "Linux tun/tap device (tap mode)";
 	}
 
 	if(iface)
@@ -92,45 +89,46 @@ bool setup_device(void)
 
 	if(!ioctl(device_fd, TUNSETIFF, &ifr)) {
 		strncpy(ifrname, ifr.ifr_name, IFNAMSIZ);
-		iface = ifrname;
+		if(iface) free(iface);
+		iface = xstrdup(ifrname);
 	} else if(!ioctl(device_fd, (('T' << 8) | 202), &ifr)) {
-		logger(LOG_WARNING, _("Old ioctl() request was needed for %s"), device);
+		logger(LOG_WARNING, "Old ioctl() request was needed for %s", device);
 		strncpy(ifrname, ifr.ifr_name, IFNAMSIZ);
-		iface = ifrname;
+		if(iface) free(iface);
+		iface = xstrdup(ifrname);
 	} else
 #endif
 	{
 		if(routing_mode == RMODE_ROUTER)
 			overwrite_mac = true;
-		device_info = _("Linux ethertap device");
+		device_info = "Linux ethertap device";
 		device_type = DEVICE_TYPE_ETHERTAP;
-		iface = rindex(device, '/') ? rindex(device, '/') + 1 : device;
+		if(iface)
+			free(iface);
+		iface = xstrdup(rindex(device, '/') ? rindex(device, '/') + 1 : device);
 	}
 
-	logger(LOG_INFO, _("%s is a %s"), device, device_info);
+	logger(LOG_INFO, "%s is a %s", device, device_info);
 
 	return true;
 }
 
-void close_device(void)
-{
-	cp();
-	
+void close_device(void) {
 	close(device_fd);
+
+	free(device);
+	free(iface);
 }
 
-bool read_packet(vpn_packet_t *packet)
-{
+bool read_packet(vpn_packet_t *packet) {
 	int lenin;
 	
-	cp();
-
 	switch(device_type) {
 		case DEVICE_TYPE_TUN:
 			lenin = read(device_fd, packet->data + 10, MTU - 10);
 
 			if(lenin <= 0) {
-				logger(LOG_ERR, _("Error while reading from %s %s: %s"),
+				logger(LOG_ERR, "Error while reading from %s %s: %s",
 					   device_info, device, strerror(errno));
 				return false;
 			}
@@ -141,7 +139,7 @@ bool read_packet(vpn_packet_t *packet)
 			lenin = read(device_fd, packet->data, MTU);
 
 			if(lenin <= 0) {
-				logger(LOG_ERR, _("Error while reading from %s %s: %s"),
+				logger(LOG_ERR, "Error while reading from %s %s: %s",
 					   device_info, device, strerror(errno));
 				return false;
 			}
@@ -152,7 +150,7 @@ bool read_packet(vpn_packet_t *packet)
 			lenin = read(device_fd, packet->data - 2, MTU + 2);
 
 			if(lenin <= 0) {
-				logger(LOG_ERR, _("Error while reading from %s %s: %s"),
+				logger(LOG_ERR, "Error while reading from %s %s: %s",
 					   device_info, device, strerror(errno));
 				return false;
 			}
@@ -163,31 +161,28 @@ bool read_packet(vpn_packet_t *packet)
 
 	device_total_in += packet->len;
 
-	ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Read packet of %d bytes from %s"), packet->len,
+	ifdebug(TRAFFIC) logger(LOG_DEBUG, "Read packet of %d bytes from %s", packet->len,
 			   device_info);
 
 	return true;
 }
 
-bool write_packet(vpn_packet_t *packet)
-{
-	cp();
-
-	ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Writing packet of %d bytes to %s"),
+bool write_packet(vpn_packet_t *packet) {
+	ifdebug(TRAFFIC) logger(LOG_DEBUG, "Writing packet of %d bytes to %s",
 			   packet->len, device_info);
 
 	switch(device_type) {
 		case DEVICE_TYPE_TUN:
 			packet->data[10] = packet->data[11] = 0;
 			if(write(device_fd, packet->data + 10, packet->len - 10) < 0) {
-				logger(LOG_ERR, _("Can't write to %s %s: %s"), device_info, device,
+				logger(LOG_ERR, "Can't write to %s %s: %s", device_info, device,
 					   strerror(errno));
 				return false;
 			}
 			break;
 		case DEVICE_TYPE_TAP:
 			if(write(device_fd, packet->data, packet->len) < 0) {
-				logger(LOG_ERR, _("Can't write to %s %s: %s"), device_info, device,
+				logger(LOG_ERR, "Can't write to %s %s: %s", device_info, device,
 					   strerror(errno));
 				return false;
 			}
@@ -196,7 +191,7 @@ bool write_packet(vpn_packet_t *packet)
 			*(short int *)(packet->data - 2) = packet->len;
 
 			if(write(device_fd, packet->data - 2, packet->len + 2) < 0) {
-				logger(LOG_ERR, _("Can't write to %s %s: %s"), device_info, device,
+				logger(LOG_ERR, "Can't write to %s %s: %s", device_info, device,
 					   strerror(errno));
 				return false;
 			}
@@ -208,11 +203,8 @@ bool write_packet(vpn_packet_t *packet)
 	return true;
 }
 
-void dump_device_stats(void)
-{
-	cp();
-
-	logger(LOG_DEBUG, _("Statistics for %s %s:"), device_info, device);
-	logger(LOG_DEBUG, _(" total bytes in:  %10d"), device_total_in);
-	logger(LOG_DEBUG, _(" total bytes out: %10d"), device_total_out);
+void dump_device_stats(void) {
+	logger(LOG_DEBUG, "Statistics for %s %s:", device_info, device);
+	logger(LOG_DEBUG, " total bytes in:  %10d", device_total_in);
+	logger(LOG_DEBUG, " total bytes out: %10d", device_total_out);
 }

@@ -1,7 +1,7 @@
 /*
     netutl.c -- some supporting network utility code
     Copyright (C) 1998-2005 Ivo Timmermans
-                  2000-2006 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2009 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -13,11 +13,9 @@
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with this program; if not, write to the Free Software
-    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-
-    $Id: netutl.c 1459 2006-08-08 13:44:37Z guus $
+    You should have received a copy of the GNU General Public License along
+    with this program; if not, write to the Free Software Foundation, Inc.,
+    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
 #include "system.h"
@@ -34,12 +32,9 @@ bool hostnames = false;
   Turn a string into a struct addrinfo.
   Return NULL on failure.
 */
-struct addrinfo *str2addrinfo(const char *address, const char *service, int socktype)
-{
+struct addrinfo *str2addrinfo(const char *address, const char *service, int socktype) {
 	struct addrinfo *ai, hint = {0};
 	int err;
-
-	cp();
 
 	hint.ai_family = addressfamily;
 	hint.ai_socktype = socktype;
@@ -47,7 +42,7 @@ struct addrinfo *str2addrinfo(const char *address, const char *service, int sock
 	err = getaddrinfo(address, service, &hint, &ai);
 
 	if(err) {
-		logger(LOG_WARNING, _("Error looking up %s port %s: %s"), address,
+		logger(LOG_WARNING, "Error looking up %s port %s: %s", address,
 				   service, gai_strerror(err));
 		return NULL;
 	}
@@ -55,13 +50,10 @@ struct addrinfo *str2addrinfo(const char *address, const char *service, int sock
 	return ai;
 }
 
-sockaddr_t str2sockaddr(const char *address, const char *port)
-{
+sockaddr_t str2sockaddr(const char *address, const char *port) {
 	struct addrinfo *ai, hint = {0};
 	sockaddr_t result;
 	int err;
-
-	cp();
 
 	hint.ai_family = AF_UNSPEC;
 	hint.ai_flags = AI_NUMERICHOST;
@@ -84,14 +76,11 @@ sockaddr_t str2sockaddr(const char *address, const char *port)
 	return result;
 }
 
-void sockaddr2str(const sockaddr_t *sa, char **addrstr, char **portstr)
-{
+void sockaddr2str(const sockaddr_t *sa, char **addrstr, char **portstr) {
 	char address[NI_MAXHOST];
 	char port[NI_MAXSERV];
 	char *scopeid;
 	int err;
-
-	cp();
 
 	if(sa->sa.sa_family == AF_UNKNOWN) {
 		*addrstr = xstrdup(sa->unknown.address);
@@ -102,9 +91,8 @@ void sockaddr2str(const sockaddr_t *sa, char **addrstr, char **portstr)
 	err = getnameinfo(&sa->sa, SALEN(sa->sa), address, sizeof(address), port, sizeof(port), NI_NUMERICHOST | NI_NUMERICSERV);
 
 	if(err) {
-		logger(LOG_ERR, _("Error while translating addresses: %s"),
+		logger(LOG_ERR, "Error while translating addresses: %s",
 			   gai_strerror(err));
-		cp_trace();
 		raise(SIGFPE);
 		exit(0);
 	}
@@ -118,37 +106,60 @@ void sockaddr2str(const sockaddr_t *sa, char **addrstr, char **portstr)
 	*portstr = xstrdup(port);
 }
 
-char *sockaddr2hostname(const sockaddr_t *sa)
-{
+char *sockaddr2hostname(const sockaddr_t *sa) {
 	char *str;
 	char address[NI_MAXHOST] = "unknown";
 	char port[NI_MAXSERV] = "unknown";
 	int err;
 
-	cp();
-
 	if(sa->sa.sa_family == AF_UNKNOWN) {
-		asprintf(&str, _("%s port %s"), sa->unknown.address, sa->unknown.port);
+		xasprintf(&str, "%s port %s", sa->unknown.address, sa->unknown.port);
 		return str;
 	}
 
 	err = getnameinfo(&sa->sa, SALEN(sa->sa), address, sizeof(address), port, sizeof(port),
 					hostnames ? 0 : (NI_NUMERICHOST | NI_NUMERICSERV));
 	if(err) {
-		logger(LOG_ERR, _("Error while looking up hostname: %s"),
+		logger(LOG_ERR, "Error while looking up hostname: %s",
 			   gai_strerror(err));
 	}
 
-	asprintf(&str, _("%s port %s"), address, port);
+	xasprintf(&str, "%s port %s", address, port);
 
 	return str;
 }
 
-int sockaddrcmp(const sockaddr_t *a, const sockaddr_t *b)
-{
+int sockaddrcmp_noport(const sockaddr_t *a, const sockaddr_t *b) {
 	int result;
 
-	cp();
+	result = a->sa.sa_family - b->sa.sa_family;
+
+	if(result)
+		return result;
+
+	switch (a->sa.sa_family) {
+		case AF_UNSPEC:
+			return 0;
+
+		case AF_UNKNOWN:
+			return strcmp(a->unknown.address, b->unknown.address);
+
+		case AF_INET:
+			return memcmp(&a->in.sin_addr, &b->in.sin_addr, sizeof(a->in.sin_addr));
+
+		case AF_INET6:
+			return memcmp(&a->in6.sin6_addr, &b->in6.sin6_addr, sizeof(a->in6.sin6_addr));
+
+		default:
+			logger(LOG_ERR, "sockaddrcmp() was called with unknown address family %d, exitting!",
+				   a->sa.sa_family);
+			raise(SIGFPE);
+			exit(0);
+	}
+}
+
+int sockaddrcmp(const sockaddr_t *a, const sockaddr_t *b) {
+	int result;
 
 	result = a->sa.sa_family - b->sa.sa_family;
 
@@ -184,17 +195,14 @@ int sockaddrcmp(const sockaddr_t *a, const sockaddr_t *b)
 			return memcmp(&a->in6.sin6_port, &b->in6.sin6_port, sizeof(a->in6.sin6_port));
 
 		default:
-			logger(LOG_ERR, _("sockaddrcmp() was called with unknown address family %d, exitting!"),
+			logger(LOG_ERR, "sockaddrcmp() was called with unknown address family %d, exitting!",
 				   a->sa.sa_family);
-			cp_trace();
 			raise(SIGFPE);
 			exit(0);
 	}
 }
 
 void sockaddrcpy(sockaddr_t *a, const sockaddr_t *b) {
-	cp();
-
 	if(b->sa.sa_family != AF_UNKNOWN) {
 		*a = *b;
 	} else {
@@ -205,18 +213,13 @@ void sockaddrcpy(sockaddr_t *a, const sockaddr_t *b) {
 }
 
 void sockaddrfree(sockaddr_t *a) {
-	cp();
-
 	if(a->sa.sa_family == AF_UNKNOWN) {
 		free(a->unknown.address);
 		free(a->unknown.port);
 	}
 }
 	
-void sockaddrunmap(sockaddr_t *sa)
-{
-	cp();
-
+void sockaddrunmap(sockaddr_t *sa) {
 	if(sa->sa.sa_family == AF_INET6 && IN6_IS_ADDR_V4MAPPED(&sa->in6.sin6_addr)) {
 		sa->in.sin_addr.s_addr = ((uint32_t *) & sa->in6.sin6_addr)[3];
 		sa->in.sin_family = AF_INET;
@@ -225,13 +228,10 @@ void sockaddrunmap(sockaddr_t *sa)
 
 /* Subnet mask handling */
 
-int maskcmp(const void *va, const void *vb, int masklen)
-{
+int maskcmp(const void *va, const void *vb, int masklen) {
 	int i, m, result;
 	const char *a = va;
 	const char *b = vb;
-
-	cp();
 
 	for(m = masklen, i = 0; m >= 8; m -= 8, i++) {
 		result = a[i] - b[i];
@@ -246,12 +246,9 @@ int maskcmp(const void *va, const void *vb, int masklen)
 	return 0;
 }
 
-void mask(void *va, int masklen, int len)
-{
+void mask(void *va, int masklen, int len) {
 	int i;
 	char *a = va;
-
-	cp();
 
 	i = masklen / 8;
 	masklen %= 8;
@@ -263,13 +260,10 @@ void mask(void *va, int masklen, int len)
 		a[i] = 0;
 }
 
-void maskcpy(void *va, const void *vb, int masklen, int len)
-{
+void maskcpy(void *va, const void *vb, int masklen, int len) {
 	int i, m;
 	char *a = va;
 	const char *b = vb;
-
-	cp();
 
 	for(m = masklen, i = 0; m >= 8; m -= 8, i++)
 		a[i] = b[i];
@@ -283,12 +277,9 @@ void maskcpy(void *va, const void *vb, int masklen, int len)
 		a[i] = 0;
 }
 
-bool maskcheck(const void *va, int masklen, int len)
-{
+bool maskcheck(const void *va, int masklen, int len) {
 	int i;
 	const char *a = va;
-
-	cp();
 
 	i = masklen / 8;
 	masklen %= 8;

@@ -1,17 +1,15 @@
-This is tinc.info, produced by makeinfo version 4.11 from tinc.texi.
+This is tinc.info, produced by makeinfo version 4.13 from tinc.texi.
 
 INFO-DIR-SECTION Networking tools
 START-INFO-DIR-ENTRY
 * tinc: (tinc).              The tinc Manual.
 END-INFO-DIR-ENTRY
 
-   This is the info manual for tinc version 1.0.9, a Virtual Private
+   This is the info manual for tinc version 1.0.10, a Virtual Private
 Network daemon.
 
-   Copyright (C) 1998-2008 Ivo Timmermans, Guus Sliepen
+   Copyright (C) 1998-2009 Ivo Timmermans, Guus Sliepen
 <guus@tinc-vpn.org> and Wessel Dankers <wsl@tinc-vpn.org>.
-
-   $Id: tinc.texi 1597 2008-12-22 21:29:21Z guus $
 
    Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -258,8 +256,8 @@ File: tinc.info,  Node: Configuration of Darwin (MacOS/X) kernels,  Next: Config
 
 Tinc on Darwin relies on a tunnel driver for its data acquisition from
 the kernel.  Tinc supports either the driver from
-`http://www-user.rhrk.uni-kl.de/~nissler/tuntap/', which supports both
-tun and tap style devices, and also the driver from from
+`http://tuntaposx.sourceforge.net/', which supports both tun and tap
+style devices, and also the driver from from
 `http://chrisp.de/en/projects/tunnel.html'.  The former driver is
 recommended.  The tunnel driver must be loaded before starting tinc
 with the following command:
@@ -839,6 +837,11 @@ PrivateKeyFile = <PATH> (`/etc/tinc/NETNAME/rsa_key.priv')
      Note that there must be exactly one of PrivateKey or PrivateKeyFile
      specified in the configuration file.
 
+ProcessPriority = <low|normal|high>
+     When this option is used the priority of the tincd process will be
+     adjusted.  Increasing the priority may help to reduce latency and
+     packet loss on the VPN.
+
 TunnelServer = <yes|no> (no) [experimental]
      When this option is enabled tinc will no longer forward
      information between other tinc daemons, and will only allow nodes
@@ -913,7 +916,7 @@ PublicKeyFile = <PATH> [obsolete]
      host configuration file, if you want to be able to establish a
      connection with that host.
 
-Subnet = <ADDRESS[/PREFIXLENGTH]>
+Subnet = <ADDRESS[/PREFIXLENGTH[#WEIGHT]]>
      The subnet which this tinc daemon will serve.  Tinc tries to look
      up which other daemon it should send a packet to by searching the
      appropiate subnet.  If the packet matches a subnet, it will be
@@ -936,13 +939,23 @@ Subnet = <ADDRESS[/PREFIXLENGTH]>
      becomes /22. This conforms to standard CIDR notation as described
      in RFC1519 (ftp://ftp.isi.edu/in-notes/rfc1519.txt)
 
-TCPonly = <yes|no> (no)
+     A Subnet can be given a weight to indicate its priority over
+     identical Subnets owned by different nodes. The default weight is
+     10. Lower values indicate higher priority. Packets will be sent to
+     the node with the highest priority, unless that node is not
+     reachable, in which case the node with the next highest priority
+     will be tried, and so on.
+
+TCPonly = <yes|no> (no) [deprecated]
      If this variable is set to yes, then the packets are tunnelled
      over a TCP connection instead of a UDP connection.  This is
      especially useful for those who want to run a tinc daemon from
      behind a masquerading firewall, or if UDP packet routing is
      disabled somehow.  Setting this options also implicitly sets
      IndirectData.
+
+     Since version 1.0.10, tinc will automatically detect whether
+     communication via UDP is possible or not.
 
 
 File: tinc.info,  Node: Scripts,  Next: How to configure,  Prev: Host configuration variables,  Up: Configuration files
@@ -1020,6 +1033,10 @@ signs.
 
 `SUBNET'
      When a subnet becomes (un)reachable, this is set to the subnet.
+
+`WEIGHT'
+     When a subnet becomes (un)reachable, this is set to the subnet
+     weight.
 
 
 
@@ -1350,7 +1367,7 @@ command line options.
 
 `-K, --generate-keys[=BITS]'
      Generate public/private keypair of BITS length. If BITS is not
-     specified, 1024 is the default. tinc will ask where you want to
+     specified, 2048 is the default. tinc will ask where you want to
      store the files, but will default to the configuration directory
      (you can use the -c or -n option in combination with -K). After
      that, tinc will quit.
@@ -1370,6 +1387,25 @@ command line options.
 
 `--bypass-security'
      Disables encryption and authentication.  Only useful for debugging.
+
+`-R, --chroot'
+     Change process root directory to the directory where the config
+     file is located (`/etc/tinc/NETNAME/' as determined by -n/-net
+     option or as given by -c/-config option), for added security.  The
+     chroot is performed after all the initialization is done, after
+     writing pid files and opening network sockets.
+
+     Note that this option alone does not do any good without -U/-user,
+     below.
+
+     Note also that tinc can't run scripts anymore (such as tinc-down
+     or host-up), unless it's setup to be runnable inside chroot
+     environment.
+
+`-U, --user=USER'
+     Switch to the given USER after initialization, at the same time as
+     chroot is performed (see -chroot above).  With this option tinc
+     drops privileges, for added security.
 
 `--help'
      Display a short reminder of these runtime options and terminate.
@@ -1479,7 +1515,9 @@ check the following things:
      it, make sure that it forwards TCP and UDP traffic to port 655 to
      the host running tinc.  You can add `TCPOnly = yes' to your host
      config file to force tinc to only use a single TCP connection,
-     this works through most firewalls and NATs.
+     this works through most firewalls and NATs. Since version 1.0.10,
+     tinc will automatically fall back to TCP if direct communication
+     via UDP is not possible.
 
 
 
@@ -1568,12 +1606,6 @@ high enough.
 `Received UDP packet from unknown source 1.2.3.4 (port 12345)'
         * If you see this only sporadically, it is harmless and caused
           by a node sending packets using an old key.
-
-        * If you see this often and another node is not reachable
-          anymore, then a NAT (masquerading firewall) is changing the
-          source address of UDP packets.  You can add `TCPOnly = yes'
-          to host configuration files to force all VPN traffic to go
-          over a TCP connection.
 
 `Got bad/bogus/unauthorized REQUEST from foo (1.2.3.4 port 12345)'
         * Node foo does not have the right public/private keypair.
@@ -2151,7 +2183,7 @@ File: tinc.info,  Node: Authors,  Prev: Contact information,  Up: About us
 8.2 Authors
 ===========
 
-Ivo Timmermans (zarq) (<ivo@tinc-vpn.org>)
+Ivo Timmermans (zarq)
 
 Guus Sliepen (guus) (<guus@tinc-vpn.org>)
 
@@ -2290,6 +2322,8 @@ Concept Index
                                                               (line 158)
 * PrivateKeyFile:                        Main configuration variables.
                                                               (line 164)
+* ProcessPriority:                       Main configuration variables.
+                                                              (line 172)
 * PublicKey:                             Host configuration variables.
                                                               (line  52)
 * PublicKeyFile:                         Host configuration variables.
@@ -2310,12 +2344,14 @@ Concept Index
 * SUBNET:                                Scripts.             (line  74)
 * Subnet:                                Host configuration variables.
                                                               (line  67)
+* Subnet weight:                         Host configuration variables.
+                                                              (line  90)
 * SVPN:                                  Security.            (line  11)
 * switch:                                Main configuration variables.
                                                               (line 111)
 * TCP:                                   The meta-connection. (line  10)
 * TCPonly:                               Host configuration variables.
-                                                              (line  90)
+                                                              (line  97)
 * TINC:                                  Security.            (line   6)
 * tinc:                                  Introduction.        (line   6)
 * tinc-down:                             Scripts.             (line  18)
@@ -2326,7 +2362,7 @@ Concept Index
 * tunifhead:                             Main configuration variables.
                                                               (line  62)
 * TunnelServer:                          Main configuration variables.
-                                                              (line 172)
+                                                              (line 177)
 * tunnohead:                             Main configuration variables.
                                                               (line  56)
 * UDP <1>:                               Encryption of network packets.
@@ -2341,71 +2377,72 @@ Concept Index
                                                               (line   6)
 * vpnd:                                  tinc.                (line   6)
 * website:                               Contact information. (line   6)
+* WEIGHT:                                Scripts.             (line  77)
 * zlib:                                  zlib.                (line   6)
 
 
 
 Tag Table:
-Node: Top861
-Node: Introduction1160
-Node: Virtual Private Networks1970
-Node: tinc3695
-Node: Supported platforms5222
-Node: Preparations5920
-Node: Configuring the kernel6176
-Node: Configuration of Linux kernels6585
-Node: Configuration of FreeBSD kernels7440
-Node: Configuration of OpenBSD kernels7830
-Node: Configuration of NetBSD kernels8438
-Node: Configuration of Solaris kernels8843
-Node: Configuration of Darwin (MacOS/X) kernels9504
-Node: Configuration of Windows10207
-Node: Libraries10721
-Node: OpenSSL11109
-Node: zlib13385
-Node: lzo14214
-Node: Installation15001
-Node: Building and installing tinc16016
-Node: Darwin (MacOS/X) build environment16675
-Node: Cygwin (Windows) build environment17243
-Node: MinGW (Windows) build environment17831
-Node: System files18355
-Node: Device files18620
-Node: Other files19036
-Node: Configuration19649
-Node: Configuration introduction19960
-Node: Multiple networks21233
-Node: How connections work22659
-Node: Configuration files23881
-Node: Main configuration variables24888
-Node: Host configuration variables32721
-Node: Scripts37286
-Node: How to configure39965
-Node: Generating keypairs41228
-Node: Network interfaces41727
-Node: Example configuration43575
-Node: Running tinc48887
-Node: Runtime options49477
-Node: Signals51484
-Node: Debug levels52553
-Node: Solving problems53489
-Node: Error messages54919
-Node: Sending bug reports59241
-Node: Technical information60193
-Node: The connection60424
-Node: The UDP tunnel60736
-Node: The meta-connection63797
-Node: The meta-protocol65266
-Node: Security70275
-Node: Authentication protocol71405
-Node: Encryption of network packets76409
-Node: Security issues77782
-Node: Platform specific information79399
-Node: Interface configuration79627
-Node: Routes81526
-Node: About us83442
-Node: Contact information83617
-Node: Authors84021
-Node: Concept Index84447
+Node: Top810
+Node: Introduction1109
+Node: Virtual Private Networks1919
+Node: tinc3644
+Node: Supported platforms5171
+Node: Preparations5869
+Node: Configuring the kernel6125
+Node: Configuration of Linux kernels6534
+Node: Configuration of FreeBSD kernels7389
+Node: Configuration of OpenBSD kernels7779
+Node: Configuration of NetBSD kernels8387
+Node: Configuration of Solaris kernels8792
+Node: Configuration of Darwin (MacOS/X) kernels9453
+Node: Configuration of Windows10142
+Node: Libraries10656
+Node: OpenSSL11044
+Node: zlib13320
+Node: lzo14149
+Node: Installation14936
+Node: Building and installing tinc15951
+Node: Darwin (MacOS/X) build environment16610
+Node: Cygwin (Windows) build environment17178
+Node: MinGW (Windows) build environment17766
+Node: System files18290
+Node: Device files18555
+Node: Other files18971
+Node: Configuration19584
+Node: Configuration introduction19895
+Node: Multiple networks21168
+Node: How connections work22594
+Node: Configuration files23816
+Node: Main configuration variables24823
+Node: Host configuration variables32865
+Node: Scripts37942
+Node: How to configure40712
+Node: Generating keypairs41975
+Node: Network interfaces42474
+Node: Example configuration44322
+Node: Running tinc49634
+Node: Runtime options50224
+Node: Signals53019
+Node: Debug levels54088
+Node: Solving problems55024
+Node: Error messages56576
+Node: Sending bug reports60589
+Node: Technical information61541
+Node: The connection61772
+Node: The UDP tunnel62084
+Node: The meta-connection65145
+Node: The meta-protocol66614
+Node: Security71623
+Node: Authentication protocol72753
+Node: Encryption of network packets77757
+Node: Security issues79130
+Node: Platform specific information80747
+Node: Interface configuration80975
+Node: Routes82874
+Node: About us84790
+Node: Contact information84965
+Node: Authors85369
+Node: Concept Index85774
 
 End Tag Table

@@ -1,5 +1,4 @@
 \input texinfo   @c -*-texinfo-*-
-@c $Id: tinc.texi 1597 2008-12-22 21:29:21Z guus $
 @c %**start of header
 @setfilename tinc.info
 @settitle tinc Manual
@@ -16,11 +15,9 @@
 
 This is the info manual for @value{PACKAGE} version @value{VERSION}, a Virtual Private Network daemon.
 
-Copyright @copyright{} 1998-2008 Ivo Timmermans,
+Copyright @copyright{} 1998-2009 Ivo Timmermans,
 Guus Sliepen <guus@@tinc-vpn.org> and
 Wessel Dankers <wsl@@tinc-vpn.org>.
-
-$Id: tinc.texi 1597 2008-12-22 21:29:21Z guus $
 
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -40,14 +37,11 @@ permission notice identical to this one.
 
 @page
 @vskip 0pt plus 1filll
-@cindex copyright
 This is the info manual for @value{PACKAGE} version @value{VERSION}, a Virtual Private Network daemon.
 
-Copyright @copyright{} 1998-2006 Ivo Timmermans,
+Copyright @copyright{} 1998-2009 Ivo Timmermans,
 Guus Sliepen <guus@@tinc-vpn.org> and
 Wessel Dankers <wsl@@tinc-vpn.org>.
-
-$Id: tinc.texi 1597 2008-12-22 21:29:21Z guus $
 
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -60,7 +54,7 @@ permission notice identical to this one.
 
 @end titlepage
 
-@ifinfo
+@ifnottex
 @c ==================================================================
 @node Top
 @top Top
@@ -76,7 +70,7 @@ permission notice identical to this one.
 * About us::
 * Concept Index::               All used terms explained
 @end menu
-@end ifinfo
+@end ifnottex
 
 @c ==================================================================
 @node    Introduction
@@ -307,7 +301,7 @@ If the @file{net/if_tun.h} header file is missing, install it from the source pa
 @subsection Configuration of Darwin (MacOS/X) kernels
 
 Tinc on Darwin relies on a tunnel driver for its data acquisition from the kernel.
-Tinc supports either the driver from @uref{http://www-user.rhrk.uni-kl.de/~nissler/tuntap/},
+Tinc supports either the driver from @uref{http://tuntaposx.sourceforge.net/},
 which supports both tun and tap style devices,
 and also the driver from from @uref{http://chrisp.de/en/projects/tunnel.html}.
 The former driver is recommended.
@@ -929,6 +923,11 @@ Note that there must be exactly one of PrivateKey
 or PrivateKeyFile
 specified in the configuration file.
 
+@cindex ProcessPriority
+@item ProcessPriority = <low|normal|high>
+When this option is used the priority of the tincd process will be adjusted.
+Increasing the priority may help to reduce latency and packet loss on the VPN.
+
 @cindex TunnelServer
 @item TunnelServer = <yes|no> (no) [experimental]
 When this option is enabled tinc will no longer forward information between other tinc daemons,
@@ -1015,7 +1014,7 @@ in each host configuration file, if you want to be able to establish a
 connection with that host.
 
 @cindex Subnet
-@item Subnet = <@var{address}[/@var{prefixlength}]>
+@item Subnet = <@var{address}[/@var{prefixlength}[#@var{weight}]]>
 The subnet which this tinc daemon will serve.
 Tinc tries to look up which other daemon it should send a packet to by searching the appropiate subnet.
 If the packet matches a subnet,
@@ -1039,13 +1038,23 @@ example: netmask 255.255.255.0 would become /24, 255.255.252.0 becomes
 /22. This conforms to standard CIDR notation as described in
 @uref{ftp://ftp.isi.edu/in-notes/rfc1519.txt, RFC1519}
 
+@cindex Subnet weight
+A Subnet can be given a weight to indicate its priority over identical Subnets
+owned by different nodes. The default weight is 10. Lower values indicate
+higher priority. Packets will be sent to the node with the highest priority,
+unless that node is not reachable, in which case the node with the next highest
+priority will be tried, and so on.
+
 @cindex TCPonly
-@item TCPonly = <yes|no> (no)
+@item TCPonly = <yes|no> (no) [deprecated]
 If this variable is set to yes, then the packets are tunnelled over a
 TCP connection instead of a UDP connection.  This is especially useful
 for those who want to run a tinc daemon from behind a masquerading
 firewall, or if UDP packet routing is disabled somehow.
 Setting this options also implicitly sets IndirectData.
+
+Since version 1.0.10, tinc will automatically detect whether communication via
+UDP is possible or not.
 @end table
 
 
@@ -1133,6 +1142,10 @@ this is set to the port number it uses for communication with other tinc daemons
 @cindex SUBNET
 @item SUBNET
 When a subnet becomes (un)reachable, this is set to the subnet.
+
+@cindex WEIGHT
+@item WEIGHT
+When a subnet becomes (un)reachable, this is set to the subnet weight.
 
 @end table
 
@@ -1486,7 +1499,7 @@ Use configuration for net @var{netname}. @xref{Multiple networks}.
 
 @item -K, --generate-keys[=@var{bits}]
 Generate public/private keypair of @var{bits} length. If @var{bits} is not specified,
-1024 is the default. tinc will ask where you want to store the files,
+2048 is the default. tinc will ask where you want to store the files,
 but will default to the configuration directory (you can use the -c or -n option
 in combination with -K). After that, tinc will quit.
 
@@ -1504,6 +1517,23 @@ Write PID to @var{file} instead of @file{@value{localstatedir}/run/tinc.@var{net
 @item --bypass-security
 Disables encryption and authentication.
 Only useful for debugging.
+
+@item -R, --chroot
+Change process root directory to the directory where the config file is
+located (@file{@value{sysconfdir}/tinc/@var{netname}/} as determined by
+-n/--net option or as given by -c/--config option), for added security.
+The chroot is performed after all the initialization is done, after
+writing pid files and opening network sockets.
+
+Note that this option alone does not do any good without -U/--user, below.
+
+Note also that tinc can't run scripts anymore (such as tinc-down or host-up),
+unless it's setup to be runnable inside chroot environment.
+
+@item -U, --user=@var{user}
+Switch to the given @var{user} after initialization, at the same time as
+chroot is performed (see --chroot above).  With this option tinc drops
+privileges, for added security.
 
 @item --help
 Display a short reminder of these runtime options and terminate.
@@ -1611,7 +1641,7 @@ Do you have a firewall or a NAT device (a masquerading firewall or perhaps an AD
 If so, check that it allows TCP and UDP traffic on port 655.
 If it masquerades and the host running tinc is behind it, make sure that it forwards TCP and UDP traffic to port 655 to the host running tinc.
 You can add @samp{TCPOnly = yes} to your host config file to force tinc to only use a single TCP connection,
-this works through most firewalls and NATs.
+this works through most firewalls and NATs. Since version 1.0.10, tinc will automatically fall back to TCP if direct communication via UDP is not possible.
 
 @end itemize
 
@@ -1710,8 +1740,6 @@ or if that is not the case, try changing the prefix length into /32.
 
 @itemize
 @item If you see this only sporadically, it is harmless and caused by a node sending packets using an old key.
-@item If you see this often and another node is not reachable anymore, then a NAT (masquerading firewall) is changing the source address of UDP packets.
-You can add @samp{TCPOnly = yes} to host configuration files to force all VPN traffic to go over a TCP connection.
 @end itemize
 
 @item Got bad/bogus/unauthorized REQUEST from foo (1.2.3.4 port 12345)
@@ -2335,7 +2363,7 @@ and join channel #tinc.
 @section Authors
 
 @table @asis
-@item Ivo Timmermans (zarq) (@email{ivo@@tinc-vpn.org})
+@item Ivo Timmermans (zarq)
 @item Guus Sliepen (guus) (@email{guus@@tinc-vpn.org})
 @end table
 

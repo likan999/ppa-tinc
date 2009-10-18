@@ -13,11 +13,9 @@
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with this program; if not, write to the Free Software
-    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-
-    $Id: list.c 1452 2006-04-26 13:52:58Z guus $
+    You should have received a copy of the GNU General Public License along
+    with this program; if not, write to the Free Software Foundation, Inc.,
+    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
 #include "system.h"
@@ -27,8 +25,7 @@
 
 /* (De)constructors */
 
-list_t *list_alloc(list_action_t delete)
-{
+list_t *list_alloc(list_action_t delete) {
 	list_t *list;
 
 	list = xmalloc_and_zero(sizeof(list_t));
@@ -37,18 +34,15 @@ list_t *list_alloc(list_action_t delete)
 	return list;
 }
 
-void list_free(list_t *list)
-{
+void list_free(list_t *list) {
 	free(list);
 }
 
-list_node_t *list_alloc_node(void)
-{
+list_node_t *list_alloc_node(void) {
 	return xmalloc_and_zero(sizeof(list_node_t));
 }
 
-void list_free_node(list_t *list, list_node_t *node)
-{
+void list_free_node(list_t *list, list_node_t *node) {
 	if(node->data && list->delete)
 		list->delete(node->data);
 
@@ -57,8 +51,7 @@ void list_free_node(list_t *list, list_node_t *node)
 
 /* Insertion and deletion */
 
-list_node_t *list_insert_head(list_t *list, void *data)
-{
+list_node_t *list_insert_head(list_t *list, void *data) {
 	list_node_t *node;
 
 	node = list_alloc_node();
@@ -78,8 +71,7 @@ list_node_t *list_insert_head(list_t *list, void *data)
 	return node;
 }
 
-list_node_t *list_insert_tail(list_t *list, void *data)
-{
+list_node_t *list_insert_tail(list_t *list, void *data) {
 	list_node_t *node;
 
 	node = list_alloc_node();
@@ -99,8 +91,7 @@ list_node_t *list_insert_tail(list_t *list, void *data)
 	return node;
 }
 
-void list_unlink_node(list_t *list, list_node_t *node)
-{
+void list_unlink_node(list_t *list, list_node_t *node) {
 	if(node->prev)
 		node->prev->next = node->next;
 	else
@@ -114,34 +105,29 @@ void list_unlink_node(list_t *list, list_node_t *node)
 	list->count--;
 }
 
-void list_delete_node(list_t *list, list_node_t *node)
-{
+void list_delete_node(list_t *list, list_node_t *node) {
 	list_unlink_node(list, node);
 	list_free_node(list, node);
 }
 
-void list_delete_head(list_t *list)
-{
+void list_delete_head(list_t *list) {
 	list_delete_node(list, list->head);
 }
 
-void list_delete_tail(list_t *list)
-{
+void list_delete_tail(list_t *list) {
 	list_delete_node(list, list->tail);
 }
 
 /* Head/tail lookup */
 
-void *list_get_head(list_t *list)
-{
+void *list_get_head(list_t *list) {
 	if(list->head)
 		return list->head->data;
 	else
 		return NULL;
 }
 
-void *list_get_tail(list_t *list)
-{
+void *list_get_tail(list_t *list) {
 	if(list->tail)
 		return list->tail->data;
 	else
@@ -150,8 +136,7 @@ void *list_get_tail(list_t *list)
 
 /* Fast list deletion */
 
-void list_delete_list(list_t *list)
-{
+void list_delete_list(list_t *list) {
 	list_node_t *node, *next;
 
 	for(node = list->head; node; node = next) {
@@ -164,8 +149,7 @@ void list_delete_list(list_t *list)
 
 /* Traversing */
 
-void list_foreach_node(list_t *list, list_action_node_t action)
-{
+void list_foreach_node(list_t *list, list_action_node_t action) {
 	list_node_t *node, *next;
 
 	for(node = list->head; node; node = next) {
@@ -174,8 +158,7 @@ void list_foreach_node(list_t *list, list_action_node_t action)
 	}
 }
 
-void list_foreach(list_t *list, list_action_t action)
-{
+void list_foreach(list_t *list, list_action_t action) {
 	list_node_t *node, *next;
 
 	for(node = list->head; node; node = next) {

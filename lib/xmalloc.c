@@ -11,9 +11,9 @@
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
 
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software Foundation,
-   Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   You should have received a copy of the GNU General Public License along
+   with this program; if not, write to the Free Software Foundation, Inc., Foundation,
+   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.  */
 
 #if HAVE_CONFIG_H
 # include <config.h>
@@ -22,6 +22,8 @@
 #include <sys/types.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdarg.h>
+#include <errno.h>
 
 #if STDC_HEADERS
 # include <stdlib.h>
@@ -32,7 +34,7 @@ void *realloc ();
 void free ();
 #endif
 
-#include "gettext.h"
+#include "dropin.h"
 #include "xalloc.h"
 
 #ifndef EXIT_FAILURE
@@ -51,7 +53,7 @@ void *xrealloc (void *p, size_t n);
 int xalloc_exit_failure = EXIT_FAILURE;
 
 /* FIXME: describe */
-char *const xalloc_msg_memory_exhausted = N_("Memory exhausted");
+char *const xalloc_msg_memory_exhausted = "Memory exhausted";
 
 /* FIXME: describe */
 void (*xalloc_fail_func) (int) = 0;
@@ -138,3 +140,21 @@ xcalloc (n, s)
 }
 
 #endif /* NOT_USED */
+
+int xasprintf(char **strp, const char *fmt, ...) {
+	int result;
+	va_list ap;
+	va_start(ap, fmt);
+	result = xvasprintf(strp, fmt, ap);
+	va_end(ap);
+	return result;
+}
+
+int xvasprintf(char **strp, const char *fmt, va_list ap) {
+	int result = vasprintf(strp, fmt, ap);
+	if(result < 0) {
+		fprintf(stderr, "vasprintf() failed: %s\n", strerror(errno));
+  		exit(xalloc_exit_failure);
+	}
+	return result;
+}

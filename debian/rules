@@ -4,16 +4,15 @@ include /usr/share/cdbs/1/rules/debhelper.mk
 #include /usr/share/cdbs/1/rules/simple-patchsys.mk
 include /usr/share/cdbs/1/class/autotools.mk
 
-DEB_CONFIGURE_EXTRA_FLAGS = --enable-tracing
-
 # A bit of a kludge, we have our own init.d handling in postinst, but
 # cdbs calls dh_installinit anyway.
 DEB_DH_INSTALLINIT_ARGS = -n
 
 clean::
-	rm -f src/device.c
+	rm -rf src/device.c doc/tinc
 build/tinc::
 	cd doc && $(MAKE) texi2html
 binary-post-install/tinc::
 	mv -v doc/tinc/*.html debian/$(cdbs_curpkg)/usr/share/doc/$(cdbs_curpkg)/
+	rm -f debian/$(cdbs_curpkg)/usr/share/info/dir*
 	cd debian/$(cdbs_curpkg)/usr/share/doc/$(cdbs_curpkg)/ && tar xzf ../../../../../../doc/sample-config.tar.gz && mv sample-config examples && rm -rf examples/CVS examples/hosts/CVS
