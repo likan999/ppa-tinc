@@ -1,21 +1,30 @@
 #!/usr/bin/make -f
+# -*- makefile -*-
+# Sample debian/rules that uses debhelper.
+# This file was originally written by Joey Hess and Craig Small.
+# As a special exception, when this file is copied by dh-make into a
+# dh-make output file, you may use that output file without restriction.
+# This special exception was added by Craig Small in version 0.37 of dh-make.
 
-include /usr/share/cdbs/1/rules/debhelper.mk
-#include /usr/share/cdbs/1/rules/simple-patchsys.mk
-include /usr/share/cdbs/1/class/autotools.mk
+# Uncomment this to turn on verbose mode.
+#export DH_VERBOSE=1
 
-# A bit of a kludge, we have our own init.d handling in postinst, but
-# cdbs calls dh_installinit anyway.
-DEB_DH_INSTALLINIT_ARGS = -n
+%:
+	dh  $@
 
-clean::
-	rm -rf src/device.c doc/tinc
-build/tinc::
-	cd doc && $(MAKE) texi2html
-binary-post-install/tinc::
+override_dh_auto_build:
+	dh_auto_build
+	cd doc && $(MAKE) texi2html 
+
+override_dh_auto_install:
+	dh_auto_install
 	# Guess where texi2html installed its output today...
 	[ -f doc/tinc/tinc.html ] \
-		&& mv -v doc/tinc/*.html debian/$(cdbs_curpkg)/usr/share/doc/$(cdbs_curpkg)/ \
-		|| mv -v doc/*.html debian/$(cdbs_curpkg)/usr/share/doc/$(cdbs_curpkg)/
-	rm -f debian/$(cdbs_curpkg)/usr/share/info/dir*
-	cd debian/$(cdbs_curpkg)/usr/share/doc/$(cdbs_curpkg)/ && tar xzf ../../../../../../doc/sample-config.tar.gz && mv sample-config examples && rm -rf examples/CVS examples/hosts/CVS
+		&& mv doc/tinc/*.html debian/tinc/usr/share/doc/tinc/ \
+		|| mv doc/*.html debian/tinc/usr/share/doc/tinc/
+	# Remove info dir file
+	rm -f debian/tinc/usr/share/info/dir
+
+override_dh_clean:
+	dh_clean
+	rm -f src/device.c
