@@ -1,3 +1,142 @@
+commit 44834d030464bbe1f7733caba8d96c678f1d6cf2
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Nov 1 16:24:39 2009 +0100
+
+    Releasing 1.0.11.
+
+commit d331f04e4598824afc7de33ac1228cf441ae9872
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Nov 1 15:57:28 2009 +0100
+
+    Start a tinc service if it already exists.
+
+commit 6f6f426b353596edca77829c0477268fc2fc1925
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Tue Oct 27 23:53:49 2009 +0100
+
+    Fast handoff of roaming MAC addresses.
+    
+    In switch mode, if a known MAC address is claimed by a second node before it
+    expired at the first node, it is likely that this is because a computer has
+    roamed from the LAN of the first node to that of the second node. To ensure
+    packets for that computer are routed to the second node, the first node should
+    delete its corresponding Subnet as soon as possible, without waiting for the
+    normal expiry timeout.
+
+commit e00b44cb98e4d50a0d426048ba01dbd80bcb5941
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Oct 25 01:40:07 2009 +0200
+
+    Move socket error interpretation to utils.h.
+
+commit c11dc8079b60d9f8c5b1c7e8fecd90d0fac5a20c
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Oct 25 00:50:09 2009 +0200
+
+    Use WSAGetLastError() to determine cause of network errors on Windows.
+    
+    This reduces log spam and lets path MTU discovery work faster.
+
+commit 1bca167b7e24a9cb00ad6130c24f0bb60e208f1f
+Author: Michael Tokarev <mjt@tls.msk.ru>
+Date:   Sun Oct 18 21:27:24 2009 +0400
+
+    Remove localedir leftovers.
+
+commit c3acae034c4da2d1c70f31b852b14ca098c0eeb9
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sat Oct 24 22:32:35 2009 +0200
+
+    Use IP_DONTFRAGMENT instead of IP_MTU_DISCOVER on Windows.
+    
+    This ensures the DF bit on outgoing UDP packets gets set on Windows when path
+    MTU discovery is enabled, reducing fragmentation.
+
+commit 242c4e2ca67d0b5c78dfe6e68a5ddcd27be1de99
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sat Oct 24 21:53:01 2009 +0200
+
+    Forward packets to not directly reachable hosts via UDP if possible.
+    
+    If MTU probing discovered a node was not reachable via UDP, packets for it were
+    forwarded to the next hop, but always via TCP, even if the next hop was
+    reachable via UDP. This is now fixed by retrying to send the packet using
+    send_packet() if the destination is not the same as the nexthop.
+
+commit d922db253cd098bc038449e5c591cc94c1019952
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sat Oct 24 21:35:40 2009 +0200
+
+    Make maxmtu equal to minmtu when fixing the path MTU to a node.
+    
+    This ensures MTU probes used to ping nodes are not too large, and prevents
+    restarting MTU probing unnecessarily.
+
+commit a8f7fccbc2b5f1c4c39fc2804abaa358b31a5080
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sat Oct 24 21:32:06 2009 +0200
+
+    Always reply to MTU probes via UDP.
+    
+    It could sometime happen that a node would return MTU probes via TCP, which
+    does not make a lot of sense.
+
+commit cddcdc9af34afb388a8e4bdfff6882f568b98313
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sat Oct 24 20:54:44 2009 +0200
+
+    Allow UDP packets with an address different from the corresponding TCP connection.
+
+commit 5cbddc68bade0d1f8ded1b784bb27bb44c5dc5dc
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sat Oct 24 16:15:24 2009 +0200
+
+    Use uint32_t instead of long int for connection options.
+    
+    Options should have a fixed width anyway, but this also fixes a possible MinGW
+    compiler bug where %lx tries to print a 64 bit value, even though a long int is
+    only 32 bits.
+
+commit 468f393c4fabf9223a1bd15adfb3906cde90d547
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sat Oct 24 16:05:12 2009 +0200
+
+    Add dummy device.
+
+commit b6543af7626403516b5fc54c24b11d3a242a2992
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Tue Oct 20 22:39:07 2009 +0200
+
+    Clarify and increase level of log message about MTU probes to unreachable nodes.
+
+commit 43a6e786648fb666a9b7be8f05c8a173031c9110
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Tue Oct 20 22:33:16 2009 +0200
+
+    Handle weighted Subnets in switch and hub modes.
+    
+    We now handle MAC Subnets in exactly the same way as IPv4 and IPv6 Subnets.
+    This also fixes a problem that causes unncessary broadcasting of unicast
+    packets in VPNs where some daemons run 1.0.10 and some run other versions.
+
+commit 3a925479c2883a6a9711f7b6931863d7f2a2c09b
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Tue Oct 20 22:22:59 2009 +0200
+
+    Starting to work towards 1.0.11.
+
+commit 35af4051c3749cd2c2137a7eb57171a1fbb12af7
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Tue Oct 20 22:14:47 2009 +0200
+
+    Fix a possible crash when sending the HUP signal.
+    
+    When the HUP signal is sent while some outgoing connections have not been made
+    yet, or are being retried, a NULL pointer could be dereferenced resulting in
+    tinc crashing. We fix this by more careful handling of outgoing_ts, and by
+    deleting all connections that have not been fully activated yet at the HUP
+    signal is received.
+
 commit 8c267d3d558ac97a4ce7381a37abb6cc4b46b133
 Author: Guus Sliepen <guus@tinc-vpn.org>
 Date:   Sun Oct 18 16:45:13 2009 +0200

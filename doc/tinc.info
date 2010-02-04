@@ -5,7 +5,7 @@ START-INFO-DIR-ENTRY
 * tinc: (tinc).              The tinc Manual.
 END-INFO-DIR-ENTRY
 
-   This is the info manual for tinc version 1.0.10, a Virtual Private
+   This is the info manual for tinc version 1.0.11, a Virtual Private
 Network daemon.
 
    Copyright (C) 1998-2009 Ivo Timmermans, Guus Sliepen

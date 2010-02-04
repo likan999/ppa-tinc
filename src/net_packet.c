@@ -46,10 +46,6 @@
 #include "utils.h"
 #include "xalloc.h"
 
-#ifdef WSAEMSGSIZE
-#define EMSGSIZE WSAEMSGSIZE
-#endif
-
 int keylifetime = 0;
 int keyexpires = 0;
 static char lzo_wrkmem[LZO1X_999_MEM_COMPRESS > LZO1X_1_MEM_COMPRESS ? LZO1X_999_MEM_COMPRESS : LZO1X_1_MEM_COMPRESS];
@@ -72,7 +68,7 @@ void send_mtu_probe(node_t *n) {
 	n->mtuevent = NULL;
 
 	if(!n->status.reachable || !n->status.validkey) {
-		logger(LOG_DEBUG, "Trying to send MTU probe to unreachable node %s (%s)", n->name, n->hostname);
+		ifdebug(TRAFFIC) logger(LOG_INFO, "Trying to send MTU probe to unreachable or rekeying node %s (%s)", n->name, n->hostname);
 		n->mtuprobes = 0;
 		return;
 	}
@@ -91,6 +87,10 @@ void send_mtu_probe(node_t *n) {
 	}
 
 	if(n->mtuprobes == 30 || (n->mtuprobes < 30 && n->minmtu >= n->maxmtu)) {
+		if(n->minmtu > n->maxmtu)
+			n->minmtu = n->maxmtu;
+		else
+			n->maxmtu = n->minmtu;
 		n->mtu = n->minmtu;
 		ifdebug(TRAFFIC) logger(LOG_INFO, "Fixing MTU of %s (%s) to %d after %d probes", n->name, n->hostname, n->mtu, n->mtuprobes);
 		n->mtuprobes = 31;
@@ -135,7 +135,7 @@ void mtu_probe_h(node_t *n, vpn_packet_t *packet, length_t len) {
 
 	if(!packet->data[0]) {
 		packet->data[0] = 1;
-		send_packet(n, packet);
+		send_udppacket(n, packet);
 	} else {
 		if(len > n->maxmtu)
 			len = n->maxmtu;
@@ -365,10 +365,13 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 
 	if(n->options & OPTION_PMTU_DISCOVERY && inpkt->len > n->minmtu && (inpkt->data[12] | inpkt->data[13])) {
 		ifdebug(TRAFFIC) logger(LOG_INFO,
-				"Packet for %s (%s) larger than minimum MTU, forwarding via TCP",
-				n->name, n->hostname);
+				"Packet for %s (%s) larger than minimum MTU, forwarding via %s",
+				n->name, n->hostname, n != n->nexthop ? n->nexthop->name : "TCP");
 
-		send_tcppacket(n->nexthop->connection, origpkt);
+		if(n != n->nexthop)
+			send_packet(n->nexthop, origpkt);
+		else
+			send_tcppacket(n->nexthop->connection, origpkt);
 
 		return;
 	}
@@ -442,14 +445,14 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 	}
 #endif
 
-	if((sendto(listen_socket[sock].udp, (char *) &inpkt->seqno, inpkt->len, 0, &(n->address.sa), SALEN(n->address.sa))) < 0) {
-		if(errno == EMSGSIZE) {
+	if(sendto(listen_socket[sock].udp, (char *) &inpkt->seqno, inpkt->len, 0, &(n->address.sa), SALEN(n->address.sa)) < 0 && !sockwouldblock(sockerrno)) {
+		if(sockmsgsize(sockerrno)) {
 			if(n->maxmtu >= origlen)
 				n->maxmtu = origlen - 1;
 			if(n->mtu >= origlen)
 				n->mtu = origlen - 1;
 		} else
-			logger(LOG_ERR, "Error sending packet to %s (%s): %s", n->name, n->hostname, strerror(errno));
+			logger(LOG_ERR, "Error sending packet to %s (%s): %s", n->name, n->hostname, sockstrerror(sockerrno));
 	}
 
 end:
@@ -521,12 +524,16 @@ static node_t *try_harder(const sockaddr_t *from, const vpn_packet_t *pkt) {
 	avl_node_t *node;
 	edge_t *e;
 	node_t *n = NULL;
+	static time_t last_hard_try = 0;
 
 	for(node = edge_weight_tree->head; node; node = node->next) {
 		e = node->data;
 
-		if(sockaddrcmp_noport(from, &e->address))
-			continue;
+		if(sockaddrcmp_noport(from, &e->address)) {
+			if(last_hard_try == now)
+				continue;
+			last_hard_try = now;
+		}
 
 		if(!n)
 			n = e->to;
@@ -551,8 +558,8 @@ void handle_incoming_vpn_data(int sock) {
 	pkt.len = recvfrom(sock, (char *) &pkt.seqno, MAXSIZE, 0, &from.sa, &fromlen);
 
 	if(pkt.len < 0) {
-		if(errno != EAGAIN && errno != EINTR)
-			logger(LOG_ERR, "Receiving packet failed: %s", strerror(errno));
+		if(!sockwouldblock(sockerrno))
+			logger(LOG_ERR, "Receiving packet failed: %s", sockstrerror(sockerrno));
 		return;
 	}
 

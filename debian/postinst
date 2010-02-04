@@ -63,7 +63,7 @@ case "$1" in
 	fi
 
   	if [ "$RET" = "true" ] ; then
-	    invoke-rc.d tinc start
+	    invoke-rc.d tinc restart
 	else
 	    echo "I have not stopped or restarted the tinc daemon.  You should do this"
 	    echo "yourself whenever you're ready; type \`\`invoke-rc.d tinc restart''."
