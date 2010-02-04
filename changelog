@@ -1,3 +1,19 @@
+tinc (1.0.11-1~bpo50+1) lenny-backports; urgency=low
+
+  * Rebuild for lenny-backports.
+
+ -- Guus Sliepen <guus@debian.org>  Thu, 04 Feb 2010 19:03:00 +0000
+
+tinc (1.0.11-1) unstable; urgency=low
+
+  * New upstream release.
+  * Cope with texi2html arbitrarily changing its output directory.
+    Closes: #552927
+  * Do not stop tinc when configuring a new version, just restart after
+    the upgrade.
+
+ -- Guus Sliepen <guus@debian.org>  Sun, 01 Nov 2009 20:37:16 +0100
+
 tinc (1.0.10-1) unstable; urgency=low
 
   * New upstream release.
