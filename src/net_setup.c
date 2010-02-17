@@ -1,7 +1,7 @@
 /*
     net_setup.c -- Setup.
     Copyright (C) 1998-2005 Ivo Timmermans,
-                  2000-2009 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2010 Guus Sliepen <guus@tinc-vpn.org>
                   2006      Scott Lamb <slamb@slamb.org>
 
     This program is free software; you can redistribute it and/or modify
@@ -218,8 +218,8 @@ bool setup_myself(void) {
 	myself->connection = new_connection();
 	init_configuration(&myself->connection->config_tree);
 
-	xasprintf(&myself->hostname, "MYSELF");
-	xasprintf(&myself->connection->hostname, "MYSELF");
+	myself->hostname = xstrdup("MYSELF");
+	myself->connection->hostname = xstrdup("MYSELF");
 
 	myself->connection->options = 0;
 	myself->connection->protocol_version = PROT_CURRENT;
@@ -246,8 +246,9 @@ bool setup_myself(void) {
 	if(!read_rsa_private_key())
 		return false;
 
-	if(!get_config_string(lookup_config(myself->connection->config_tree, "Port"), &myport))
-		xasprintf(&myport, "655");
+	if(!get_config_string(lookup_config(config_tree, "Port"), &myport)
+			&& !get_config_string(lookup_config(myself->connection->config_tree, "Port"), &myport))
+		myport = xstrdup("655");
 
 	/* Read in all the subnets specified in the host configuration file */
 
@@ -296,12 +297,17 @@ bool setup_myself(void) {
 	} else
 		routing_mode = RMODE_ROUTER;
 
-	// Enable PMTUDiscovery by default if we are in router mode.
-
-	choice = routing_mode == RMODE_ROUTER;
+	choice = true;
 	get_config_bool(lookup_config(myself->connection->config_tree, "PMTUDiscovery"), &choice);
-	if(choice)	
+	get_config_bool(lookup_config(config_tree, "PMTUDiscovery"), &choice);
+	if(choice)
 		myself->options |= OPTION_PMTU_DISCOVERY;
+
+	choice = true;
+	get_config_bool(lookup_config(config_tree, "ClampMSS"), &choice);
+	get_config_bool(lookup_config(myself->connection->config_tree, "ClampMSS"), &choice);
+	if(choice)
+		myself->options |= OPTION_CLAMP_MSS;
 
 	get_config_bool(lookup_config(config_tree, "PriorityInheritance"), &priorityinheritance);
 

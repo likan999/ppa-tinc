@@ -1,7 +1,7 @@
 /*
     protocol_key.c -- handle the meta-protocol, key exchange
     Copyright (C) 1999-2005 Ivo Timmermans,
-                  2000-2009 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2010 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -36,15 +36,19 @@
 
 bool mykeyused = false;
 
-bool send_key_changed() {
-	/* Only send this message if some other daemon requested our key previously.
-	   This reduces unnecessary key_changed broadcasts.
-	 */
+void send_key_changed() {
+	avl_node_t *node;
+	connection_t *c;
 
-	if(!mykeyused)
-		return true;
+	send_request(broadcast, "%d %x %s", KEY_CHANGED, rand(), myself->name);
 
-	return send_request(broadcast, "%d %x %s", KEY_CHANGED, rand(), myself->name);
+	/* Immediately send new keys to directly connected nodes to keep UDP mappings alive */
+
+	for(node = connection_tree->head; node; node = node->next) {
+		c = node->data;
+		if(c->status.active && c->node && c->node->status.reachable)
+			send_ans_key(c->node);
+	}
 }
 
 bool key_changed_h(connection_t *c) {
@@ -57,6 +61,11 @@ bool key_changed_h(connection_t *c) {
 		return false;
 	}
 
+	if(!check_id(name)) {
+		logger(LOG_ERR, "Got bad %s from %s (%s): %s", "KEY_CHANGED", c->name, c->hostname, "invalid name");
+		return false;
+	}
+
 	if(seen_request(c->buffer))
 		return true;
 
@@ -65,11 +74,11 @@ bool key_changed_h(connection_t *c) {
 	if(!n) {
 		logger(LOG_ERR, "Got %s from %s (%s) origin %s which does not exist",
 			   "KEY_CHANGED", c->name, c->hostname, name);
-		return false;
+		return true;
 	}
 
 	n->status.validkey = false;
-	n->status.waitingforkey = false;
+	n->last_req_key = 0;
 
 	/* Tell the others */
 
@@ -94,12 +103,17 @@ bool req_key_h(connection_t *c) {
 		return false;
 	}
 
+	if(!check_id(from_name) || !check_id(to_name)) {
+		logger(LOG_ERR, "Got bad %s from %s (%s): %s", "REQ_KEY", c->name, c->hostname, "invalid name");
+		return false;
+	}
+
 	from = lookup_node(from_name);
 
 	if(!from) {
 		logger(LOG_ERR, "Got %s from %s (%s) origin %s which does not exist in our connection list",
 			   "REQ_KEY", c->name, c->hostname, from_name);
-		return false;
+		return true;
 	}
 
 	to = lookup_node(to_name);
@@ -107,7 +121,7 @@ bool req_key_h(connection_t *c) {
 	if(!to) {
 		logger(LOG_ERR, "Got %s from %s (%s) destination %s which does not exist in our connection list",
 			   "REQ_KEY", c->name, c->hostname, to_name);
-		return false;
+		return true;
 	}
 
 	/* Check if this key request is for us */
@@ -116,7 +130,7 @@ bool req_key_h(connection_t *c) {
 		send_ans_key(from);
 	} else {
 		if(tunnelserver)
-			return false;
+			return true;
 
 		if(!to->status.reachable) {
 			logger(LOG_WARNING, "Got %s from %s (%s) destination %s which is not reachable",
@@ -169,14 +183,21 @@ bool ans_key_h(connection_t *c) {
 	char from_name[MAX_STRING_SIZE];
 	char to_name[MAX_STRING_SIZE];
 	char key[MAX_STRING_SIZE];
+	char address[MAX_STRING_SIZE] = "";
+	char port[MAX_STRING_SIZE] = "";
 	int cipher, digest, maclength, compression;
 	node_t *from, *to;
 
-	if(sscanf(c->buffer, "%*d "MAX_STRING" "MAX_STRING" "MAX_STRING" %d %d %d %d",
+	if(sscanf(c->buffer, "%*d "MAX_STRING" "MAX_STRING" "MAX_STRING" %d %d %d %d "MAX_STRING" "MAX_STRING,
 		from_name, to_name, key, &cipher, &digest, &maclength,
-		&compression) != 7) {
+		&compression, address, port) < 7) {
 		logger(LOG_ERR, "Got bad %s from %s (%s)", "ANS_KEY", c->name,
 			   c->hostname);
+		return false;
+	}
+
+	if(!check_id(from_name) || !check_id(to_name)) {
+		logger(LOG_ERR, "Got bad %s from %s (%s): %s", "ANS_KEY", c->name, c->hostname, "invalid name");
 		return false;
 	}
 
@@ -185,7 +206,7 @@ bool ans_key_h(connection_t *c) {
 	if(!from) {
 		logger(LOG_ERR, "Got %s from %s (%s) origin %s which does not exist in our connection list",
 			   "ANS_KEY", c->name, c->hostname, from_name);
-		return false;
+		return true;
 	}
 
 	to = lookup_node(to_name);
@@ -193,18 +214,28 @@ bool ans_key_h(connection_t *c) {
 	if(!to) {
 		logger(LOG_ERR, "Got %s from %s (%s) destination %s which does not exist in our connection list",
 			   "ANS_KEY", c->name, c->hostname, to_name);
-		return false;
+		return true;
 	}
 
 	/* Forward it if necessary */
 
 	if(to != myself) {
 		if(tunnelserver)
-			return false;
+			return true;
 
 		if(!to->status.reachable) {
 			logger(LOG_WARNING, "Got %s from %s (%s) destination %s which is not reachable",
 				"ANS_KEY", c->name, c->hostname, to_name);
+			return true;
+		}
+
+		if(!*address) {
+			char *address, *port;
+			ifdebug(PROTOCOL) logger(LOG_DEBUG, "Appending reflexive UDP address to ANS_KEY from %s to %s", from->name, to->name);
+			sockaddr2str(&from->address, &address, &port);
+			send_request(to->nexthop->connection, "%s %s %s", c->buffer, address, port);
+			free(address);
+			free(port);
 			return true;
 		}
 
@@ -218,7 +249,6 @@ bool ans_key_h(connection_t *c) {
 	from->outkeylength = strlen(key) / 2;
 	hex2bin(key, from->outkey, from->outkeylength);
 
-	from->status.waitingforkey = false;
 	/* Check and lookup cipher and digest algorithms */
 
 	if(cipher) {
@@ -227,13 +257,13 @@ bool ans_key_h(connection_t *c) {
 		if(!from->outcipher) {
 			logger(LOG_ERR, "Node %s (%s) uses unknown cipher!", from->name,
 				   from->hostname);
-			return false;
+			return true;
 		}
 
 		if(from->outkeylength != from->outcipher->key_len + from->outcipher->iv_len) {
 			logger(LOG_ERR, "Node %s (%s) uses wrong keylength!", from->name,
 				   from->hostname);
-			return false;
+			return true;
 		}
 	} else {
 		from->outcipher = NULL;
@@ -247,13 +277,13 @@ bool ans_key_h(connection_t *c) {
 		if(!from->outdigest) {
 			logger(LOG_ERR, "Node %s (%s) uses unknown digest!", from->name,
 				   from->hostname);
-			return false;
+			return true;
 		}
 
 		if(from->outmaclength > from->outdigest->md_size || from->outmaclength < 0) {
 			logger(LOG_ERR, "Node %s (%s) uses bogus MAC length!",
 				   from->name, from->hostname);
-			return false;
+			return true;
 		}
 	} else {
 		from->outdigest = NULL;
@@ -261,7 +291,7 @@ bool ans_key_h(connection_t *c) {
 
 	if(compression < 0 || compression > 11) {
 		logger(LOG_ERR, "Node %s (%s) uses bogus compression level!", from->name, from->hostname);
-		return false;
+		return true;
 	}
 	
 	from->outcompression = compression;
@@ -270,11 +300,17 @@ bool ans_key_h(connection_t *c) {
 		if(!EVP_EncryptInit_ex(&from->outctx, from->outcipher, NULL, (unsigned char *)from->outkey, (unsigned char *)from->outkey + from->outcipher->key_len)) {
 			logger(LOG_ERR, "Error during initialisation of key from %s (%s): %s",
 					from->name, from->hostname, ERR_error_string(ERR_get_error(), NULL));
-			return false;
+			return true;
 		}
 
 	from->status.validkey = true;
 	from->sent_seqno = 0;
+
+	if(*address && *port) {
+		ifdebug(PROTOCOL) logger(LOG_DEBUG, "Using reflexive UDP address from %s: %s port %s", from->name, address, port);
+		sockaddr_t sa = str2sockaddr(address, port);
+		update_node_udp(from, &sa);
+	}
 
 	if(from->options & OPTION_PMTU_DISCOVERY && !from->mtuprobes)
 		send_mtu_probe(from);

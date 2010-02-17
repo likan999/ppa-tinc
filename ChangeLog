@@ -1,3 +1,195 @@
+commit f7b2a2ea43fca323f543e152e6a43a29a4eb6671
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Wed Feb 3 22:49:48 2010 +0100
+
+    Releasing 1.0.12.
+
+commit cd0c2e86a403fc9aabecdc8d51413f94491b5494
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Wed Feb 3 11:18:46 2010 +0100
+
+    Ensure peers with a meta connection always have our key.
+    
+    This keeps UDP probes going, which in turn keeps NAT mappings alive.
+
+commit 40d91ff619a6ea24a2a35c9d934bcc6bace27e24
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Tue Feb 2 22:49:21 2010 +0100
+
+    Update copyright notices.
+
+commit 44f8f61396a92c899172a1863bbc9c705cbfa649
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Tue Feb 2 22:22:27 2010 +0100
+
+    Try to set DF bit on BSDs as well.
+    
+    Every operating system seems to have its own, slightly different way to disable
+    packet fragmentation. Emit a compiler warning when no suitable way is found.
+    On OpenBSD, it seems impossible to do it for IPv4.
+
+commit ed14ef93b47622ba13099dfc6be5335222e987a6
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Tue Feb 2 01:02:40 2010 +0100
+
+    Immediately exchange keys when establishing a meta connection.
+    
+    This in turn will trigger PMTU discovery, and ensures nodes know each others
+    reflexive UDP address and port.
+
+commit 4a0b9981513059755b9fd15b38fc198f46a0d6f2
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Tue Feb 2 00:51:44 2010 +0100
+
+    Determine peer's reflexive address and port when exchanging keys.
+    
+    To help peers that are behind NAT connect to each other directly via UDP, they
+    need to know the exact external address and port that they use. Keys exchanged
+    between NATted peers necessarily go via a third node, which knows this address
+    and port, and can append this information to the keys, which is in turned used
+    by the peers.
+    
+    Since PMTU discovery will immediately trigger UDP communication from both sides
+    to each other, this should allow direct communication between peers behind
+    full, address-restricted and port-restricted cone NAT.
+
+commit d15099e0029578bfd24d6b464b941f4693280001
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sat Jan 23 18:48:01 2010 +0100
+
+    Be liberal in accepting KEY_CHANGED/REQ_KEY/ANS_KEY requests.
+    
+    When we got a key request for or from a node we don't know, we disconnected the
+    node that forwarded us that request.  However, especially in TunnelServer mode,
+    disconnecting does not help. We now ignore such requests, but since there is no
+    way of telling the original sender that the request was dropped, we now retry
+    sending REQ_KEY requests when we don't get an ANS_KEY back.
+
+commit 469fa318bc817908af9a51e3a980ffc998fae6f2
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Fri Jan 22 21:59:40 2010 +0100
+
+    Run subnet-up/down scripts for local MAC addresses as well.
+
+commit 5d194b9f8767390d9fb1170554a8b6928214957a
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Fri Jan 22 21:47:26 2010 +0100
+
+    Fix subnet-up/down scripts being called with an empty SUBNET.
+    
+    Commit 052ff8b2c598358d1c5febaa9f9f5fc5d384cfd3 contained a bug that causes
+    scripts to be called with an empty, or possibly corrupted SUBNET variable when
+    a Subnet is added or removed while the owner is still online. In router mode,
+    this normally does not happen, but in switch mode this is normal.
+
+commit b45511118421920771f5dcd5e4bafc04376e4450
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sat Jan 16 20:16:33 2010 +0100
+
+    Make MSS clamping configurable, but enabled by default.
+    
+    It can either be set globally in tinc.conf, or per-node in host config files.
+
+commit 95928f7c2910a7da01a89cdc63c86c4d87fac004
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sat Jan 16 19:32:33 2010 +0100
+
+    Also clamp MSS of TCP over IPv6 packets.
+
+commit b1945f70fe993ca447555a1e27f35638b0c1fd8b
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Fri Jan 15 23:41:14 2010 +0100
+
+    Optimise handling of select() returning <= 0.
+    
+    Before, we immediately retried select() if it returned -1 and errno is EAGAIN
+    or EINTR, and if it returned 0 it would check for network events even if we
+    know there are none.  Now, if -1 or 0 is returned we skip checking network
+    events, but we do check for timer and signal events.
+
+commit 51099658c919794cde72ea1107b9d9b9c3cee926
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Fri Jan 15 23:19:08 2010 +0100
+
+    Ping nodes immediately when receiving SIGALRM.
+    
+    One reason to send the ALRM signal is to let tinc immediately try to connect to
+    outgoing nodes, for example when PPP or DHCP configuration of the outgoing
+    interface finished.  Conversely, when the outgoing interface goes down one can
+    now send this signal to let tinc quickly detect that links are down too.
+
+commit 2a538ed34332b3392f866d56accd9efecc9467ed
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Fri Jan 15 13:42:37 2010 +0100
+
+    Clamp MSS of IPv4 SYN packets.
+    
+    Some ISPs block the ICMP Fragmentation Needed packets that tinc sends.  We
+    clamp the MSS of IPv4 SYN packets to prevent hosts behind those ISPs from
+    sending too large packets.
+
+commit e4812ba9cc4262ec921944f02639ce55781d7497
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Thu Dec 24 12:42:21 2009 +0100
+
+    Allow Port and PMTUDiscovery options in tinc.conf, always enable PMTUDiscovery by default.
+
+commit 7203d5fb07be2d3ae006c2b65d0be1e6533e1273
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Wed Dec 23 19:51:55 2009 +0100
+
+    Use xstrdup() instead of xasprintf() to copy static strings.
+
+commit a9a803d5662832eb397837055a49fd94118eabf3
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Wed Dec 23 19:49:38 2009 +0100
+
+    Allow port to be specified in Address statements.
+    
+    This allows one to connect to use more than one port number to connect to
+    another node. The syntax is now:
+    
+    Address = <hostname> [<port>]
+
+commit 43e34d8180c90682ed1601dec3de7f68ec96d65b
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Wed Dec 23 19:22:06 2009 +0100
+
+    Do not fragment packets smaller than RFC defined minimum MTUs.
+    
+    For IPv6, the minimum MTU is 1280 (RFC 2460), for IPv4 the minimum is actually
+    68, but this is such a low limit that it will probably hurt performance, so we
+    do as if it is 576 (the minimum packet size hosts should be able to handle, RFC
+    791). If we detect a path MTU smaller than those minima, and we have to handle
+    a packet that is bigger than the PMTU but smaller than those minima, we forward
+    them via TCP instead of fragmenting or returning ICMP packets.
+
+commit 369fe1ab1cbfc3f8305de1faab2e30157378b044
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Tue Dec 8 22:18:37 2009 +0000
+
+    Forget addresses of unreachable nodes.
+    
+    We clear the cached address used for UDP connections when a node becomes
+    unreachable. This also prevents host-up scripts from passing the old, cached
+    address from when the host becomes reachable again from a different address.
+
+commit 62f235e05c54e458724f437e519ed1b3e17835b1
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sat Nov 28 11:56:13 2009 +0000
+
+    Remove unused variable in lookup_subnet_*() functions.
+
+commit 92aefd25bf9e8e63f199cc252218f5c427f836b7
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sat Nov 28 11:52:23 2009 +0000
+
+    When learning MAC addresses, only check our own Subnets for previous entries.
+    
+    Before it would check all addresses, and not learn an address if another node
+    already claimed that address. This caused fast roaming to fail, the code from
+    commit 6f6f426b353596edca77829c0477268fc2fc1925 was never triggered.
+
 commit 44834d030464bbe1f7733caba8d96c678f1d6cf2
 Author: Guus Sliepen <guus@tinc-vpn.org>
 Date:   Sun Nov 1 16:24:39 2009 +0100

@@ -1,7 +1,7 @@
 /*
     route.c -- routing
     Copyright (C) 2000-2005 Ivo Timmermans,
-                  2000-2009 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2010 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -48,6 +48,7 @@ static const size_t ip6_size = sizeof(struct ip6_hdr);
 static const size_t icmp6_size = sizeof(struct icmp6_hdr);
 static const size_t ns_size = sizeof(struct nd_neighbor_solicit);
 static const size_t opt_size = sizeof(struct nd_opt_hdr);
+#define max(a, b) ((a) > (b) ? (a) : (b))
 
 /* RFC 1071 */
 
@@ -92,6 +93,74 @@ static bool checklength(node_t *source, vpn_packet_t *packet, length_t length) {
 		return true;
 }
 
+static void clamp_mss(const node_t *source, const node_t *via, vpn_packet_t *packet) {
+	if(!via || via == myself || !(via->options & OPTION_CLAMP_MSS))
+		return;
+
+	/* Find TCP header */
+	int start = 0;
+	uint16_t type = packet->data[12] << 8 | packet->data[13];
+
+	if(type == ETH_P_IP && packet->data[23] == 6)
+		start = 14 + (packet->data[14] & 0xf) * 4;
+	else if(type == ETH_P_IPV6 && packet->data[20] == 6)
+		start = 14 + 40;
+
+	if(!start || packet->len <= start + 20)
+		return;
+
+	/* Use data offset field to calculate length of options field */
+	int len = ((packet->data[start + 12] >> 4) - 5) * 4;
+
+	if(packet->len < start + 20 + len)
+		return;
+
+	/* Search for MSS option header */
+	for(int i = 0; i < len;) {
+		if(packet->data[start + 20 + i] == 0)
+			break;
+
+		if(packet->data[start + 20 + i] == 1) {
+			i++;
+			continue;
+		}
+
+		if(i > len - 2 || i > len - packet->data[start + 21 + i])
+			break;
+
+		if(packet->data[start + 20 + i] != 2) {
+			if(packet->data[start + 21 + i] < 2)
+				break;
+			i += packet->data[start + 21 + i];
+			continue;
+		}
+
+		if(packet->data[start + 21] != 4)
+			break;
+
+		/* Found it */
+		uint16_t oldmss = packet->data[start + 22 + i] << 8 | packet->data[start + 23 + i];
+		uint16_t newmss = via->mtu - start - 20;
+		uint16_t csum = packet->data[start + 16] << 8 | packet->data[start + 17];
+
+		if(oldmss <= newmss)
+			break;
+		
+		ifdebug(TRAFFIC) logger(LOG_INFO, "Clamping MSS of packet from %s to %s to %d", source->name, via->name, newmss);
+
+		/* Update the MSS value and the checksum */
+		packet->data[start + 22 + i] = newmss >> 8;
+		packet->data[start + 23 + i] = newmss & 0xff;
+		csum ^= 0xffff;
+		csum -= oldmss;
+		csum += newmss;
+		csum ^= 0xffff;
+		packet->data[start + 16] = csum >> 8;
+		packet->data[start + 17] = csum & 0xff;
+		break;
+	}
+}
+
 static void swap_mac_addresses(vpn_packet_t *packet) {
 	mac_t tmp;
 	memcpy(&tmp, &packet->data[0], sizeof tmp);
@@ -104,7 +173,7 @@ static void learn_mac(mac_t *address) {
 	avl_node_t *node;
 	connection_t *c;
 
-	subnet = lookup_subnet_mac(address);
+	subnet = lookup_subnet_mac(myself, address);
 
 	/* If we don't know this MAC address yet, store it */
 
@@ -119,6 +188,7 @@ static void learn_mac(mac_t *address) {
 		subnet->net.mac.address = *address;
 		subnet->weight = 10;
 		subnet_add(myself, subnet);
+		subnet_update(myself, subnet, true);
 
 		/* And tell all other tinc daemons it's our MAC */
 
@@ -154,6 +224,7 @@ void age_subnets(void) {
 					send_del_subnet(c, s);
 			}
 
+			subnet_update(myself, s, false);
 			subnet_del(myself, s);
 		}
 	}
@@ -315,10 +386,10 @@ static void route_ipv4_unicast(node_t *source, vpn_packet_t *packet) {
 
 	via = (subnet->owner->via == myself) ? subnet->owner->nexthop : subnet->owner->via;
 	
-	if(via && packet->len > via->mtu && via != myself) {
+	if(via && packet->len > max(via->mtu, 590) && via != myself) {
 		ifdebug(TRAFFIC) logger(LOG_INFO, "Packet for %s (%s) length %d larger than MTU %d", subnet->owner->name, subnet->owner->hostname, packet->len, via->mtu);
 		if(packet->data[20] & 0x40) {
-			packet->len = via->mtu;
+			packet->len = max(via->mtu, 590);
 			route_ipv4_unreachable(source, packet, ICMP_DEST_UNREACH, ICMP_FRAG_NEEDED);
 		} else {
 			fragment_ipv4_packet(via, packet);
@@ -327,6 +398,8 @@ static void route_ipv4_unicast(node_t *source, vpn_packet_t *packet) {
 		return;
 	}
 
+	clamp_mss(source, via, packet);
+ 
 	send_packet(subnet->owner, packet);
 }
 
@@ -458,13 +531,15 @@ static void route_ipv6_unicast(node_t *source, vpn_packet_t *packet) {
 
 	via = (subnet->owner->via == myself) ? subnet->owner->nexthop : subnet->owner->via;
 	
-	if(via && packet->len > via->mtu && via != myself) {
+	if(via && packet->len > max(via->mtu, 1294) && via != myself) {
 		ifdebug(TRAFFIC) logger(LOG_INFO, "Packet for %s (%s) length %d larger than MTU %d", subnet->owner->name, subnet->owner->hostname, packet->len, via->mtu);
-		packet->len = via->mtu;
+		packet->len = max(via->mtu, 1294);
 		route_ipv6_unreachable(source, packet, ICMP6_PACKET_TOO_BIG, 0);
 		return;
 	}
 
+	clamp_mss(source, via, packet);
+ 
 	send_packet(subnet->owner, packet);
 }
 
@@ -705,7 +780,7 @@ static void route_mac(node_t *source, vpn_packet_t *packet) {
 	/* Lookup destination address */
 
 	memcpy(&dest, &packet->data[0], sizeof dest);
-	subnet = lookup_subnet_mac(&dest);
+	subnet = lookup_subnet_mac(NULL, &dest);
 
 	if(!subnet) {
 		broadcast_packet(source, packet);
@@ -724,7 +799,7 @@ static void route_mac(node_t *source, vpn_packet_t *packet) {
 	if(via && packet->len > via->mtu && via != myself) {
 		ifdebug(TRAFFIC) logger(LOG_INFO, "Packet for %s (%s) length %d larger than MTU %d", subnet->owner->name, subnet->owner->hostname, packet->len, via->mtu);
 		uint16_t type = packet->data[12] << 8 | packet->data[13];
-		if(type == ETH_P_IP) {
+		if(type == ETH_P_IP && packet->len > 590) {
 			if(packet->data[20] & 0x40) {
 				packet->len = via->mtu;
 				route_ipv4_unreachable(source, packet, ICMP_DEST_UNREACH, ICMP_FRAG_NEEDED);
@@ -732,13 +807,15 @@ static void route_mac(node_t *source, vpn_packet_t *packet) {
 				fragment_ipv4_packet(via, packet);
 			}
 			return;
-		} else if(type == ETH_P_IPV6) {
+		} else if(type == ETH_P_IPV6 && packet->len > 1294) {
 			packet->len = via->mtu;
 			route_ipv6_unreachable(source, packet, ICMP6_PACKET_TOO_BIG, 0);
 			return;
 		}
 	}
 
+	clamp_mss(source, via, packet);
+ 
 	send_packet(subnet->owner, packet);
 }
 
