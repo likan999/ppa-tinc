@@ -1,3 +1,19 @@
+tinc (1.0.12-1~bpo50) lenny-backports; urgency=low
+
+  * New upstream release.
+  * Keep debian/ from 1.0.11-1~bpo50.
+  * Use init.d script from Michael Tokarev, allowing per-network arguments to
+    tincd.
+  * Let the init.d script depend on $remote_fs.
+
+ -- Guus Sliepen <guus@debian.org>  Wed, 17 Feb 2010 22:00:31 +0000
+
+tinc (1.0.11-1~bpo50+1) lenny-backports; urgency=low
+
+  * Rebuild for lenny-backports.
+
+ -- Guus Sliepen <guus@debian.org>  Thu, 04 Feb 2010 19:03:00 +0000
+
 tinc (1.0.11-1) unstable; urgency=low
 
   * New upstream release.

@@ -2,8 +2,8 @@
 #
 ### BEGIN INIT INFO
 # Provides:          tinc
-# Required-Start:    $network
-# Required-Stop:     $network
+# Required-Start:    $remote_fs $network
+# Required-Stop:     $remote_fs $network
 # Should-Start:      $syslog $named
 # Should-Stop:       $syslog
 # Default-Start:     2 3 4 5
@@ -29,52 +29,47 @@ test -f $DAEMON || exit 0
 
 [ -r /etc/default/tinc ] && . /etc/default/tinc
 
-find_nets () {
+# foreach_net "what-to-say" action [arguments...]
+foreach_net() {
   if [ ! -f $NETSFILE ] ; then
     echo "Please create $NETSFILE."
     exit 0
   fi
-  NETS="`egrep '^[ ]*[a-zA-Z0-9_-]+[ ]*$' $NETSFILE`"
+  echo -n "$1"
+  shift
+  egrep '^[ ]*[a-zA-Z0-9_-]+' $NETSFILE | while read net args; do
+    echo -n " $net"
+    "$@" $net $args
+  done
+  echo "."
+}
+
+start() {
+  $DAEMON $EXTRA -n "$@"
+}
+stop() {
+  $DAEMON -n $1 -k
+}
+reload() {
+  $DAEMON -n $1 -kHUP
+}
+restart() {
+  stop "$@" && sleep 1
+  start "$@"
 }
 
 case "$1" in
   start)
-    find_nets
-    echo -n "Starting $DESC:"
-    for n in $NETS ; do
-      echo -n " $n"
-      $DAEMON -n $n $EXTRA
-    done
-    echo "."
+    foreach_net "Starting $DESC:" start
   ;;
   stop)
-    find_nets
-    echo -n "Stopping $DESC:"
-    for n in $NETS ; do
-      echo -n " $n"
-      $DAEMON -n $n $EXTRA -k
-    done
-    echo "."
+    foreach_net "Stopping $DESC:" stop
   ;;
   reload|force-reload)
-    find_nets
-    echo -n "Reloading $DESC configuration:"
-    for n in $NETS ; do
-      echo -n " $n"
-      $DAEMON -n $n $EXTRA -kHUP
-    done
-    echo "."
+    foreach_net "Reloading $DESC configuration:" reload
   ;;
   restart)
-    find_nets
-    echo -n "Restarting $DESC:"
-    for n in $NETS ; do
-      echo -n " $n"
-      $DAEMON -n $n $EXTRA -k
-      sleep 1
-      $DAEMON -n $n $EXTRA
-    done
-    echo "."
+    foreach_net "Restarting $DESC:" restart
   ;;
   *)
     echo "Usage: /etc/init.d/$NAME {start|stop|reload|restart|force-reload}"
