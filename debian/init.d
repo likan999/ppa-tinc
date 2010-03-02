@@ -54,7 +54,18 @@ reload() {
   $DAEMON -n $1 -kHUP
 }
 restart() {
-  stop "$@" && sleep 1
+  stop "$@"
+  sleep 0.5
+  i=0;
+  while [ -f /var/run/tinc.$1.pid ] ; do
+	if [ $i = '10' ] ; then
+		break
+	else
+		echo -n "."
+		sleep 0.5
+		i=$(($i+1))
+	fi		
+  done
   start "$@"
 }
 
