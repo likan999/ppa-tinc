@@ -1,3 +1,14 @@
+tinc (1.0.12-2) unstable; urgency=low
+
+  * Remove debconf questions. Closes: #572116
+    Apparently debconf may not be used to ask a question at install time and
+    use the answer at upgrade time. Instead of kludging around this
+    restriction, no questions are asked anymore, and tinc will now always be
+    restarted when upgrading.
+  * Wait up to 5 seconds for tinc daemon to stop before restarting it.
+
+ -- Guus Sliepen <guus@debian.org>  Tue, 02 Mar 2010 14:01:36 +0100
+
 tinc (1.0.12-1) unstable; urgency=low
 
   * New upstream release.

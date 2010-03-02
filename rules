@@ -25,6 +25,9 @@ override_dh_auto_install:
 	# Remove info dir file
 	rm -f debian/tinc/usr/share/info/dir
 
+override_dh_installinit:
+	dh_installinit -R
+
 override_dh_clean:
 	dh_clean
 	rm -f src/device.c
