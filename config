@@ -1,9 +1,0 @@
-#!/bin/sh -e
-
-# Source debconf library.
-. /usr/share/debconf/confmodule
-
-db_title tinc configuration
-
-db_input medium tinc/restart_on_upgrade || true
-db_go

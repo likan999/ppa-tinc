@@ -1,24 +1,33 @@
-tinc (1.0.13-1~bpo50) lenny-backports; urgency=low
+tinc (1.0.13-1) unstable; urgency=low
 
   * New upstream release.
 
- -- Guus Sliepen <guus@debian.org>  Thu, 02 Sep 2010 14:40:42 +0200
+ -- Guus Sliepen <guus@debian.org>  Tue, 13 Apr 2010 12:06:36 +0200
 
-tinc (1.0.12-1~bpo50) lenny-backports; urgency=low
+tinc (1.0.12-2) unstable; urgency=low
+
+  * Remove debconf questions. Closes: #572116
+    Apparently debconf may not be used to ask a question at install time and
+    use the answer at upgrade time. Instead of kludging around this
+    restriction, no questions are asked anymore, and tinc will now always be
+    restarted when upgrading.
+  * Wait up to 5 seconds for tinc daemon to stop before restarting it.
+
+ -- Guus Sliepen <guus@debian.org>  Tue, 02 Mar 2010 14:01:36 +0100
+
+tinc (1.0.12-1) unstable; urgency=low
 
   * New upstream release.
-  * Keep debian/ from 1.0.11-1~bpo50.
+  * Bump Standards-Version.
+  * Migrate from CDBS to debhelper.
+  * Convert source package to 3.0 (quilt) format.
+  * Remove useless tinc.modules.
   * Use init.d script from Michael Tokarev, allowing per-network arguments to
     tincd.
+  * Remove update-rc.d calls from postinst and postrm.
   * Let the init.d script depend on $remote_fs.
 
- -- Guus Sliepen <guus@debian.org>  Wed, 17 Feb 2010 22:00:31 +0000
-
-tinc (1.0.11-1~bpo50+1) lenny-backports; urgency=low
-
-  * Rebuild for lenny-backports.
-
- -- Guus Sliepen <guus@debian.org>  Thu, 04 Feb 2010 19:03:00 +0000
+ -- Guus Sliepen <guus@debian.org>  Thu, 04 Feb 2010 00:56:45 +0100
 
 tinc (1.0.11-1) unstable; urgency=low
 
