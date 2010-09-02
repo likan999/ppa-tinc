@@ -1,9 +1,10 @@
 #!/bin/sh
-
 set -e
-
+# Automatically added by package maintainer
 if [ "$1" = purge ]; then
     rm -f /etc/tinc/nets.boot
+    update-rc.d tinc remove >/dev/null 2>/dev/null
 fi
+# End automatically added section
 
 #DEBHELPER#

@@ -1,0 +1,56 @@
+# translation of tinc debconf to Portuguese
+# Copyright (C) 2007 Américo Monteiro
+# This file is distributed under the same license as the tinc package.
+#
+# Américo Monteiro <a_monteiro@netcabo.pt>, 2007.
+msgid ""
+msgstr ""
+"Project-Id-Version: tinc_1.0.8-1_templates\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2007-05-25 04:46+0200\n"
+"PO-Revision-Date: 2007-07-21 16:38+0100\n"
+"Last-Translator: Américo Monteiro <a_monteiro@netcabo.pt>\n"
+"Language-Team: Portuguese <traduz@debianpt.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: KBabel 1.11.4\n"
+
+#. Type: boolean
+#. Description
+#: ../tinc.templates:1001
+msgid "Restart tinc on each upgrade?"
+msgstr "Reiniciar o tinc em cada actualização?"
+
+#. Type: boolean
+#. Description
+#: ../tinc.templates:1001
+msgid ""
+"You may choose if you want me to restart the tinc daemon every time you "
+"install a new version of this package."
+msgstr ""
+"Você pode escolher se quer eu reinicie o serviço tinc toda a vez que instalar "
+"uma nova versão deste pacote."
+
+#. Type: boolean
+#. Description
+#: ../tinc.templates:1001
+msgid ""
+"Sometimes you don't want to do this, for example if you are doing the "
+"upgrade over a tunnel that is created with tinc.  Stopping the daemon would "
+"probably leave you with a dead connection, and tinc may not be started again."
+msgstr ""
+"Por vezes você não querer que isto aconteça, por exemplo, se estiver a fazer "
+"a actualização por um túnel que é criado pelo tinc. Parando o serviço iria provavelmente "
+"deixá-lo com uma ligação morta, e o tinc poderia não arrancar de novo."
+
+#. Type: boolean
+#. Description
+#: ../tinc.templates:1001
+msgid ""
+"If you refuse, you have to restart tinc yourself if you upgraded, by typing "
+"`invoke-rc.d tinc restart' whenever it suits you."
+msgstr ""
+"Se recusar, terá que ser você a reiniciar o tinc se o actualizar, escrevendo "
+"'invoke-rc.d tinc restart' ou outro comando que lhe sirva."
+
