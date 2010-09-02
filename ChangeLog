@@ -1,3 +1,181 @@
+commit 26b8cf8680ae68443dccac2adbc2361caafc3712
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Apr 11 20:40:20 2010 +0200
+
+    Releasing 1.0.13.
+
+commit 74653beb5bc510e60579058ee15c0f66350f5137
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Apr 11 19:47:44 2010 +0200
+
+    Mark Forwarding and DirectOnly options as being experimental.
+
+commit 0ddce6370d39eff162bd212a6e47fe3a8e96a09e
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Apr 11 19:39:31 2010 +0200
+
+    Don't redefine MAX if it already exists.
+
+commit a9bbb3357a89e27185312fbce0ee134eda4eda90
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Apr 11 19:20:02 2010 +0200
+
+    Fixes for definitions under Windows.
+
+commit 4708f2c89edea4be2562256544cf35309cf1ea89
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Apr 11 18:34:50 2010 +0200
+
+    Ensure subnet-up/down scripts are called after HUP when necessary.
+
+commit 32f5524c4b52a2d3a96bc48ee2437f8b9b4dbe10
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Apr 11 04:35:16 2010 +0200
+
+    Fix reloading Subnets when StrictSubnets is set.
+
+commit 9f53ab209d8a6a7622a49ed03cef735b6e3f3eeb
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Apr 11 00:50:42 2010 +0200
+
+    Reload Subnets when getting a HUP signal and StrictSubnets is used.
+
+commit d1cc637470edaed663e694fdeb290eb45cc9ecca
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sat Apr 10 23:55:15 2010 +0200
+
+    Ensure ICMP_NET_ANO is defined.
+
+commit f75e71bc693847af71f61fb72cd788e3e47f9bd3
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sat Apr 3 09:46:45 2010 +0100
+
+    Convert Port to numeric form before sending it to other nodes.
+    
+    If one uses a symbolic name for the Port option, tinc will send that name
+    literally to other nodes.  However, it is not guaranteed that all nodes have
+    the same contents in /etc/services, or have such a file at all.
+
+commit 292354912f346fe467f557f0dc026b519997289c
+Author: Sven-Haegar Koch <haegar@ccc.de>
+Date:   Wed Mar 10 02:50:51 2010 +0100
+
+    Never delete Subnets when StrictSubnets is set
+    
+    If a node is unreachable, and not connected to an edge anymore, it gets
+    deleted. When this happens its subnets are also removed, which should
+    not happen with StrictSubnets=yes.
+    
+    Solution:
+    - do not remove subnets in src/net.c::purge(), we know that all subnets
+      in the list came from our hosts files.
+      I think here you got the check wrong by looking at the tunnelserver
+      code below it - with strictsubnets we still inform others but do not
+      remove the subnet from our data.
+    - do not remove nodes in net.c::purge() that still have subnets
+      attached.
+
+commit 146760bd35b351d58e817ce0e67f5c6f74750cd4
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Wed Mar 10 16:07:01 2010 +0100
+
+    Fix typo.
+
+commit f2346771cf5b22092dd3f5af3674008aa1e878d1
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Mon Mar 8 21:44:32 2010 +0100
+
+    Log unauthorized Subnets when StrictSubnets is set.
+
+commit ee64b8ef33b709fabfc1ed56762d5f52fc026e52
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Mon Mar 8 17:54:57 2010 +0100
+
+    ConnectTo does not mean tinc does not listen for incoming connections anymore.
+
+commit 8ae54dc7c782bcc4b771ec0766fcf9eee115756e
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Tue Mar 2 23:27:50 2010 +0100
+
+    Fixes for the Forwarding option.
+
+commit 3e4829e78a3c7f7e19017d05611e5b69d5268119
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Tue Mar 2 22:55:24 2010 +0100
+
+    Add the DirectOnly option.
+    
+    When this option is enabled, packets that cannot be sent directly to the destination node,
+    but which would have to be forwarded by an intermediate node, are dropped instead.
+    When combined with the IndirectData option,
+    packets for nodes for which we do not have a meta connection with are also dropped.
+
+commit 95a6974de173e0cb78611c6704ed09631d510dae
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Tue Mar 2 22:34:26 2010 +0100
+
+    Add the Forwarding option.
+    
+    This determines if and how incoming packets that are not meant for the local
+    node are forwarded.  It can either be off, internal (tinc forwards them itself,
+    as in previous versions), or kernel (packets are always sent to the TUN/TAP
+    device, letting the kernel sort them out).
+
+commit 5038964032ef55913b2d4741c67bf191b2208abb
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Tue Mar 2 00:18:44 2010 +0100
+
+    Add the StrictSubnets option.
+    
+    When this option is enabled, tinc will not accept dynamic updates of Subnets
+    from other nodes, but will only use Subnets read from local host config files
+    to build its routing table.
+
+commit 9fed0ec34b9208611a7e96a595f23fa04e60a5c0
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Mon Mar 1 23:44:56 2010 +0100
+
+    Preload all Subnets in TunnelServer mode.
+    
+    This simplifies the logic in protocol_subnet.c.
+
+commit d47ab576a25d91600acf7eecf376ed026bdc9c83
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Mon Mar 1 23:44:46 2010 +0100
+
+    Check for dirent.h.
+
+commit 21f33b638291c2ffe7156e6c1e0df339f855d831
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Mon Mar 1 23:35:02 2010 +0100
+
+    Simplify reading lines from configuration files.
+    
+    Instead of allocating storage for each line read, we now read into fixed-size
+    buffers on the stack. This fixes a case where a malformed configuration file
+    could crash tinc.
+
+commit 3cb91d75f874e3398c35cd4280c1e0a1ceeedabc
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Feb 28 18:20:13 2010 +0100
+
+    Clamp MSS to miminum MTU in both directions.
+    
+    Clamp MSS of both incoming and outgoing packets, and use the minimum of the
+    PMTU of both directions when clamping.
+
+commit ddb8cb0779ed36d17ce186dd0bf67e9f0c860d28
+Author: Timothy Redaelli <timothy@redaelli.eu>
+Date:   Wed Feb 10 14:52:15 2010 +0100
+
+    Add --disable-zlib configure option
+
+commit eeb505af36ba9496ad29b32cd0917afb8c6cd355
+Author: Timothy Redaelli <timothy@redaelli.eu>
+Date:   Wed Feb 10 13:24:33 2010 +0100
+
+    Add --disable-lzo configure option
+
 commit f7b2a2ea43fca323f543e152e6a43a29a4eb6671
 Author: Guus Sliepen <guus@tinc-vpn.org>
 Date:   Wed Feb 3 22:49:48 2010 +0100

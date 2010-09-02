@@ -55,6 +55,9 @@
    don't. */
 #undef HAVE_DECL_GETNAMEINFO
 
+/* Define to 1 if you have the <dirent.h> header file. */
+#undef HAVE_DIRENT_H
+
 /* Define to 1 if you have the `EVP_EncryptInit_ex' function. */
 #undef HAVE_EVP_ENCRYPTINIT_EX
 
@@ -93,6 +96,9 @@
 
 /* Define to 1 if you have the <linux/if_tun.h> header file. */
 #undef HAVE_LINUX_IF_TUN_H
+
+/* enable lzo compression support */
+#undef HAVE_LZO
 
 /* Define to 1 if you have the <lzo1x.h> header file. */
 #undef HAVE_LZO1X_H
@@ -326,6 +332,9 @@
 
 /* Define to 1 if you have the `writev' function. */
 #undef HAVE_WRITEV
+
+/* have zlib compression support */
+#undef HAVE_ZLIB
 
 /* Define to 1 if you have the <zlib.h> header file. */
 #undef HAVE_ZLIB_H

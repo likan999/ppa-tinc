@@ -33,6 +33,8 @@
 #include "utils.h"
 
 rmode_t routing_mode = RMODE_ROUTER;
+fmode_t forwarding_mode = FMODE_INTERNAL;
+bool directonly = false;
 bool priorityinheritance = false;
 int macexpire = 600;
 bool overwrite_mac = false;
@@ -48,7 +50,10 @@ static const size_t ip6_size = sizeof(struct ip6_hdr);
 static const size_t icmp6_size = sizeof(struct icmp6_hdr);
 static const size_t ns_size = sizeof(struct nd_neighbor_solicit);
 static const size_t opt_size = sizeof(struct nd_opt_hdr);
-#define max(a, b) ((a) > (b) ? (a) : (b))
+
+#ifndef MAX
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
+#endif
 
 /* RFC 1071 */
 
@@ -94,8 +99,12 @@ static bool checklength(node_t *source, vpn_packet_t *packet, length_t length) {
 }
 
 static void clamp_mss(const node_t *source, const node_t *via, vpn_packet_t *packet) {
-	if(!via || via == myself || !(via->options & OPTION_CLAMP_MSS))
+	if(!source || !via || !(via->options & OPTION_CLAMP_MSS))
 		return;
+
+	uint16_t mtu = source->mtu;
+	if(via != myself && via->mtu < mtu)
+		mtu = via->mtu;
 
 	/* Find TCP header */
 	int start = 0;
@@ -140,7 +149,7 @@ static void clamp_mss(const node_t *source, const node_t *via, vpn_packet_t *pac
 
 		/* Found it */
 		uint16_t oldmss = packet->data[start + 22 + i] << 8 | packet->data[start + 23 + i];
-		uint16_t newmss = via->mtu - start - 20;
+		uint16_t newmss = mtu - start - 20;
 		uint16_t csum = packet->data[start + 16] << 8 | packet->data[start + 17];
 
 		if(oldmss <= newmss)
@@ -379,17 +388,23 @@ static void route_ipv4_unicast(node_t *source, vpn_packet_t *packet) {
 	}
 
 	if(!subnet->owner->status.reachable)
-		route_ipv4_unreachable(source, packet, ICMP_DEST_UNREACH, ICMP_NET_UNREACH);
+		return route_ipv4_unreachable(source, packet, ICMP_DEST_UNREACH, ICMP_NET_UNREACH);
+
+	if(forwarding_mode == FMODE_OFF && source != myself && subnet->owner != myself)
+		return route_ipv4_unreachable(source, packet, ICMP_DEST_UNREACH, ICMP_NET_ANO);
 
 	if(priorityinheritance)
 		packet->priority = packet->data[15];
 
 	via = (subnet->owner->via == myself) ? subnet->owner->nexthop : subnet->owner->via;
 	
-	if(via && packet->len > max(via->mtu, 590) && via != myself) {
+	if(directonly && subnet->owner != via)
+		return route_ipv4_unreachable(source, packet, ICMP_DEST_UNREACH, ICMP_NET_ANO);
+
+	if(via && packet->len > MAX(via->mtu, 590) && via != myself) {
 		ifdebug(TRAFFIC) logger(LOG_INFO, "Packet for %s (%s) length %d larger than MTU %d", subnet->owner->name, subnet->owner->hostname, packet->len, via->mtu);
 		if(packet->data[20] & 0x40) {
-			packet->len = max(via->mtu, 590);
+			packet->len = MAX(via->mtu, 590);
 			route_ipv4_unreachable(source, packet, ICMP_DEST_UNREACH, ICMP_FRAG_NEEDED);
 		} else {
 			fragment_ipv4_packet(via, packet);
@@ -527,13 +542,19 @@ static void route_ipv6_unicast(node_t *source, vpn_packet_t *packet) {
 	}
 
 	if(!subnet->owner->status.reachable)
-		route_ipv6_unreachable(source, packet, ICMP6_DST_UNREACH, ICMP6_DST_UNREACH_NOROUTE);
+		return route_ipv6_unreachable(source, packet, ICMP6_DST_UNREACH, ICMP6_DST_UNREACH_NOROUTE);
+
+	if(forwarding_mode == FMODE_OFF && source != myself && subnet->owner != myself)
+		return route_ipv6_unreachable(source, packet, ICMP6_DST_UNREACH, ICMP6_DST_UNREACH_ADMIN);
 
 	via = (subnet->owner->via == myself) ? subnet->owner->nexthop : subnet->owner->via;
 	
-	if(via && packet->len > max(via->mtu, 1294) && via != myself) {
+	if(directonly && subnet->owner != via)
+		return route_ipv6_unreachable(source, packet, ICMP6_DST_UNREACH, ICMP6_DST_UNREACH_ADMIN);
+
+	if(via && packet->len > MAX(via->mtu, 1294) && via != myself) {
 		ifdebug(TRAFFIC) logger(LOG_INFO, "Packet for %s (%s) length %d larger than MTU %d", subnet->owner->name, subnet->owner->hostname, packet->len, via->mtu);
-		packet->len = max(via->mtu, 1294);
+		packet->len = MAX(via->mtu, 1294);
 		route_ipv6_unreachable(source, packet, ICMP6_PACKET_TOO_BIG, 0);
 		return;
 	}
@@ -792,9 +813,15 @@ static void route_mac(node_t *source, vpn_packet_t *packet) {
 		return;
 	}
 
+	if(forwarding_mode == FMODE_OFF && source != myself && subnet->owner != myself)
+		return;
+
 	// Handle packets larger than PMTU
 
 	node_t *via = (subnet->owner->via == myself) ? subnet->owner->nexthop : subnet->owner->via;
+
+	if(directonly && subnet->owner != via)
+		return;
 	
 	if(via && packet->len > via->mtu && via != myself) {
 		ifdebug(TRAFFIC) logger(LOG_INFO, "Packet for %s (%s) length %d larger than MTU %d", subnet->owner->name, subnet->owner->hostname, packet->len, via->mtu);
@@ -820,6 +847,11 @@ static void route_mac(node_t *source, vpn_packet_t *packet) {
 }
 
 void route(node_t *source, vpn_packet_t *packet) {
+	if(forwarding_mode == FMODE_KERNEL && source != myself) {
+		send_packet(myself, packet);
+		return;
+	}
+
 	if(!checklength(source, packet, ether_size))
 		return;
 

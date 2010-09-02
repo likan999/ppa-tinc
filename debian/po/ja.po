@@ -1,0 +1,49 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: tinc 1.0.4-1\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2004-11-11 20:06+0000\n"
+"PO-Revision-Date: 2005-06-14 21:09+0900\n"
+"Last-Translator: Atsushi Shimono <shimono@kwasan.kyoto-u.ac.jp>\n"
+"Language-Team: Japanese <debian-japanese@lists.debian.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=EUC-JP\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#. Type: boolean
+#. Description
+#: ../tinc.templates:4
+msgid "Restart tinc on each upgrade?"
+msgstr "アップグレードのたびに tinc を再起動しますか？"
+
+#. Type: boolean
+#. Description
+#: ../tinc.templates:4
+msgid ""
+"You may choose if you want me to restart the tinc daemon every time you "
+"install a new version of this package."
+msgstr ""
+"このパッケージの新しいバージョンをインストールするたびに、tinc デーモンを"
+"再起動するかどうかを選択できます。"
+
+#. Type: boolean
+#. Description
+#: ../tinc.templates:4
+msgid ""
+"Sometimes you don't want to do this, for example if you are doing the "
+"upgrade over a tunnel that is created with tinc.  Stopping the daemon would "
+"probably leave you with a dead connection, and tinc may not be started again."
+msgstr ""
+"tinc のトンネルを経由してアップグレードを行っているときなど、これを行い"
+"たくないことがあると思います。デーモンを止めることで接続が失われ、tinc "
+"も再起動しなくなります。"
+
+#. Type: boolean
+#. Description
+#: ../tinc.templates:4
+msgid ""
+"If you refuse, you have to restart tinc yourself if you upgraded, by typing "
+"`invoke-rc.d tinc restart' whenever it suits you."
+msgstr ""
+"これを選択しない場合、アップグレードを行った際、都合が良いときに "
+"'invoke-rc.d tinc restart' を実行して tinc を自分で再起動する必要があります。"

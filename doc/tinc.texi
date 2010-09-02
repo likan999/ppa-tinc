@@ -818,6 +818,33 @@ Tinc will expect packets read from the virtual network device
 to start with an Ethernet header.
 @end table
 
+@cindex DirectOnly
+@item DirectOnly = <yes|no> (no) [experimental]
+When this option is enabled, packets that cannot be sent directly to the destination node,
+but which would have to be forwarded by an intermediate node, are dropped instead.
+When combined with the IndirectData option,
+packets for nodes for which we do not have a meta connection with are also dropped.
+
+@cindex Forwarding
+@item Forwarding = <off|internal|kernel> (internal) [experimental]
+This option selects the way indirect packets are forwarded.
+
+@table @asis
+@item off
+Incoming packets that are not meant for the local node,
+but which should be forwarded to another node, are dropped.
+
+@item internal
+Incoming packets that are meant for another node are forwarded by tinc internally.
+
+This is the default mode, and unless you really know you need another forwarding mode, don't change it.
+
+@item kernel
+Incoming packets are always sent to the TUN/TAP device, even if the packets are not for the local node.
+This is less efficient, but allows the kernel to apply its routing and firewall rules on them,
+and can also help debugging.
+@end table
+
 @cindex GraphDumpFile
 @item GraphDumpFile = <@var{filename}> [experimental]
 If this option is present,
@@ -928,11 +955,18 @@ specified in the configuration file.
 When this option is used the priority of the tincd process will be adjusted.
 Increasing the priority may help to reduce latency and packet loss on the VPN.
 
+@cindex StrictSubnets
+@item StrictSubnets <yes|no> (no) [experimental]
+When this option is enabled tinc will only use Subnet statements which are
+present in the host config files in the local
+@file{@value{sysconfdir}/tinc/@var{netname}/hosts/} directory.
+
 @cindex TunnelServer
 @item TunnelServer = <yes|no> (no) [experimental]
 When this option is enabled tinc will no longer forward information between other tinc daemons,
-and will only allow nodes and subnets on the VPN which are present in the
+and will only allow connections with nodes for which host config files are present in the local
 @file{@value{sysconfdir}/tinc/@var{netname}/hosts/} directory.
+Setting this options also implicitly sets StrictSubnets.
 
 @end table
 
@@ -1314,7 +1348,7 @@ Address = 1.2.3.4
 
 Note that the IP addresses of eth0 and tap0 are the same.
 This is quite possible, if you make sure that the netmasks of the interfaces are different.
-It is in fact recommended to give give both real internal network interfaces and tap interfaces the same IP address,
+It is in fact recommended to give both real internal network interfaces and tap interfaces the same IP address,
 since that will make things a lot easier to remember and set up.
 
 
@@ -1337,8 +1371,8 @@ ConnectTo = BranchA
 @end example
 
 Note here that the internal address (on eth0) doesn't have to be the
-same as on the tap0 device.  Also, ConnectTo is given so that no-one can
-connect to this node.
+same as on the tap0 device.  Also, ConnectTo is given so that this node will
+always try to connect to BranchA.
 
 On all hosts, in @file{@value{sysconfdir}/tinc/company/hosts/BranchB}:
 

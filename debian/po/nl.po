@@ -1,0 +1,63 @@
+#
+#    Translators, if you are not familiar with the PO format, gettext
+#    documentation is worth reading, especially sections dedicated to
+#    this format, e.g. by running:
+#         info -n '(gettext)PO Files'
+#         info -n '(gettext)Header Entry'
+#
+#    Some information specific to po-debconf are available at
+#            /usr/share/doc/po-debconf/README-trans
+#         or http://www.debian.org/intl/l10n/po-debconf/README-trans
+#
+#    Developers do not need to manually edit POT or PO files.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: tinc_1.0.4-1\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2004-11-11 20:06+0000\n"
+"PO-Revision-Date: 2005-05-04 21:40+0200\n"
+"Last-Translator: Guus Sliepen <guus@debian.org>\n"
+"Language-Team: Dutch <nl@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#. Type: boolean
+#. Description
+#: ../tinc.templates:4
+msgid "Restart tinc on each upgrade?"
+msgstr "Start tinc opnieuw na iedere upgrade?"
+
+#. Type: boolean
+#. Description
+#: ../tinc.templates:4
+msgid ""
+"You may choose if you want me to restart the tinc daemon every time you "
+"install a new version of this package."
+msgstr ""
+"Je kunt kiezen of ik de tinc daemon opnieuw moet starten iedere keer als je "
+"een nieuwe versie van het pakket installeert."
+
+#. Type: boolean
+#. Description
+#: ../tinc.templates:4
+msgid ""
+"Sometimes you don't want to do this, for example if you are doing the "
+"upgrade over a tunnel that is created with tinc.  Stopping the daemon would "
+"probably leave you with a dead connection, and tinc may not be started again."
+msgstr ""
+"Soms wil je dit niet doen, bij voorbeeld als je de upgrade uitvoert over een "
+"tunnel die met tinc is gemaakt.  Het stoppen van tinc resulteert dan "
+"waarschijnlijk is een dode verbinding, en tinc wordt dan misschien niet "
+"opnieuw gestart."
+
+#. Type: boolean
+#. Description
+#: ../tinc.templates:4
+msgid ""
+"If you refuse, you have to restart tinc yourself if you upgraded, by typing "
+"`invoke-rc.d tinc restart' whenever it suits you."
+msgstr ""
+"Als je weigert, moet je zelf tinc opnieuw starten na een upgrade, door"
+"`invoke-rc.d tinc restart' in te tiepen wanneer het goed uitkomt."
