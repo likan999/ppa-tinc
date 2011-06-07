@@ -58,6 +58,9 @@
 /* Define to 1 if you have the <dirent.h> header file. */
 #undef HAVE_DIRENT_H
 
+/* DragonFly */
+#undef HAVE_DRAGONFLY
+
 /* Define to 1 if you have the `EVP_EncryptInit_ex' function. */
 #undef HAVE_EVP_ENCRYPTINIT_EX
 
@@ -172,6 +175,12 @@
 
 /* Define to 1 if you have the <net/if_types.h> header file. */
 #undef HAVE_NET_IF_TYPES_H
+
+/* Define to 1 if you have the <net/tap/if_tap.h> header file. */
+#undef HAVE_NET_TAP_IF_TAP_H
+
+/* Define to 1 if you have the <net/tun/if_tun.h> header file. */
+#undef HAVE_NET_TUN_IF_TUN_H
 
 /* OpenBSD */
 #undef HAVE_OPENBSD
@@ -303,6 +312,9 @@
 /* Define to 1 if you have the <sys/param.h> header file. */
 #undef HAVE_SYS_PARAM_H
 
+/* Define to 1 if you have the <sys/resource.h> header file. */
+#undef HAVE_SYS_RESOURCE_H
+
 /* Define to 1 if you have the <sys/socket.h> header file. */
 #undef HAVE_SYS_SOCKET_H
 
@@ -326,6 +338,9 @@
 
 /* Define to 1 if you have the `unsetenv' function. */
 #undef HAVE_UNSETENV
+
+/* Define to 1 if you have the `usleep' function. */
+#undef HAVE_USLEEP
 
 /* Define to 1 if you have the `vsyslog' function. */
 #undef HAVE_VSYSLOG

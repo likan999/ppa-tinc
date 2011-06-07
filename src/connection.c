@@ -127,14 +127,3 @@ void dump_connections(void) {
 
 	logger(LOG_DEBUG, "End of connections.");
 }
-
-bool read_connection_config(connection_t *c) {
-	char *fname;
-	bool x;
-
-	xasprintf(&fname, "%s/hosts/%s", confbase, c->name);
-	x = read_config_file(c->config_tree, fname);
-	free(fname);
-
-	return x;
-}

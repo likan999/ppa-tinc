@@ -2,7 +2,8 @@
     conf.c -- configuration code
     Copyright (C) 1998 Robert van der Meulen
                   1998-2005 Ivo Timmermans
-                  2000-2009 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2010 Guus Sliepen <guus@tinc-vpn.org>
+                  2010-2011 Julien Muchembled <jm@jmuchemb.eu>
 		  2000 Cris van Pelt
 
     This program is free software; you can redistribute it and/or modify
@@ -23,6 +24,7 @@
 #include "system.h"
 
 #include "avl_tree.h"
+#include "connection.h"
 #include "conf.h"
 #include "logger.h"
 #include "netutl.h"				/* for str2address */
@@ -36,6 +38,8 @@ int pinginterval = 0;			/* seconds between pings */
 int pingtimeout = 0;			/* seconds to wait for response */
 char *confbase = NULL;			/* directory in which all config files are */
 char *netname = NULL;			/* name of the vpn network */
+list_t *cmdline_conf = NULL;	/* global/host configuration values given at the command line */
+
 
 static int config_compare(const config_t *a, const config_t *b) {
 	int result;
@@ -45,12 +49,17 @@ static int config_compare(const config_t *a, const config_t *b) {
 	if(result)
 		return result;
 
+	/* give priority to command line options */
+	result = !b->file - !a->file;
+	if (result)
+		return result;
+
 	result = a->line - b->line;
 
 	if(result)
 		return result;
 	else
-		return strcmp(a->file, b->file);
+		return a->file ? strcmp(a->file, b->file) : 0;
 }
 
 void init_configuration(avl_tree_t ** config_tree) {
@@ -87,7 +96,7 @@ config_t *lookup_config(avl_tree_t *config_tree, char *variable) {
 	config_t cfg, *found;
 
 	cfg.variable = variable;
-	cfg.file = "";
+	cfg.file = NULL;
 	cfg.line = 0;
 
 	found = avl_search_closest_greater(config_tree, &cfg);
@@ -224,13 +233,52 @@ static char *readline(FILE * fp, char *buf, size_t buflen) {
 	newline = strchr(p, '\n');
 
 	if(!newline)
-		return NULL;
+		return buf;
 
 	*newline = '\0';	/* kill newline */
 	if(newline > p && newline[-1] == '\r')	/* and carriage return if necessary */
 		newline[-1] = '\0';
 
 	return buf;
+}
+
+config_t *parse_config_line(char *line, const char *fname, int lineno) {
+	config_t *cfg;
+	int len;
+	char *variable, *value, *eol;
+	variable = value = line;
+
+	eol = line + strlen(line);
+	while(strchr("\t ", *--eol))
+		*eol = '\0';
+
+	len = strcspn(value, "\t =");
+	value += len;
+	value += strspn(value, "\t ");
+	if(*value == '=') {
+		value++;
+		value += strspn(value, "\t ");
+	}
+	variable[len] = '\0';
+
+	if(!*value) {
+		const char err[] = "No value for variable";
+		if (fname)
+			logger(LOG_ERR, "%s `%s' on line %d while reading config file %s",
+				err, variable, lineno, fname);
+		else
+			logger(LOG_ERR, "%s `%s' in command line option %d",
+				err, variable, lineno);
+		return NULL;
+	}
+
+	cfg = new_config();
+	cfg->variable = xstrdup(variable);
+	cfg->value = xstrdup(value);
+	cfg->file = fname ? xstrdup(fname) : NULL;
+	cfg->line = lineno;
+
+	return cfg;
 }
 
 /*
@@ -241,9 +289,7 @@ bool read_config_file(avl_tree_t *config_tree, const char *fname) {
 	FILE *fp;
 	char buffer[MAX_STRING_SIZE];
 	char *line;
-	char *variable, *value, *eol;
 	int lineno = 0;
-	int len;
 	bool ignore = false;
 	config_t *cfg;
 	bool result = false;
@@ -280,34 +326,9 @@ bool read_config_file(avl_tree_t *config_tree, const char *fname) {
 			continue;
 		}
 
-		variable = value = line;
-
-		eol = line + strlen(line);
-		while(strchr("\t ", *--eol))
-			*eol = '\0';
-
-		len = strcspn(value, "\t =");
-		value += len;
-		value += strspn(value, "\t ");
-		if(*value == '=') {
-			value++;
-			value += strspn(value, "\t ");
-		}
-		variable[len] = '\0';
-
-	
-		if(!*value) {
-			logger(LOG_ERR, "No value for variable `%s' on line %d while reading config file %s",
-				   variable, lineno, fname);
+		cfg = parse_config_line(line, fname, lineno);
+		if (!cfg)
 			break;
-		}
-
-		cfg = new_config();
-		cfg->variable = xstrdup(variable);
-		cfg->value = xstrdup(value);
-		cfg->file = xstrdup(fname);
-		cfg->line = lineno;
-
 		config_add(config_tree, cfg);
 	}
 
@@ -316,9 +337,42 @@ bool read_config_file(avl_tree_t *config_tree, const char *fname) {
 	return result;
 }
 
+void read_config_options(avl_tree_t *config_tree, const char *prefix) {
+	list_node_t *node, *next;
+	size_t prefix_len = prefix ? strlen(prefix) : 0;
+
+	for(node = cmdline_conf->tail; node; node = next) {
+		config_t *orig_cfg, *cfg = (config_t *)node->data;
+		next = node->prev;
+
+		if(!prefix) {
+			if(strchr(cfg->variable, '.'))
+				continue;
+			node->data = NULL;
+			list_unlink_node(cmdline_conf, node);
+		} else {
+			if(strncmp(prefix, cfg->variable, prefix_len) ||
+			   cfg->variable[prefix_len] != '.')
+				continue;
+			/* Because host configuration is parsed again when
+			   reconnecting, nodes must not be freed when a prefix
+			   is given. */
+			orig_cfg = cfg;
+			cfg = new_config();
+			cfg->variable = xstrdup(orig_cfg->variable + prefix_len + 1);
+			cfg->value = xstrdup(orig_cfg->value);
+			cfg->file = NULL;
+			cfg->line = orig_cfg->line;
+		}
+		config_add(config_tree, cfg);
+	}
+}
+
 bool read_server_config() {
 	char *fname;
 	bool x;
+
+	read_config_options(config_tree, NULL);
 
 	xasprintf(&fname, "%s/tinc.conf", confbase);
 	x = read_config_file(config_tree, fname);
@@ -327,6 +381,19 @@ bool read_server_config() {
 		logger(LOG_ERR, "Failed to read `%s': %s", fname, strerror(errno));
 	}
 
+	free(fname);
+
+	return x;
+}
+
+bool read_connection_config(connection_t *c) {
+	char *fname;
+	bool x;
+
+	read_config_options(c->config_tree, c->name);
+
+	xasprintf(&fname, "%s/hosts/%s", confbase, c->name);
+	x = read_config_file(c->config_tree, fname);
 	free(fname);
 
 	return x;
@@ -400,24 +467,33 @@ bool disable_old_keys(FILE *f) {
 	rewind(f);
 	pos = ftell(f);
 
+	if(pos < 0)
+		return false;
+
 	while(fgets(buf, sizeof buf, f)) {
 		if(!strncmp(buf, "-----BEGIN RSA", 14)) {	
 			buf[11] = 'O';
 			buf[12] = 'L';
 			buf[13] = 'D';
-			fseek(f, pos, SEEK_SET);
-			fputs(buf, f);
+			if(fseek(f, pos, SEEK_SET))
+				break;
+			if(fputs(buf, f) <= 0)
+				break;
 			disabled = true;
 		}
 		else if(!strncmp(buf, "-----END RSA", 12)) {	
 			buf[ 9] = 'O';
 			buf[10] = 'L';
 			buf[11] = 'D';
-			fseek(f, pos, SEEK_SET);
-			fputs(buf, f);
+			if(fseek(f, pos, SEEK_SET))
+				break;
+			if(fputs(buf, f) <= 0)
+				break;
 			disabled = true;
 		}
 		pos = ftell(f);
+		if(pos < 0)
+			break;
 	}
 
 	return disabled;

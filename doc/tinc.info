@@ -5,10 +5,10 @@ START-INFO-DIR-ENTRY
 * tinc: (tinc).              The tinc Manual.
 END-INFO-DIR-ENTRY
 
-   This is the info manual for tinc version 1.0.13, a Virtual Private
+   This is the info manual for tinc version 1.0.14, a Virtual Private
 Network daemon.
 
-   Copyright (C) 1998-2010 Ivo Timmermans, Guus Sliepen
+   Copyright (C) 1998-2011 Ivo Timmermans, Guus Sliepen
 <guus@tinc-vpn.org> and Wessel Dankers <wsl@tinc-vpn.org>.
 
    Permission is granted to make and distribute verbatim copies of this
@@ -84,7 +84,7 @@ trusted computers on the other end of the Internet.
    This problem can be solved by using _virtual_ networks.  Virtual
 networks can live on top of other networks, but they use encapsulation
 to keep using their private address space so they do not interfere with
-the Internet.  Mostly, virtual networks appear like a singe LAN, even
+the Internet.  Mostly, virtual networks appear like a single LAN, even
 though they can span the entire world.  But virtual networks can't be
 secured by using firewalls, because the traffic that flows through it
 has to go through the Internet, where other people can look at it.
@@ -654,6 +654,13 @@ that you put in the `=' sign, but doing so improves readability.  If
 you leave it out, remember to replace it with at least one space
 character.
 
+   The server configuration is complemented with host specific
+configuration (see the next section). Although all host configuration
+options for the local node listed in this document can also be put in
+`/etc/tinc/NETNAME/tinc.conf', it is recommended to put host specific
+configuration options in the host configuration file, as this makes it
+easy to exchange with other nodes.
+
    In this section all valid variables are listed in alphabetical order.
 The default value is given between parentheses, other comments are
 between square brackets.
@@ -869,6 +876,17 @@ ProcessPriority = <low|normal|high>
      adjusted.  Increasing the priority may help to reduce latency and
      packet loss on the VPN.
 
+ReplayWindow = <bytes> (16)
+     This is the size of the replay tracking window for each remote
+     node, in bytes.  The window is a bitfield which tracks 1 packet
+     per bit, so for example the default setting of 16 will track up to
+     128 packets in the window. In high bandwidth scenarios, setting
+     this to a higher value can reduce packet loss from the interaction
+     of replay tracking with underlying real packet loss and/or
+     reordering. Setting this to zero will disable replay tracking
+     completely and pass all traffic, but leaves tinc vulnerable to
+     replay-based attacks on your traffic.
+
 StrictSubnets <yes|no> (no) [experimental]
      When this option is enabled tinc will only use Subnet statements
      which are present in the host config files in the local
@@ -880,6 +898,16 @@ TunnelServer = <yes|no> (no) [experimental]
      connections with nodes for which host config files are present in
      the local `/etc/tinc/NETNAME/hosts/' directory.  Setting this
      options also implicitly sets StrictSubnets.
+
+UDPRcvBuf = <bytes> (OS default)
+     Sets the socket receive buffer size for the UDP socket, in bytes.
+     If unset, the default buffer size will be used by the operating
+     system.
+
+UDPSndBuf = <bytes> Pq OS default
+     Sets the socket send buffer size for the UDP socket, in bytes.  If
+     unset, the default buffer size will be used by the operating
+     system.
 
 
 
@@ -1403,7 +1431,10 @@ command line options.
      always be stopped and removed.
 
 `-n, --net=NETNAME'
-     Use configuration for net NETNAME. *Note Multiple networks::.
+     Use configuration for net NETNAME.  This will let tinc read all
+     configuration files from `/etc/tinc/NETNAME/'.  Specifying . for
+     NETNAME is the same as not specifying any NETNAME.  *Note Multiple
+     networks::.
 
 `-K, --generate-keys[=BITS]'
      Generate public/private keypair of BITS length. If BITS is not
@@ -2377,6 +2408,8 @@ Concept Index
 * release:                               Supported platforms. (line  14)
 * REMOTEADDRESS:                         Scripts.             (line  67)
 * REMOTEPORT:                            Scripts.             (line  70)
+* ReplayWindow:                          Main configuration variables.
+                                                              (line 204)
 * REQ_KEY:                               The meta-protocol.   (line  64)
 * requirements:                          Libraries.           (line   6)
 * router:                                Main configuration variables.
@@ -2388,7 +2421,7 @@ Concept Index
                                                               (line  18)
 * signals:                               Signals.             (line   6)
 * StrictSubnets:                         Main configuration variables.
-                                                              (line 204)
+                                                              (line 215)
 * SUBNET:                                Scripts.             (line  74)
 * Subnet:                                Host configuration variables.
                                                               (line  74)
@@ -2410,12 +2443,16 @@ Concept Index
 * tunifhead:                             Main configuration variables.
                                                               (line  62)
 * TunnelServer:                          Main configuration variables.
-                                                              (line 209)
+                                                              (line 220)
 * tunnohead:                             Main configuration variables.
                                                               (line  56)
 * UDP <1>:                               Encryption of network packets.
                                                               (line  12)
 * UDP:                                   The UDP tunnel.      (line  30)
+* UDPRcvBuf:                             Main configuration variables.
+                                                              (line 227)
+* UDPSndBuf:                             Main configuration variables.
+                                                              (line 232)
 * Universal tun/tap:                     Configuration of Linux kernels.
                                                               (line   6)
 * virtual:                               Virtual Private Networks.
@@ -2434,63 +2471,63 @@ Tag Table:
 Node: Top810
 Node: Introduction1109
 Node: Virtual Private Networks1919
-Node: tinc3644
-Node: Supported platforms5171
-Node: Preparations5869
-Node: Configuring the kernel6125
-Node: Configuration of Linux kernels6534
-Node: Configuration of FreeBSD kernels7389
-Node: Configuration of OpenBSD kernels7779
-Node: Configuration of NetBSD kernels8387
-Node: Configuration of Solaris kernels8792
-Node: Configuration of Darwin (MacOS/X) kernels9453
-Node: Configuration of Windows10142
-Node: Libraries10656
-Node: OpenSSL11044
-Node: zlib13320
-Node: lzo14149
-Node: Installation14936
-Node: Building and installing tinc15951
-Node: Darwin (MacOS/X) build environment16610
-Node: Cygwin (Windows) build environment17178
-Node: MinGW (Windows) build environment17766
-Node: System files18290
-Node: Device files18555
-Node: Other files18971
-Node: Configuration19584
-Node: Configuration introduction19895
-Node: Multiple networks21168
-Node: How connections work22594
-Node: Configuration files23816
-Node: Main configuration variables24823
-Node: Host configuration variables34334
-Node: Scripts39745
-Node: How to configure42515
-Node: Generating keypairs43778
-Node: Network interfaces44277
-Node: Example configuration46125
-Node: Running tinc51448
-Node: Runtime options52038
-Node: Signals54833
-Node: Debug levels55902
-Node: Solving problems56838
-Node: Error messages58390
-Node: Sending bug reports62403
-Node: Technical information63355
-Node: The connection63586
-Node: The UDP tunnel63898
-Node: The meta-connection66959
-Node: The meta-protocol68428
-Node: Security73437
-Node: Authentication protocol74567
-Node: Encryption of network packets79571
-Node: Security issues80944
-Node: Platform specific information82561
-Node: Interface configuration82789
-Node: Routes84688
-Node: About us86604
-Node: Contact information86779
-Node: Authors87183
-Node: Concept Index87588
+Node: tinc3645
+Node: Supported platforms5172
+Node: Preparations5870
+Node: Configuring the kernel6126
+Node: Configuration of Linux kernels6535
+Node: Configuration of FreeBSD kernels7390
+Node: Configuration of OpenBSD kernels7780
+Node: Configuration of NetBSD kernels8388
+Node: Configuration of Solaris kernels8793
+Node: Configuration of Darwin (MacOS/X) kernels9454
+Node: Configuration of Windows10143
+Node: Libraries10657
+Node: OpenSSL11045
+Node: zlib13321
+Node: lzo14150
+Node: Installation14937
+Node: Building and installing tinc15952
+Node: Darwin (MacOS/X) build environment16611
+Node: Cygwin (Windows) build environment17179
+Node: MinGW (Windows) build environment17767
+Node: System files18291
+Node: Device files18556
+Node: Other files18972
+Node: Configuration19585
+Node: Configuration introduction19896
+Node: Multiple networks21169
+Node: How connections work22595
+Node: Configuration files23817
+Node: Main configuration variables25204
+Node: Host configuration variables35709
+Node: Scripts41120
+Node: How to configure43890
+Node: Generating keypairs45153
+Node: Network interfaces45652
+Node: Example configuration47500
+Node: Running tinc52823
+Node: Runtime options53413
+Node: Signals56369
+Node: Debug levels57438
+Node: Solving problems58374
+Node: Error messages59926
+Node: Sending bug reports63939
+Node: Technical information64891
+Node: The connection65122
+Node: The UDP tunnel65434
+Node: The meta-connection68495
+Node: The meta-protocol69964
+Node: Security74973
+Node: Authentication protocol76103
+Node: Encryption of network packets81107
+Node: Security issues82480
+Node: Platform specific information84097
+Node: Interface configuration84325
+Node: Routes86224
+Node: About us88140
+Node: Contact information88315
+Node: Authors88719
+Node: Concept Index89124
 
 End Tag Table

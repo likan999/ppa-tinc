@@ -1,7 +1,9 @@
 /*
     net_packet.c -- Handles in- and outgoing VPN packets
     Copyright (C) 1998-2005 Ivo Timmermans,
-                  2000-2010 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2011 Guus Sliepen <guus@tinc-vpn.org>
+                  2010      Timothy Redaelli <timothy@redaelli.eu>
+                  2010      Brandon Black <blblack@gmail.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -59,6 +61,8 @@ static char lzo_wrkmem[LZO1X_999_MEM_COMPRESS > LZO1X_1_MEM_COMPRESS ? LZO1X_999
 
 static void send_udppacket(node_t *, vpn_packet_t *);
 
+unsigned replaywin = 16;
+
 #define MAX_SEQNO 1073741824
 
 // mtuprobes == 1..30: initial discovery, send bursts with 1 second interval
@@ -81,16 +85,21 @@ void send_mtu_probe(node_t *n) {
 	}
 
 	if(n->mtuprobes > 32) {
+		if(!n->minmtu) {
+			n->mtuprobes = 31;
+			timeout = pinginterval;
+			goto end;
+		}
+
 		ifdebug(TRAFFIC) logger(LOG_INFO, "%s (%s) did not respond to UDP ping, restarting PMTU discovery", n->name, n->hostname);
 		n->mtuprobes = 1;
 		n->minmtu = 0;
 		n->maxmtu = MTU;
 	}
 
-	if(n->mtuprobes >= 10 && !n->minmtu) {
+	if(n->mtuprobes >= 10 && n->mtuprobes < 32 && !n->minmtu) {
 		ifdebug(TRAFFIC) logger(LOG_INFO, "No response to MTU probes from %s (%s)", n->name, n->hostname);
-		n->mtuprobes = 0;
-		return;
+		n->mtuprobes = 31;
 	}
 
 	if(n->mtuprobes == 30 || (n->mtuprobes < 30 && n->minmtu >= n->maxmtu)) {
@@ -144,12 +153,17 @@ void mtu_probe_h(node_t *n, vpn_packet_t *packet, length_t len) {
 		packet->data[0] = 1;
 		send_udppacket(n, packet);
 	} else {
+		if(n->mtuprobes > 30) {
+			if(n->minmtu)
+				n->mtuprobes = 30;
+			else
+				n->mtuprobes = 1;
+		}
+
 		if(len > n->maxmtu)
 			len = n->maxmtu;
 		if(n->minmtu < len)
 			n->minmtu = len;
-		if(n->mtuprobes > 30)
-			n->mtuprobes = 30;
 	}
 }
 
@@ -292,25 +306,32 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 	inpkt->len -= sizeof(inpkt->seqno);
 	inpkt->seqno = ntohl(inpkt->seqno);
 
-	if(inpkt->seqno != n->received_seqno + 1) {
-		if(inpkt->seqno >= n->received_seqno + sizeof(n->late) * 8) {
-			logger(LOG_WARNING, "Lost %d packets from %s (%s)",
-					   inpkt->seqno - n->received_seqno - 1, n->name, n->hostname);
-			
-			memset(n->late, 0, sizeof(n->late));
-		} else if (inpkt->seqno <= n->received_seqno) {
-			if((n->received_seqno >= sizeof(n->late) * 8 && inpkt->seqno <= n->received_seqno - sizeof(n->late) * 8) || !(n->late[(inpkt->seqno / 8) % sizeof(n->late)] & (1 << inpkt->seqno % 8))) {
-				logger(LOG_WARNING, "Got late or replayed packet from %s (%s), seqno %d, last received %d",
-					   n->name, n->hostname, inpkt->seqno, n->received_seqno);
-				return;
+	if(replaywin) {
+		if(inpkt->seqno != n->received_seqno + 1) {
+			if(inpkt->seqno >= n->received_seqno + replaywin * 8) {
+				if(n->farfuture++ < replaywin >> 2) {
+					logger(LOG_WARNING, "Packet from %s (%s) is %d seqs in the future, dropped (%u)",
+						n->name, n->hostname, inpkt->seqno - n->received_seqno - 1, n->farfuture);
+					return;
+				}
+				logger(LOG_WARNING, "Lost %d packets from %s (%s)",
+					   	inpkt->seqno - n->received_seqno - 1, n->name, n->hostname);
+				memset(n->late, 0, replaywin);
+			} else if (inpkt->seqno <= n->received_seqno) {
+				if((n->received_seqno >= replaywin * 8 && inpkt->seqno <= n->received_seqno - replaywin * 8) || !(n->late[(inpkt->seqno / 8) % replaywin] & (1 << inpkt->seqno % 8))) {
+					logger(LOG_WARNING, "Got late or replayed packet from %s (%s), seqno %d, last received %d",
+					   	n->name, n->hostname, inpkt->seqno, n->received_seqno);
+					return;
+				}
+			} else {
+				for(i = n->received_seqno + 1; i < inpkt->seqno; i++)
+					n->late[(i / 8) % replaywin] |= 1 << i % 8;
 			}
-		} else {
-			for(i = n->received_seqno + 1; i < inpkt->seqno; i++)
-				n->late[(i / 8) % sizeof(n->late)] |= 1 << i % 8;
 		}
+
+		n->farfuture = 0;
+		n->late[(inpkt->seqno / 8) % replaywin] &= ~(1 << inpkt->seqno % 8);
 	}
-	
-	n->late[(inpkt->seqno / 8) % sizeof(n->late)] &= ~(1 << inpkt->seqno % 8);
 
 	if(inpkt->seqno > n->received_seqno)
 		n->received_seqno = inpkt->seqno;
@@ -365,7 +386,9 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 	vpn_packet_t *outpkt;
 	int origlen;
 	int outlen, outpad;
+#if defined(SOL_IP) && defined(IP_TOS)
 	static int priority = 0;
+#endif
 	int origpriority;
 	int sock;
 
@@ -552,19 +575,20 @@ static node_t *try_harder(const sockaddr_t *from, const vpn_packet_t *pkt) {
 	avl_node_t *node;
 	edge_t *e;
 	node_t *n = NULL;
+	bool hard = false;
 	static time_t last_hard_try = 0;
 
 	for(node = edge_weight_tree->head; node; node = node->next) {
 		e = node->data;
 
+		if(e->to == myself)
+			continue;
+
 		if(sockaddrcmp_noport(from, &e->address)) {
 			if(last_hard_try == now)
 				continue;
-			last_hard_try = now;
+			hard = true;
 		}
-
-		if(!n)
-			n = e->to;
 
 		if(!try_mac(e->to, pkt))
 			continue;
@@ -572,6 +596,9 @@ static node_t *try_harder(const sockaddr_t *from, const vpn_packet_t *pkt) {
 		n = e->to;
 		break;
 	}
+
+	if(hard)
+		last_hard_try = now;
 
 	return n;
 }

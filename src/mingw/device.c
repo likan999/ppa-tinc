@@ -1,7 +1,7 @@
 /*
     device.c -- Interaction with Windows tap driver in a MinGW environment
     Copyright (C) 2002-2005 Ivo Timmermans,
-                  2002-2009 Guus Sliepen <guus@tinc-vpn.org>
+                  2002-2011 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -38,8 +38,8 @@ char *device = NULL;
 char *iface = NULL;
 static char *device_info = NULL;
 
-static int device_total_in = 0;
-static int device_total_out = 0;
+static uint64_t device_total_in = 0;
+static uint64_t device_total_out = 0;
 
 extern char *myport;
 
@@ -95,16 +95,8 @@ bool setup_device(void) {
 
 	bool found = false;
 
-	int sock, err;
+	int err;
 	HANDLE thread;
-
-	struct addrinfo *ai;
-	struct addrinfo hint = {
-		.ai_family = AF_UNSPEC,
-		.ai_socktype = SOCK_STREAM,
-		.ai_protocol = IPPROTO_TCP,
-		.ai_flags = 0,
-	};
 
 	get_config_string(lookup_config(config_tree, "Device"), &device);
 	get_config_string(lookup_config(config_tree, "Interface"), &iface);
@@ -247,6 +239,6 @@ bool write_packet(vpn_packet_t *packet) {
 
 void dump_device_stats(void) {
 	logger(LOG_DEBUG, "Statistics for %s %s:", device_info, device);
-	logger(LOG_DEBUG, " total bytes in:  %10d", device_total_in);
-	logger(LOG_DEBUG, " total bytes out: %10d", device_total_out);
+	logger(LOG_DEBUG, " total bytes in:  %10"PRIu64, device_total_in);
+	logger(LOG_DEBUG, " total bytes out: %10"PRIu64, device_total_out);
 }

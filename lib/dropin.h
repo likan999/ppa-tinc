@@ -1,7 +1,7 @@
 /*
     dropin.h -- header file for dropin.c
     Copyright (C) 2000-2005 Ivo Timmermans,
-                  2000-2009 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2011 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -39,6 +39,10 @@ extern int vasprintf(char **, const char *, va_list ap);
 
 #ifndef HAVE_GETTIMEOFDAY
 extern int gettimeofday(struct timeval *, void *);
+#endif
+
+#ifndef HAVE_USLEEP
+extern int usleep(long);
 #endif
 
 #endif							/* __DROPIN_H__ */

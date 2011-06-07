@@ -1,6 +1,6 @@
 /*
     node.c -- node tree management
-    Copyright (C) 2001-2009 Guus Sliepen <guus@tinc-vpn.org>,
+    Copyright (C) 2001-2011 Guus Sliepen <guus@tinc-vpn.org>,
                   2001-2005 Ivo Timmermans
 
     This program is free software; you can redistribute it and/or modify
@@ -54,6 +54,7 @@ void exit_nodes(void) {
 node_t *new_node(void) {
 	node_t *n = xmalloc_and_zero(sizeof(*n));
 
+	if(replaywin) n->late = xmalloc_and_zero(replaywin);
 	n->subnet_tree = new_subnet_tree();
 	n->edge_tree = new_edge_tree();
 	EVP_CIPHER_CTX_init(&n->inctx);
@@ -90,6 +91,9 @@ void free_node(node_t *n) {
 
 	if(n->name)
 		free(n->name);
+
+	if(n->late)
+		free(n->late);
 
 	free(n);
 }
@@ -137,6 +141,11 @@ node_t *lookup_node_udp(const sockaddr_t *sa) {
 }
 
 void update_node_udp(node_t *n, const sockaddr_t *sa) {
+	if(n == myself) {
+		logger(LOG_WARNING, "Trying to update UDP address of myself!\n");
+		return;
+	}
+
 	avl_delete(node_udp_tree, n);
 
 	if(n->hostname)

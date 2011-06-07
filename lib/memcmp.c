@@ -23,6 +23,10 @@
 # include "config.h"
 #endif
 
+#ifdef HAVE_INTTYPES_H
+#include <inttypes.h>
+#endif
+
 #undef	__ptr_t
 #if defined __cplusplus || (defined __STDC__ && __STDC__)
 # define __ptr_t	void *
@@ -107,8 +111,8 @@ static int
 memcmp_bytes (a, b)
      op_t a, b;
 {
-  long int srcp1 = (long int) &a;
-  long int srcp2 = (long int) &b;
+  intptr_t srcp1 = (intptr_t) &a;
+  intptr_t srcp2 = (intptr_t) &b;
   op_t a0, b0;
 
   do
@@ -123,7 +127,7 @@ memcmp_bytes (a, b)
 }
 #endif
 
-static int memcmp_common_alignment __P((long, long, size_t));
+static int memcmp_common_alignment __P((intptr_t, intptr_t, size_t));
 
 /* memcmp_common_alignment -- Compare blocks at SRCP1 and SRCP2 with LEN `op_t'
    objects (not LEN bytes!).  Both SRCP1 and SRCP2 should be aligned for
@@ -133,8 +137,8 @@ __inline
 #endif
 static int
 memcmp_common_alignment (srcp1, srcp2, len)
-     long int srcp1;
-     long int srcp2;
+     intptr_t srcp1;
+     intptr_t srcp2;
      size_t len;
 {
   op_t a0, a1;
@@ -213,7 +217,7 @@ memcmp_common_alignment (srcp1, srcp2, len)
   return 0;
 }
 
-static int memcmp_not_common_alignment __P((long, long, size_t));
+static int memcmp_not_common_alignment __P((intptr_t, intptr_t, size_t));
 
 /* memcmp_not_common_alignment -- Compare blocks at SRCP1 and SRCP2 with LEN
    `op_t' objects (not LEN bytes!).  SRCP2 should be aligned for memory
@@ -223,8 +227,8 @@ __inline
 #endif
 static int
 memcmp_not_common_alignment (srcp1, srcp2, len)
-     long int srcp1;
-     long int srcp2;
+     intptr_t srcp1;
+     intptr_t srcp2;
      size_t len;
 {
   op_t a0, a1, a2, a3;
@@ -332,8 +336,8 @@ rpl_memcmp (s1, s2, len)
 {
   op_t a0;
   op_t b0;
-  long int srcp1 = (long int) s1;
-  long int srcp2 = (long int) s2;
+  intptr_t srcp1 = (intptr_t) s1;
+  intptr_t srcp2 = (intptr_t) s2;
   op_t res;
 
   if (len >= OP_T_THRES)

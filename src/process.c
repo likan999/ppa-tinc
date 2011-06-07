@@ -1,7 +1,7 @@
 /*
     process.c -- process management functions
     Copyright (C) 1999-2005 Ivo Timmermans,
-                  2000-2009 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2011 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -43,7 +43,9 @@ extern char **g_argv;
 extern bool use_logfile;
 extern volatile bool running;
 
+#ifndef HAVE_MINGW
 sigset_t emptysigset;
+#endif
 
 static int saved_debug_level = -1;
 
@@ -354,7 +356,7 @@ bool detach(void) {
 bool execute_script(const char *name, char **envp) {
 #ifdef HAVE_SYSTEM
 	int status, len;
-	char *scriptname, *p;
+	char *scriptname;
 	int i;
 
 #ifndef HAVE_MINGW
@@ -395,7 +397,7 @@ bool execute_script(const char *name, char **envp) {
 	for(i = 0; envp[i]; i++) {
 		char *e = strchr(envp[i], '=');
 		if(e) {
-			p = alloca(e - envp[i] + 1);
+			char p[e - envp[i] + 1];
 			strncpy(p, envp[i], e - envp[i]);
 			p[e - envp[i]] = '\0';
 			putenv(p);
@@ -544,6 +546,7 @@ static struct {
 	{SIGCHLD, ignore_signal_handler},
 	{SIGALRM, sigalrm_handler},
 	{SIGWINCH, sigwinch_handler},
+	{SIGABRT, SIG_DFL},
 	{0, NULL}
 };
 #endif

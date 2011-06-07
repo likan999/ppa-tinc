@@ -106,15 +106,20 @@ extern list_t *outgoing_list;
 extern int maxoutbufsize;
 extern int seconds_till_retry;
 extern int addressfamily;
+extern unsigned replaywin;
 
 extern listen_socket_t listen_socket[MAXSOCKETS];
 extern int listen_sockets;
 extern int keyexpires;
 extern int keylifetime;
+extern int udp_rcvbuf;
+extern int udp_sndbuf;
 extern bool do_prune;
 extern bool do_purge;
 extern char *myport;
 extern time_t now;
+extern int contradicting_add_edge;
+extern int contradicting_del_edge;
 
 /* Yes, very strange placement indeed, but otherwise the typedefs get all tangled up */
 #include "connection.h"
