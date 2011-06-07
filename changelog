@@ -1,8 +1,15 @@
-tinc (1.0.13-1+squeeze1) squeeze-security; urgency=high
+tinc (1.0.14-1~bpo60+1) squeeze-backports; urgency=low
 
-  * Drop packets forwarded via TCP if they are too big (CVE-2013-1428).
+  * Rebuild for squeeze-backports.
 
- -- Guus Sliepen <guus@debian.org>  Fri, 12 Apr 2013 20:40:15 +0000
+ -- Guus Sliepen <guus@debian.org>  Tue, 07 Jun 2011 09:35:50 +0000
+
+tinc (1.0.14-1) unstable; urgency=low
+
+  * New upstream release.
+  * Bump Standards-Version.
+
+ -- Guus Sliepen <guus@debian.org>  Mon, 09 May 2011 00:25:37 +0200
 
 tinc (1.0.13-1) unstable; urgency=low
 
