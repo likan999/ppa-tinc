@@ -1,7 +1,0 @@
-* end-to-end encryption
-* perfect forward secrecy, ECDH
-* AES in counter mode
-* Replay + Delay protection
-* MPLS-like label
-* Conflicting Subnets or key-name pairs: disable both, inform admin
-

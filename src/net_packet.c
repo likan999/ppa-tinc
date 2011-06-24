@@ -43,7 +43,6 @@
 #include "ethernet.h"
 #include "event.h"
 #include "graph.h"
-#include "list.h"
 #include "logger.h"
 #include "net.h"
 #include "netutl.h"
@@ -365,7 +364,7 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 		receive_packet(n, inpkt);
 }
 
-void receive_tcppacket(connection_t *c, char *buffer, int len) {
+void receive_tcppacket(connection_t *c, const char *buffer, int len) {
 	vpn_packet_t outpkt;
 
 	outpkt.len = len;
@@ -404,7 +403,7 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 				   "No valid key known yet for %s (%s), forwarding via TCP",
 				   n->name, n->hostname);
 
-		if(n->last_req_key + 10 < now) {
+		if(n->last_req_key + 10 <= now) {
 			send_req_key(n);
 			n->last_req_key = now;
 		}

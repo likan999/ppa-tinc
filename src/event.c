@@ -28,7 +28,7 @@
 avl_tree_t *event_tree;
 extern time_t now;
 
-int id;
+static int id;
 
 static int event_compare(const event_t *a, const event_t *b) {
 	if(a->time > b->time)
@@ -62,10 +62,10 @@ void expire_events(void) {
 		return;
 
 	event = event_tree->tail->data;
-	if(event->time < now)
+	if(event->time <= now)
 		return;
 
-	diff = 1 + event->time - now;
+	diff = event->time - now;
 	
 	for(node = event_tree->head; node; node = node->next) {
 		event = node->data;
@@ -96,7 +96,7 @@ event_t *get_expired_event(void) {
 	if(event_tree->head) {
 		event = event_tree->head->data;
 
-		if(event->time < now) {
+		if(event->time <= now) {
 			avl_node_t *node = event_tree->head;
 			avl_unlink_node(event_tree, node);
 			free(node);
@@ -104,5 +104,11 @@ event_t *get_expired_event(void) {
 		}
 	}
 
+	return NULL;
+}
+
+event_t *peek_next_event(void) {
+	if (event_tree->head)
+		return event_tree->head->data;
 	return NULL;
 }

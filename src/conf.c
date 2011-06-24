@@ -26,6 +26,7 @@
 #include "avl_tree.h"
 #include "connection.h"
 #include "conf.h"
+#include "list.h"
 #include "logger.h"
 #include "netutl.h"				/* for str2address */
 #include "protocol.h"
@@ -92,7 +93,7 @@ void config_add(avl_tree_t *config_tree, config_t *cfg) {
 	avl_insert(config_tree, cfg);
 }
 
-config_t *lookup_config(avl_tree_t *config_tree, char *variable) {
+config_t *lookup_config(const avl_tree_t *config_tree, char *variable) {
 	config_t cfg, *found;
 
 	cfg.variable = variable;
@@ -110,7 +111,7 @@ config_t *lookup_config(avl_tree_t *config_tree, char *variable) {
 	return found;
 }
 
-config_t *lookup_config_next(avl_tree_t *config_tree, const config_t *cfg) {
+config_t *lookup_config_next(const avl_tree_t *config_tree, const config_t *cfg) {
 	avl_node_t *node;
 	config_t *found;
 
@@ -188,7 +189,7 @@ bool get_config_address(const config_t *cfg, struct addrinfo **result) {
 }
 
 bool get_config_subnet(const config_t *cfg, subnet_t ** result) {
-	subnet_t subnet = {0};
+	subnet_t subnet = {NULL};
 
 	if(!cfg)
 		return false;
@@ -368,7 +369,7 @@ void read_config_options(avl_tree_t *config_tree, const char *prefix) {
 	}
 }
 
-bool read_server_config() {
+bool read_server_config(void) {
 	char *fname;
 	bool x;
 

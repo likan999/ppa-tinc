@@ -1,3 +1,13 @@
+tinc (1.0.15-1) unstable; urgency=low
+
+  * New upstream release.
+  * Send SIGALRM to running tinc daemons whenever an interface is brought up
+    with the ifupdown framework. Based on a patch from Joachim Breitner.
+    Closes: #629880
+  * Allow tinc daemons to be started using ifupdown.
+
+ -- Guus Sliepen <guus@debian.org>  Fri, 24 Jun 2011 18:21:51 +0200
+
 tinc (1.0.14-1) unstable; urgency=low
 
   * New upstream release.
