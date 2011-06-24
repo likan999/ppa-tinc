@@ -44,6 +44,16 @@ foreach_net() {
   echo "."
 }
 
+signal_running() {
+  for i in /var/run/tinc.*pid; do
+    if [ -f "$i" ]; then
+      head -1 $i | while read pid; do
+        kill -$1 $pid
+      done
+    fi
+  done
+}
+
 start() {
   $DAEMON $EXTRA -n "$@"
 }
@@ -52,6 +62,9 @@ stop() {
 }
 reload() {
   $DAEMON -n $1 -kHUP
+}
+alarm() {
+  $DAEMON -n $1 -kALRM
 }
 restart() {
   stop "$@"
@@ -81,6 +94,9 @@ case "$1" in
   ;;
   restart)
     foreach_net "Restarting $DESC:" restart
+  ;;
+  alarm)
+    signal_running ALRM
   ;;
   *)
     echo "Usage: /etc/init.d/$NAME {start|stop|reload|restart|force-reload}"
