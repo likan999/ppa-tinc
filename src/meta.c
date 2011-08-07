@@ -1,6 +1,6 @@
 /*
     meta.c -- handle the meta communication
-    Copyright (C) 2000-2017 Guus Sliepen <guus@tinc-vpn.org>,
+    Copyright (C) 2000-2009 Guus Sliepen <guus@tinc-vpn.org>,
                   2000-2005 Ivo Timmermans
                   2006      Scott Lamb <slamb@slamb.org>
 
@@ -21,125 +21,60 @@
 
 #include "system.h"
 
-#include <openssl/err.h>
-#include <openssl/evp.h>
-
-#include "avl_tree.h"
+#include "splay_tree.h"
+#include "cipher.h"
 #include "connection.h"
 #include "logger.h"
 #include "meta.h"
 #include "net.h"
 #include "protocol.h"
-#include "proxy.h"
 #include "utils.h"
 #include "xalloc.h"
 
 bool send_meta(connection_t *c, const char *buffer, int length) {
-	int outlen;
-	int result;
+	if(!c) {
+		logger(LOG_ERR, "send_meta() called with NULL pointer!");
+		abort();
+	}
 
 	ifdebug(META) logger(LOG_DEBUG, "Sending %d bytes of metadata to %s (%s)", length,
-	                     c->name, c->hostname);
-
-	if(!c->outbuflen) {
-		c->last_flushed_time = now;
-	}
-
-	/* Find room in connection's buffer */
-	if(length + c->outbuflen > c->outbufsize) {
-		c->outbufsize = length + c->outbuflen;
-		c->outbuf = xrealloc(c->outbuf, c->outbufsize);
-	}
-
-	if(length + c->outbuflen + c->outbufstart > c->outbufsize) {
-		memmove(c->outbuf, c->outbuf + c->outbufstart, c->outbuflen);
-		c->outbufstart = 0;
-	}
+			   c->name, c->hostname);
 
 	/* Add our data to buffer */
 	if(c->status.encryptout) {
-		/* Check encryption limits */
-		if((uint64_t)length > c->outbudget) {
-			ifdebug(META) logger(LOG_ERR, "Byte limit exceeded for encryption to %s (%s)", c->name, c->hostname);
+		size_t outlen = length;
+
+		if(!cipher_encrypt(&c->outcipher, buffer, length, buffer_prepare(&c->outbuf, length), &outlen, false) || outlen != length) {
+			logger(LOG_ERR, "Error while encrypting metadata to %s (%s)",
+					c->name, c->hostname);
 			return false;
-		} else {
-			c->outbudget -= length;
 		}
 
-		result = EVP_EncryptUpdate(c->outctx, (unsigned char *)c->outbuf + c->outbufstart + c->outbuflen,
-		                           &outlen, (unsigned char *)buffer, length);
-
-		if(!result || outlen < length) {
-			logger(LOG_ERR, "Error while encrypting metadata to %s (%s): %s",
-			       c->name, c->hostname, ERR_error_string(ERR_get_error(), NULL));
-			return false;
-		} else if(outlen > length) {
-			logger(LOG_EMERG, "Encrypted data too long! Heap corrupted!");
-			abort();
-		}
-
-		c->outbuflen += outlen;
 	} else {
-		memcpy(c->outbuf + c->outbufstart + c->outbuflen, buffer, length);
-		c->outbuflen += length;
+		buffer_add(&c->outbuf, buffer, length);
 	}
 
-	return true;
-}
+	event_add(&c->outevent, NULL);
 
-bool flush_meta(connection_t *c) {
-	int result;
-
-	ifdebug(META) logger(LOG_DEBUG, "Flushing %d bytes to %s (%s)",
-	                     c->outbuflen, c->name, c->hostname);
-
-	while(c->outbuflen) {
-		result = send(c->socket, c->outbuf + c->outbufstart, c->outbuflen, 0);
-
-		if(result <= 0) {
-			if(!errno || errno == EPIPE) {
-				ifdebug(CONNECTIONS) logger(LOG_NOTICE, "Connection closed by %s (%s)",
-				                            c->name, c->hostname);
-			} else if(errno == EINTR) {
-				continue;
-			} else if(sockwouldblock(sockerrno)) {
-				ifdebug(META) logger(LOG_DEBUG, "Flushing %d bytes to %s (%s) would block",
-				                     c->outbuflen, c->name, c->hostname);
-				return true;
-			} else {
-				logger(LOG_ERR, "Flushing meta data to %s (%s) failed: %s", c->name,
-				       c->hostname, sockstrerror(sockerrno));
-			}
-
-			return false;
-		}
-
-		c->outbufstart += result;
-		c->outbuflen -= result;
-	}
-
-	c->outbufstart = 0; /* avoid unnecessary memmoves */
 	return true;
 }
 
 void broadcast_meta(connection_t *from, const char *buffer, int length) {
-	avl_node_t *node;
+	splay_node_t *node;
 	connection_t *c;
 
 	for(node = connection_tree->head; node; node = node->next) {
 		c = node->data;
 
-		if(c != from && c->status.active) {
+		if(c != from && c->status.active)
 			send_meta(c, buffer, length);
-		}
 	}
 }
 
 bool receive_meta(connection_t *c) {
-	int oldlen, i, result;
-	int lenin, lenout, reqlen;
-	bool decrypted = false;
+	int inlen;
 	char inbuf[MAXBUFSIZE];
+	char *bufp = inbuf, *endp;
 
 	/* Strategy:
 	   - Read as much as possible from the TCP socket in one go.
@@ -150,109 +85,79 @@ bool receive_meta(connection_t *c) {
 	   - If not, keep stuff in buffer and exit.
 	 */
 
-	lenin = recv(c->socket, c->buffer + c->buflen, MAXBUFSIZE - c->buflen, 0);
+	buffer_compact(&c->inbuf, MAXBUFSIZE);
 
-	if(lenin <= 0) {
-		if(!lenin || !errno) {
-			ifdebug(CONNECTIONS) logger(LOG_NOTICE, "Connection closed by %s (%s)",
-			                            c->name, c->hostname);
-		} else if(sockwouldblock(sockerrno)) {
-			return true;
-		} else
-			logger(LOG_ERR, "Metadata socket read error for %s (%s): %s",
-			       c->name, c->hostname, sockstrerror(sockerrno));
-
+	if(sizeof inbuf <= c->inbuf.len) {
+		logger(LOG_ERR, "Input buffer full for %s (%s)", c->name, c->hostname);
 		return false;
 	}
 
-	oldlen = c->buflen;
-	c->buflen += lenin;
+	inlen = recv(c->socket, inbuf, sizeof inbuf - c->inbuf.len, 0);
 
-	while(lenin > 0) {
-		reqlen = 0;
+	if(inlen <= 0) {
+		if(!inlen || !errno) {
+			ifdebug(CONNECTIONS) logger(LOG_NOTICE, "Connection closed by %s (%s)",
+					   c->name, c->hostname);
+		} else if(sockwouldblock(sockerrno))
+			return true;
+		else
+			logger(LOG_ERR, "Metadata socket read error for %s (%s): %s",
+				   c->name, c->hostname, sockstrerror(sockerrno));
+		return false;
+	}
 
-		/* Is it proxy metadata? */
+	do {
+		if(!c->status.decryptin) {
+			endp = memchr(bufp, '\n', inlen);
+			if(endp)
+				endp++;
+			else
+				endp = bufp + inlen;
 
-		if(c->allow_request == PROXY) {
-			reqlen = receive_proxy_meta(c);
+			buffer_add(&c->inbuf, bufp, endp - bufp);
 
-			if(reqlen < 0) {
-				return false;
-			}
-
-			goto consume;
-		}
-
-		/* Decrypt */
-
-		if(c->status.decryptin && !decrypted) {
-			/* Check decryption limits */
-			if((uint64_t)lenin > c->inbudget) {
-				ifdebug(META) logger(LOG_ERR, "Byte limit exceeded for decryption from %s (%s)", c->name, c->hostname);
-				return false;
-			} else {
-				c->inbudget -= lenin;
-			}
-
-			result = EVP_DecryptUpdate(c->inctx, (unsigned char *)inbuf, &lenout, (unsigned char *)c->buffer + oldlen, lenin);
-
-			if(!result || lenout != lenin) {
-				logger(LOG_ERR, "Error while decrypting metadata from %s (%s): %s",
-				       c->name, c->hostname, ERR_error_string(ERR_get_error(), NULL));
-				return false;
-			}
-
-			memcpy(c->buffer + oldlen, inbuf, lenin);
-			decrypted = true;
-		}
-
-		/* Are we receiving a TCPpacket? */
-
-		if(c->tcplen) {
-			if(c->tcplen <= c->buflen) {
-				if(c->allow_request != ALL) {
-					logger(LOG_ERR, "Got unauthorized TCP packet from %s (%s)", c->name, c->hostname);
-					return false;
-				}
-
-				receive_tcppacket(c, c->buffer, c->tcplen);
-				reqlen = c->tcplen;
-				c->tcplen = 0;
-			}
+			inlen -= endp - bufp;
+			bufp = endp;
 		} else {
-			/* Otherwise we are waiting for a request */
+			size_t outlen = inlen;
+			ifdebug(META) logger(LOG_DEBUG, "Received encrypted %d bytes", inlen);
 
-			for(i = oldlen; i < c->buflen; i++) {
-				if(c->buffer[i] == '\n') {
-					c->buffer[i] = '\0';    /* replace end-of-line by end-of-string so we can use sscanf */
-					c->reqlen = reqlen = i + 1;
+			if(!cipher_decrypt(&c->incipher, bufp, inlen, buffer_prepare(&c->inbuf, inlen), &outlen, false) || inlen != outlen) {
+				logger(LOG_ERR, "Error while decrypting metadata from %s (%s)",
+					   c->name, c->hostname);
+				return false;
+			}
+
+			inlen = 0;
+		}
+
+		while(c->inbuf.len) {
+			/* Are we receiving a TCPpacket? */
+
+			if(c->tcplen) {
+				char *tcpbuffer = buffer_read(&c->inbuf, c->tcplen);
+				if(tcpbuffer) {
+					receive_tcppacket(c, tcpbuffer, c->tcplen);
+					c->tcplen = 0;
+					continue;
+				} else {
 					break;
 				}
 			}
 
-			if(reqlen && !receive_request(c)) {
-				return false;
+			/* Otherwise we are waiting for a request */
+
+			char *request = buffer_readline(&c->inbuf);
+			if(request) {
+				bool result = receive_request(c, request);
+				if(!result)
+					return false;
+				continue;
+			} else {
+				break;
 			}
 		}
-
-consume:
-
-		if(reqlen) {
-			c->buflen -= reqlen;
-			lenin -= reqlen - oldlen;
-			memmove(c->buffer, c->buffer + reqlen, c->buflen);
-			oldlen = 0;
-			continue;
-		} else {
-			break;
-		}
-	}
-
-	if(c->buflen >= MAXBUFSIZE) {
-		logger(LOG_ERR, "Metadata read buffer overflow for %s (%s)",
-		       c->name, c->hostname);
-		return false;
-	}
+	} while(inlen);
 
 	return true;
 }

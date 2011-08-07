@@ -1,238 +1,32 @@
-Version 1.0.35               October 5 2018
+Version 1.1pre2              Juli 17 2011
 
- * Prevent oracle attacks (CVE-2018-16737, CVE-2018-16738).
- * Prevent a MITM from forcing a NULL cipher for UDP (CVE-2018-16758).
+ * .cookie files are renamed to .pid files, which are compatible with 1.0.x.
 
-Version 1.0.34               June 12 2018
+ * Experimental protocol enhancements that can be enabled with the option
+   ExperimentalProtocol = yes:
 
- * Fix a potential segmentation fault when connecting to an IPv6 peer via a
-   proxy.
- * Minor improvements to the build system.
- * Make the systemd service file identical to the one from the 1.1 branch.
- * Fix a potential problem causing IPv4 sockets to not work on macOS.
+   * Ephemeral ECDH key exchange will be used for both the meta protocol and
+     UDP session keys.
+   * Key exchanges are signed with ECDSA.
+   * ECDSA public keys are automatically exchanged after RSA authentication if
+     nodes do not know each other's ECDSA public key yet.
 
-Thanks to Maximilian Stein and Wang Liu Shuai for their contributions to this
-version of tinc.
+Version 1.1pre1              June 25 2011
 
-Version 1.0.33               November 4 2017
+ * Control interface allows control of a running tinc daemon. Used by:
+   * tincctl, a commandline utility
+   * tinc-gui, a preliminary GUI implemented in Python/wxWidgets
 
- * Allow compilation from a build directory.
- * Source code cleanups.
- * Fix some options specified on the command line not surviving a HUP signal.
- * Handle tun/tap device returning EPERM or EBUSY.
- * Disable PMTUDiscovery when TCPOnly is used.
- * Support the --runstatedir option of the autoconf 2.70.
+ * Code cleanups and reorganization. 
 
-Thanks to Rafael Sadowski and Pierre-Olivier Mercier for their contributions to
-this version of tinc.
+ * Repleacable cryptography backend, currently supports OpenSSL and libgcrypt.
 
-Version 1.0.32               September 2 2017
+ * Use libevent to handle I/O events and timeouts.
 
- * Fix segmentation fault when using Cipher = none.
- * Fix Proxy = exec.
- * Support PriorityInheritance for IPv6 packets.
- * Fixes for Solaris tun/tap support.
- * Bind outgoing TCP sockets when ListenAddress is used.
+ * Use splay trees instead of AVL trees to manage internal datastructures.
 
-Thanks to Vittorio Gambaletta for his contribution to this version of tinc.
-
-Version 1.0.31               January 15 2017
-
- * Remove ExecStop in tinc@.service.
-
-Thanks to Élie Bouttier for his contribution to this version of tinc.
-
-Version 1.0.30               October 30 2016
-
- * Fix troubles connecting to some HTTP proxies.
-
- * Add mitigations for the Sweet32 attack when using a 64-bit block cipher.
-
- * Use AES256 and SHA256 as the default encryption and digest algorithms.
-
-Version 1.0.29               October 9 2016
-
- * Fix UDP communication with peers with link-local IPv6 addresses.
-
- * Ensure compatibility with OpenSSL 1.1.0.
-
- * Ensure autoreconf can be run without requiring autoconf-archive.
-
- * Log warnings about dropped packets only at debug level 5.
-
-Version 1.0.28               April 10 2016
-
- * Fix compilation on BSD platforms.
-
- * Add systemd service files.
-
-Version 1.0.27               April 10 2016
-
- * When using Proxy, let the proxy resolve hostnames if tinc can't.
-
- * Fixes and improvements of the DecrementTTL option.
-
- * Fixed the $NAME variable in subnet-up/down scripts for the local Subnets.
-
- * Fixed potentially wrong checksum generation when clamping the MSS.
-
- * Properly choose between the system's or our own copy of getopt.
-
- * Fixed compiling tinc for Cygwin with MinGW installed.
-
- * Added support for OS X utun interfaces.
-
- * Documentation updates and minor fixes.
-
-Thanks to Vittorio Gambaletta, LunarShaddow, Florian Weik and Nathan Stratton
-Treadway for their contributions to this version of tinc.
-
-Version 1.0.26               July 5 2015
-
- * Tinc now forces glibc to reload /etc/resolv.conf for every hostname lookup.
-
- * Fixed --logfile without a filename on Windows.
-
- * Ensure tinc can be compiled when using musl libc.
-
-Thanks to Jo-Philipp Wich for his contribution to this version of tinc.
-
-Version 1.0.25               December 22 2014
-
- * Documentation updates.
-
- * Support linking against -lresolv on Mac OS X.
-
- * Fix scripts on Windows when using the ScriptsInterpreter option.
-
- * Allow a minimum reconnect timeout to be specified.
-
- * Support PriorityInheritance on IPv6 sockets.
-
-Thanks to David Pflug, Baptiste Jonglez, Alexis Hildebrandt, Borg, Jochen Voss,
-Tomislav Čohar and VittGam for their contributions to this version of tinc.
-
-Version 1.0.24               May 11 2014
-
- * Various compiler hardening flags are enabled by default.
-
- * Updated support for Solaris, allowing switch mode on Solaris 11.
-
- * Configuration will now also be read from a conf.d directory.
-
- * Various updates to the documentation.
-
- * Tinc now forces glibc to reload /etc/resolv.conf after it receives SIGALRM.
-
- * Fixed a potential routing loop when IndirectData or TCPOnly is used and
-   broadcast packets are being sent.
-
- * Improved security with constant time memcmp and stricter use of OpenSSL's
-   RNG functions.
-
- * Fixed all issues found by Coverity.
-
-Thanks to Florent Clairambault, Vilbrekin, luckyhacky, Armin Fisslthaler, Loïc
-Dachary and Steffan Karger for their contributions to this version of tinc.
-
-Version 1.0.23               October 19 2013
-
- * Start authentication immediately on outgoing connections (useful for sslh).
-
- * Fixed segfault when Name = $HOST but $HOST is not set.
-
- * Updated the build system and the documentation.
-
- * Clean up child processes left over from Proxy = exec.
-
-Version 1.0.22               August 13 2013
-
- * Fixed the combination of Mode = router and DeviceType = tap.
-
- * The $NAME variable is now set in subnet-up/down scripts.
-
- * Tinc now gives an error when unknown options are given on the command line.
-
- * Tinc now correctly handles a space between a short command line option and
-   an optional argument.
-
-Thanks to Etienne Dechamps for his contribution to this version of tinc.
-
-Version 1.0.21               April 22 2013
-
- * Drop packets forwarded via TCP if they are too big (CVE-2013-1428).
-
-Thanks to Martin Schobert for auditing tinc and reporting this vulnerability.
-
-Version 1.0.20               March 03 2013
-
- * Use /dev/tap0 by default on FreeBSD and NetBSD when using switch mode.
-
- * Minor improvements and clarifications in the documentation.
-
- * Allow tinc to be cross-compiled with Android's NDK.
-
- * The discovered PMTU is now also applied to VLAN tagged traffic.
-
- * The LocalDiscovery option now makes use of all addresses tinc is bound to.
-
- * Fixed support for tunemu on iOS devices.
-
- * The PriorityInheritance option now also works with switch mode.
-
- * Fixed tinc crashing when using a SOCKS5 proxy.
-
-Thanks to Mesar Hameed, Vilbrekin and Martin Schürrer for their contributions
-to this version of tinc.
-
-Version 1.0.19               June 25 2012
-
- * Allow :: notation in IPv6 Subnets.
-
- * Add support for systemd style socket activation.
-
- * Allow environment variables to be used for the Name option.
-
- * Add basic support for SOCKS proxies, HTTP proxies, and proxying through an
-   external command.
-
-Thanks to Anthony G. Basile and Michael Tokarev for their contributions to
-this version of tinc.
-
-Version 1.0.18               March 25 2012
-
- * Fixed IPv6 in switch mode by turning off DecrementTTL by default.
-
- * Allow a port number to be specified in BindToAddress, which also allows tinc
-   to listen on multiple ports.
-
- * Add support for multicast communication with UML/QEMU/KVM.
-
-Version 1.0.17               March 10 2012
-
- * The DeviceType option can now be used to select dummy, raw socket, UML and
-   VDE devices without needing to recompile tinc.
-
- * Allow multiple BindToAddress statements.
-
- * Decrement TTL value of IPv4 and IPv6 packets.
-
- * Add LocalDiscovery option allowing tinc to detect peers that are behind the
-   same NAT.
-
- * Accept Subnets passed with the -o option when StrictSubnets = yes.
-
- * Disabling old RSA keys when generating new ones now also works properly on
-   Windows.
-
-Thanks to Nick Hibma for his contribution to this version of tinc.
-
-Version 1.0.16               July 23 2011
-
- * Fixed a performance issue with TCP communication under Windows.
-
- * Fixed code that, during network outages, would cause tinc to exit when it
-   thought two nodes with identical Names were on the VPN.
+ Thanks to Scott Lamb and Sven-Haegar Koch for their contributions to this
+ version of tinc.
 
 Version 1.0.15               June 24 2011
 
@@ -241,6 +35,8 @@ Version 1.0.15               June 24 2011
  * Reduced amount of process wakeups on platforms which support pselect().
 
  * Fixed ProcessPriority option under Windows.
+
+  Thanks to Loïc Grenié for his contribution to this version of tinc.
 
 Version 1.0.14               May  8 2011
 
@@ -357,7 +153,7 @@ Version 1.0.9                Dec 26 2008
 
  * Enable path MTU discovery by default.
 
- * Fixed a memory leak that occurred when connections were closed.
+ * Fixed a memory leak that occured when connections were closed.
 
  Thanks to Max Rijevski for his contributions to this version of tinc.
 

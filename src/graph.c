@@ -1,6 +1,6 @@
 /*
     graph.c -- graph algorithms
-    Copyright (C) 2001-2014 Guus Sliepen <guus@tinc-vpn.org>,
+    Copyright (C) 2001-2011 Guus Sliepen <guus@tinc-vpn.org>,
                   2001-2005 Ivo Timmermans
 
     This program is free software; you can redistribute it and/or modify
@@ -44,8 +44,8 @@
 
 #include "system.h"
 
-#include "avl_tree.h"
-#include "conf.h"
+#include "splay_tree.h"
+#include "config.h"
 #include "connection.h"
 #include "device.h"
 #include "edge.h"
@@ -58,34 +58,24 @@
 #include "subnet.h"
 #include "utils.h"
 #include "xalloc.h"
-
-static bool graph_changed = true;
+#include "graph.h"
 
 /* Implementation of Kruskal's algorithm.
-   Running time: O(EN)
+   Running time: O(E)
    Please note that sorting on weight is already done by add_edge().
 */
 
-static void mst_kruskal(void) {
-	avl_node_t *node, *next;
+void mst_kruskal(void) {
+	splay_node_t *node, *next;
 	edge_t *e;
 	node_t *n;
 	connection_t *c;
-	int nodes = 0;
-	int safe_edges = 0;
-	bool skipped;
 
 	/* Clear MST status on connections */
 
 	for(node = connection_tree->head; node; node = node->next) {
 		c = node->data;
 		c->status.mst = false;
-	}
-
-	/* Do we have something to do at all? */
-
-	if(!edge_weight_tree->head) {
-		return;
 	}
 
 	ifdebug(SCARY_THINGS) logger(LOG_DEBUG, "Running Kruskal's algorithm:");
@@ -95,73 +85,144 @@ static void mst_kruskal(void) {
 	for(node = node_tree->head; node; node = node->next) {
 		n = node->data;
 		n->status.visited = false;
-		nodes++;
-	}
-
-	/* Starting point */
-
-	for(node = edge_weight_tree->head; node; node = node->next) {
-		e = node->data;
-
-		if(e->from->status.reachable) {
-			e->from->status.visited = true;
-			break;
-		}
 	}
 
 	/* Add safe edges */
 
-	for(skipped = false, node = edge_weight_tree->head; node; node = next) {
+	for(node = edge_weight_tree->head; node; node = next) {
 		next = node->next;
 		e = node->data;
 
-		if(!e->reverse || e->from->status.visited == e->to->status.visited) {
-			skipped = true;
+		if(!e->reverse || (e->from->status.visited && e->to->status.visited))
 			continue;
-		}
 
 		e->from->status.visited = true;
 		e->to->status.visited = true;
 
-		if(e->connection) {
+		if(e->connection)
 			e->connection->status.mst = true;
-		}
 
-		if(e->reverse->connection) {
+		if(e->reverse->connection)
 			e->reverse->connection->status.mst = true;
-		}
-
-		safe_edges++;
 
 		ifdebug(SCARY_THINGS) logger(LOG_DEBUG, " Adding edge %s - %s weight %d", e->from->name,
-		                             e->to->name, e->weight);
+				   e->to->name, e->weight);
+	}
+}
 
-		if(skipped) {
-			skipped = false;
-			next = edge_weight_tree->head;
-			continue;
+/* Implementation of Dijkstra's algorithm.
+   Running time: O(N^2)
+*/
+
+static void sssp_dijkstra(void) {
+	splay_node_t *node, *to;
+	edge_t *e;
+	node_t *n, *m;
+	list_t *todo_list;
+	list_node_t *lnode, *nnode;
+	bool indirect;
+
+	todo_list = list_alloc(NULL);
+
+	ifdebug(SCARY_THINGS) logger(LOG_DEBUG, "Running Dijkstra's algorithm:");
+
+	/* Clear visited status on nodes */
+
+	for(node = node_tree->head; node; node = node->next) {
+		n = node->data;
+		n->status.visited = false;
+		n->status.indirect = true;
+		n->distance = -1;
+	}
+
+	/* Begin with myself */
+
+	myself->status.indirect = false;
+	myself->nexthop = myself;
+	myself->via = myself;
+	myself->distance = 0;
+	list_insert_head(todo_list, myself);
+
+	/* Loop while todo_list is filled */
+
+	while(todo_list->head) {
+		n = NULL;
+		nnode = NULL;
+
+		/* Select node from todo_list with smallest distance */
+
+		for(lnode = todo_list->head; lnode; lnode = lnode->next) {
+			m = lnode->data;
+			if(!n || m->status.indirect < n->status.indirect || m->distance < n->distance) {
+				n = m;
+				nnode = lnode;
+			}
+		}
+
+		/* Mark this node as visited and remove it from the todo_list */
+
+		n->status.visited = true;
+		list_unlink_node(todo_list, nnode);
+
+		/* Update distance of neighbours and add them to the todo_list */
+
+		for(to = n->edge_tree->head; to; to = to->next) {	/* "to" is the edge connected to "from" */
+			e = to->data;
+
+			if(e->to->status.visited || !e->reverse)
+				continue;
+
+			/* Situation:
+
+				   /
+				  /
+			   ----->(n)---e-->(e->to)
+				  \
+				   \
+
+			   Where e is an edge, (n) and (e->to) are nodes.
+			   n->address is set to the e->address of the edge left of n to n.
+			   We are currently examining the edge e right of n from n:
+
+			   - If edge e provides for better reachability of e->to, update e->to.
+			 */
+
+			if(e->to->distance < 0)
+				list_insert_tail(todo_list, e->to);
+
+			indirect = n->status.indirect || e->options & OPTION_INDIRECT || ((n != myself) && sockaddrcmp(&n->address, &e->reverse->address));
+
+			if(e->to->distance >= 0 && (!e->to->status.indirect || indirect) && e->to->distance <= n->distance + e->weight)
+				continue;
+
+			e->to->distance = n->distance + e->weight;
+			e->to->status.indirect = indirect;
+			e->to->nexthop = (n->nexthop == myself) ? e->to : n->nexthop;
+			e->to->via = indirect ? n->via : e->to;
+			e->to->options = e->options;
+
+			if(e->to->address.sa.sa_family == AF_UNSPEC && e->address.sa.sa_family != AF_UNKNOWN)
+				update_node_udp(e->to, &e->address);
+
+			ifdebug(SCARY_THINGS) logger(LOG_DEBUG, " Updating edge %s - %s weight %d distance %d", e->from->name,
+					   e->to->name, e->weight, e->to->distance);
 		}
 	}
 
-	ifdebug(SCARY_THINGS) logger(LOG_DEBUG, "Done, counted %d nodes and %d safe edges.", nodes,
-	                             safe_edges);
+	list_free(todo_list);
 }
 
 /* Implementation of a simple breadth-first search algorithm.
    Running time: O(E)
 */
 
-static void sssp_bfs(void) {
-	avl_node_t *node, *next, *to;
+void sssp_bfs(void) {
+	splay_node_t *node, *to;
 	edge_t *e;
 	node_t *n;
 	list_t *todo_list;
 	list_node_t *from, *todonext;
 	bool indirect;
-	char *name;
-	char *address, *port;
-	char *envp[8] = {NULL};
-	int i;
 
 	todo_list = list_alloc(NULL);
 
@@ -178,29 +239,27 @@ static void sssp_bfs(void) {
 	myself->status.visited = true;
 	myself->status.indirect = false;
 	myself->nexthop = myself;
-	myself->prevedge = NULL;
 	myself->via = myself;
 	list_insert_head(todo_list, myself);
 
 	/* Loop while todo_list is filled */
 
-	for(from = todo_list->head; from; from = todonext) {    /* "from" is the node from which we start */
+	for(from = todo_list->head; from; from = todonext) {	/* "from" is the node from which we start */
 		n = from->data;
 
-		for(to = n->edge_tree->head; to; to = to->next) {       /* "to" is the edge connected to "from" */
+		for(to = n->edge_tree->head; to; to = to->next) {	/* "to" is the edge connected to "from" */
 			e = to->data;
 
-			if(!e->reverse) {
+			if(!e->reverse)
 				continue;
-			}
 
 			/* Situation:
 
-			           /
-			          /
+				   /
+				  /
 			   ----->(n)---e-->(e->to)
-			          \
-			           \
+				  \
+				   \
 
 			   Where e is an edge, (n) and (e->to) are nodes.
 			   n->address is set to the e->address of the edge left of n to n.
@@ -214,25 +273,17 @@ static void sssp_bfs(void) {
 			indirect = n->status.indirect || e->options & OPTION_INDIRECT;
 
 			if(e->to->status.visited
-			                && (!e->to->status.indirect || indirect)) {
+			   && (!e->to->status.indirect || indirect))
 				continue;
-			}
-
-			// Only update nexthop the first time we visit this node.
-
-			if(!e->to->status.visited) {
-				e->to->nexthop = (n->nexthop == myself) ? e->to : n->nexthop;
-			}
 
 			e->to->status.visited = true;
 			e->to->status.indirect = indirect;
-			e->to->prevedge = e;
+			e->to->nexthop = (n->nexthop == myself) ? e->to : n->nexthop;
 			e->to->via = indirect ? n->via : e->to;
 			e->to->options = e->options;
 
-			if(e->to->address.sa.sa_family == AF_UNSPEC && e->address.sa.sa_family != AF_UNKNOWN) {
+			if(e->to->address.sa.sa_family == AF_UNSPEC && e->address.sa.sa_family != AF_UNKNOWN)
 				update_node_udp(e->to, &e->address);
-			}
 
 			list_insert_tail(todo_list, e->to);
 		}
@@ -242,6 +293,15 @@ static void sssp_bfs(void) {
 	}
 
 	list_free(todo_list);
+}
+
+static void check_reachability(void) {
+	splay_node_t *node, *next;
+	node_t *n;
+	char *name;
+	char *address, *port;
+	char *envp[7];
+	int i;
 
 	/* Check reachability status. */
 
@@ -254,10 +314,10 @@ static void sssp_bfs(void) {
 
 			if(n->status.reachable) {
 				ifdebug(TRAFFIC) logger(LOG_DEBUG, "Node %s (%s) became reachable",
-				                        n->name, n->hostname);
+					   n->name, n->hostname);
 			} else {
 				ifdebug(TRAFFIC) logger(LOG_DEBUG, "Node %s (%s) became unreachable",
-				                        n->name, n->hostname);
+					   n->name, n->hostname);
 			}
 
 			/* TODO: only clear status.validkey if node is unreachable? */
@@ -269,122 +329,45 @@ static void sssp_bfs(void) {
 			n->minmtu = 0;
 			n->mtuprobes = 0;
 
-			if(n->mtuevent) {
-				event_del(n->mtuevent);
-				n->mtuevent = NULL;
-			}
+			if(timeout_initialized(&n->mtuevent))
+				event_del(&n->mtuevent);
 
-			xasprintf(&envp[0], "NETNAME=%s", netname ? netname : "");
-			xasprintf(&envp[1], "DEVICE=%s", device ? device : "");
-			xasprintf(&envp[2], "INTERFACE=%s", iface ? iface : "");
+			xasprintf(&envp[0], "NETNAME=%s", netname ? : "");
+			xasprintf(&envp[1], "DEVICE=%s", device ? : "");
+			xasprintf(&envp[2], "INTERFACE=%s", iface ? : "");
 			xasprintf(&envp[3], "NODE=%s", n->name);
 			sockaddr2str(&n->address, &address, &port);
 			xasprintf(&envp[4], "REMOTEADDRESS=%s", address);
 			xasprintf(&envp[5], "REMOTEPORT=%s", port);
-			xasprintf(&envp[6], "NAME=%s", myself->name);
+			envp[6] = NULL;
 
 			execute_script(n->status.reachable ? "host-up" : "host-down", envp);
 
 			xasprintf(&name,
-			          n->status.reachable ? "hosts/%s-up" : "hosts/%s-down",
-			          n->name);
+					 n->status.reachable ? "hosts/%s-up" : "hosts/%s-down",
+					 n->name);
 			execute_script(name, envp);
 
 			free(name);
 			free(address);
 			free(port);
 
-			for(i = 0; i < 7; i++) {
+			for(i = 0; i < 6; i++)
 				free(envp[i]);
-			}
 
 			subnet_update(n, NULL, n->status.reachable);
 
-			if(!n->status.reachable) {
+			if(!n->status.reachable)
 				update_node_udp(n, NULL);
-				memset(&n->status, 0, sizeof(n->status));
-				n->options = 0;
-			} else if(n->connection) {
+			else if(n->connection)
 				send_ans_key(n);
-			}
 		}
 	}
 }
 
 void graph(void) {
 	subnet_cache_flush();
-	sssp_bfs();
+	sssp_dijkstra();
+	check_reachability();
 	mst_kruskal();
-	graph_changed = true;
-}
-
-
-
-/* Dump nodes and edges to a graphviz file.
-
-   The file can be converted to an image with
-   dot -Tpng graph_filename -o image_filename.png -Gconcentrate=true
-*/
-
-void dump_graph(void) {
-	avl_node_t *node;
-	node_t *n;
-	edge_t *e;
-	char *filename = NULL, *tmpname = NULL;
-	FILE *file, *pipe = NULL;
-
-	if(!graph_changed || !get_config_string(lookup_config(config_tree, "GraphDumpFile"), &filename)) {
-		return;
-	}
-
-	graph_changed = false;
-
-	ifdebug(PROTOCOL) logger(LOG_NOTICE, "Dumping graph");
-
-	if(filename[0] == '|') {
-		file = pipe = popen(filename + 1, "w");
-	} else {
-		xasprintf(&tmpname, "%s.new", filename);
-		file = fopen(tmpname, "w");
-	}
-
-	if(!file) {
-		logger(LOG_ERR, "Unable to open graph dump file %s: %s", filename, strerror(errno));
-		free(filename);
-		free(tmpname);
-		return;
-	}
-
-	fprintf(file, "digraph {\n");
-
-	/* dump all nodes first */
-	for(node = node_tree->head; node; node = node->next) {
-		n = node->data;
-		fprintf(file, "	%s [label = \"%s\"];\n", n->name, n->name);
-	}
-
-	/* now dump all edges */
-	for(node = edge_weight_tree->head; node; node = node->next) {
-		e = node->data;
-		fprintf(file, "	%s -> %s;\n", e->from->name, e->to->name);
-	}
-
-	fprintf(file, "}\n");
-
-	if(pipe) {
-		pclose(pipe);
-	} else {
-		fclose(file);
-#ifdef HAVE_MINGW
-		unlink(filename);
-#endif
-
-		if(rename(tmpname, filename)) {
-			logger(LOG_ERR, "Could not rename %s to %s: %s\n", tmpname, filename, strerror(errno));
-		}
-
-		free(tmpname);
-	}
-
-	free(filename);
 }

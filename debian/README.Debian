@@ -1,54 +1,17 @@
 tinc for Debian
----------------
+----------------------
 
 The manual for tinc is also available as info pages, type `info tinc'
 to read it.
 
-There are several ways in which tinc may be automatically started at boot:
-
-Systemd
--------
-
-Since 1.0.27-1, the tinc package comes with native systemd service files.
-To enable and start a net, call:
-
-systemctl enable tinc@<netname>
-systemctl start tinc@<netname>
-
-This will cause a tincd to be started which uses the configuration from
-/etc/tinc/<netname>, and also makes sure that it will be started next time your
-system boots.
-
-Apart from controlling individual instances, you can also start/stop/reload all
-enabled instances simultaneously by omitting @<netname>, for example:
-
-systemctl reload tinc
-
-Note that when you have systemd installed on your system, the file
-/etc/tinc/nets.boot will not be used anymore to automatically start tinc
-daemons. If the variable EXTRA is defined in /etc/default/tinc, it will be
-passed on to tinc. The variable LIMITS is however not used.
-
-The service files that come with this package start tinc unconditionally.
-However, tinc does support socket activation. If you wish to write a socket
-unit for tinc, use the ListenStream option to specify on which port(s) and
-address(es) tinc should listen.
-
-SysVinit
---------
-
 The system startup script for tinc, /etc/init.d/tinc, uses the file
-/etc/tinc/nets.boot to find out which networks have to be started. Use one
-netname per line. Lines starting with a # are ignored.
+/etc/tinc/nets.boot to find out which networks have to be started.
 
-/etc/network/interfaces
------------------------
-
-You can create a stanza in /etc/network/interfaces, and add a line with
-"tinc-net <netname>". This will cause a tincd to be started which uses the
-configuration from /etc/tinc/<netname>. You can use an inet static (with
-address and netmask options) or inet dhcp stanza, in which case the ifup will
-configure the VPN interface and you do not need to have a tinc-up script.
+Alternatively, you can create a stanza in /etc/network/interfaces, and add a
+line with "tinc-net <netname>". This will cause a tincd to be started which
+uses the configuration from /etc/tinc/<netname>. You can use an inet static
+(with address and netmask options) or inet dhcp stanza, in which case the ifup
+will configure the VPN interface and you do not need to have a tinc-up script.
 
 The following options are also recognized and map directly to the corresponding
 command line options for tincd:
@@ -57,7 +20,6 @@ tinc-config <directory>
 tinc-debug <level>
 tinc-mlock yes
 tinc-logfile <filename>
-tinc-pidfile <filename>
 tinc-chroot yes
 tinc-user <username>
 
@@ -70,11 +32,10 @@ iface vpn inet static
 	tinc-debug 1
 	tinc-mlock yes
 	tinc-user nobody
-	tinc-pidfile /tmp/tinc.pid
 
 This will start a tinc daemon that reads its configuration from
 /etc/tinc/myvpn, logs at debug level 1, locks itself in RAM, runs as user
 nobody, and creates a network interface called "vpn". Ifup then sets the
 address and netmask on that interface.
 
- -- Guus Sliepen <guus@debian.org>, Sun, 10 April 2016, 01:38:08 +0200
+ -- Guus Sliepen <guus@debian.org>, Fri, 24 June 2011, 18:10:53 +0200

@@ -2,15 +2,13 @@ Source: tinc
 Section: net
 Priority: optional
 Maintainer: Guus Sliepen <guus@debian.org>
-Standards-Version: 4.3.0
-Build-Depends: libssl-dev, debhelper-compat (= 12), gettext, texinfo, zlib1g-dev, liblzo2-dev, libvdeplug-dev
+Standards-Version: 3.9.2
+Build-Depends: libssl-dev (>>1.0.0), debhelper (>= 7.0.50~), gettext, texi2html, texinfo, zlib1g-dev, liblzo2-dev
 Homepage: http://www.tinc-vpn.org/
-Rules-Requires-Root: no
 
 Package: tinc
 Architecture: any
-Pre-Depends: ${misc:Pre-Depends}
-Depends: ${shlibs:Depends}, ${misc:Depends}, lsb-base (>= 3.0-6)
+Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: Virtual Private Network daemon
  tinc is a daemon with which you can create a virtual private network
  (VPN). One daemon can handle multiple connections, so you can

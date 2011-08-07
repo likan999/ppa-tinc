@@ -2,29 +2,11 @@
 
 set -e
 
-if [ "$METHOD" = loopback -o -z "$IF_TINC_NET" ]; then
-	exit 0
-fi
+[ -z "$IF_TINC_NET" ] && exit 0
 
 # Read options from /etc/default
 
-[ -r /etc/default/tinc ] && . /etc/default/tinc
-
-# Set process limits
-
-setlimits() {
-  while [ $# -gt 0 ]; do
-    parm=$1 ; shift
-    if [ -n "$1" -a "${1#-}" = "$1" ]; then
-      value=$1 ; shift
-      ulimit $parm $value
-    else
-      ulimit $parm
-    fi
-  done
-}
-
-test -n "$LIMITS" && setlimits $LIMITS
+. /etc/default/tinc
 
 # Read options from /etc/network/interfaces
 
@@ -32,10 +14,8 @@ test -n "$LIMITS" && setlimits $LIMITS
 [ -n "$IF_TINC_DEBUG" ]           && EXTRA="$EXTRA -d$IF_TINC_DEBUG"
 [ -n "$IF_TINC_MLOCK" ]           && EXTRA="$EXTRA --mlock"
 [ -n "$IF_TINC_LOGFILE" ]         && EXTRA="$EXTRA --logfile=$IF_TINC_LOGFILE"
-[ -n "$IF_TINC_PIDFILE" ]         && EXTRA="$EXTRA --pidfile=$IF_TINC_PIDFILE" || IF_TINC_PIDFILE=/var/run/tinc.$IF_TINC_NET.pid
 [ -n "$IF_TINC_CHROOT" ]          && EXTRA="$EXTRA --chroot"
 [ -n "$IF_TINC_USER" ]            && EXTRA="$EXTRA --user=$IF_TINC_USER"
-
 
 # Start tinc daemon
 
@@ -43,27 +23,14 @@ test -n "$LIMITS" && setlimits $LIMITS
 
 # Wait for it to come up properly
 
-/bin/sleep 0.1
+sleep 0.1
 i=0;
-while [ ! -f $IF_TINC_PIDFILE ] ; do
+while [ ! -f "/var/run/tinc.$IF_TINC_NET.pid" ] ; do
 	if [ $i = '30' ] ; then
 		echo 'Failed to start tinc daemon!'
 		exit 1
 	fi
-	/bin/sleep 0.1
-	i=$(($i+1))
-done
-
-while read pid rest < $IF_TINC_PIDFILE ; do
-	if [ -e "/proc/$pid" ] ; then
-		exit 0
-	fi
-
-	if [ $i = '30' ] ; then
-		echo 'Failed to start tinc daemon!'
-		exit 1
-	fi
-	/bin/sleep 0.1
+	sleep 0.1
 	i=$(($i+1))
 done
 

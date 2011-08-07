@@ -1,10 +1,7 @@
-#ifndef TINC_DEVICE_H
-#define TINC_DEVICE_H
-
 /*
-    device.h -- generic header for device.c
+    net.h -- generic header for device.c
     Copyright (C) 2001-2005 Ivo Timmermans
-                  2001-2012 Guus Sliepen <guus@tinc-vpn.org>
+                  2001-2006 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -21,27 +18,24 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
+#ifndef __TINC_DEVICE_H__
+#define __TINC_DEVICE_H__
+
 #include "net.h"
 
 extern int device_fd;
 extern char *device;
-
 extern char *iface;
 
-typedef struct devops_t {
-	bool (*setup)(void);
-	void (*close)(void);
-	bool (*read)(struct vpn_packet_t *packet);
-	bool (*write)(struct vpn_packet_t *packet);
-	void (*dump_stats)(void);
-} devops_t;
+extern uint64_t device_in_packets;
+extern uint64_t device_in_bytes;
+extern uint64_t device_out_packets;
+extern uint64_t device_out_bytes;
 
-extern const devops_t os_devops;
-extern const devops_t dummy_devops;
-extern const devops_t raw_socket_devops;
-extern const devops_t multicast_devops;
-extern const devops_t uml_devops;
-extern const devops_t vde_devops;
-extern devops_t devops;
+extern bool setup_device(void);
+extern void close_device(void);
+extern bool read_packet(struct vpn_packet_t *);
+extern bool write_packet(struct vpn_packet_t *);
+extern void dump_device_stats(void);
 
-#endif
+#endif							/* __TINC_DEVICE_H__ */

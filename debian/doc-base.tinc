@@ -6,5 +6,5 @@ Abstract: This manual describes how to set up a Virtual Private
 Section: System/Security
 
 Format: HTML
-Files: /usr/share/doc/tinc/tinc.html/*
-Index: /usr/share/doc/tinc/tinc.html/index.html
+Files: /usr/share/doc/tinc/tinc*.html
+Index: /usr/share/doc/tinc/tinc_toc.html
