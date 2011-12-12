@@ -99,7 +99,7 @@ case "$1" in
     signal_running ALRM
   ;;
   *)
-    echo "Usage: /etc/init.d/$NAME {start|stop|reload|restart|force-reload}"
+    echo "Usage: /etc/init.d/$NAME {start|stop|reload|restart|force-reload|alarm}"
     exit 1
   ;;
 esac

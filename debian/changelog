@@ -1,3 +1,17 @@
+tinc (1.0.16-1~bpo60+1) squeeze-backports; urgency=low
+
+  * Rebuild for squeeze-backports, no changes.
+
+ -- Michael Tokarev <mjt@tls.msk.ru>  Mon, 12 Dec 2011 13:27:23 +0400
+
+tinc (1.0.16-1) unstable; urgency=low
+
+  * New upstream release.
+  * Mention alarm option in /etc/init.d/tinc's usage information.
+    Closes: #631761
+
+ -- Guus Sliepen <guus@debian.org>  Sat, 23 Jul 2011 14:37:56 +0200
+
 tinc (1.0.15-1) unstable; urgency=low
 
   * New upstream release.
