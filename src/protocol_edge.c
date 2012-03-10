@@ -1,7 +1,7 @@
 /*
     protocol_edge.c -- handle the meta-protocol, edges
     Copyright (C) 1999-2005 Ivo Timmermans,
-                  2000-2009 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2012 Guus Sliepen <guus@tinc-vpn.org>
                   2009      Michael Tokarev <mjt@corpit.ru>
 
     This program is free software; you can redistribute it and/or modify
@@ -254,7 +254,7 @@ bool del_edge_h(connection_t *c) {
 		e = lookup_edge(to, myself);
 		if(e) {
 			if(!tunnelserver)
-				send_del_edge(broadcast, e);
+				send_del_edge(everyone, e);
 			edge_del(e);
 		}
 	}

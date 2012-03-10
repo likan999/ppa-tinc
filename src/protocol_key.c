@@ -1,7 +1,7 @@
 /*
     protocol_key.c -- handle the meta-protocol, key exchange
     Copyright (C) 1999-2005 Ivo Timmermans,
-                  2000-2011 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2012 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -40,7 +40,7 @@ void send_key_changed(void) {
 	avl_node_t *node;
 	connection_t *c;
 
-	send_request(broadcast, "%d %x %s", KEY_CHANGED, rand(), myself->name);
+	send_request(everyone, "%d %x %s", KEY_CHANGED, rand(), myself->name);
 
 	/* Immediately send new keys to directly connected nodes to keep UDP mappings alive */
 
@@ -242,8 +242,6 @@ bool ans_key_h(connection_t *c) {
 
 	/* Update our copy of the origin's packet key */
 	from->outkey = xrealloc(from->outkey, strlen(key) / 2);
-
-	from->outkey = xstrdup(key);
 	from->outkeylength = strlen(key) / 2;
 	hex2bin(key, from->outkey, from->outkeylength);
 

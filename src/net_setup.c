@@ -1,7 +1,7 @@
 /*
     net_setup.c -- Setup.
     Copyright (C) 1998-2005 Ivo Timmermans,
-                  2000-2010 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2012 Guus Sliepen <guus@tinc-vpn.org>
                   2006      Scott Lamb <slamb@slamb.org>
                   2010      Brandon Black <blblack@gmail.com>
 
@@ -45,6 +45,7 @@
 #include "xalloc.h"
 
 char *myport;
+devops_t devops;
 
 bool read_rsa_public_key(connection_t *c) {
 	FILE *fp;
@@ -113,11 +114,14 @@ bool read_rsa_public_key(connection_t *c) {
 	xasprintf(&fname, "%s/hosts/%s", confbase, c->name);
 	fp = fopen(fname, "r");
 
-	if(fp) {
-		c->rsa_key = PEM_read_RSAPublicKey(fp, &c->rsa_key, NULL, NULL);
-		fclose(fp);
+	if(!fp) {
+		logger(LOG_ERR, "Error reading RSA public key file `%s': %s", fname, strerror(errno));
+		free(fname);
+		return false;
 	}
 
+	c->rsa_key = PEM_read_RSAPublicKey(fp, &c->rsa_key, NULL, NULL);
+	fclose(fp);
 	free(fname);
 
 	if(c->rsa_key)
@@ -128,12 +132,15 @@ bool read_rsa_public_key(connection_t *c) {
 	xasprintf(&fname, "%s/hosts/%s", confbase, c->name);
 	fp = fopen(fname, "r");
 
-	if(fp) {
-		c->rsa_key = PEM_read_RSA_PUBKEY(fp, &c->rsa_key, NULL, NULL);
-//		RSA_blinding_on(c->rsa_key, NULL);
-		fclose(fp);
+	if(!fp) {
+		logger(LOG_ERR, "Error reading RSA public key file `%s': %s", fname, strerror(errno));
+		free(fname);
+		return false;
 	}
 
+	c->rsa_key = PEM_read_RSA_PUBKEY(fp, &c->rsa_key, NULL, NULL);
+//	RSA_blinding_on(c->rsa_key, NULL);
+	fclose(fp);
 	free(fname);
 
 	if(c->rsa_key)
@@ -214,7 +221,6 @@ void load_all_subnets(void) {
 	config_t *cfg;
 	subnet_t *s, *s2;
 	node_t *n;
-	bool result;
 
 	xasprintf(&dname, "%s/hosts", confbase);
 	dir = opendir(dname);
@@ -236,10 +242,9 @@ void load_all_subnets(void) {
 
 		xasprintf(&fname, "%s/hosts/%s", confbase, ent->d_name);
 		init_configuration(&config_tree);
-		result = read_config_file(config_tree, fname);
+		read_config_options(config_tree, ent->d_name);
+		read_config_file(config_tree, fname);
 		free(fname);
-		if(!result)
-			continue;
 
 		if(!n) {
 			n = new_node();
@@ -270,7 +275,7 @@ void load_all_subnets(void) {
 static bool setup_myself(void) {
 	config_t *cfg;
 	subnet_t *subnet;
-	char *name, *hostname, *mode, *afname, *cipher, *digest;
+	char *name, *hostname, *mode, *afname, *cipher, *digest, *type;
 	char *fname = NULL;
 	char *address = NULL;
 	char *envp[5];
@@ -349,6 +354,7 @@ static bool setup_myself(void) {
 	get_config_bool(lookup_config(config_tree, "DirectOnly"), &directonly);
 	get_config_bool(lookup_config(config_tree, "StrictSubnets"), &strictsubnets);
 	get_config_bool(lookup_config(config_tree, "TunnelServer"), &tunnelserver);
+	get_config_bool(lookup_config(config_tree, "LocalDiscovery"), &localdiscovery);
 	strictsubnets |= tunnelserver;
 
 	if(get_config_string(lookup_config(config_tree, "Mode"), &mode)) {
@@ -390,6 +396,8 @@ static bool setup_myself(void) {
 		myself->options |= OPTION_CLAMP_MSS;
 
 	get_config_bool(lookup_config(config_tree, "PriorityInheritance"), &priorityinheritance);
+	get_config_bool(lookup_config(config_tree, "DecrementTTL"), &decrement_ttl);
+	get_config_bool(lookup_config(config_tree, "Broadcast"), &broadcast);
 
 #if !defined(SOL_IP) || !defined(IP_TOS)
 	if(priorityinheritance)
@@ -533,7 +541,24 @@ static bool setup_myself(void) {
 
 	/* Open device */
 
-	if(!setup_device())
+	devops = os_devops;
+
+	if(get_config_string(lookup_config(config_tree, "DeviceType"), &type)) {
+		if(!strcasecmp(type, "dummy"))
+			devops = dummy_devops;
+		else if(!strcasecmp(type, "raw_socket"))
+			devops = raw_socket_devops;
+#ifdef ENABLE_UML
+		else if(!strcasecmp(type, "uml"))
+			devops = uml_devops;
+#endif
+#ifdef ENABLE_VDE
+		else if(!strcasecmp(type, "vde"))
+			devops = vde_devops;
+#endif
+	}
+
+	if(!devops.setup())
 		return false;
 
 	/* Run tinc-up script to further initialize the tap interface */
@@ -554,47 +579,58 @@ static bool setup_myself(void) {
 
 	/* Open sockets */
 
-	get_config_string(lookup_config(config_tree, "BindToAddress"), &address);
-
-	hint.ai_family = addressfamily;
-	hint.ai_socktype = SOCK_STREAM;
-	hint.ai_protocol = IPPROTO_TCP;
-	hint.ai_flags = AI_PASSIVE;
-
-	err = getaddrinfo(address, myport, &hint, &ai);
-
-	if(err || !ai) {
-		logger(LOG_ERR, "System call `%s' failed: %s", "getaddrinfo",
-			   gai_strerror(err));
-		return false;
-	}
-
 	listen_sockets = 0;
+	cfg = lookup_config(config_tree, "BindToAddress");
 
-	for(aip = ai; aip; aip = aip->ai_next) {
-		listen_socket[listen_sockets].tcp =
-			setup_listen_socket((sockaddr_t *) aip->ai_addr);
+	do {
+		get_config_string(cfg, &address);
+		if(cfg)
+			cfg = lookup_config_next(config_tree, cfg);
 
-		if(listen_socket[listen_sockets].tcp < 0)
-			continue;
+		hint.ai_family = addressfamily;
+		hint.ai_socktype = SOCK_STREAM;
+		hint.ai_protocol = IPPROTO_TCP;
+		hint.ai_flags = AI_PASSIVE;
 
-		listen_socket[listen_sockets].udp =
-			setup_vpn_in_socket((sockaddr_t *) aip->ai_addr);
+		err = getaddrinfo(address, myport, &hint, &ai);
+		free(address);
 
-		if(listen_socket[listen_sockets].udp < 0)
-			continue;
-
-		ifdebug(CONNECTIONS) {
-			hostname = sockaddr2hostname((sockaddr_t *) aip->ai_addr);
-			logger(LOG_NOTICE, "Listening on %s", hostname);
-			free(hostname);
+		if(err || !ai) {
+			logger(LOG_ERR, "System call `%s' failed: %s", "getaddrinfo",
+				   gai_strerror(err));
+			return false;
 		}
 
-		memcpy(&listen_socket[listen_sockets].sa, aip->ai_addr, aip->ai_addrlen);
-		listen_sockets++;
-	}
+		for(aip = ai; aip; aip = aip->ai_next) {
+			if(listen_sockets >= MAXSOCKETS) {
+				logger(LOG_ERR, "Too many listening sockets");
+				return false;
+			}
 
-	freeaddrinfo(ai);
+			listen_socket[listen_sockets].tcp =
+				setup_listen_socket((sockaddr_t *) aip->ai_addr);
+
+			if(listen_socket[listen_sockets].tcp < 0)
+				continue;
+
+			listen_socket[listen_sockets].udp =
+				setup_vpn_in_socket((sockaddr_t *) aip->ai_addr);
+
+			if(listen_socket[listen_sockets].udp < 0)
+				continue;
+
+			ifdebug(CONNECTIONS) {
+				hostname = sockaddr2hostname((sockaddr_t *) aip->ai_addr);
+				logger(LOG_NOTICE, "Listening on %s", hostname);
+				free(hostname);
+			}
+
+			memcpy(&listen_socket[listen_sockets].sa, aip->ai_addr, aip->ai_addrlen);
+			listen_sockets++;
+		}
+
+		freeaddrinfo(ai);
+	} while(cfg);
 
 	if(listen_sockets)
 		logger(LOG_NOTICE, "Ready");
@@ -696,7 +732,7 @@ void close_network_connections(void) {
 	for(i = 0; i < 4; i++)
 		free(envp[i]);
 
-	close_device();
+	devops.close();
 
 	return;
 }

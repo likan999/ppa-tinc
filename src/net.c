@@ -1,7 +1,7 @@
 /*
     net.c -- most of the network code
     Copyright (C) 1998-2005 Ivo Timmermans,
-                  2000-2011 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2012 Guus Sliepen <guus@tinc-vpn.org>
                   2006      Scott Lamb <slamb@slamb.org>
 		  2011      Loïc Grenié <loic.grenie@gmail.com>
 
@@ -75,7 +75,7 @@ static void purge(void) {
 			for(snode = n->subnet_tree->head; snode; snode = snext) {
 				snext = snode->next;
 				s = snode->data;
-				send_del_subnet(broadcast, s);
+				send_del_subnet(everyone, s);
 				if(!strictsubnets)
 					subnet_del(n, s);
 			}
@@ -84,7 +84,7 @@ static void purge(void) {
 				enext = enode->next;
 				e = enode->data;
 				if(!tunnelserver)
-					send_del_edge(broadcast, e);
+					send_del_edge(everyone, e);
 				edge_del(e);
 			}
 		}
@@ -183,7 +183,7 @@ void terminate_connection(connection_t *c, bool report) {
 
 	if(c->edge) {
 		if(report && !tunnelserver)
-			send_del_edge(broadcast, c->edge);
+			send_del_edge(everyone, c->edge);
 
 		edge_del(c->edge);
 
@@ -198,7 +198,7 @@ void terminate_connection(connection_t *c, bool report) {
 			e = lookup_edge(c->node, myself);
 			if(e) {
 				if(!tunnelserver)
-					send_del_edge(broadcast, e);
+					send_del_edge(everyone, e);
 				edge_del(e);
 			}
 		}
@@ -289,7 +289,7 @@ static void check_network_activity(fd_set * readset, fd_set * writeset) {
 
 	/* check input from kernel */
 	if(device_fd >= 0 && FD_ISSET(device_fd, readset)) {
-		if(read_packet(&packet)) {
+		if(devops.read(&packet)) {
 			errors = 0;
 			packet.priority = 0;
 			route(myself, &packet);
@@ -343,7 +343,7 @@ static void check_network_activity(fd_set * readset, fd_set * writeset) {
 
 	for(i = 0; i < listen_sockets; i++) {
 		if(FD_ISSET(listen_socket[i].udp, readset))
-			handle_incoming_vpn_data(listen_socket[i].udp);
+			handle_incoming_vpn_data(i);
 
 		if(FD_ISSET(listen_socket[i].tcp, readset))
 			handle_new_meta_connection(listen_socket[i].tcp);
@@ -576,14 +576,14 @@ int main_loop(void) {
 					next = node->next;
 					subnet = node->data;
 					if(subnet->expires == 1) {
-						send_del_subnet(broadcast, subnet);
+						send_del_subnet(everyone, subnet);
 						if(subnet->owner->status.reachable)
 							subnet_update(subnet->owner, subnet, false);
 						subnet_del(subnet->owner, subnet);
 					} else if(subnet->expires == -1) {
 						subnet->expires = 0;
 					} else {
-						send_add_subnet(broadcast, subnet);
+						send_add_subnet(everyone, subnet);
 						if(subnet->owner->status.reachable)
 							subnet_update(subnet->owner, subnet, true);
 					}

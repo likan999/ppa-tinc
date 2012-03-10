@@ -1,7 +1,7 @@
 /*
     net.h -- header for net.c
     Copyright (C) 1998-2005 Ivo Timmermans
-                  2000-2009 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2012 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -107,6 +107,7 @@ extern int maxoutbufsize;
 extern int seconds_till_retry;
 extern int addressfamily;
 extern unsigned replaywin;
+extern bool localdiscovery;
 
 extern listen_socket_t listen_socket[MAXSOCKETS];
 extern int listen_sockets;

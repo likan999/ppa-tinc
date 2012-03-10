@@ -1,3 +1,10 @@
+tinc (1.0.17-1) unstable; urgency=low
+
+  * New upstream release.
+  * Enable support for UML and VDE.
+
+ -- Guus Sliepen <guus@debian.org>  Sat, 10 Mar 2012 14:50:00 +0100
+
 tinc (1.0.16-1) unstable; urgency=low
 
   * New upstream release.
