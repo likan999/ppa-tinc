@@ -2,9 +2,8 @@ Source: tinc
 Section: net
 Priority: optional
 Maintainer: Guus Sliepen <guus@debian.org>
-Uploaders: Michael Tokarev <mjt@tls.msk.ru>
 Standards-Version: 3.9.3
-Build-Depends: libssl-dev, debhelper (>= 7.0.50~), gettext, texi2html, texinfo, zlib1g-dev, liblzo2-dev, libvdeplug-dev | libvdeplug2-dev
+Build-Depends: libssl-dev, debhelper (>= 7.0.50~), gettext, texi2html, texinfo, zlib1g-dev, liblzo2-dev, libvdeplug-dev
 Homepage: http://www.tinc-vpn.org/
 
 Package: tinc
