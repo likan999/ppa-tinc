@@ -1,3 +1,107 @@
+commit 482c6119a7ae80f320e5b519ef2e785e04a77b8e
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Mar 25 15:32:26 2012 +0100
+
+    Releasing 1.0.18.
+
+commit 64c657b32d1eb34eb669c6d5b0ec26c1a643b194
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Mar 25 15:30:58 2012 +0100
+
+    Mark DecrementTTL option experimental.
+
+commit f71ce341800739c7cdee01d7cf025e7492da22ac
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Mar 25 15:17:50 2012 +0100
+
+    Fix return type of vde_recv() as well.
+    
+    In this case it is not really necessary as the conversion to int will already
+    take care of ensuring the return value is treated as signed.
+
+commit 6225b1884a25af4debc2d0821a4c377ddbaec696
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Mar 25 14:55:56 2012 +0100
+
+    Document OpenBSD "ifconfig link0" and Linux "ip tuntap" commands.
+
+commit 399835385380d485416d6d59a8f27ce71f1db644
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Mar 25 14:46:50 2012 +0100
+
+    Fix some more compiler warnings.
+
+commit cfe6558d4ba4f572311aeafd62737f6f2692ad86
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Mar 25 14:00:21 2012 +0100
+
+    Fix return value type of vde_send().
+    
+    The libvdeplug_dyn.h header file incorrectly declares the return type of
+    vde_send() to size_t, while in reality it is ssize_t.
+
+commit 95968c67f9df9102ddbce5b7c8d34107989ad51a
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Mar 25 13:58:14 2012 +0100
+
+    Fix compiler warnings.
+
+commit e2d1b0b899ef66cd7ff227549e58b96c292f784e
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Mar 25 13:42:10 2012 +0100
+
+    Allow scoped addresses to be used for IPv6 multicast socket.
+
+commit 251204063255d95910f9a079015e2f9b428fd983
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Mar 25 13:40:55 2012 +0100
+
+    Add #ifdefs in case not all platforms support IPv4 and IPv6 multicast.
+
+commit b5e3bf1a85462f0c41638c11305d28f87af24395
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Fri Mar 23 13:18:36 2012 +0100
+
+    Set default value of DecrementTTL to "no".
+    
+    Decrementing the TTL causes IPv6 to fail when Mode = switch, and there may be
+    other unforeseen side-effects.
+
+commit c373de2e9812700c0568640727ad917b6fc7d758
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Wed Mar 21 17:00:53 2012 +0100
+
+    Add support for multicast communication with UML/QEMU/KVM.
+    
+    DeviceType = multicast allows one to specify a multicast address and port with
+    a Device statement. Tinc will then read/send packets to that multicast group
+    instead of to a tun/tap device. This allows interaction with UML, QEMU and KVM
+    instances that are listening on the same group.
+
+commit a7dbb50c23f447a23b543c92ec096ff178bc2de3
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Wed Mar 21 13:20:15 2012 +0100
+
+    Allow a port to be specified in BindToAddress statements.
+    
+    This can be used to let tinc listen on multiple ports for incoming connections.
+
+commit 80e15d8b96e5313b33c91003b1f75d7f6db9924e
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Tue Mar 20 23:49:16 2012 +0100
+
+    Always try next Address when an outgoing connection fails to authenticate.
+    
+    When making outgoing connections, tinc goes through the list of Addresses and
+    tries all of them until one succeeds. However, before it would consider
+    establishing a TCP connection a success, even when the authentication failed.
+    This would be a problem if the first Address would point to a hostname and port
+    combination that belongs to the wrong tinc node, or perhaps even to a non-tinc
+    service, causing tinc to endlessly try this Address instead of moving to the
+    next one.
+    
+    Problem found by Delf Eldkraft.
+
 commit 28a1501b9a8b4c730f7f965d6b2e8fc50feba261
 Author: Guus Sliepen <guus@tinc-vpn.org>
 Date:   Sat Mar 10 13:31:36 2012 +0100

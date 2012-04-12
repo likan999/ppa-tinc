@@ -204,18 +204,14 @@ void terminate_connection(connection_t *c, bool report) {
 		}
 	}
 
+	free_connection_partially(c);
+
 	/* Check if this was our outgoing connection */
 
 	if(c->outgoing) {
-		retry_outgoing(c->outgoing);
-		c->outgoing = NULL;
+		c->status.remove = false;
+		do_outgoing_connection(c);	
 	}
-
-	free(c->outbuf);
-	c->outbuf = NULL;
-	c->outbuflen = 0;
-	c->outbufsize = 0;
-	c->outbufstart = 0;
 }
 
 /*
@@ -238,7 +234,7 @@ static void check_dead_connections(void) {
 			if(c->status.active) {
 				if(c->status.pinged) {
 					ifdebug(CONNECTIONS) logger(LOG_INFO, "%s (%s) didn't respond to PING in %ld seconds",
-							   c->name, c->hostname, now - c->last_ping_time);
+							   c->name, c->hostname, (long)now - c->last_ping_time);
 					c->status.timeout = true;
 					terminate_connection(c, true);
 				} else if(c->last_ping_time + pinginterval <= now) {
@@ -267,7 +263,7 @@ static void check_dead_connections(void) {
 			if(c->status.active) {
 				ifdebug(CONNECTIONS) logger(LOG_INFO,
 						"%s (%s) could not flush for %ld seconds (%d bytes remaining)",
-						c->name, c->hostname, now - c->last_flushed_time, c->outbuflen);
+						c->name, c->hostname, (long)now - c->last_flushed_time, c->outbuflen);
 				c->status.timeout = true;
 				terminate_connection(c, true);
 			}
@@ -290,9 +286,11 @@ static void check_network_activity(fd_set * readset, fd_set * writeset) {
 	/* check input from kernel */
 	if(device_fd >= 0 && FD_ISSET(device_fd, readset)) {
 		if(devops.read(&packet)) {
-			errors = 0;
-			packet.priority = 0;
-			route(myself, &packet);
+			if(packet.len) {
+				errors = 0;
+				packet.priority = 0;
+				route(myself, &packet);
+			}
 		} else {
 			usleep(errors * 50000);
 			errors++;
