@@ -337,15 +337,8 @@ static void indicator(int a, int b, void *p) {
 static bool keygen(int bits) {
 	RSA *rsa_key;
 	FILE *f;
-	char *name = NULL;
+	char *name = get_name();
 	char *filename;
-
-	get_config_string(lookup_config(config_tree, "Name"), &name);
-
-	if(name && !check_id(name)) {
-		fprintf(stderr, "Invalid name for myself!\n");
-		return false;
-	}
 
 	fprintf(stderr, "Generating %d bits keys:\n", bits);
 	rsa_key = RSA_generate_key(bits, 0x10001, indicator, NULL);
@@ -386,8 +379,7 @@ static bool keygen(int bits) {
 	PEM_write_RSAPublicKey(f, rsa_key);
 	fclose(f);
 	free(filename);
-	if(name)
-		free(name);
+	free(name);
 
 	return true;
 }
@@ -538,6 +530,12 @@ int main(int argc, char **argv) {
 	openlogger("tinc", use_logfile?LOGMODE_FILE:LOGMODE_STDERR);
 
 	g_argv = argv;
+
+	if(getenv("LISTEN_PID") && atoi(getenv("LISTEN_PID")) == getpid())
+		do_detach = false;
+#ifdef HAVE_UNSETENV
+	unsetenv("LISTEN_PID");
+#endif
 
 	init_configuration(&config_tree);
 

@@ -1,3 +1,11 @@
+tinc (1.0.19-1) unstable; urgency=low
+
+  * New upstream release.
+  * Bump debian/compat so tinc gets built with hardening flags.
+  * Allow tinc-pidfile in /etc/network/interfaces.
+
+ -- Guus Sliepen <guus@debian.org>  Mon, 25 Jun 2012 20:29:22 +0200
+
 tinc (1.0.18-1) unstable; urgency=low
 
   * New upstream release.
