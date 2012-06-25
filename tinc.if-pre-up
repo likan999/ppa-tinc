@@ -14,6 +14,7 @@ set -e
 [ -n "$IF_TINC_DEBUG" ]           && EXTRA="$EXTRA -d$IF_TINC_DEBUG"
 [ -n "$IF_TINC_MLOCK" ]           && EXTRA="$EXTRA --mlock"
 [ -n "$IF_TINC_LOGFILE" ]         && EXTRA="$EXTRA --logfile=$IF_TINC_LOGFILE"
+[ -n "$IF_TINC_PIDFILE" ]         && EXTRA="$EXTRA --logfile=$IF_TINC_PIDFILE"
 [ -n "$IF_TINC_CHROOT" ]          && EXTRA="$EXTRA --chroot"
 [ -n "$IF_TINC_USER" ]            && EXTRA="$EXTRA --user=$IF_TINC_USER"
 

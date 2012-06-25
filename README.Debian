@@ -20,6 +20,7 @@ tinc-config <directory>
 tinc-debug <level>
 tinc-mlock yes
 tinc-logfile <filename>
+tinc-pidfile <filename>
 tinc-chroot yes
 tinc-user <username>
 
@@ -32,10 +33,11 @@ iface vpn inet static
 	tinc-debug 1
 	tinc-mlock yes
 	tinc-user nobody
+	tinc-pidfile /tmp/tinc.pid
 
 This will start a tinc daemon that reads its configuration from
 /etc/tinc/myvpn, logs at debug level 1, locks itself in RAM, runs as user
-nobody, and creates a network interface called "vpn". Ifup then sets the
-address and netmask on that interface.
+nobody, writes the PID to /tmp/tinc.pid, and creates a network interface called
+"vpn". Ifup then sets the address and netmask on that interface.
 
- -- Guus Sliepen <guus@debian.org>, Fri, 24 June 2011, 18:10:53 +0200
+ -- Guus Sliepen <guus@debian.org>, Fri, 25 June 2012, 20:28:35 +0200
