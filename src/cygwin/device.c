@@ -1,7 +1,7 @@
 /*
     device.c -- Interaction with Windows tap driver in a Cygwin environment
     Copyright (C) 2002-2005 Ivo Timmermans,
-                  2002-2009 Guus Sliepen <guus@tinc-vpn.org>
+                  2002-2012 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -45,7 +45,7 @@ static uint64_t device_total_out = 0;
 static pid_t reader_pid;
 static int sp[2];
 
-bool setup_device(void) {
+static bool setup_device(void) {
 	HKEY key, key2;
 	int i, err;
 
@@ -64,7 +64,7 @@ bool setup_device(void) {
 	/* Open registry and look for network adapters */
 
 	if(RegOpenKeyEx(HKEY_LOCAL_MACHINE, NETWORK_CONNECTIONS_KEY, 0, KEY_READ, &key)) {
-		logger(LOG_ERR, "Unable to read registry: %s", winerror(GetLastError()));
+		logger(DEBUG_ALWAYS, LOG_ERR, "Unable to read registry: %s", winerror(GetLastError()));
 		return false;
 	}
 
@@ -77,7 +77,7 @@ bool setup_device(void) {
 
 		snprintf(regpath, sizeof regpath, "%s\\%s\\Connection", NETWORK_CONNECTIONS_KEY, adapterid);
 
-                if(RegOpenKeyEx(HKEY_LOCAL_MACHINE, regpath, 0, KEY_READ, &key2))
+		if(RegOpenKeyEx(HKEY_LOCAL_MACHINE, regpath, 0, KEY_READ, &key2))
 			continue;
 
 		len = sizeof adaptername;
@@ -116,7 +116,7 @@ bool setup_device(void) {
 	RegCloseKey(key);
 
 	if(!found) {
-		logger(LOG_ERR, "No Windows tap device found!");
+		logger(DEBUG_ALWAYS, LOG_ERR, "No Windows tap device found!");
 		return false;
 	}
 
@@ -127,22 +127,22 @@ bool setup_device(void) {
 		iface = xstrdup(adaptername);
 
 	snprintf(tapname, sizeof tapname, USERMODEDEVICEDIR "%s" TAPSUFFIX, device);
-	
+
 	/* Now we are going to open this device twice: once for reading and once for writing.
 	   We do this because apparently it isn't possible to check for activity in the select() loop.
 	   Furthermore I don't really know how to do it the "Windows" way. */
 
 	if(socketpair(AF_UNIX, SOCK_DGRAM, PF_UNIX, sp)) {
-		logger(LOG_DEBUG, "System call `%s' failed: %s", "socketpair", strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_DEBUG, "System call `%s' failed: %s", "socketpair", strerror(errno));
 		return false;
 	}
 
 	/* The parent opens the tap device for writing. */
-	
+
 	device_handle = CreateFile(tapname, GENERIC_WRITE,  FILE_SHARE_READ,  0,  OPEN_EXISTING, FILE_ATTRIBUTE_SYSTEM , 0);
-	
+
 	if(device_handle == INVALID_HANDLE_VALUE) {
-		logger(LOG_ERR, "Could not open Windows tap device %s (%s) for writing: %s", device, iface, winerror(GetLastError()));
+		logger(DEBUG_ALWAYS, LOG_ERR, "Could not open Windows tap device %s (%s) for writing: %s", device, iface, winerror(GetLastError()));
 		return false;
 	}
 
@@ -151,7 +151,7 @@ bool setup_device(void) {
 	/* Get MAC address from tap device */
 
 	if(!DeviceIoControl(device_handle, TAP_IOCTL_GET_MAC, mymac.x, sizeof mymac.x, mymac.x, sizeof mymac.x, &len, 0)) {
-		logger(LOG_ERR, "Could not get MAC address from Windows tap device %s (%s): %s", device, iface, winerror(GetLastError()));
+		logger(DEBUG_ALWAYS, LOG_ERR, "Could not get MAC address from Windows tap device %s (%s): %s", device, iface, winerror(GetLastError()));
 		return false;
 	}
 
@@ -164,14 +164,14 @@ bool setup_device(void) {
 	reader_pid = fork();
 
 	if(reader_pid == -1) {
-		logger(LOG_DEBUG, "System call `%s' failed: %s", "fork", strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_DEBUG, "System call `%s' failed: %s", "fork", strerror(errno));
 		return false;
 	}
 
 	if(!reader_pid) {
 		/* The child opens the tap device for reading, blocking.
 		   It passes everything it reads to the socket. */
-	
+
 		char buf[MTU];
 		long inlen;
 
@@ -180,13 +180,13 @@ bool setup_device(void) {
 		device_handle = CreateFile(tapname, GENERIC_READ, FILE_SHARE_WRITE, 0,  OPEN_EXISTING, FILE_ATTRIBUTE_SYSTEM, 0);
 
 		if(device_handle == INVALID_HANDLE_VALUE) {
-			logger(LOG_ERR, "Could not open Windows tap device %s (%s) for reading: %s", device, iface, winerror(GetLastError()));
+			logger(DEBUG_ALWAYS, LOG_ERR, "Could not open Windows tap device %s (%s) for reading: %s", device, iface, winerror(GetLastError()));
 			buf[0] = 0;
 			write(sp[1], buf, 1);
 			exit(1);
 		}
 
-		logger(LOG_DEBUG, "Tap reader forked and running.");
+		logger(DEBUG_ALWAYS, LOG_DEBUG, "Tap reader forked and running.");
 
 		/* Notify success */
 
@@ -203,18 +203,18 @@ bool setup_device(void) {
 
 	read(device_fd, &gelukt, 1);
 	if(gelukt != 1) {
-		logger(LOG_DEBUG, "Tap reader failed!");
+		logger(DEBUG_ALWAYS, LOG_DEBUG, "Tap reader failed!");
 		return false;
 	}
 
 	device_info = "Windows tap device";
 
-	logger(LOG_INFO, "%s (%s) is a %s", device, iface, device_info);
+	logger(DEBUG_ALWAYS, LOG_INFO, "%s (%s) is a %s", device, iface, device_info);
 
 	return true;
 }
 
-void close_device(void) {
+static void close_device(void) {
 	close(sp[0]);
 	close(sp[1]);
 	CloseHandle(device_handle);
@@ -225,33 +225,33 @@ void close_device(void) {
 	free(iface);
 }
 
-bool read_packet(vpn_packet_t *packet) {
+static bool read_packet(vpn_packet_t *packet) {
 	int inlen;
 
 	if((inlen = read(sp[0], packet->data, MTU)) <= 0) {
-		logger(LOG_ERR, "Error while reading from %s %s: %s", device_info,
+		logger(DEBUG_ALWAYS, LOG_ERR, "Error while reading from %s %s: %s", device_info,
 			   device, strerror(errno));
 		return false;
 	}
-	
+
 	packet->len = inlen;
 
 	device_total_in += packet->len;
 
-	ifdebug(TRAFFIC) logger(LOG_DEBUG, "Read packet of %d bytes from %s", packet->len,
+	logger(DEBUG_TRAFFIC, LOG_DEBUG, "Read packet of %d bytes from %s", packet->len,
 			   device_info);
 
 	return true;
 }
 
-bool write_packet(vpn_packet_t *packet) {
+static bool write_packet(vpn_packet_t *packet) {
 	long outlen;
 
-	ifdebug(TRAFFIC) logger(LOG_DEBUG, "Writing packet of %d bytes to %s",
+	logger(DEBUG_TRAFFIC, LOG_DEBUG, "Writing packet of %d bytes to %s",
 			   packet->len, device_info);
 
 	if(!WriteFile (device_handle, packet->data, packet->len, &outlen, NULL)) {
-		logger(LOG_ERR, "Error while writing to %s %s: %s", device_info, device, winerror(GetLastError()));
+		logger(DEBUG_ALWAYS, LOG_ERR, "Error while writing to %s %s: %s", device_info, device, winerror(GetLastError()));
 		return false;
 	}
 
@@ -260,8 +260,16 @@ bool write_packet(vpn_packet_t *packet) {
 	return true;
 }
 
-void dump_device_stats(void) {
-	logger(LOG_DEBUG, "Statistics for %s %s:", device_info, device);
-	logger(LOG_DEBUG, " total bytes in:  %10"PRIu64, device_total_in);
-	logger(LOG_DEBUG, " total bytes out: %10"PRIu64, device_total_out);
+static void dump_device_stats(void) {
+	logger(DEBUG_ALWAYS, LOG_DEBUG, "Statistics for %s %s:", device_info, device);
+	logger(DEBUG_ALWAYS, LOG_DEBUG, " total bytes in:  %10"PRIu64, device_total_in);
+	logger(DEBUG_ALWAYS, LOG_DEBUG, " total bytes out: %10"PRIu64, device_total_out);
 }
+
+const devops_t os_devops = {
+	.setup = setup_device,
+	.close = close_device,
+	.read = read_packet,
+	.write = write_packet,
+	.dump_stats = dump_device_stats,
+};

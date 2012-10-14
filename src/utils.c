@@ -1,7 +1,7 @@
 /*
     utils.c -- gathering of some stupid small functions
     Copyright (C) 1999-2005 Ivo Timmermans
-                  2000-2009 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2012 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -38,7 +38,7 @@ static int charb64decode(char c) {
 		return c - 'a' + 26;
 	else if(c >= 'A')
 		return c - 'A';
-	else if(c >= '0') 
+	else if(c >= '0')
 		return c - '0' + 52;
 	else if(c == '+')
 		return 62;
@@ -48,14 +48,13 @@ static int charb64decode(char c) {
 
 int hex2bin(const char *src, char *dst, int length) {
 	int i;
-	for(i = 0; i < length && src[i * 2] && src[i * 2 + 1]; i++)
+	for(i = 0; i < length && isxdigit(src[i * 2]) && isxdigit(src[i * 2 + 1]); i++)
 		dst[i] = charhex2bin(src[i * 2]) * 16 + charhex2bin(src[i * 2 + 1]);
 	return i;
 }
 
 int bin2hex(const char *src, char *dst, int length) {
-	int i;
-	for(i = length - 1; i >= 0; i--) {
+	for(int i = length - 1; i >= 0; i--) {
 		dst[i * 2 + 1] = hexadecimals[(unsigned char) src[i] & 15];
 		dst[i * 2] = hexadecimals[(unsigned char) src[i] >> 4];
 	}
@@ -66,7 +65,7 @@ int bin2hex(const char *src, char *dst, int length) {
 int b64decode(const char *src, char *dst, int length) {
 	int i;
 	uint32_t triplet = 0;
-	unsigned char *udst = dst;
+	unsigned char *udst = (unsigned char *)dst;
 
 	for(i = 0; i < length / 3 * 4 && src[i]; i++) {
 		triplet |= charb64decode(src[i]) << (6 * (i & 3));
@@ -92,12 +91,12 @@ int b64decode(const char *src, char *dst, int length) {
 
 int b64encode(const char *src, char *dst, int length) {
 	uint32_t triplet;
-	const unsigned char *usrc = src;
+	const unsigned char *usrc = (unsigned char *)src;
 	int si = length / 3 * 3;
 	int di = length / 3 * 4;
 
 	switch(length % 3) {
-		case 2:	
+		case 2:
 			triplet = usrc[si] | usrc[si + 1] << 8;
 			dst[di] = base64imals[triplet & 63]; triplet >>= 6;
 			dst[di + 1] = base64imals[triplet & 63]; triplet >>= 6;
@@ -137,15 +136,17 @@ int b64encode(const char *src, char *dst, int length) {
 #endif
 
 const char *winerror(int err) {
-	static char buf[1024], *newline;
+	static char buf[1024], *ptr;
+
+	ptr = buf + sprintf(buf, "(%d) ", err);
 
 	if (!FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-	        NULL, err, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), buf, sizeof(buf), NULL)) {
+		NULL, err, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), ptr, sizeof(buf) - (ptr - buf), NULL)) {
 		strncpy(buf, "(unable to format errormessage)", sizeof(buf));
 	};
 
-	if((newline = strchr(buf, '\r')))
-		*newline = '\0';
+	if((ptr = strchr(buf, '\r')))
+		*ptr = '\0';
 
 	return buf;
 }

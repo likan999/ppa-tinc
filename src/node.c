@@ -1,6 +1,6 @@
 /*
     node.c -- node tree management
-    Copyright (C) 2001-2011 Guus Sliepen <guus@tinc-vpn.org>,
+    Copyright (C) 2001-2012 Guus Sliepen <guus@tinc-vpn.org>,
                   2001-2005 Ivo Timmermans
 
     This program is free software; you can redistribute it and/or modify
@@ -21,16 +21,17 @@
 #include "system.h"
 
 #include "control_common.h"
-#include "splay_tree.h"
+#include "hash.h"
 #include "logger.h"
 #include "net.h"
 #include "netutl.h"
 #include "node.h"
+#include "splay_tree.h"
 #include "utils.h"
 #include "xalloc.h"
 
-splay_tree_t *node_tree;			/* Known nodes, sorted by name */
-splay_tree_t *node_udp_tree;		/* Known nodes, sorted by address and port */
+splay_tree_t *node_tree;
+static hash_t *node_udp_cache;
 
 node_t *myself;
 
@@ -38,24 +39,13 @@ static int node_compare(const node_t *a, const node_t *b) {
 	return strcmp(a->name, b->name);
 }
 
-static int node_udp_compare(const node_t *a, const node_t *b) {
-	int result;
-
-	result = sockaddrcmp(&a->address, &b->address);
-
-	if(result)
-		return result;
-
-	return (a->name && b->name) ? strcmp(a->name, b->name) : 0;
-}
-
 void init_nodes(void) {
 	node_tree = splay_alloc_tree((splay_compare_t) node_compare, (splay_action_t) free_node);
-	node_udp_tree = splay_alloc_tree((splay_compare_t) node_udp_compare, NULL);
+	node_udp_cache = hash_alloc(0x100, sizeof(sockaddr_t));
 }
 
 void exit_nodes(void) {
-	splay_delete_tree(node_udp_tree);
+	hash_free(node_udp_cache);
 	splay_delete_tree(node_tree);
 }
 
@@ -85,12 +75,12 @@ void free_node(node_t *n) {
 	cipher_close(&n->outcipher);
 	digest_close(&n->outdigest);
 
-	ecdh_free(&n->ecdh);
 	ecdsa_free(&n->ecdsa);
+	sptps_stop(&n->sptps);
 
 	if(timeout_initialized(&n->mtuevent))
 		event_del(&n->mtuevent);
-	
+
 	if(n->hostname)
 		free(n->hostname);
 
@@ -108,23 +98,12 @@ void node_add(node_t *n) {
 }
 
 void node_del(node_t *n) {
-	splay_node_t *node, *next;
-	edge_t *e;
-	subnet_t *s;
-
-	for(node = n->subnet_tree->head; node; node = next) {
-		next = node->next;
-		s = node->data;
+	for splay_each(subnet_t, s, n->subnet_tree)
 		subnet_del(n, s);
-	}
 
-	for(node = n->edge_tree->head; node; node = next) {
-		next = node->next;
-		e = node->data;
+	for splay_each(edge_t, e, n->edge_tree)
 		edge_del(e);
-	}
 
-	splay_delete(node_udp_tree, n);
 	splay_delete(node_tree, n);
 }
 
@@ -137,62 +116,41 @@ node_t *lookup_node(char *name) {
 }
 
 node_t *lookup_node_udp(const sockaddr_t *sa) {
-	node_t n = {NULL};
-
-	n.address = *sa;
-	n.name = NULL;
-
-	return splay_search(node_udp_tree, &n);
+	return hash_search(node_udp_cache, sa);
 }
 
 void update_node_udp(node_t *n, const sockaddr_t *sa) {
 	if(n == myself) {
-		logger(LOG_WARNING, "Trying to update UDP address of myself!");
+		logger(DEBUG_ALWAYS, LOG_WARNING, "Trying to update UDP address of myself!");
 		return;
 	}
 
-	splay_delete(node_udp_tree, n);
-
-	if(n->hostname)
-		free(n->hostname);
+	hash_insert(node_udp_cache, &n->address, NULL);
 
 	if(sa) {
 		n->address = *sa;
+		hash_insert(node_udp_cache, sa, n);
+		free(n->hostname);
 		n->hostname = sockaddr2hostname(&n->address);
-		splay_insert(node_udp_tree, n);
-		ifdebug(PROTOCOL) logger(LOG_DEBUG, "UDP address of %s set to %s", n->name, n->hostname);
-	} else {
-		memset(&n->address, 0, sizeof n->address);
-		n->hostname = NULL;
-		ifdebug(PROTOCOL) logger(LOG_DEBUG, "UDP address of %s cleared", n->name);
+		logger(DEBUG_PROTOCOL, LOG_DEBUG, "UDP address of %s set to %s", n->name, n->hostname);
 	}
 }
 
 bool dump_nodes(connection_t *c) {
-	splay_node_t *node;
-	node_t *n;
-
-	for(node = node_tree->head; node; node = node->next) {
-		n = node->data;
-		send_request(c, "%d %d %s at %s cipher %d digest %d maclength %d compression %d options %x status %04x nexthop %s via %s distance %d pmtu %hd (min %hd max %hd)", CONTROL, REQ_DUMP_NODES,
-			   n->name, n->hostname, cipher_get_nid(&n->outcipher),
+	for splay_each(node_t, n, node_tree)
+		send_request(c, "%d %d %s %s %d %d %d %d %x %x %s %s %d %hd %hd %hd %ld", CONTROL, REQ_DUMP_NODES,
+			   n->name, n->hostname ?: "unknown port unknown", cipher_get_nid(&n->outcipher),
 			   digest_get_nid(&n->outdigest), (int)digest_length(&n->outdigest), n->outcompression,
 			   n->options, bitfield_to_int(&n->status, sizeof n->status), n->nexthop ? n->nexthop->name : "-",
-			   n->via ? n->via->name ?: "-" : "-", n->distance, n->mtu, n->minmtu, n->maxmtu);
-	}
+			   n->via ? n->via->name ?: "-" : "-", n->distance, n->mtu, n->minmtu, n->maxmtu, (long)n->last_state_change);
 
 	return send_request(c, "%d %d", CONTROL, REQ_DUMP_NODES);
 }
 
 bool dump_traffic(connection_t *c) {
-	splay_node_t *node;
-	node_t *n;
-
-	for(node = node_tree->head; node; node = node->next) {
-		n = node->data;
+	for splay_each(node_t, n, node_tree)
 		send_request(c, "%d %d %s %"PRIu64" %"PRIu64" %"PRIu64" %"PRIu64, CONTROL, REQ_DUMP_TRAFFIC,
 			   n->name, n->in_packets, n->in_bytes, n->out_packets, n->out_bytes);
-	}
 
 	return send_request(c, "%d %d", CONTROL, REQ_DUMP_TRAFFIC);
 }

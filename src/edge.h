@@ -1,6 +1,6 @@
 /*
     edge.h -- header for edge.c
-    Copyright (C) 2001-2006 Guus Sliepen <guus@tinc-vpn.org>,
+    Copyright (C) 2001-2012 Guus Sliepen <guus@tinc-vpn.org>,
                   2001-2005 Ivo Timmermans
 
     This program is free software; you can redistribute it and/or modify
@@ -31,14 +31,14 @@ typedef struct edge_t {
 	struct node_t *to;
 	sockaddr_t address;
 
-	uint32_t options;			/* options turned on for this edge */
-	int weight;					/* weight of this edge */
+	uint32_t options;                       /* options turned on for this edge */
+	int weight;                             /* weight of this edge */
 
-	struct connection_t *connection;	/* connection associated with this edge, if available */
-	struct edge_t *reverse;		/* edge in the opposite direction, if available */
+	struct connection_t *connection;        /* connection associated with this edge, if available */
+	struct edge_t *reverse;                 /* edge in the opposite direction, if available */
 } edge_t;
 
-extern splay_tree_t *edge_weight_tree;	/* Tree with all known edges sorted on weight */
+extern splay_tree_t *edge_weight_tree;          /* Tree with all known edges sorted on weight */
 
 extern void init_edges(void);
 extern void exit_edges(void);
@@ -51,4 +51,4 @@ extern void edge_del(edge_t *);
 extern edge_t *lookup_edge(struct node_t *, struct node_t *);
 extern bool dump_edges(struct connection_t *);
 
-#endif							/* __TINC_EDGE_H__ */
+#endif /* __TINC_EDGE_H__ */

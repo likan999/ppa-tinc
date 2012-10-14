@@ -1,6 +1,6 @@
 /*
     digest.c -- Digest handling
-    Copyright (C) 2007 Guus Sliepen <guus@tinc-vpn.org>
+    Copyright (C) 2007-2012 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -75,7 +75,7 @@ static bool digesttonid(int algo, int *nid) {
 
 static bool digest_open(digest_t *digest, int algo, int maclength) {
 	if(!digesttonid(algo, &digest->nid)) {
-		logger(LOG_DEBUG, "Digest %d has no corresponding nid!", algo);
+		logger(DEBUG_ALWAYS, LOG_DEBUG, "Digest %d has no corresponding nid!", algo);
 		return false;
 	}
 
@@ -85,7 +85,7 @@ static bool digest_open(digest_t *digest, int algo, int maclength) {
 		digest->maclength = len;
 	else
 		digest->maclength = maclength;
-	
+
 	digest->algo = algo;
 	digest->hmac = NULL;
 
@@ -96,7 +96,7 @@ bool digest_open_by_name(digest_t *digest, const char *name, int maclength) {
 	int algo;
 
 	if(!nametodigest(name, &algo)) {
-		logger(LOG_DEBUG, "Unknown digest name '%s'!", name);
+		logger(DEBUG_ALWAYS, LOG_DEBUG, "Unknown digest name '%s'!", name);
 		return false;
 	}
 
@@ -107,7 +107,7 @@ bool digest_open_by_nid(digest_t *digest, int nid, int maclength) {
 	int algo;
 
 	if(!nidtodigest(nid, &algo)) {
-		logger(LOG_DEBUG, "Unknown digest ID %d!", nid);
+		logger(DEBUG_ALWAYS, LOG_DEBUG, "Unknown digest ID %d!", nid);
 		return false;
 	}
 

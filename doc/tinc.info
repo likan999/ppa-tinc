@@ -8,7 +8,7 @@ END-INFO-DIR-ENTRY
    This is the info manual for tinc version 1.1pre2, a Virtual Private
 Network daemon.
 
-   Copyright (C) 1998-2011 Ivo Timmermans, Guus Sliepen
+   Copyright (C) 1998-2012 Ivo Timmermans, Guus Sliepen
 <guus@tinc-vpn.org> and Wessel Dankers <wsl@tinc-vpn.org>.
 
    Permission is granted to make and distribute verbatim copies of this
@@ -148,7 +148,7 @@ will most likely compile and run, but it will not be able to send or
 receive data packets.
 
    For an up to date list of supported platforms, please check the list
-on our website: `http://www.tinc-vpn.org/platforms'.
+on our website: `http://www.tinc-vpn.org/platforms/'.
 
 
 File: tinc.info,  Node: Preparations,  Next: Installation,  Prev: Introduction,  Up: Top
@@ -210,7 +210,9 @@ File: tinc.info,  Node: Configuration of FreeBSD kernels,  Next: Configuration o
 --------------------------------------
 
 For FreeBSD version 4.1 and higher, tun and tap drivers are included in
-the default kernel configuration.  Using tap devices is recommended.
+the default kernel configuration.  The tap driver can be loaded with
+`kldload if_tap', or by adding `if_tap_load="YES"' to
+`/boot/loader.conf'.
 
 
 File: tinc.info,  Node: Configuration of OpenBSD kernels,  Next: Configuration of NetBSD kernels,  Prev: Configuration of FreeBSD kernels,  Up: Configuring the kernel
@@ -413,10 +415,9 @@ if available.  Make sure you install the development AND runtime
 versions of this package.
 
    If you have to install libevent manually, you can get the source code
-from `http://monkey.org/~provos/libevent/'.  Instructions on how to
-configure, build and install this package are included within the
-package.  Please make sure you build development and runtime libraries
-(which is the default).
+from `http://libevent.org/'. Instructions on how to configure, build
+and install this package are included within the package.  Please make
+sure you build development and runtime libraries (which is the default).
 
 
 File: tinc.info,  Node: Installation,  Next: Configuration,  Prev: Preparations,  Up: Top
@@ -431,9 +432,9 @@ startup scripts and sample configurations.
    If you cannot use one of the precompiled packages, or you want to
 compile tinc for yourself, you can use the source.  The source is
 distributed under the GNU General Public License (GPL).  Download the
-source from the download page (http://www.tinc-vpn.org/download), which
-has the checksums of these files listed; you may wish to check these
-with md5sum before continuing.
+source from the download page (http://www.tinc-vpn.org/download/),
+which has the checksums of these files listed; you may wish to check
+these with md5sum before continuing.
 
    Tinc comes in a convenient autoconf/automake package, which you can
 just treat the same as any other package.  Which is just untar it, type
@@ -474,7 +475,7 @@ File: tinc.info,  Node: Darwin (MacOS/X) build environment,  Next: Cygwin (Windo
 In order to build tinc on Darwin, you need to install the MacOS/X
 Developer Tools from
 `http://developer.apple.com/tools/macosxtools.html' and a recent
-version of Fink from `http://fink.sourceforge.net/'.
+version of Fink from `http://www.finkproject.org/'.
 
    After installation use fink to download and install the following
 packages: autoconf25, automake, dlcompat, m4, openssl, zlib and lzo.
@@ -573,7 +574,6 @@ File: tinc.info,  Node: Configuration,  Next: Running tinc,  Prev: Installation,
 * Multiple networks::
 * How connections work::
 * Configuration files::
-* Generating keypairs::
 * Network interfaces::
 * Example configuration::
 
@@ -593,13 +593,19 @@ Do you want to run tinc in router mode or switch mode?  These questions
 can only be answered by yourself, you will not find the answers in this
 documentation.  Make sure you have an adequate understanding of
 networks in general.  A good resource on networking is the Linux
-Network Administrators Guide (http://www.linuxdoc.org/LDP/nag2/).
+Network Administrators Guide (http://www.tldp.org/LDP/nag2/).
 
    If you have everything clearly pictured in your mind, proceed in the
-following order: First, generate the configuration files (`tinc.conf',
-your host configuration file, `tinc-up' and perhaps `tinc-down').  Then
-generate the keypairs.  Finally, distribute the host configuration
-files.  These steps are described in the subsections below.
+following order: First, create the initial configuration files and
+public/private keypairs using the following command:
+     tincctl -n NETNAME init NAME
+   Second, use `tincctl -n NETNAME config ...' to further configure
+tinc.  Finally, export your host configuration file using `tincctl -n
+NETNAME export' and send it to those people or computers you want tinc
+to connect to.  They should send you their host configuration file
+back, which you can import using `tincctl -n NETNAME import'.
+
+   These steps are described in the subsections below.
 
 
 File: tinc.info,  Node: Multiple networks,  Next: How connections work,  Prev: Configuration introduction,  Up: Configuration
@@ -610,27 +616,26 @@ File: tinc.info,  Node: Multiple networks,  Next: How connections work,  Prev: C
 In order to allow you to run more than one tinc daemon on one computer,
 for instance if your computer is part of more than one VPN, you can
 assign a NETNAME to your VPN.  It is not required if you only run one
-tinc daemon, it doesn't even have to be the same on all the sites of
+tinc daemon, it doesn't even have to be the same on all the nodes of
 your VPN, but it is recommended that you choose one anyway.
 
    We will asume you use a netname throughout this document.  This
-means that you call tincd with the -n argument, which will assign a
-netname to this daemon.
+means that you call tincctl with the -n argument, which will specify
+the netname.
 
-   The effect of this is that the daemon will set its configuration
+   The effect of this option is that tinc will set its configuration
 root to `/etc/tinc/NETNAME/', where NETNAME is your argument to the -n
-option.  You'll notice that it appears in syslog as `tinc.NETNAME'.
+option.  You will also notice that log messages it appears in syslog as
+coming from `tinc.NETNAME', and on Linux, unless specified otherwise,
+the name of the virtual network interface will be the same as the
+network name.
 
    However, it is not strictly necessary that you call tinc with the -n
-option.  In this case, the network name would just be empty, and it will
-be used as such.  tinc now looks for files in `/etc/tinc/', instead of
-`/etc/tinc/NETNAME/'; the configuration file should be
-`/etc/tinc/tinc.conf', and the host configuration files are now
-expected to be in `/etc/tinc/hosts/'.
-
-   But it is highly recommended that you use this feature of tinc,
-because it will be so much clearer whom your daemon talks to.  Hence,
-we will assume that you use it.
+option. If you don not use it, the network name will just be empty, and
+tinc will look for files in `/etc/tinc/' instead of
+`/etc/tinc/NETNAME/'; the configuration file will then be
+`/etc/tinc/tinc.conf', and the host configuration files are expected to
+be in `/etc/tinc/hosts/'.
 
 
 File: tinc.info,  Node: How connections work,  Next: Configuration files,  Prev: Multiple networks,  Up: Configuration
@@ -656,8 +661,31 @@ a server, and one which does specify such a value as a client.  It does
 not matter if two tinc daemons have a `ConnectTo' value pointing to
 each other however.
 
+   Connections specified using `ConnectTo' are so-called
+meta-connections.  Tinc daemons exchange information about all other
+daemon they know about via these meta-connections.  After learning
+about all the daemons in the VPN, tinc will create other connections as
+necessary in order to communicate with them.  For example, if there are
+three daemons named A, B and C, and A has `ConnectTo = B' in its
+tinc.conf file, and C has `ConnectTo = B' in its tinc.conf file, then A
+will learn about C from B, and will be able to exchange VPN packets
+with C without the need to have `ConnectTo = C' in its tinc.conf file.
+
+   It could be that some daemons are located behind a Network Address
+Translation (NAT) device, or behind a firewall.  In the above scenario
+with three daemons, if A and C are behind a NAT, B will automatically
+help A and C punch holes through their NAT, in a way similar to the
+STUN protocol, so that A and C can still communicate with each other
+directly.  It is not always possible to do this however, and firewalls
+might also prevent direct communication.  In that case, VPN packets
+between A and C will be forwarded by B.
+
+   In effect, all nodes in the VPN will be able to talk to each other,
+as long as their is a path of meta-connections between them, and
+whenever possible, two nodes will communicate with each other directly.
+
 
-File: tinc.info,  Node: Configuration files,  Next: Generating keypairs,  Prev: How connections work,  Up: Configuration
+File: tinc.info,  Node: Configuration files,  Next: Network interfaces,  Prev: How connections work,  Up: Configuration
 
 4.4 Configuration files
 =======================
@@ -684,9 +712,12 @@ options for the local node listed in this document can also be put in
 configuration options in the host configuration file, as this makes it
 easy to exchange with other nodes.
 
-   In this section all valid variables are listed in alphabetical order.
-The default value is given between parentheses, other comments are
-between square brackets.
+   You can edit the config file manually, but it is recommended that
+you use tincctl to change configuration variables for you.
+
+   In the following two subsections all valid variables are listed in
+alphabetical order.  The default value is given between parentheses,
+other comments are between square brackets.
 
 * Menu:
 
@@ -707,12 +738,16 @@ AddressFamily = <ipv4|ipv6|any> (any)
      system both IPv4 and IPv6 or just IPv6 listening sockets will be
      created.
 
-BindToAddress = <ADDRESS> [experimental]
+BindToAddress = <ADDRESS> [<PORT>]
      If your computer has more than one IPv4 or IPv6 address, tinc will
-     by default listen on all of them for incoming connections.  It is
-     possible to bind only to a single address with this variable.
+     by default listen on all of them for incoming connections.
+     Multiple BindToAddress variables may be specified, in which case
+     listening sockets for each specified address are made.
 
-     This option may not work on all platforms.
+     If no PORT is specified, the socket will be bound to the port
+     specified by the Port option, or to port 655 if neither is given.
+     To only bind to a specific port but not to a specific address, use
+     "*" for the ADDRESS.
 
 BindToInterface = <INTERFACE> [experimental]
      If you have more than one network interface in your computer, tinc
@@ -720,7 +755,30 @@ BindToInterface = <INTERFACE> [experimental]
      It is possible to bind tinc to a single interface like eth0 or
      ppp0 with this variable.
 
-     This option may not work on all platforms.
+     This option may not work on all platforms.  Also, on some
+     platforms it will not actually bind to an interface, but rather to
+     the address that the interface has at the moment a socket is
+     created.
+
+Broadcast = <no | mst | direct> (mst) [experimental]
+     This option selects the way broadcast packets are sent to other
+     daemons.  _NOTE: all nodes in a VPN must use the same Broadcast
+     mode, otherwise routing loops can form._
+
+    no
+          Broadcast packets are never sent to other nodes.
+
+    mst
+          Broadcast packets are sent and forwarded via the VPN's
+          Minimum Spanning Tree.  This ensures broadcast packets reach
+          all nodes.
+
+    direct
+          Broadcast packets are sent directly to all nodes that can be
+          reached directly.  Broadcast packets received from other
+          nodes are never forwarded.  If the IndirectData option is
+          also set, broadcast packets will only be sent to nodes which
+          we have a meta connection to.
 
 ConnectTo = <NAME>
      Specifies which other tinc daemon to connect to on startup.
@@ -733,6 +791,15 @@ ConnectTo = <NAME>
      connect to other daemons at all, and will instead just listen for
      incoming connections.
 
+DecrementTTL = <yes | no> (no) [experimental]
+     When enabled, tinc will decrement the Time To Live field in IPv4
+     packets, or the Hop Limit field in IPv6 packets, before forwarding
+     a received packet to the virtual network device or to another node,
+     and will drop packets that have a TTL value of zero, in which case
+     it will send an ICMP Time Exceeded packet back.
+
+     Do not use this option if you use switch mode and want to use IPv6.
+
 Device = <DEVICE> (`/dev/tap0', `/dev/net/tun' or other depending on platform)
      The virtual network device to use.  Tinc will automatically detect
      what kind of device it is.  Note that you can only use one device
@@ -740,31 +807,68 @@ Device = <DEVICE> (`/dev/tap0', `/dev/net/tun' or other depending on platform)
      that you can only use one device per daemon.  See also *note
      Device files::.
 
-DeviceType = <tun|tunnohead|tunifhead|tap> (only supported on BSD platforms)
+DeviceType = <TYPE> (platform dependent)
      The type of the virtual network device.  Tinc will normally
-     automatically select the right type, and this option should not be
-     used.  However, in case tinc does not seem to correctly interpret
-     packets received from the virtual network device, using this
-     option might help.
+     automatically select the right type of tun/tap interface, and this
+     option should not be used.  However, this option can be used to
+     select one of the special interface types, if support for them is
+     compiled in.
 
-    tun
+    dummy
+          Use a dummy interface.  No packets are ever read or written
+          to a virtual network device.  Useful for testing, or when
+          setting up a node that only forwards packets for other nodes.
+
+    raw_socket
+          Open a raw socket, and bind it to a pre-existing INTERFACE
+          (eth0 by default).  All packets are read from this interface.
+          Packets received for the local node are written to the raw
+          socket.  However, at least on Linux, the operating system
+          does not process IP packets destined for the local host.
+
+    multicast
+          Open a multicast UDP socket and bind it to the address and
+          port (separated by spaces) and optionally a TTL value
+          specified using DEVICE.  Packets are read from and written to
+          this multicast socket.  This can be used to connect to UML,
+          QEMU or KVM instances listening on the same multicast address.
+          Do NOT connect multiple tinc daemons to the same multicast
+          address, this will very likely cause routing loops.  Also
+          note that this can cause decrypted VPN packets to be sent out
+          on a real network if misconfigured.
+
+    uml (not compiled in by default)
+          Create a UNIX socket with the filename specified by DEVICE,
+          or `/var/run/NETNAME.umlsocket' if not specified.  Tinc will
+          wait for a User Mode Linux instance to connect to this socket.
+
+    vde (not compiled in by default)
+          Uses the libvdeplug library to connect to a Virtual
+          Distributed Ethernet switch, using the UNIX socket specified
+          by DEVICE, or `/var/run/vde.ctl' if not specified.
+
+     Also, in case tinc does not seem to correctly interpret packets
+     received from the virtual network device, it can be used to change
+     the way packets are interpreted:
+
+    tun (BSD and Linux)
           Set type to tun.  Depending on the platform, this can either
           be with or without an address family header (see below).
 
-    tunnohead
+    tunnohead (BSD)
           Set type to tun without an address family header.  Tinc will
           expect packets read from the virtual network device to start
           with an IP header.  On some platforms IPv6 packets cannot be
           read from or written to the device in this mode.
 
-    tunifhead
+    tunifhead (BSD)
           Set type to tun with an address family header.  Tinc will
           expect packets read from the virtual network device to start
           with a four byte header containing the address family,
           followed by an IP header.  This mode should support both IPv4
           and IPv6 packets.
 
-    tap
+    tap (BSD and Linux)
           Set type to tap.  Tinc will expect packets read from the
           virtual network device to start with an Ethernet header.
 
@@ -808,7 +912,7 @@ Forwarding = <off|internal|kernel> (internal) [experimental]
           efficient, but allows the kernel to apply its routing and
           firewall rules on them, and can also help debugging.
 
-GraphDumpFile = <FILENAME> [experimental]
+GraphDumpFile = <FILENAME>
      If this option is present, tinc will dump the current network
      graph to the file FILENAME every minute, unless there were no
      changes to the graph.  The file is in a format that can be read by
@@ -824,7 +928,8 @@ Hostnames = <yes|no> (no)
      responding.
 
      This does not affect resolving hostnames to IP addresses from the
-     configuration file.
+     configuration file, but whether hostnames should be resolved while
+     logging.
 
 Interface = <INTERFACE>
      Defines the name of the interface corresponding to the virtual
@@ -833,6 +938,17 @@ Interface = <INTERFACE>
      Under Windows, this variable is used to select which network
      interface will be used.  If you specified a Device, this variable
      is almost always already correctly set.
+
+LocalDiscovery = <yes | no> (no)
+     When enabled, tinc will try to detect peers that are on the same
+     local network.  This will allow direct communication using LAN
+     addresses, even if both peers are behind a NAT and they only
+     ConnectTo a third node outside the NAT, which normally would
+     prevent the peers from learning each other's LAN address.
+
+     Currently, local discovery is implemented by sending broadcast
+     packets to the LAN during path MTU discovery.  This feature may
+     not work in all possible situations.
 
 Mode = <router|switch|hub> (router)
      This option selects the way packets are routed to other daemons.
@@ -878,6 +994,12 @@ Name = <NAME> [required]
      consist only of alfanumeric and underscore characters (a-z, A-Z,
      0-9 and _).
 
+     If Name starts with a $, then the contents of the environment
+     variable that follows will be used.  In that case, invalid
+     characters will be converted to underscores.  If Name is $HOST,
+     but no such environment variable exist, the hostname will be read
+     using the gethostnname() system call.
+
 PingInterval = <SECONDS> (60)
      The number of seconds of inactivity that tinc will wait before
      sending a probe to the other end.
@@ -911,6 +1033,29 @@ ProcessPriority = <low|normal|high>
      When this option is used the priority of the tincd process will be
      adjusted.  Increasing the priority may help to reduce latency and
      packet loss on the VPN.
+
+Proxy = socks4 | socks4 | http | exec ... [experimental]
+     Use a proxy when making outgoing connections.  The following proxy
+     types are currently supported:
+
+    socks4 <ADDRESS> <PORT> [<USERNAME>]
+          Connects to the proxy using the SOCKS version 4 protocol.
+          Optionally, a USERNAME can be supplied which will be passed
+          on to the proxy server.
+
+    socks4 <ADDRESS> <PORT> [<USERNAME> <PASSWORD>]
+          Connect to the proxy using the SOCKS version 5 protocol.  If
+          a USERNAME and PASSWORD are given, basic username/password
+          authentication will be used, otherwise no authentication will
+          be used.
+
+    http <ADDRESS> <PORT>
+          Connects to the proxy and sends a HTTP CONNECT request.
+
+    exec <COMMAND>
+          Executes the given command which should set up the outgoing
+          connection.  The environment variables `NAME', `NODE',
+          `REMOTEADDRES' and `REMOTEPORT' are available.
 
 ReplayWindow = <bytes> (16)
      This is the size of the replay tracking window for each remote
@@ -1030,18 +1175,17 @@ Subnet = <ADDRESS[/PREFIXLENGTH[#WEIGHT]]>
      Subnets can either be single MAC, IPv4 or IPv6 addresses, in which
      case a subnet consisting of only that single address is assumed,
      or they can be a IPv4 or IPv6 network address with a prefixlength.
-     Shorthand notations are not supported.  For example, IPv4 subnets
-     must be in a form like 192.168.1.0/24, where 192.168.1.0 is the
-     network address and 24 is the number of bits set in the netmask.
-     Note that subnets like 192.168.1.1/24 are invalid!  Read a
-     networking HOWTO/FAQ/guide if you don't understand this.  IPv6
-     subnets are notated like fec0:0:0:1:0:0:0:0/64.  MAC addresses are
-     notated like 0:1a:2b:3c:4d:5e.
+     For example, IPv4 subnets must be in a form like 192.168.1.0/24,
+     where 192.168.1.0 is the network address and 24 is the number of
+     bits set in the netmask.  Note that subnets like 192.168.1.1/24
+     are invalid!  Read a networking HOWTO/FAQ/guide if you don't
+     understand this.  IPv6 subnets are notated like fec0:0:0:1::/64.
+     MAC addresses are notated like 0:1a:2b:3c:4d:5e.
 
      Prefixlength is the number of bits set to 1 in the netmask part;
      for example: netmask 255.255.255.0 would become /24, 255.255.252.0
      becomes /22. This conforms to standard CIDR notation as described
-     in RFC1519 (ftp://ftp.isi.edu/in-notes/rfc1519.txt)
+     in RFC1519 (http://www.ietf.org/rfc/rfc1519.txt)
 
      A Subnet can be given a weight to indicate its priority over
      identical Subnets owned by different nodes. The default weight is
@@ -1142,55 +1286,117 @@ File: tinc.info,  Node: How to configure,  Prev: Scripts,  Up: Configuration fil
 4.4.4 How to configure
 ----------------------
 
-Step 1.  Creating the main configuration file
-.............................................
-
-The main configuration file will be called
-`/etc/tinc/NETNAME/tinc.conf'.  Adapt the following example to create a
-basic configuration file:
-
-     Name = YOURNAME
-     Device = `/dev/tap0'
-
-   Then, if you know to which other tinc daemon(s) yours is going to
-connect, add `ConnectTo' values.
-
-Step 2.  Creating your host configuration file
+Step 1.  Creating initial configuration files.
 ..............................................
 
-If you added a line containing `Name = yourname' in the main
-configuarion file, you will need to create a host configuration file
-`/etc/tinc/NETNAME/hosts/yourname'.  Adapt the following example to
-create a host configuration file:
+The initial directory structure, configuration files and public/private
+keypairs are created using the following command:
 
-     Address = your.real.hostname.org
-     Subnet = 192.168.1.0/24
+     tincctl -n NETNAME init NAME
 
-   You can also use an IP address instead of a hostname.  The `Subnet'
-specifies the address range that is local for _your part of the VPN
-only_.  If you have multiple address ranges you can specify more than
-one `Subnet'.  You might also need to add a `Port' if you want your
-tinc daemon to run on a different port number than the default (655).
+   (You will need to run this as root, or use "sudo".)  This will
+create the configuration directory `/etc/tinc/NETNAME.', and inside it
+will create another directory named `hosts/'.  In the configuration
+directory, it will create the file `tinc.conf' with the following
+contents:
+
+     Name = NAME
+
+   It will also create private RSA and ECDSA keys, which will be stored
+in the files `rsa_key.priv' and `ecdsa_key.priv'.  It will also create
+a host configuration file `hosts/NAME', which will contain the
+corresponding public RSA and ECDSA keys.
+
+   Finally, on UNIX operating systems, it will create an executable
+script `tinc-up', which will initially not do anything except warning
+that you should edit it.
+
+Step 2.  Modifying the initial configuration.
+.............................................
+
+Unless you want to use tinc in switch mode, you should now configure
+which range of addresses you will use on the VPN.  Let's assume you
+will be part of a VPN which uses the address range 192.168.0.0/16, and
+you yourself have a smaller portion of that range: 192.168.2.0/24.
+Then you should run the following command:
+
+     tincctl -n NETNAME config add subnet 192.168.2.0/24
+
+   This will add a Subnet statement to your host configuration file.
+Try opening the file `/etc/tinc/NETNAME/hosts/NAME' in an editor.  You
+should now see a file containing the public RSA and ECDSA keys (which
+looks like a bunch of random characters), and the following line at the
+bottom:
+
+     Subnet = 192.168.2.0/24
+
+   If you will use more than one address range, you can add more
+Subnets.  For example, if you also use the IPv6 subnet fec0:0:0:2::/64,
+you can add it as well:
+
+     tincctl -n NETNAME config add subnet fec0:0:0:2::/24
+
+   This will add another line to the file `hosts/NAME'.  If you make a
+mistake, you can undo it by simply using `config del' instead of
+`config add'.
+
+   If you want other tinc daemons to create meta-connections to your
+daemon, you should add your public IP address or hostname to your host
+configuration file.  For example, if your hostname is foo.example.org,
+run:
+
+     tincctl -n NETNAME config add address foo.example.org
+
+   If you already know to which daemons your daemon should make
+meta-connections, you should configure that now as well.  Suppose you
+want to connect to a daemon named "bar", run:
+
+     tincctl -n NETNAME config add connectto bar
+
+   Note that you specify the Name of the other daemon here, not an IP
+address or hostname!  When you start tinc, and it tries to make a
+connection to "bar", it will look for a host configuration file named
+`hosts/bar', and will read Address statements and public keys from that
+file.
+
+Step 2.  Exchanging configuration files.
+........................................
+
+If your daemon has a ConnectTo = bar statement in its `tinc.conf' file,
+or if bar has a ConnectTo your daemon, then you both need each other's
+host configuration files.  You should send `hosts/NAME' to bar, and bar
+should send you his file which you should move to `hosts/bar'.  If you
+are on a UNIX platform, you can easily send an email containing the
+necessary information using the following command (assuming the owner
+of bar has the email address bar@example.org):
+
+     tincctl -n NETNAME export | mail -s "My config file" bar@example.org
+
+   If the owner of bar does the same to send his host configuration
+file to you, you can probably pipe his email through the following
+command, or you can just start this command in a terminal and
+copy&paste the email:
+
+     tincctl -n NETNAME import
+
+   If you are the owner of bar yourself, and you have SSH access to
+that computer, you can also swap the host configuration files using the
+following commands:
+
+     tincctl -n NETNAME export | ssh bar.example.org tincctl -n NETNAME import
+     ssh bar.example.org tincctl -n NETNAME export | tincctl -n NETNAME import
+
+   You should repeat this for all nodes you ConnectTo, or which
+ConnectTo you.  However, remember that you do not need to ConnectTo all
+nodes in the VPN; it is only necessary to create one or a few
+meta-connections, after the connections are made tinc will learn about
+all the other nodes in the VPN, and will automatically make other
+connections as necessary.
 
 
-File: tinc.info,  Node: Generating keypairs,  Next: Network interfaces,  Prev: Configuration files,  Up: Configuration
+File: tinc.info,  Node: Network interfaces,  Next: Example configuration,  Prev: Configuration files,  Up: Configuration
 
-4.5 Generating keypairs
-=======================
-
-Now that you have already created the main configuration file and your
-host configuration file, you can easily create a public/private keypair
-by entering the following command:
-
-     tincctl -n NETNAME generate-keys
-
-   Tinc will generate a public and a private key and ask you where to
-put them.  Just press enter to accept the defaults.
-
-
-File: tinc.info,  Node: Network interfaces,  Next: Example configuration,  Prev: Generating keypairs,  Up: Configuration
-
-4.6 Network interfaces
+4.5 Network interfaces
 ======================
 
 Before tinc can start transmitting data over the tunnel, it must set up
@@ -1211,19 +1417,28 @@ ifconfig, route, and other commands to a script named
 `/etc/tinc/NETNAME/tinc-up'.  When tinc starts, this script will be
 executed. When tinc exits, it will execute the script named
 `/etc/tinc/NETNAME/tinc-down', but normally you don't need to create
-that script.
+that script.  You can manually open the script in an editor, or use the
+following command:
 
-   An example `tinc-up' script:
+     tincctl -n NETNAME edit tinc-up
+
+   An example `tinc-up' script, that would be appropriate for the
+scenario in the previous section, is:
 
      #!/bin/sh
-     ifconfig $INTERFACE 192.168.1.1 netmask 255.255.0.0
+     ifconfig $INTERFACE 192.168.2.1 netmask 255.255.0.0
+     ip addr add fec0:0:0:2::/48 dev $INTERFACE
 
-   This script gives the interface an IP address and a netmask.  The
-kernel will also automatically add a route to this interface, so
-normally you don't need to add route commands to the `tinc-up' script.
-The kernel will also bring the interface up after this command.  The
+   The first command gives the interface an IPv4 address and a netmask.
+The kernel will also automatically add an IPv4 route to this interface,
+so normally you don't need to add route commands to the `tinc-up'
+script.  The kernel will also bring the interface up after this command.  The
 netmask is the mask of the _entire_ VPN network, not just your own
-subnet.
+subnet.  The second command gives the interface an IPv6 address and
+netmask, which will also automatically add an IPv6 route.  If you only
+want to use "ip addr" commands on Linux, don't forget that it doesn't
+bring the interface up, unlike ifconfig, so you need to add `ip link
+set $INTERFACE up' in that case.
 
    The exact syntax of the ifconfig and route commands differs from
 platform to platform.  You can look up the commands for setting
@@ -1234,7 +1449,7 @@ platform.
 
 File: tinc.info,  Node: Example configuration,  Prev: Network interfaces,  Up: Configuration
 
-4.7 Example configuration
+4.6 Example configuration
 =========================
 
 Imagine the following situation.  Branch A of our example `company'
@@ -1262,12 +1477,17 @@ configuration of the real interface is also shown as a comment, to give
 you an idea of how these example host is set up. All branches use the
 netname `company' for this particular VPN.
 
+   Each branch is set up using the `tincctl init' and `tincctl config'
+commands, here we just show the end results:
+
 For Branch A
 ............
 
 _BranchA_ would be configured like this:
 
    In `/etc/tinc/company/tinc-up':
+
+     #!/bin/sh
 
      # Real interface of internal network:
      # ifconfig eth0 10.1.54.1 netmask 255.255.0.0
@@ -1277,7 +1497,6 @@ _BranchA_ would be configured like this:
    and in `/etc/tinc/company/tinc.conf':
 
      Name = BranchA
-     Device = /dev/tap0
 
    On all hosts, `/etc/tinc/company/hosts/BranchA' contains:
 
@@ -1288,16 +1507,18 @@ _BranchA_ would be configured like this:
      ...
      -----END RSA PUBLIC KEY-----
 
-   Note that the IP addresses of eth0 and tap0 are the same.  This is
-quite possible, if you make sure that the netmasks of the interfaces
-are different.  It is in fact recommended to give both real internal
-network interfaces and tap interfaces the same IP address, since that
-will make things a lot easier to remember and set up.
+   Note that the IP addresses of eth0 and the VPN interface are the
+same.  This is quite possible, if you make sure that the netmasks of
+the interfaces are different.  It is in fact recommended to give both
+real internal network interfaces and VPN interfaces the same IP address,
+since that will make things a lot easier to remember and set up.
 
 For Branch B
 ............
 
 In `/etc/tinc/company/tinc-up':
+
+     #!/bin/sh
 
      # Real interface of internal network:
      # ifconfig eth0 10.2.43.8 netmask 255.255.0.0
@@ -1310,8 +1531,8 @@ In `/etc/tinc/company/tinc-up':
      ConnectTo = BranchA
 
    Note here that the internal address (on eth0) doesn't have to be the
-same as on the tap0 device.  Also, ConnectTo is given so that this node
-will always try to connect to BranchA.
+same as on the VPN interface.  Also, ConnectTo is given so that this
+node will always try to connect to BranchA.
 
    On all hosts, in `/etc/tinc/company/hosts/BranchB':
 
@@ -1327,6 +1548,8 @@ For Branch C
 
 In `/etc/tinc/company/tinc-up':
 
+     #!/bin/sh
+
      # Real interface of internal network:
      # ifconfig eth0 10.3.69.254 netmask 255.255.0.0
 
@@ -1336,7 +1559,6 @@ In `/etc/tinc/company/tinc-up':
 
      Name = BranchC
      ConnectTo = BranchA
-     Device = /dev/tap1
 
    C already has another daemon that runs on port 655, so they have to
 reserve another port for tinc. It knows the portnumber it has to listen
@@ -1357,6 +1579,8 @@ For Branch D
 
 In `/etc/tinc/company/tinc-up':
 
+     #!/bin/sh
+
      # Real interface of internal network:
      # ifconfig eth0 10.4.3.32 netmask 255.255.0.0
 
@@ -1366,13 +1590,10 @@ In `/etc/tinc/company/tinc-up':
 
      Name = BranchD
      ConnectTo = BranchC
-     Device = /dev/net/tun
 
    D will be connecting to C, which has a tincd running for this
 network on port 2000. It knows the port number from the host
-configuration file.  Also note that since D uses the tun/tap driver,
-the network interface will not be called `tun' or `tap0' or something
-like that, but will have the same name as netname.
+configuration file.
 
    On all hosts, in `/etc/tinc/company/hosts/BranchD':
 
@@ -1386,16 +1607,12 @@ like that, but will have the same name as netname.
 Key files
 .........
 
-A, B, C and D all have generated a public/private keypair with the
-following command:
+A, B, C and D all have their own public/private keypairs:
 
-     tincctl -n company generate-keys
-
-   The private key is stored in `/etc/tinc/company/rsa_key.priv', the
-public key is put into the host configuration file in the
-`/etc/tinc/company/hosts/' directory.  During key generation, tinc
-automatically guesses the right filenames based on the -n option and
-the Name directive in the `tinc.conf' file (if it is available).
+   The private RSA key is stored in `/etc/tinc/company/rsa_key.priv',
+the private ECDSA key is stored in `/etc/tinc/company/ecdsa_key.priv',
+and the public RSA and ECDSA keys are put into the host configuration
+file in the `/etc/tinc/company/hosts/' directory.
 
 Starting
 ........
@@ -1415,7 +1632,7 @@ File: tinc.info,  Node: Running tinc,  Next: Controlling tinc,  Prev: Configurat
 If everything else is done, you can start tinc by typing the following
 command:
 
-     tincd -n NETNAME
+     tincctl -n NETNAME start
 
    Tinc will detach from the terminal and continue to run in the
 background like a good daemon.  If there are any problems however you
@@ -1461,6 +1678,13 @@ command line options.
 `--pidfile=FILENAME'
      Store a cookie in FILENAME which allows tincctl to authenticate.
      If unspecified, the default is `/var/run/tinc.NETNAME.pid'.
+
+`-o, --option=[HOST.]KEY=VALUE'
+     Without specifying a HOST, this will set server configuration
+     variable KEY to VALUE.  If specified as HOST.KEY=VALUE, this will
+     set the host configuration variable KEY of the host named HOST to
+     VALUE.  This option can be used more than once to specify multiple
+     configuration variables.
 
 `-L, --mlock'
      Lock tinc into main memory.  This will prevent sensitive data like
@@ -1738,12 +1962,13 @@ command. A quick example:
 * Menu:
 
 * tincctl runtime options::
+* tincctl environment variables::
 * tincctl commands::
 * tincctl examples::
 * tincctl top::
 
 
-File: tinc.info,  Node: tincctl runtime options,  Next: tincctl commands,  Up: Controlling tinc
+File: tinc.info,  Node: tincctl runtime options,  Next: tincctl environment variables,  Up: Controlling tinc
 
 6.1 tincctl runtime options
 ===========================
@@ -1769,13 +1994,64 @@ File: tinc.info,  Node: tincctl runtime options,  Next: tincctl commands,  Up: C
 
 
 
-File: tinc.info,  Node: tincctl commands,  Next: tincctl examples,  Prev: tincctl runtime options,  Up: Controlling tinc
+File: tinc.info,  Node: tincctl environment variables,  Next: tincctl commands,  Prev: tincctl runtime options,  Up: Controlling tinc
 
-6.2 tincctl commands
+6.2 tincctl environment variables
+=================================
+
+`NETNAME'
+     If no netname is specified on the command line with the `-n'
+     option, the value of this environment variable is used.
+
+
+File: tinc.info,  Node: tincctl commands,  Next: tincctl examples,  Prev: tincctl environment variables,  Up: Controlling tinc
+
+6.3 tincctl commands
 ====================
 
-`start'
-     Start `tincd'.
+`init [NAME]'
+     Create initial configuration files and RSA and ECDSA keypairs with
+     default length.  If no NAME for this node is given, it will be
+     asked for.
+
+`config [get] VARIABLE'
+     Print the current value of configuration variable VARIABLE.  If
+     more than one variable with the same name exists, the value of
+     each of them will be printed on a separate line.
+
+`config [set] VARIABLE VALUE'
+     Set configuration variable VARIABLE to the given VALUE.  All
+     previously existing configuration variables with the same name are
+     removed.  To set a variable for a specific host, use the notation
+     HOST.VARIABLE.
+
+`config add VARIABLE VALUE'
+     As above, but without removing any previously existing
+     configuration variables.
+
+`config del VARIABLE [VALUE]'
+     Remove configuration variables with the same name and VALUE.  If
+     no VALUE is given, all configuration variables with the same name
+     will be removed.
+
+`edit FILENAME'
+     Start an editor for the given configuration file.  You do not need
+     to specify the full path to the file.
+
+`export'
+     Export the host configuration file of the local node to standard
+     output.
+
+`export-all'
+     Export all host configuration files to standard output.
+
+`import [--force]'
+     Import host configuration file(s) from standard input.  Already
+     existing host configuration files are not overwritten unless the
+     option -force is used.
+
+`start [tincd options]'
+     Start `tincd', optionally with the given extra options.
 
 `stop'
      Stop `tincd'.
@@ -1809,14 +2085,27 @@ File: tinc.info,  Node: tincctl commands,  Next: tincctl examples,  Prev: tincct
 `dump connections'
      Dump a list of all meta connections with ourself.
 
-`dump graph'
-     Dump a graph of the VPN in dotty format.
+`dump graph | digraph'
+     Dump a graph of the VPN in dotty format.  Nodes are colored
+     according to their reachability: red nodes are unreachable, orange
+     nodes are indirectly reachable, green nodes are directly reachable.
+     Black nodes are either directly or indirectly reachable, but
+     direct reachability has not been tried yet.
+
+`info NODE | SUBNET | ADDRESS'
+     Show information about a particular NODE, SUBNET or ADDRESS.  If
+     an ADDRESS is given, any matching subnet will be shown.
 
 `purge'
      Purges all information remembered about unreachable nodes.
 
 `debug LEVEL'
      Sets debug level to LEVEL.
+
+`log [LEVEL]'
+     Capture log messages from a running tinc daemon.  An optional
+     debug level can be given that will be applied only for log
+     messages sent to tincctl.
 
 `retry'
      Forces tinc to try to connect to all uplinks immediately.  Usually
@@ -1843,7 +2132,7 @@ File: tinc.info,  Node: tincctl commands,  Next: tincctl examples,  Prev: tincct
 
 File: tinc.info,  Node: tincctl examples,  Next: tincctl top,  Prev: tincctl commands,  Up: Controlling tinc
 
-6.3 tincctl examples
+6.4 tincctl examples
 ====================
 
 Examples of some commands:
@@ -1852,10 +2141,18 @@ Examples of some commands:
      tincctl -n vpn pcap | tcpdump -r -
      tincctl -n vpn top
 
+   Example of configuring tinc using tincctl:
+
+     tincctl -n vpn init foo
+     tincctl -n vpn config Subnet 192.168.1.0/24
+     tincctl -n vpn config bar.Address bar.example.com
+     tincctl -n vpn config ConnectTo bar
+     tincctl -n vpn export | gpg --clearsign | mail -s "My config" vpnmaster@example.com
+
 
 File: tinc.info,  Node: tincctl top,  Prev: tincctl examples,  Up: Controlling tinc
 
-6.4 tincctl top
+6.5 tincctl top
 ===============
 
 The top command connects to a running tinc daemon and repeatedly
@@ -2387,6 +2684,19 @@ Solaris            `ifconfig' INTERFACE `inet6 plumb up'
 Darwin (MacOS/X)   `ifconfig' INTERFACE `inet6' ADDRESS `prefixlen' PREFIXLENGTH
 Windows            `netsh interface ipv6 add address' INTERFACE `static' ADDRESS/PREFIXLENGTH
 
+   On some platforms, when running tinc in switch mode, the VPN
+interface must be set to tap mode with an ifconfig command:
+
+OpenBSD            `ifconfig' INTERFACE `link0'
+
+   On Linux, it is possible to create a persistent tun/tap interface
+which will continue to exist even if tinc quit, although this is
+normally not required.  It can be useful to set up a tun/tap interface
+owned by a non-root user, so tinc can be started without needing any
+root privileges at all.
+
+Linux              `ip tuntap add dev' INTERFACE `mode' TUN|TAP `user' USERNAME
+
 
 File: tinc.info,  Node: Routes,  Prev: Interface configuration,  Up: Platform specific information
 
@@ -2487,14 +2797,16 @@ Concept Index
 * BindToAddress:                         Main configuration variables.
                                                               (line  12)
 * BindToInterface:                       Main configuration variables.
-                                                              (line  19)
+                                                              (line  23)
+* Broadcast:                             Main configuration variables.
+                                                              (line  34)
 * Cabal:                                 Security.            (line   6)
 * CHAL_REPLY:                            Authentication protocol.
                                                               (line  10)
 * CHALLENGE:                             Authentication protocol.
                                                               (line  10)
 * CIDR notation:                         Host configuration variables.
-                                                              (line  92)
+                                                              (line  91)
 * Cipher:                                Host configuration variables.
                                                               (line  12)
 * ClampMSS:                              Host configuration variables.
@@ -2506,72 +2818,85 @@ Concept Index
                                                               (line  24)
 * connection:                            The connection.      (line   6)
 * ConnectTo:                             Main configuration variables.
-                                                              (line  27)
+                                                              (line  54)
 * daemon:                                Running tinc.        (line  11)
 * data-protocol:                         The meta-connection. (line  18)
 * debug level:                           Runtime options.     (line  17)
 * debug levels:                          Debug levels.        (line   6)
+* DecrementTTL:                          Main configuration variables.
+                                                              (line  65)
 * DEL_EDGE:                              The meta-protocol.   (line  47)
 * DEL_SUBNET:                            The meta-protocol.   (line  47)
 * DEVICE:                                Scripts.             (line  55)
 * Device:                                Main configuration variables.
-                                                              (line  38)
+                                                              (line  74)
 * device files:                          Device files.        (line   6)
 * DeviceType:                            Main configuration variables.
-                                                              (line  45)
+                                                              (line  81)
 * Digest:                                Host configuration variables.
                                                               (line  29)
 * DirectOnly:                            Main configuration variables.
-                                                              (line  73)
+                                                              (line 146)
+* dummy:                                 Main configuration variables.
+                                                              (line  88)
 * ECDSAPrivateKeyFile:                   Main configuration variables.
-                                                              (line  80)
+                                                              (line 153)
 * encapsulating:                         The UDP tunnel.      (line  30)
 * encryption:                            Encryption of network packets.
                                                               (line   6)
 * environment variables:                 Scripts.             (line  43)
 * example:                               Example configuration.
                                                               (line   6)
+* exec:                                  Main configuration variables.
+                                                              (line 326)
 * ExperimentalProtocol:                  Main configuration variables.
-                                                              (line  84)
+                                                              (line 157)
 * Forwarding:                            Main configuration variables.
-                                                              (line  93)
+                                                              (line 166)
 * frame type:                            The UDP tunnel.      (line   6)
 * GraphDumpFile:                         Main configuration variables.
-                                                              (line 113)
+                                                              (line 186)
 * Hostnames:                             Main configuration variables.
-                                                              (line 121)
+                                                              (line 194)
+* http:                                  Main configuration variables.
+                                                              (line 323)
 * hub:                                   Main configuration variables.
-                                                              (line 162)
+                                                              (line 247)
 * ID:                                    Authentication protocol.
                                                               (line  10)
 * IndirectData:                          Host configuration variables.
                                                               (line  34)
 * INTERFACE:                             Scripts.             (line  58)
 * Interface:                             Main configuration variables.
-                                                              (line 131)
+                                                              (line 205)
 * IRC:                                   Contact information. (line   9)
-* key generation:                        Generating keypairs. (line   6)
 * KEY_CHANGED:                           The meta-protocol.   (line  64)
 * KeyExpire:                             Main configuration variables.
-                                                              (line 167)
+                                                              (line 252)
 * libevent:                              libevent.            (line   6)
 * libraries:                             Libraries.           (line   6)
 * license:                               OpenSSL.             (line  36)
+* LocalDiscovery:                        Main configuration variables.
+                                                              (line 213)
 * lzo:                                   lzo.                 (line   6)
 * MACExpire:                             Main configuration variables.
-                                                              (line 173)
+                                                              (line 258)
 * MACLength:                             Host configuration variables.
                                                               (line  42)
 * meta-protocol:                         The meta-connection. (line  18)
 * META_KEY:                              Authentication protocol.
                                                               (line  10)
 * Mode:                                  Main configuration variables.
-                                                              (line 139)
+                                                              (line 224)
+* multicast:                             Main configuration variables.
+                                                              (line 100)
 * multiple networks:                     Multiple networks.   (line   6)
 * NAME:                                  Scripts.             (line  52)
 * Name:                                  Main configuration variables.
-                                                              (line 178)
-* netmask:                               Network interfaces.  (line  34)
+                                                              (line 263)
+* netmask:                               Network interfaces.  (line  39)
+* NETNAME <1>:                           tincctl environment variables.
+                                                              (line   6)
 * NETNAME:                               Scripts.             (line  49)
 * netname:                               Multiple networks.   (line   6)
 * Network Administrators Guide:          Configuration introduction.
@@ -2583,9 +2908,9 @@ Concept Index
                                                               (line  67)
 * PING:                                  The meta-protocol.   (line  89)
 * PingInterval:                          Main configuration variables.
-                                                              (line 183)
+                                                              (line 274)
 * PingTimeout:                           Main configuration variables.
-                                                              (line 187)
+                                                              (line 278)
 * platforms:                             Supported platforms. (line   6)
 * PMTU:                                  Host configuration variables.
                                                               (line  47)
@@ -2596,45 +2921,53 @@ Concept Index
                                                               (line  55)
 * port numbers:                          Other files.         (line  17)
 * PriorityInheritance:                   Main configuration variables.
-                                                              (line 193)
+                                                              (line 284)
 * private:                               Virtual Private Networks.
                                                               (line  10)
 * PrivateKey:                            Main configuration variables.
-                                                              (line 198)
+                                                              (line 289)
 * PrivateKeyFile:                        Main configuration variables.
-                                                              (line 204)
+                                                              (line 295)
 * ProcessPriority:                       Main configuration variables.
-                                                              (line 212)
+                                                              (line 303)
+* Proxy:                                 Main configuration variables.
+                                                              (line 308)
 * PublicKey:                             Host configuration variables.
                                                               (line  59)
 * PublicKeyFile:                         Host configuration variables.
                                                               (line  62)
+* raw_socket:                            Main configuration variables.
+                                                              (line  93)
 * release:                               Supported platforms. (line  14)
 * REMOTEADDRESS:                         Scripts.             (line  67)
 * REMOTEPORT:                            Scripts.             (line  70)
 * ReplayWindow:                          Main configuration variables.
-                                                              (line 217)
+                                                              (line 331)
 * REQ_KEY:                               The meta-protocol.   (line  64)
 * requirements:                          Libraries.           (line   6)
 * router:                                Main configuration variables.
-                                                              (line 142)
+                                                              (line 227)
 * runtime options:                       Runtime options.     (line   9)
 * scalability:                           tinc.                (line  19)
 * scripts:                               Scripts.             (line   6)
 * server:                                How connections work.
                                                               (line  18)
 * signals:                               Signals.             (line   6)
+* socks4:                                Main configuration variables.
+                                                              (line 312)
+* socks5:                                Main configuration variables.
+                                                              (line 317)
 * StrictSubnets:                         Main configuration variables.
-                                                              (line 228)
+                                                              (line 342)
 * SUBNET:                                Scripts.             (line  74)
 * Subnet:                                Host configuration variables.
                                                               (line  74)
 * SVPN:                                  Security.            (line  11)
 * switch:                                Main configuration variables.
-                                                              (line 151)
+                                                              (line 236)
 * TCP:                                   The meta-connection. (line  10)
 * TCPonly:                               Host configuration variables.
-                                                              (line 104)
+                                                              (line 103)
 * TINC:                                  Security.            (line   6)
 * tinc:                                  Introduction.        (line   6)
 * tinc-down:                             Scripts.             (line  18)
@@ -2643,20 +2976,24 @@ Concept Index
 * tincd:                                 tinc.                (line  14)
 * traditional VPNs:                      tinc.                (line  19)
 * tunifhead:                             Main configuration variables.
-                                                              (line  62)
+                                                              (line 135)
 * TunnelServer:                          Main configuration variables.
-                                                              (line 233)
+                                                              (line 347)
 * tunnohead:                             Main configuration variables.
-                                                              (line  56)
+                                                              (line 129)
 * UDP <1>:                               Encryption of network packets.
                                                               (line  12)
 * UDP:                                   The UDP tunnel.      (line  30)
 * UDPRcvBuf:                             Main configuration variables.
-                                                              (line 240)
+                                                              (line 354)
 * UDPSndBuf:                             Main configuration variables.
-                                                              (line 245)
+                                                              (line 359)
+* UML:                                   Main configuration variables.
+                                                              (line 111)
 * Universal tun/tap:                     Configuration of Linux kernels.
                                                               (line   6)
+* VDE:                                   Main configuration variables.
+                                                              (line 116)
 * virtual:                               Virtual Private Networks.
                                                               (line  18)
 * virtual network device:                The UDP tunnel.      (line   6)
@@ -2674,67 +3011,67 @@ Node: Introduction1131
 Node: Virtual Private Networks1941
 Node: tinc3667
 Node: Supported platforms5194
-Node: Preparations5892
-Node: Configuring the kernel6148
-Node: Configuration of Linux kernels6557
-Node: Configuration of FreeBSD kernels7412
-Node: Configuration of OpenBSD kernels7802
-Node: Configuration of NetBSD kernels8410
-Node: Configuration of Solaris kernels8815
-Node: Configuration of Darwin (MacOS/X) kernels9476
-Node: Configuration of Windows10165
-Node: Libraries10679
-Node: OpenSSL11080
-Node: zlib13356
-Node: lzo14185
-Node: libevent14989
-Node: Installation15700
-Node: Building and installing tinc16715
-Node: Darwin (MacOS/X) build environment17374
-Node: Cygwin (Windows) build environment17942
-Node: MinGW (Windows) build environment18530
-Node: System files19054
-Node: Device files19319
-Node: Other files19735
-Node: Configuration20348
-Node: Configuration introduction20659
-Node: Multiple networks21932
-Node: How connections work23358
-Node: Configuration files24580
-Node: Main configuration variables25967
-Node: Host configuration variables37161
-Node: Scripts42445
-Node: How to configure45124
-Node: Generating keypairs46387
-Node: Network interfaces46899
-Node: Example configuration48747
-Node: Running tinc54083
-Node: Runtime options54668
-Node: Signals57028
-Node: Debug levels57878
-Node: Solving problems58814
-Node: Error messages60244
-Node: Sending bug reports64566
-Node: Controlling tinc65518
-Node: tincctl runtime options65881
-Node: tincctl commands66567
-Node: tincctl examples68653
-Node: tincctl top68947
-Node: Technical information70545
-Node: The connection70780
-Node: The UDP tunnel71092
-Node: The meta-connection74153
-Node: The meta-protocol75622
-Node: Security80631
-Node: Authentication protocol81761
-Node: Encryption of network packets86765
-Node: Security issues88138
-Node: Platform specific information89755
-Node: Interface configuration89983
-Node: Routes91882
-Node: About us93798
-Node: Contact information93973
-Node: Authors94377
-Node: Concept Index94782
+Node: Preparations5893
+Node: Configuring the kernel6149
+Node: Configuration of Linux kernels6558
+Node: Configuration of FreeBSD kernels7413
+Node: Configuration of OpenBSD kernels7878
+Node: Configuration of NetBSD kernels8486
+Node: Configuration of Solaris kernels8891
+Node: Configuration of Darwin (MacOS/X) kernels9552
+Node: Configuration of Windows10241
+Node: Libraries10755
+Node: OpenSSL11156
+Node: zlib13432
+Node: lzo14261
+Node: libevent15065
+Node: Installation15760
+Node: Building and installing tinc16776
+Node: Darwin (MacOS/X) build environment17435
+Node: Cygwin (Windows) build environment18002
+Node: MinGW (Windows) build environment18590
+Node: System files19114
+Node: Device files19379
+Node: Other files19795
+Node: Configuration20408
+Node: Configuration introduction20695
+Node: Multiple networks22242
+Node: How connections work23622
+Node: Configuration files26195
+Node: Main configuration variables27728
+Node: Host configuration variables44334
+Node: Scripts49564
+Node: How to configure52243
+Node: Network interfaces56861
+Node: Example configuration59262
+Node: Running tinc64414
+Node: Runtime options65007
+Node: Signals67711
+Node: Debug levels68561
+Node: Solving problems69497
+Node: Error messages70927
+Node: Sending bug reports75249
+Node: Controlling tinc76201
+Node: tincctl runtime options76598
+Node: tincctl environment variables77297
+Node: tincctl commands77641
+Node: tincctl examples81866
+Node: tincctl top82471
+Node: Technical information84069
+Node: The connection84304
+Node: The UDP tunnel84616
+Node: The meta-connection87677
+Node: The meta-protocol89146
+Node: Security94155
+Node: Authentication protocol95285
+Node: Encryption of network packets100289
+Node: Security issues101662
+Node: Platform specific information103279
+Node: Interface configuration103507
+Node: Routes105960
+Node: About us107876
+Node: Contact information108051
+Node: Authors108455
+Node: Concept Index108860
 
 End Tag Table

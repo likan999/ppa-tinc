@@ -1,6 +1,6 @@
 tinc (1.1~pre2-1) experimental; urgency=low
 
- * tinc-1.1 has separate control utility, tincctl, which is now used
+   tinc-1.1 has separate control utility, tincctl, which is now used
    to start/stop tinc instances, to reload configuration, to get
    various information about running tincd (including dump of nodes
    and connections) and so on.  tincd still reacts to some signals

@@ -1,6 +1,6 @@
 /*
     logger.c -- logging code
-    Copyright (C) 2004-2006 Guus Sliepen <guus@tinc-vpn.org>
+    Copyright (C) 2004-2012 Guus Sliepen <guus@tinc-vpn.org>
                   2004-2005 Ivo Timmermans
 
     This program is free software; you can redistribute it and/or modify
@@ -21,7 +21,11 @@
 #include "system.h"
 
 #include "conf.h"
+#include "meta.h"
 #include "logger.h"
+#include "connection.h"
+#include "control_common.h"
+#include "sptps.h"
 
 debug_t debug_level = DEBUG_NOTHING;
 static logmode_t logmode = LOGMODE_STDERR;
@@ -32,11 +36,94 @@ static FILE *logfile = NULL;
 static HANDLE loghandle = NULL;
 #endif
 static const char *logident = NULL;
+bool logcontrol = false;
+
+
+static void real_logger(int level, int priority, const char *message) {
+	char timestr[32] = "";
+	time_t now;
+	static bool suppress = false;
+
+	// Bail out early if there is nothing to do.
+	if(suppress)
+		return;
+
+	if(!logcontrol && (level > debug_level || logmode == LOGMODE_NULL))
+		return;
+
+	if(level <= debug_level) {
+		switch(logmode) {
+			case LOGMODE_STDERR:
+				fprintf(stderr, "%s\n", message);
+				fflush(stderr);
+				break;
+			case LOGMODE_FILE:
+				now = time(NULL);
+				strftime(timestr, sizeof timestr, "%Y-%m-%d %H:%M:%S", localtime(&now));
+				fprintf(logfile, "%s %s[%ld]: %s\n", timestr, logident, (long)logpid, message);
+				fflush(logfile);
+				break;
+			case LOGMODE_SYSLOG:
+#ifdef HAVE_MINGW
+				{
+					const char *messages[] = {message};
+					ReportEvent(loghandle, priority, 0, 0, NULL, 1, 0, messages, NULL);
+				}
+#else
+#ifdef HAVE_SYSLOG_H
+				syslog(priority, "%s", message);
+#endif
+#endif
+				break;
+			case LOGMODE_NULL:
+				break;
+		}
+	}
+
+	if(logcontrol) {
+		suppress = true;
+		logcontrol = false;
+		for list_each(connection_t, c, connection_list) {
+			if(!c->status.log)
+				continue;
+			logcontrol = true;
+			if(level > (c->outcompression >= 0 ? c->outcompression : debug_level))
+				continue;
+			int len = strlen(message);
+			if(send_request(c, "%d %d %d", CONTROL, REQ_LOG, len))
+				send_meta(c, message, len);
+		}
+		suppress = false;
+	}
+}
+
+void logger(int level, int priority, const char *format, ...) {
+	va_list ap;
+	char message[1024] = "";
+
+	va_start(ap, format);
+	int len = vsnprintf(message, sizeof message, format, ap);
+	va_end(ap);
+
+	if(len > 0 && len < sizeof message && message[len - 1] == '\n')
+		message[len - 1] = 0;
+
+	real_logger(level, priority, message);
+}
+
+static void sptps_logger(sptps_t *s, int s_errno, const char *format, va_list ap) {
+	char message[1024] = "";
+	int len = vsnprintf(message, sizeof message, format, ap);
+	if(len > 0 && len < sizeof message && message[len - 1] == '\n')
+		message[len - 1] = 0;
+
+	real_logger(DEBUG_ALWAYS, LOG_ERR, message);
+}
 
 void openlogger(const char *ident, logmode_t mode) {
 	logident = ident;
 	logmode = mode;
-	
+
 	switch(mode) {
 		case LOGMODE_STDERR:
 			logpid = getpid();
@@ -66,6 +153,11 @@ void openlogger(const char *ident, logmode_t mode) {
 		case LOGMODE_NULL:
 			break;
 	}
+
+	if(logmode != LOGMODE_NULL)
+		sptps_log = sptps_logger;
+	else
+		sptps_log = sptps_log_quiet;
 }
 
 void reopenlogger() {
@@ -75,62 +167,13 @@ void reopenlogger() {
 	fflush(logfile);
 	FILE *newfile = fopen(logfilename, "a");
 	if(!newfile) {
-		logger(LOG_ERR, "Unable to reopen log file %s: %s\n", logfilename, strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, "Unable to reopen log file %s: %s", logfilename, strerror(errno));
 		return;
 	}
 	fclose(logfile);
 	logfile = newfile;
 }
 
-void logger(int priority, const char *format, ...) {
-	va_list ap;
-	char timestr[32] = "";
-	time_t now;
-
-	va_start(ap, format);
-
-	switch(logmode) {
-		case LOGMODE_STDERR:
-			vfprintf(stderr, format, ap);
-			fprintf(stderr, "\n");
-			fflush(stderr);
-			break;
-		case LOGMODE_FILE:
-			now = time(NULL);
-			strftime(timestr, sizeof timestr, "%Y-%m-%d %H:%M:%S", localtime(&now));
-			fprintf(logfile, "%s %s[%ld]: ", timestr, logident, (long)logpid);
-			vfprintf(logfile, format, ap);
-			fprintf(logfile, "\n");
-			fflush(logfile);
-			break;
-		case LOGMODE_SYSLOG:
-#ifdef HAVE_MINGW
-			{
-				char message[4096];
-				const char *messages[] = {message};
-				vsnprintf(message, sizeof message, format, ap);
-				ReportEvent(loghandle, priority, 0, 0, NULL, 1, 0, messages, NULL);
-			}
-#else
-#ifdef HAVE_SYSLOG_H
-#ifdef HAVE_VSYSLOG
-			vsyslog(priority, format, ap);
-#else
-			{
-				char message[4096];
-				vsnprintf(message, sizeof message, format, ap);
-				syslog(priority, "%s", message);
-			}
-#endif
-			break;
-#endif
-#endif
-		case LOGMODE_NULL:
-			break;
-	}
-
-	va_end(ap);
-}
 
 void closelogger(void) {
 	switch(logmode) {

@@ -1,3 +1,13 @@
+tinc (1.1~pre3-1) experimental; urgency=low
+
+  * New upstream release.
+  * Bump Standards-Version.
+  * Enable parallel builds.
+  * Bump debian/compat to 9, so tinc gets build with hardening flags.
+  * Move tinc-gui to its own package.
+
+ -- Guus Sliepen <guus@debian.org>  Sun, 14 Oct 2012 23:51:21 +0200
+
 tinc (1.1~pre2-2) experimental; urgency=low
 
   * add forgotten build-depend on libncurses5-dev for new `tincctl top'

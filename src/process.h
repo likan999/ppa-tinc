@@ -1,7 +1,7 @@
 /*
     process.h -- header file for process.c
     Copyright (C) 1999-2005 Ivo Timmermans,
-                  2000-2006 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2010 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -33,4 +33,4 @@ extern bool kill_other(int);
 extern bool init_service(void);
 #endif
 
-#endif							/* __TINC_PROCESS_H__ */
+#endif /* __TINC_PROCESS_H__ */

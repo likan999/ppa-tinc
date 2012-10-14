@@ -1,9 +1,9 @@
 /*
     net.c -- most of the network code
     Copyright (C) 1998-2005 Ivo Timmermans,
-                  2000-2011 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2012 Guus Sliepen <guus@tinc-vpn.org>
                   2006      Scott Lamb <slamb@slamb.org>
-		  2011      Loïc Grenié <loic.grenie@gmail.com>
+                  2011      Loïc Grenié <loic.grenie@gmail.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -23,7 +23,6 @@
 #include "system.h"
 
 #include "utils.h"
-#include "splay_tree.h"
 #include "conf.h"
 #include "connection.h"
 #include "device.h"
@@ -40,40 +39,28 @@
 int contradicting_add_edge = 0;
 int contradicting_del_edge = 0;
 static int sleeptime = 10;
+time_t last_config_check = 0;
 
 /* Purge edges and subnets of unreachable nodes. Use carefully. */
 
 void purge(void) {
-	splay_node_t *nnode, *nnext, *enode, *enext, *snode, *snext;
-	node_t *n;
-	edge_t *e;
-	subnet_t *s;
-
-	ifdebug(PROTOCOL) logger(LOG_DEBUG, "Purging unreachable nodes");
+	logger(DEBUG_PROTOCOL, LOG_DEBUG, "Purging unreachable nodes");
 
 	/* Remove all edges and subnets owned by unreachable nodes. */
 
-	for(nnode = node_tree->head; nnode; nnode = nnext) {
-		nnext = nnode->next;
-		n = nnode->data;
-
+	for splay_each(node_t, n, node_tree) {
 		if(!n->status.reachable) {
-			ifdebug(SCARY_THINGS) logger(LOG_DEBUG, "Purging node %s (%s)", n->name,
-					   n->hostname);
+			logger(DEBUG_SCARY_THINGS, LOG_DEBUG, "Purging node %s (%s)", n->name, n->hostname);
 
-			for(snode = n->subnet_tree->head; snode; snode = snext) {
-				snext = snode->next;
-				s = snode->data;
-				send_del_subnet(broadcast, s);
+			for splay_each(subnet_t, s, n->subnet_tree) {
+				send_del_subnet(everyone, s);
 				if(!strictsubnets)
 					subnet_del(n, s);
 			}
 
-			for(enode = n->edge_tree->head; enode; enode = enext) {
-				enext = enode->next;
-				e = enode->data;
+			for splay_each(edge_t, e, n->edge_tree) {
 				if(!tunnelserver)
-					send_del_edge(broadcast, e);
+					send_del_edge(everyone, e);
 				edge_del(e);
 			}
 		}
@@ -81,20 +68,13 @@ void purge(void) {
 
 	/* Check if anyone else claims to have an edge to an unreachable node. If not, delete node. */
 
-	for(nnode = node_tree->head; nnode; nnode = nnext) {
-		nnext = nnode->next;
-		n = nnode->data;
-
+	for splay_each(node_t, n, node_tree) {
 		if(!n->status.reachable) {
-			for(enode = edge_weight_tree->head; enode; enode = enext) {
-				enext = enode->next;
-				e = enode->data;
-
+			for splay_each(edge_t, e, edge_weight_tree)
 				if(e->to == n)
-					break;
-			}
+					return;
 
-			if(!enode && (!strictsubnets || !n->subnet_tree->head))
+			if(!strictsubnets || !n->subnet_tree->head)
 				/* in strictsubnets mode do not delete nodes with subnets */
 				node_del(n);
 		}
@@ -103,25 +83,25 @@ void purge(void) {
 
 /*
   Terminate a connection:
-  - Close the socket
-  - Remove associated edge and tell other connections about it if report = true
+  - Mark it as inactive
+  - Remove the edge representing this connection
+  - Kill it with fire
   - Check if we need to retry making an outgoing connection
-  - Deactivate the host
 */
 void terminate_connection(connection_t *c, bool report) {
-	ifdebug(CONNECTIONS) logger(LOG_NOTICE, "Closing connection with %s (%s)",
-			   c->name, c->hostname);
+	logger(DEBUG_CONNECTIONS, LOG_NOTICE, "Closing connection with %s (%s)", c->name, c->hostname);
 
 	c->status.active = false;
 
-	if(c->node)
+	if(c->node && c->node->connection == c)
 		c->node->connection = NULL;
 
 	if(c->edge) {
 		if(report && !tunnelserver)
-			send_del_edge(broadcast, c->edge);
+			send_del_edge(everyone, c->edge);
 
 		edge_del(c->edge);
+		c->edge = NULL;
 
 		/* Run MST and SSSP algorithms */
 
@@ -134,18 +114,19 @@ void terminate_connection(connection_t *c, bool report) {
 			e = lookup_edge(c->node, myself);
 			if(e) {
 				if(!tunnelserver)
-					send_del_edge(broadcast, e);
+					send_del_edge(everyone, e);
 				edge_del(e);
 			}
 		}
 	}
 
+	outgoing_t *outgoing = c->outgoing;
+	connection_del(c);
+
 	/* Check if this was our outgoing connection */
 
-	if(c->outgoing)
-		retry_outgoing(c->outgoing);
-
-	connection_del(c);
+	if(outgoing)
+		do_outgoing_connection(outgoing);
 }
 
 /*
@@ -157,42 +138,34 @@ void terminate_connection(connection_t *c, bool report) {
   and close the connection.
 */
 static void timeout_handler(int fd, short events, void *event) {
-	splay_node_t *node, *next;
-	connection_t *c;
 	time_t now = time(NULL);
 
-	for(node = connection_tree->head; node; node = next) {
-		next = node->next;
-		c = node->data;
+	for list_each(connection_t, c, connection_list) {
+		if(c->status.control)
+			continue;
 
 		if(c->last_ping_time + pingtimeout <= now) {
 			if(c->status.active) {
 				if(c->status.pinged) {
-					ifdebug(CONNECTIONS) logger(LOG_INFO, "%s (%s) didn't respond to PING in %ld seconds",
-							   c->name, c->hostname, now - c->last_ping_time);
-					terminate_connection(c, true);
-					continue;
+					logger(DEBUG_CONNECTIONS, LOG_INFO, "%s (%s) didn't respond to PING in %ld seconds", c->name, c->hostname, (long)now - c->last_ping_time);
 				} else if(c->last_ping_time + pinginterval <= now) {
 					send_ping(c);
-				}
-			} else {
-				if(c->status.connecting) {
-					ifdebug(CONNECTIONS)
-						logger(LOG_WARNING, "Timeout while connecting to %s (%s)", c->name, c->hostname);
-					c->status.connecting = false;
-					closesocket(c->socket);
-					do_outgoing_connection(c);
+					continue;
 				} else {
-					ifdebug(CONNECTIONS) logger(LOG_WARNING, "Timeout from %s (%s) during authentication", c->name, c->hostname);
-					terminate_connection(c, false);
 					continue;
 				}
+			} else {
+				if(c->status.connecting)
+					logger(DEBUG_CONNECTIONS, LOG_WARNING, "Timeout while connecting to %s (%s)", c->name, c->hostname);
+				else
+					logger(DEBUG_CONNECTIONS, LOG_WARNING, "Timeout from %s (%s) during authentication", c->name, c->hostname);
 			}
+			terminate_connection(c, c->status.active);
 		}
 	}
 
 	if(contradicting_del_edge > 100 && contradicting_add_edge > 100) {
-		logger(LOG_WARNING, "Possible node with same Name as us! Sleeping %d seconds.", sleeptime);
+		logger(DEBUG_ALWAYS, LOG_WARNING, "Possible node with same Name as us! Sleeping %d seconds.", sleeptime);
 		usleep(sleeptime * 1000000LL);
 		sleeptime *= 2;
 		if(sleeptime < 0)
@@ -222,11 +195,8 @@ void handle_meta_connection_data(int fd, short events, void *data) {
 		if(!result)
 			finish_connecting(c);
 		else {
-			ifdebug(CONNECTIONS) logger(LOG_DEBUG,
-					   "Error while connecting to %s (%s): %s",
-					   c->name, c->hostname, sockstrerror(result));
-			closesocket(c->socket);
-			do_outgoing_connection(c);
+			logger(DEBUG_CONNECTIONS, LOG_DEBUG, "Error while connecting to %s (%s): %s", c->name, c->hostname, sockstrerror(result));
+			terminate_connection(c, false);
 			return;
 		}
 	}
@@ -238,27 +208,23 @@ void handle_meta_connection_data(int fd, short events, void *data) {
 }
 
 static void sigterm_handler(int signal, short events, void *data) {
-	logger(LOG_NOTICE, "Got %s signal", strsignal(signal));
+	logger(DEBUG_ALWAYS, LOG_NOTICE, "Got %s signal", strsignal(signal));
 	event_loopexit(NULL);
 }
 
 static void sighup_handler(int signal, short events, void *data) {
-	logger(LOG_NOTICE, "Got %s signal", strsignal(signal));
+	logger(DEBUG_ALWAYS, LOG_NOTICE, "Got %s signal", strsignal(signal));
 	reopenlogger();
 	reload_configuration();
 }
 
 static void sigalrm_handler(int signal, short events, void *data) {
-	logger(LOG_NOTICE, "Got %s signal", strsignal(signal));
+	logger(DEBUG_ALWAYS, LOG_NOTICE, "Got %s signal", strsignal(signal));
 	retry();
 }
 
 int reload_configuration(void) {
-	connection_t *c;
-	splay_node_t *node, *next;
 	char *fname;
-	struct stat s;
-	static time_t last_config_check = 0;
 
 	/* Reread our own configuration file */
 
@@ -266,85 +232,112 @@ int reload_configuration(void) {
 	init_configuration(&config_tree);
 
 	if(!read_server_config()) {
-		logger(LOG_ERR, "Unable to reread configuration file, exitting.");
+		logger(DEBUG_ALWAYS, LOG_ERR, "Unable to reread configuration file, exitting.");
 		event_loopexit(NULL);
 		return EINVAL;
 	}
 
-	/* Close connections to hosts that have a changed or deleted host config file */
-	
-	for(node = connection_tree->head; node; node = next) {
-		c = node->data;
-		next = node->next;
-		
-		if(c->outgoing) {
-			free(c->outgoing->name);
-			if(c->outgoing->ai)
-				freeaddrinfo(c->outgoing->ai);
-			free(c->outgoing);
-			c->outgoing = NULL;
-		}
-		
-		xasprintf(&fname, "%s/hosts/%s", confbase, c->name);
-		if(stat(fname, &s) || s.st_mtime > last_config_check)
-			terminate_connection(c, c->status.active);
-		free(fname);
-	}
+	read_config_options(config_tree, NULL);
 
-	last_config_check = time(NULL);
+	xasprintf(&fname, "%s" SLASH "hosts" SLASH "%s", confbase, myself->name);
+	read_config_file(config_tree, fname);
+	free(fname);
+
+	/* Parse some options that are allowed to be changed while tinc is running */
+
+	setup_myself_reloadable();
 
 	/* If StrictSubnet is set, expire deleted Subnets and read new ones in */
 
 	if(strictsubnets) {
-		subnet_t *subnet;
-
-
-		for(node = subnet_tree->head; node; node = node->next) {
-			subnet = node->data;
+		for splay_each(subnet_t, subnet, subnet_tree)
 			subnet->expires = 1;
-		}
 
 		load_all_subnets();
 
-		for(node = subnet_tree->head; node; node = next) {
-			next = node->next;
-			subnet = node->data;
+		for splay_each(subnet_t, subnet, subnet_tree) {
 			if(subnet->expires == 1) {
-				send_del_subnet(broadcast, subnet);
+				send_del_subnet(everyone, subnet);
 				if(subnet->owner->status.reachable)
 					subnet_update(subnet->owner, subnet, false);
 				subnet_del(subnet->owner, subnet);
 			} else if(subnet->expires == -1) {
 				subnet->expires = 0;
 			} else {
-				send_add_subnet(broadcast, subnet);
+				send_add_subnet(everyone, subnet);
 				if(subnet->owner->status.reachable)
 					subnet_update(subnet->owner, subnet, true);
+			}
+		}
+	} else { /* Only read our own subnets back in */
+		for splay_each(subnet_t, subnet, myself->subnet_tree)
+			if(!subnet->expires)
+				subnet->expires = 1;
+
+		config_t *cfg = lookup_config(config_tree, "Subnet");
+
+		while(cfg) {
+			subnet_t *subnet, *s2;
+
+			if(!get_config_subnet(cfg, &subnet))
+				continue;
+
+			if((s2 = lookup_subnet(myself, subnet))) {
+				if(s2->expires == 1)
+					s2->expires = 0;
+
+				free_subnet(subnet);
+			} else {
+				subnet_add(myself, subnet);
+				send_add_subnet(everyone, subnet);
+				subnet_update(myself, subnet, true);
+			}
+
+			cfg = lookup_config_next(config_tree, cfg);
+		}
+
+		for splay_each(subnet_t, subnet, myself->subnet_tree) {
+			if(subnet->expires == 1) {
+				send_del_subnet(everyone, subnet);
+				subnet_update(myself, subnet, false);
+				subnet_del(myself, subnet);
 			}
 		}
 	}
 
 	/* Try to make outgoing connections */
-	
+
 	try_outgoing_connections();
+
+	/* Close connections to hosts that have a changed or deleted host config file */
+
+	for list_each(connection_t, c, connection_list) {
+		if(c->status.control)
+			continue;
+
+		xasprintf(&fname, "%s" SLASH "hosts" SLASH "%s", confbase, c->name);
+		struct stat s;
+		if(stat(fname, &s) || s.st_mtime > last_config_check) {
+			logger(DEBUG_CONNECTIONS, LOG_INFO, "Host config file of %s has been changed", c->name);
+			terminate_connection(c, c->status.active);
+		}
+		free(fname);
+	}
+
+	last_config_check = time(NULL);
 
 	return 0;
 }
 
 void retry(void) {
-	connection_t *c;
-	splay_node_t *node;
-
-	for(node = connection_tree->head; node; node = node->next) {
-		c = node->data;
-		
+	for list_each(connection_t, c, connection_list) {
 		if(c->outgoing && !c->node) {
 			if(timeout_initialized(&c->outgoing->ev))
 				event_del(&c->outgoing->ev);
 			if(c->status.connecting)
 				close(c->socket);
 			c->outgoing->timeout = 0;
-			do_outgoing_connection(c);
+			terminate_connection(c, c->status.active);
 		}
 	}
 }
@@ -375,7 +368,7 @@ int main_loop(void) {
 #endif
 
 	if(event_loop(0) < 0) {
-		logger(LOG_ERR, "Error while waiting for input: %s", strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, "Error while waiting for input: %s", strerror(errno));
 		return 1;
 	}
 

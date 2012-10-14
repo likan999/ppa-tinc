@@ -1,11 +1,34 @@
 #!/usr/bin/python
 
+# tinc-gui -- GUI for controlling a running tincd
+# Copyright (C) 2009-2012 Guus Sliepen <guus@tinc-vpn.org>
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
 import string
 import socket
 import wx
 import sys
+import os
+import platform
+import time
 from wx.lib.mixins.listctrl import ColumnSorterMixin
 from wx.lib.mixins.listctrl import ListCtrlAutoWidthMixin
+
+if platform.system == 'Windows':
+	import _winreg
 
 # Classes to interface with a running tinc daemon
 
@@ -30,34 +53,32 @@ CONTROL = 18
 class Node:
 	def parse(self, args):
 		self.name = args[0]
-		self.address = args[2]
-		if args[3] != 'port':
-			args.insert(3, 'port')
-			args.insert(4, '')
-		self.port = args[4]
-		self.cipher = int(args[6])
-		self.digest = int(args[8])
-		self.maclength = int(args[10])
-		self.compression = int(args[12])
-		self.options = int(args[14], 0x10)
-		self.status = int(args[16], 0x10)
-		self.nexthop = args[18]
-		self.via = args[20]
-		self.distance = int(args[22])
-		self.pmtu = int(args[24])
-		self.minmtu = int(args[26])
-		self.maxmtu = int(args[28][:-1])
+		self.address = args[1]
+		self.port = args[3]
+		self.cipher = int(args[4])
+		self.digest = int(args[5])
+		self.maclength = int(args[6])
+		self.compression = int(args[7])
+		self.options = int(args[8], 0x10)
+		self.status = int(args[9], 0x10)
+		self.nexthop = args[10]
+		self.via = args[11]
+		self.distance = int(args[12])
+		self.pmtu = int(args[13])
+		self.minmtu = int(args[14])
+		self.maxmtu = int(args[15])
+		self.last_state_change = float(args[16])
 
 		self.subnets = {}
 
 class Edge:
 	def parse(self, args):
 		self.fr = args[0]
-		self.to = args[2]
-		self.address = args[4]
-		self.port = args[6]
-		self.options = int(args[8], 16)
-		self.weight = int(args[10])
+		self.to = args[1]
+		self.address = args[2]
+		self.port = args[4]
+		self.options = int(args[5], 16)
+		self.weight = int(args[6])
 
 class Subnet:
 	def parse(self, args):
@@ -73,19 +94,16 @@ class Subnet:
 			self.address = address
 			self.prefixlen = '48'
 
-		self.owner = args[2]	
+		self.owner = args[1]	
 
 class Connection:
 	def parse(self, args):
 		self.name = args[0]
-		self.address = args[2]
-		if args[3] != 'port':
-			args.insert(3, 'port')
-			args.insert(4, '')
-		self.port = args[4]
-		self.options = int(args[6], 0x10)
-		self.socket = int(args[8])
-		self.status = int(args[10], 0x10)
+		self.address = args[1]
+		self.port = args[3]
+		self.options = int(args[4], 0x10)
+		self.socket = int(args[5])
+		self.status = int(args[6], 0x10)
 		self.weight = 123
 
 class VPN:
@@ -132,34 +150,34 @@ class VPN:
 			if resp[0] != '18':
 				break
 			if resp[1] == '3':
-				if len(resp) < 3:
+				if len(resp) < 19:
 					continue
 				node = self.nodes.get(resp[2]) or Node()
 				node.parse(resp[2:])
 				node.visited = True
 				self.nodes[resp[2]] = node
 			elif resp[1] == '4':
-				if len(resp) < 5:
+				if len(resp) < 9:
 					continue
-				edge = self.nodes.get((resp[2], resp[4])) or Edge()
+				edge = self.nodes.get((resp[2], resp[3])) or Edge()
 				edge.parse(resp[2:])
 				edge.visited = True
-				self.edges[(resp[2], resp[4])] = edge
+				self.edges[(resp[2], resp[3])] = edge
 			elif resp[1] == '5':
-				if len(resp) < 5:
+				if len(resp) < 4:
 					continue
-				subnet = self.subnets.get((resp[2], resp[4])) or Subnet()
+				subnet = self.subnets.get((resp[2], resp[3])) or Subnet()
 				subnet.parse(resp[2:])
 				subnet.visited = True
-				self.subnets[(resp[2], resp[4])] = subnet
+				self.subnets[(resp[2], resp[3])] = subnet
 				self.nodes[subnet.owner].subnets[resp[2]] = subnet
 			elif resp[1] == '6':
-				if len(resp) < 5:
+				if len(resp) < 9:
 					break
-				connection = self.connections.get((resp[2], resp[4])) or Connection()
+				connection = self.connections.get((resp[2], resp[3], resp[5])) or Connection()
 				connection.parse(resp[2:])
 				connection.visited = True
-				self.connections[(resp[2], resp[4])] = connection
+				self.connections[(resp[2], resp[3], resp[5])] = connection
 			else:
 				break
 
@@ -198,27 +216,38 @@ class VPN:
 		return int(resp[2])
 
 	def __init__(self, netname = None, pidfile = None):
-		self.tincconf = VPN.confdir + '/'
+		if platform.system == 'Windows':
+			try:
+				reg = _winreg.ConnectRegistry(None, HKEY_LOCAL_MACHINE)
+				key = _winreg.OpenKey(reg, "SOFTWARE\\tinc")
+				VPN.confdir = _winreg.QueryValue(key, None)
+			except WindowsError:
+				pass
 
 		if netname:
 			self.netname = netname
-			self.tincconf += netname + '/'
+			self.confbase = os.path.join(VPN.confdir, netname)
+		else:
+			self.confbase = VPN.confdir
 
-		self.tincconf += 'tinc.conf'
+		self.tincconf = os.path.join(self.confbase, 'tinc.conf')
 
-		if pidfile is not None:
+		if pidfile != None:
 			self.pidfile = pidfile
 		else:
-			self.pidfile = VPN.piddir + 'tinc.'
-			if netname:
-				self.pidfile += netname + '.'
-			self.pidfile += 'pid'
+			if platform.system == 'Windows':
+				self.pidfile = os.path.join(self.confbase, 'pid')
+			else:
+				if netname:
+					self.pidfile = os.path.join(VPN.piddir, 'tinc.' + netname + '.pid')
+				else:
+					self.pidfile = os.path.join(VPN.piddir, 'tinc.pid')
 
 # GUI starts here
 
 argv0 = sys.argv[0]
 del sys.argv[0]
-net = None
+netname = None
 pidfile = None
 
 def usage(exitcode = 0):
@@ -230,10 +259,10 @@ def usage(exitcode = 0):
 	print('\nReport bugs to tinc@tinc-vpn.org.')
 	sys.exit(exitcode)
 
-while len(sys.argv):
+while sys.argv:
 	if sys.argv[0] in ('-n', '--net'):
 		del sys.argv[0]
-		net = sys.argv[0]
+		netname = sys.argv[0]
 	elif sys.argv[0] in ('--pidfile'):
 		del sys.argv[0]
 		pidfile = sys.argv[0]
@@ -245,14 +274,20 @@ while len(sys.argv):
 
 	del sys.argv[0]
 
-vpn = VPN(net, pidfile)
+if netname == None:
+	netname = os.getenv("NETNAME")
+
+if netname == ".":
+	netname = None
+
+vpn = VPN(netname, pidfile)
 vpn.connect()
 
 class SuperListCtrl(wx.ListCtrl, ColumnSorterMixin, ListCtrlAutoWidthMixin):
     def __init__(self, parent, style):
         wx.ListCtrl.__init__(self, parent, -1, style=wx.LC_REPORT | wx.LC_HRULES | wx.LC_VRULES)
 	ListCtrlAutoWidthMixin.__init__(self)
-        ColumnSorterMixin.__init__(self, 14)
+        ColumnSorterMixin.__init__(self, 16)
 
     def GetListCtrl(self):
         return self
@@ -265,12 +300,12 @@ class SettingsPage(wx.Panel):
 	def __init__(self, parent, id):
 		wx.Panel.__init__(self, parent, id)
 		grid = wx.FlexGridSizer(cols = 2)
-		grid.AddGrowableCol(0, 1)
+		grid.AddGrowableCol(1, 1)
 
 		namelabel = wx.StaticText(self, -1, 'Name:')
 		self.name = wx.TextCtrl(self, -1, vpn.name)
 		grid.Add(namelabel)
-		grid.Add(self.name)
+		grid.Add(self.name, 1, wx.EXPAND)
 
 		portlabel = wx.StaticText(self, -1, 'Port:')
 		self.port = wx.TextCtrl(self, -1, vpn.port)
@@ -293,7 +328,7 @@ class SettingsPage(wx.Panel):
 class ConnectionsPage(wx.Panel):
 	def __init__(self, parent, id):
 		wx.Panel.__init__(self, parent, id)
-		self.list = wx.ListCtrl(self, id, style=wx.LC_REPORT | wx.LC_HRULES | wx.LC_VRULES)
+		self.list = SuperListCtrl(self, id)
 		self.list.InsertColumn(0, 'Name')
 		self.list.InsertColumn(1, 'Address')
 		self.list.InsertColumn(2, 'Port')
@@ -323,6 +358,7 @@ class ConnectionsPage(wx.Panel):
 		self.PopupMenu(self.ContextMenu(self.list.itemDataMap[event.GetIndex()]), event.GetPosition())
 
 	def refresh(self):
+		sortstate = self.list.GetSortState()
 		self.list.itemDataMap = {}
 		i = 0
 
@@ -337,11 +373,13 @@ class ConnectionsPage(wx.Panel):
 			self.list.SetStringItem(i, 4, str(connection.weight))
 			self.list.itemDataMap[i] = (connection.name, connection.address, connection.port, connection.options, connection.weight)
 			self.list.Bind(wx.EVT_LIST_ITEM_RIGHT_CLICK, self.OnContext)
+			self.list.SetItemData(i, i)
 			i += 1
 
 		while self.list.GetItemCount() > i:
 			self.list.DeleteItem(self.list.GetItemCount() - 1)
 
+		self.list.SortListItems(sortstate[0], sortstate[1])
 
 class NodesPage(wx.Panel):
 	def __init__(self, parent, id):
@@ -362,6 +400,7 @@ class NodesPage(wx.Panel):
 		self.list.InsertColumn(12, 'PMTU')
 		self.list.InsertColumn(13, 'Min MTU')
 		self.list.InsertColumn(14, 'Max MTU')
+		self.list.InsertColumn(15, 'Since')
 
 		hbox = wx.BoxSizer(wx.HORIZONTAL)
 		hbox.Add(self.list, 1, wx.EXPAND)
@@ -369,6 +408,7 @@ class NodesPage(wx.Panel):
 		self.refresh()
 
 	def refresh(self):
+		sortstate = self.list.GetSortState()
 		self.list.itemDataMap = {}
 		i = 0
 
@@ -383,25 +423,32 @@ class NodesPage(wx.Panel):
 			self.list.SetStringItem(i,  4, str(node.digest))
 			self.list.SetStringItem(i,  5, str(node.maclength))
 			self.list.SetStringItem(i,  6, str(node.compression))
-			self.list.SetStringItem(i,  7, str(node.options))
-			self.list.SetStringItem(i,  8, str(node.status))
+			self.list.SetStringItem(i,  7, format(node.options, "x"))
+			self.list.SetStringItem(i,  8, format(node.status, "04x"))
 			self.list.SetStringItem(i,  9, node.nexthop)
 			self.list.SetStringItem(i, 10, node.via)
 			self.list.SetStringItem(i, 11, str(node.distance))
 			self.list.SetStringItem(i, 12, str(node.pmtu))
 			self.list.SetStringItem(i, 13, str(node.minmtu))
 			self.list.SetStringItem(i, 14, str(node.maxmtu))
-			self.list.itemDataMap[i] = (node.name, node.address, node.port, node.cipher, node.digest, node.maclength, node.compression, node.options, node.status, node.nexthop, node.via, node.distance, node.pmtu, node.minmtu, node.maxmtu)
+			if node.last_state_change:
+				since = time.strftime("%Y-%m-%d %H:%M", time.localtime(node.last_state_change))
+			else:
+				since = "never"
+			self.list.SetStringItem(i, 15, since)
+			self.list.itemDataMap[i] = (node.name, node.address, node.port, node.cipher, node.digest, node.maclength, node.compression, node.options, node.status, node.nexthop, node.via, node.distance, node.pmtu, node.minmtu, node.maxmtu, since)
 			self.list.SetItemData(i, i)
 			i += 1
 
 		while self.list.GetItemCount() > i:
 			self.list.DeleteItem(self.list.GetItemCount() - 1)
 
+		self.list.SortListItems(sortstate[0], sortstate[1])
+
 class EdgesPage(wx.Panel):
 	def __init__(self, parent, id):
 		wx.Panel.__init__(self, parent, id)
-		self.list = wx.ListCtrl(self, id, style=wx.LC_REPORT | wx.LC_HRULES | wx.LC_VRULES)
+		self.list = SuperListCtrl(self, id)
 		self.list.InsertColumn(0, 'From')
 		self.list.InsertColumn(1, 'To')
 		self.list.InsertColumn(2, 'Address')
@@ -415,6 +462,7 @@ class EdgesPage(wx.Panel):
 		self.refresh()
 
 	def refresh(self):
+		sortstate = self.list.GetSortState()
 		self.list.itemDataMap = {}
 		i = 0
 
@@ -426,13 +474,16 @@ class EdgesPage(wx.Panel):
 			self.list.SetStringItem(i, 1, edge.to)
 			self.list.SetStringItem(i, 2, edge.address)
 			self.list.SetStringItem(i, 3, edge.port)
-			self.list.SetStringItem(i, 4, str(edge.options))
+			self.list.SetStringItem(i, 4, format(edge.options, "x"))
 			self.list.SetStringItem(i, 5, str(edge.weight))
 			self.list.itemDataMap[i] = (edge.fr, edge.to, edge.address, edge.port, edge.options, edge.weight)
+			self.list.SetItemData(i, i)
 			i += 1
 
 		while self.list.GetItemCount() > i:
 			self.list.DeleteItem(self.list.GetItemCount() - 1)
+
+		self.list.SortListItems(sortstate[0], sortstate[1])
 
 class SubnetsPage(wx.Panel):
 	def __init__(self, parent, id):
@@ -447,6 +498,7 @@ class SubnetsPage(wx.Panel):
 		self.refresh()
 
 	def refresh(self):
+		sortstate = self.list.GetSortState()
 		self.list.itemDataMap = {}
 		i = 0
 
@@ -458,10 +510,13 @@ class SubnetsPage(wx.Panel):
 			self.list.SetStringItem(i, 1, subnet.weight)
 			self.list.SetStringItem(i, 2, subnet.owner)
 			self.list.itemDataMap[i] = (subnet.address + '/' + subnet.prefixlen, subnet.weight, subnet.owner)
-			i = i + 1
+			self.list.SetItemData(i, i)
+			i += 1
 
 		while self.list.GetItemCount() > i:
 			self.list.DeleteItem(self.list.GetItemCount() - 1)
+
+		self.list.SortListItems(sortstate[0], sortstate[1])
 
 class StatusPage(wx.Panel):
 	def __init__(self, parent, id):
@@ -493,7 +548,7 @@ class NetPage(wx.Notebook):
 
 class MainWindow(wx.Frame):
 	def OnQuit(self, event):
-		self.Close(True)
+		app.ExitMainLoop()
 
 	def OnTimer(self, event):
 		vpn.refresh()

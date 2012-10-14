@@ -1,7 +1,7 @@
 /*
     tincd.c -- the main file for tincd
     Copyright (C) 1998-2005 Ivo Timmermans
-                  2000-2011 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2012 Guus Sliepen <guus@tinc-vpn.org>
                   2008      Max Rijevski <maksuf@gmail.com>
                   2009      Michael Tokarev <mjt@tls.msk.ru>
                   2010      Julien Muchembled <jm@jmuchemb.eu>
@@ -87,10 +87,10 @@ static const char *switchuser = NULL;
 /* If nonzero, write log entries to a separate file. */
 bool use_logfile = false;
 
-char *identname = NULL;				/* program name for syslog */
-char *logfilename = NULL;			/* log file location */
+char *identname = NULL;         /* program name for syslog */
+char *logfilename = NULL;       /* log file location */
 char *pidfilename = NULL;
-char **g_argv;					/* a copy of the cmdline arguments */
+char **g_argv;                  /* a copy of the cmdline arguments */
 
 static int status = 1;
 
@@ -107,6 +107,7 @@ static struct option const long_options[] = {
 	{"user", required_argument, NULL, 'U'},
 	{"logfile", optional_argument, NULL, 4},
 	{"pidfile", required_argument, NULL, 5},
+	{"option", required_argument, NULL, 'o'},
 	{NULL, 0, NULL, 0}
 };
 
@@ -122,18 +123,18 @@ static void usage(bool status) {
 				program_name);
 	else {
 		printf("Usage: %s [option]...\n\n", program_name);
-		printf(	"  -c, --config=DIR          Read configuration options from DIR.\n"
-				"  -D, --no-detach           Don't fork and detach.\n"
-				"  -d, --debug[=LEVEL]       Increase debug level or set it to LEVEL.\n"
-				"  -n, --net=NETNAME         Connect to net NETNAME.\n"
-				"  -L, --mlock               Lock tinc into main memory.\n"
-				"      --logfile[=FILENAME]  Write log entries to a logfile.\n"
-				"      --pidfile=FILENAME    Write PID and control socket cookie to FILENAME.\n"
-				"      --bypass-security     Disables meta protocol security, for debugging.\n"
-				"  -o [HOST.]KEY=VALUE       Set global/host configuration value.\n"
-				"  -R, --chroot              chroot to NET dir at startup.\n"
-				"  -U, --user=USER           setuid to given USER at startup.\n"				"      --help                    Display this help and exit.\n"
-				"      --version             Output version information and exit.\n\n");
+		printf( "  -c, --config=DIR              Read configuration options from DIR.\n"
+				"  -D, --no-detach               Don't fork and detach.\n"
+				"  -d, --debug[=LEVEL]           Increase debug level or set it to LEVEL.\n"
+				"  -n, --net=NETNAME             Connect to net NETNAME.\n"
+				"  -L, --mlock                   Lock tinc into main memory.\n"
+				"      --logfile[=FILENAME]      Write log entries to a logfile.\n"
+				"      --pidfile=FILENAME        Write PID and control socket cookie to FILENAME.\n"
+				"      --bypass-security         Disables meta protocol security, for debugging.\n"
+				"  -o, --option[HOST.]KEY=VALUE  Set global/host configuration value.\n"
+				"  -R, --chroot                  chroot to NET dir at startup.\n"
+				"  -U, --user=USER               setuid to given USER at startup.\n"                            "      --help                    Display this help and exit.\n"
+				"      --version                 Output version information and exit.\n\n");
 		printf("Report bugs to tinc@tinc-vpn.org.\n");
 	}
 }
@@ -148,83 +149,96 @@ static bool parse_options(int argc, char **argv) {
 
 	while((r = getopt_long(argc, argv, "c:DLd::n:o:RU:", long_options, &option_index)) != EOF) {
 		switch (r) {
-			case 0:				/* long option */
+			case 0:   /* long option */
 				break;
 
-			case 'c':				/* config file */
+			case 'c': /* config file */
 				confbase = xstrdup(optarg);
 				break;
 
-			case 'D':				/* no detach */
+			case 'D': /* no detach */
 				do_detach = false;
 				break;
 
-			case 'L':				/* no detach */
+			case 'L': /* no detach */
 #ifndef HAVE_MLOCKALL
-				logger(LOG_ERR, "%s not supported on this platform", "mlockall()");
+				logger(DEBUG_ALWAYS, LOG_ERR, "%s not supported on this platform", "mlockall()");
 				return false;
 #else
 				do_mlock = true;
 				break;
 #endif
 
-			case 'd':				/* inc debug level */
+			case 'd': /* inc debug level */
 				if(optarg)
 					debug_level = atoi(optarg);
 				else
 					debug_level++;
 				break;
 
-			case 'n':				/* net name given */
-				/* netname "." is special: a "top-level name" */
-				netname = strcmp(optarg, ".") != 0 ?
-						xstrdup(optarg) : NULL;
+			case 'n': /* net name given */
+				netname = xstrdup(optarg);
 				break;
 
-			case 'o':				/* option */
+			case 'o': /* option */
 				cfg = parse_config_line(optarg, NULL, ++lineno);
 				if (!cfg)
 					return false;
 				list_insert_tail(cmdline_conf, cfg);
 				break;
 
-			case 'R':				/* chroot to NETNAME dir */
+			case 'R': /* chroot to NETNAME dir */
 				do_chroot = true;
 				break;
 
-			case 'U':				/* setuid to USER */
+			case 'U': /* setuid to USER */
 				switchuser = optarg;
 				break;
 
-			case 1:					/* show help */
+			case 1:   /* show help */
 				show_help = true;
 				break;
 
-			case 2:					/* show version */
+			case 2:   /* show version */
 				show_version = true;
 				break;
 
-			case 3:					/* bypass security */
+			case 3:   /* bypass security */
 				bypass_security = true;
 				break;
 
-			case 4:					/* write log entries to a file */
+			case 4:   /* write log entries to a file */
 				use_logfile = true;
 				if(optarg)
 					logfilename = xstrdup(optarg);
 				break;
 
-			case 5:					/* open control socket here */
+			case 5:   /* open control socket here */
 				pidfilename = xstrdup(optarg);
 				break;
 
-			case '?':
+			case '?': /* wrong options */
 				usage(true);
 				return false;
 
 			default:
 				break;
 		}
+	}
+
+	if(!netname && (netname = getenv("NETNAME")))
+		netname = xstrdup(netname);
+
+	/* netname "." is special: a "top-level name" */
+
+	if(netname && (!*netname || !strcmp(netname, "."))) {
+		free(netname);
+		netname = NULL;
+	}
+
+	if(netname && (strpbrk(netname, "\\/") || *netname == '.')) {
+		fprintf(stderr, "Invalid character in netname!\n");
+		return false;
 	}
 
 	return true;
@@ -249,15 +263,15 @@ static void make_names(void) {
 	if(!RegOpenKeyEx(HKEY_LOCAL_MACHINE, "SOFTWARE\\tinc", 0, KEY_READ, &key)) {
 		if(!RegQueryValueEx(key, NULL, 0, 0, installdir, &len)) {
 			if(!logfilename)
-				xasprintf(&logfilename, "%s/log/%s.log", identname);
+				xasprintf(&logfilename, "%s" SLASH "log" SLASH "%s.log", identname);
 			if(!confbase) {
 				if(netname)
-					xasprintf(&confbase, "%s/%s", installdir, netname);
+					xasprintf(&confbase, "%s" SLASH "%s", installdir, netname);
 				else
 					xasprintf(&confbase, "%s", installdir);
 			}
 			if(!pidfilename)
-				xasprintf(&pidfilename, "%s/pid", confbase);
+				xasprintf(&pidfilename, "%s" SLASH "pid", confbase);
 		}
 		RegCloseKey(key);
 		if(*installdir)
@@ -266,19 +280,19 @@ static void make_names(void) {
 #endif
 
 	if(!logfilename)
-		xasprintf(&logfilename, LOCALSTATEDIR "/log/%s.log", identname);
+		xasprintf(&logfilename, LOCALSTATEDIR SLASH "log" SLASH "%s.log", identname);
 
 	if(!pidfilename)
-		xasprintf(&pidfilename, LOCALSTATEDIR "/run/%s.pid", identname);
+		xasprintf(&pidfilename, LOCALSTATEDIR SLASH "run" SLASH "%s.pid", identname);
 
 	if(netname) {
 		if(!confbase)
-			xasprintf(&confbase, CONFDIR "/tinc/%s", netname);
+			xasprintf(&confbase, CONFDIR SLASH "tinc" SLASH "%s", netname);
 		else
-			logger(LOG_INFO, "Both netname and configuration directory given, using the latter...");
+			logger(DEBUG_ALWAYS, LOG_INFO, "Both netname and configuration directory given, using the latter...");
 	} else {
 		if(!confbase)
-			xasprintf(&confbase, CONFDIR "/tinc");
+			xasprintf(&confbase, CONFDIR SLASH "tinc");
 	}
 }
 
@@ -293,11 +307,11 @@ static void free_names(void) {
 static bool drop_privs(void) {
 #ifdef HAVE_MINGW
 	if (switchuser) {
-		logger(LOG_ERR, "%s not supported on this platform", "-U");
+		logger(DEBUG_ALWAYS, LOG_ERR, "%s not supported on this platform", "-U");
 		return false;
 	}
 	if (do_chroot) {
-		logger(LOG_ERR, "%s not supported on this platform", "-R");
+		logger(DEBUG_ALWAYS, LOG_ERR, "%s not supported on this platform", "-R");
 		return false;
 	}
 #else
@@ -305,23 +319,26 @@ static bool drop_privs(void) {
 	if (switchuser) {
 		struct passwd *pw = getpwnam(switchuser);
 		if (!pw) {
-			logger(LOG_ERR, "unknown user `%s'", switchuser);
+			logger(DEBUG_ALWAYS, LOG_ERR, "unknown user `%s'", switchuser);
 			return false;
 		}
 		uid = pw->pw_uid;
 		if (initgroups(switchuser, pw->pw_gid) != 0 ||
 		    setgid(pw->pw_gid) != 0) {
-			logger(LOG_ERR, "System call `%s' failed: %s",
+			logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s",
 			       "initgroups", strerror(errno));
 			return false;
 		}
+#ifndef __ANDROID__
+// Not supported in android NDK
 		endgrent();
 		endpwent();
+#endif
 	}
 	if (do_chroot) {
-		tzset();	/* for proper timestamps in logs */
+		tzset();        /* for proper timestamps in logs */
 		if (chroot(confbase) != 0 || chdir("/") != 0) {
-			logger(LOG_ERR, "System call `%s' failed: %s",
+			logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s",
 			       "chroot", strerror(errno));
 			return false;
 		}
@@ -330,7 +347,7 @@ static bool drop_privs(void) {
 	}
 	if (switchuser)
 		if (setuid(uid) != 0) {
-			logger(LOG_ERR, "System call `%s' failed: %s",
+			logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s",
 			       "setuid", strerror(errno));
 			return false;
 		}
@@ -352,13 +369,13 @@ int main(int argc, char **argv) {
 
 	if(!parse_options(argc, argv))
 		return 1;
-	
+
 	make_names();
 
 	if(show_version) {
 		printf("%s version %s (built %s %s, protocol %d.%d)\n", PACKAGE,
 			   VERSION, __DATE__, __TIME__, PROT_MAJOR, PROT_MINOR);
-		printf("Copyright (C) 1998-2011 Ivo Timmermans, Guus Sliepen and others.\n"
+		printf("Copyright (C) 1998-2012 Ivo Timmermans, Guus Sliepen and others.\n"
 				"See the AUTHORS file for a complete list.\n\n"
 				"tinc comes with ABSOLUTELY NO WARRANTY.  This is free software,\n"
 				"and you are welcome to redistribute it under certain conditions;\n"
@@ -374,19 +391,20 @@ int main(int argc, char **argv) {
 
 #ifdef HAVE_MINGW
 	if(WSAStartup(MAKEWORD(2, 2), &wsa_state)) {
-		logger(LOG_ERR, "System call `%s' failed: %s", "WSAStartup", winerror(GetLastError()));
+		logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s", "WSAStartup", winerror(GetLastError()));
 		return 1;
 	}
 #endif
 
 	openlogger("tinc", use_logfile?LOGMODE_FILE:LOGMODE_STDERR);
 
-	if(!event_init()) {
-		logger(LOG_ERR, "Error initializing libevent!");
-		return 1;
-	}
-
 	g_argv = argv;
+
+	if(getenv("LISTEN_PID") && atoi(getenv("LISTEN_PID")) == getpid())
+		do_detach = false;
+#ifdef HAVE_UNSETENV
+	unsetenv("LISTEN_PID");
+#endif
 
 	init_configuration(&config_tree);
 
@@ -400,7 +418,7 @@ int main(int argc, char **argv) {
 
 #ifdef HAVE_LZO
 	if(lzo_init() != LZO_E_OK) {
-		logger(LOG_ERR, "Error initializing LZO compressor!");
+		logger(DEBUG_ALWAYS, LOG_ERR, "Error initializing LZO compressor!");
 		return 1;
 	}
 #endif
@@ -416,6 +434,7 @@ int main2(int argc, char **argv) {
 	InitializeCriticalSection(&mutex);
 	EnterCriticalSection(&mutex);
 #endif
+	char *priority = NULL;
 
 	if(!detach())
 		return 1;
@@ -425,11 +444,16 @@ int main2(int argc, char **argv) {
 	 * This has to be done after daemon()/fork() so it works for child.
 	 * No need to do that in parent as it's very short-lived. */
 	if(do_mlock && mlockall(MCL_CURRENT | MCL_FUTURE) != 0) {
-		logger(LOG_ERR, "System call `%s' failed: %s", "mlockall",
+		logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s", "mlockall",
 		   strerror(errno));
 		return 1;
 	}
 #endif
+
+	if(!event_init()) {
+		logger(DEBUG_ALWAYS, LOG_ERR, "Error initializing libevent!");
+		return 1;
+	}
 
 	/* Setup sockets and open device. */
 
@@ -445,32 +469,27 @@ int main2(int argc, char **argv) {
 
 	/* Change process priority */
 
-        char *priority = NULL;
-
-        if(get_config_string(lookup_config(config_tree, "ProcessPriority"), &priority)) {
-                if(!strcasecmp(priority, "Normal")) {
-                        if (setpriority(NORMAL_PRIORITY_CLASS) != 0) {
-                                logger(LOG_ERR, "System call `%s' failed: %s",
-                                       "setpriority", strerror(errno));
-                                goto end;
-                        }
-                } else if(!strcasecmp(priority, "Low")) {
-                        if (setpriority(BELOW_NORMAL_PRIORITY_CLASS) != 0) {
-                                       logger(LOG_ERR, "System call `%s' failed: %s",
-                                       "setpriority", strerror(errno));
-                                goto end;
-                        }
-                } else if(!strcasecmp(priority, "High")) {
-                        if (setpriority(HIGH_PRIORITY_CLASS) != 0) {
-                                logger(LOG_ERR, "System call `%s' failed: %s",
-                                       "setpriority", strerror(errno));
-                                goto end;
-                        }
-                } else {
-                        logger(LOG_ERR, "Invalid priority `%s`!", priority);
-                        goto end;
-                }
-        }
+	if(get_config_string(lookup_config(config_tree, "ProcessPriority"), &priority)) {
+		if(!strcasecmp(priority, "Normal")) {
+			if (setpriority(NORMAL_PRIORITY_CLASS) != 0) {
+				logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s", "setpriority", strerror(errno));
+				goto end;
+			}
+		} else if(!strcasecmp(priority, "Low")) {
+			if (setpriority(BELOW_NORMAL_PRIORITY_CLASS) != 0) {
+				       logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s", "setpriority", strerror(errno));
+				goto end;
+			}
+		} else if(!strcasecmp(priority, "High")) {
+			if (setpriority(HIGH_PRIORITY_CLASS) != 0) {
+				logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s", "setpriority", strerror(errno));
+				goto end;
+			}
+		} else {
+			logger(DEBUG_ALWAYS, LOG_ERR, "Invalid priority `%s`!", priority);
+			goto end;
+		}
+	}
 
 	/* drop privileges */
 	if (!drop_privs())
@@ -482,8 +501,8 @@ int main2(int argc, char **argv) {
 
 	/* Shutdown properly. */
 
-	ifdebug(CONNECTIONS)
-		dump_device_stats();
+	if(debug_level >= DEBUG_CONNECTIONS)
+		devops.dump_stats();
 
 	close_network_connections();
 
@@ -491,11 +510,14 @@ end:
 	exit_control();
 
 end_nonet:
-	logger(LOG_NOTICE, "Terminating");
+	logger(DEBUG_ALWAYS, LOG_NOTICE, "Terminating");
+
+	free(priority);
 
 	crypto_exit();
 
 	exit_configuration(&config_tree);
+	free(cmdline_conf);
 	free_names();
 
 	return status;

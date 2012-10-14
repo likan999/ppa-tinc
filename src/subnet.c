@@ -1,6 +1,6 @@
 /*
     subnet.c -- handle subnet lookups and lists
-    Copyright (C) 2000-2010 Guus Sliepen <guus@tinc-vpn.org>,
+    Copyright (C) 2000-2012 Guus Sliepen <guus@tinc-vpn.org>,
                   2000-2005 Ivo Timmermans
 
     This program is free software; you can redistribute it and/or modify
@@ -23,6 +23,7 @@
 #include "splay_tree.h"
 #include "control_common.h"
 #include "device.h"
+#include "hash.h"
 #include "logger.h"
 #include "net.h"
 #include "netutl.h"
@@ -38,109 +39,14 @@ splay_tree_t *subnet_tree;
 
 /* Subnet lookup cache */
 
-static ipv4_t cache_ipv4_address[2];
-static subnet_t *cache_ipv4_subnet[2];
-static bool cache_ipv4_valid[2];
-static int cache_ipv4_slot;
-
-static ipv6_t cache_ipv6_address[2];
-static subnet_t *cache_ipv6_subnet[2];
-static bool cache_ipv6_valid[2];
-static int cache_ipv6_slot;
-
-static mac_t cache_mac_address[2];
-static subnet_t *cache_mac_subnet[2];
-static bool cache_mac_valid[2];
-static int cache_mac_slot;
+hash_t *ipv4_cache;
+hash_t *ipv6_cache;
+hash_t *mac_cache;
 
 void subnet_cache_flush(void) {
-	cache_ipv4_valid[0] = cache_ipv4_valid[1] = false;
-	cache_ipv6_valid[0] = cache_ipv6_valid[1] = false;
-	cache_mac_valid[0] = cache_mac_valid[1] = false;
-}
-
-/* Subnet comparison */
-
-static int subnet_compare_mac(const subnet_t *a, const subnet_t *b) {
-	int result;
-
-	result = memcmp(&a->net.mac.address, &b->net.mac.address, sizeof a->net.mac.address);
-
-	if(result)
-		return result;
-	
-	result = a->weight - b->weight;
-
-	if(result || !a->owner || !b->owner)
-		return result;
-
-	return strcmp(a->owner->name, b->owner->name);
-}
-
-static int subnet_compare_ipv4(const subnet_t *a, const subnet_t *b) {
-	int result;
-
-	result = b->net.ipv4.prefixlength - a->net.ipv4.prefixlength;
-
-	if(result)
-		return result;
-
-	result = memcmp(&a->net.ipv4.address, &b->net.ipv4.address, sizeof(ipv4_t));
-
-	if(result)
-		return result;
-	
-	result = a->weight - b->weight;
-
-	if(result || !a->owner || !b->owner)
-		return result;
-
-	return strcmp(a->owner->name, b->owner->name);
-}
-
-static int subnet_compare_ipv6(const subnet_t *a, const subnet_t *b) {
-	int result;
-
-	result = b->net.ipv6.prefixlength - a->net.ipv6.prefixlength;
-
-	if(result)
-		return result;
-	
-	result = memcmp(&a->net.ipv6.address, &b->net.ipv6.address, sizeof(ipv6_t));
-
-	if(result)
-		return result;
-	
-	result = a->weight - b->weight;
-
-	if(result || !a->owner || !b->owner)
-		return result;
-
-	return strcmp(a->owner->name, b->owner->name);
-}
-
-int subnet_compare(const subnet_t *a, const subnet_t *b) {
-	int result;
-
-	result = a->type - b->type;
-
-	if(result)
-		return result;
-
-	switch (a->type) {
-	case SUBNET_MAC:
-		return subnet_compare_mac(a, b);
-	case SUBNET_IPV4:
-		return subnet_compare_ipv4(a, b);
-	case SUBNET_IPV6:
-		return subnet_compare_ipv6(a, b);
-	default:
-		logger(LOG_ERR, "subnet_compare() was called with unknown subnet type %d, exitting!",
-			   a->type);
-		exit(0);
-	}
-
-	return 0;
+	hash_clear(ipv4_cache);
+	hash_clear(ipv6_cache);
+	hash_clear(mac_cache);
 }
 
 /* Initialising trees */
@@ -148,11 +54,17 @@ int subnet_compare(const subnet_t *a, const subnet_t *b) {
 void init_subnets(void) {
 	subnet_tree = splay_alloc_tree((splay_compare_t) subnet_compare, (splay_action_t) free_subnet);
 
-	subnet_cache_flush();
+	ipv4_cache = hash_alloc(0x100, sizeof(ipv4_t));
+	ipv6_cache = hash_alloc(0x100, sizeof(ipv6_t));
+	mac_cache = hash_alloc(0x100, sizeof(mac_t));
 }
 
 void exit_subnets(void) {
 	splay_delete_tree(subnet_tree);
+
+	hash_free(ipv4_cache);
+	hash_free(ipv6_cache);
+	hash_free(mac_cache);
 }
 
 splay_tree_t *new_subnet_tree(void) {
@@ -191,139 +103,6 @@ void subnet_del(node_t *n, subnet_t *subnet) {
 	subnet_cache_flush();
 }
 
-/* Ascii representation of subnets */
-
-bool str2net(subnet_t *subnet, const char *subnetstr) {
-	int i, l;
-	uint16_t x[8];
-	int weight = 10;
-
-	if(sscanf(subnetstr, "%hu.%hu.%hu.%hu/%d#%d",
-			  &x[0], &x[1], &x[2], &x[3], &l, &weight) >= 5) {
-		if(l < 0 || l > 32)
-			return false;
-
-		subnet->type = SUBNET_IPV4;
-		subnet->net.ipv4.prefixlength = l;
-		subnet->weight = weight;
-
-		for(i = 0; i < 4; i++) {
-			if(x[i] > 255)
-				return false;
-			subnet->net.ipv4.address.x[i] = x[i];
-		}
-
-		return true;
-	}
-
-	if(sscanf(subnetstr, "%hx:%hx:%hx:%hx:%hx:%hx:%hx:%hx/%d#%d",
-			  &x[0], &x[1], &x[2], &x[3], &x[4], &x[5], &x[6], &x[7],
-			  &l, &weight) >= 9) {
-		if(l < 0 || l > 128)
-			return false;
-
-		subnet->type = SUBNET_IPV6;
-		subnet->net.ipv6.prefixlength = l;
-		subnet->weight = weight;
-
-		for(i = 0; i < 8; i++)
-			subnet->net.ipv6.address.x[i] = htons(x[i]);
-
-		return true;
-	}
-
-	if(sscanf(subnetstr, "%hu.%hu.%hu.%hu#%d", &x[0], &x[1], &x[2], &x[3], &weight) >= 4) {
-		subnet->type = SUBNET_IPV4;
-		subnet->net.ipv4.prefixlength = 32;
-		subnet->weight = weight;
-
-		for(i = 0; i < 4; i++) {
-			if(x[i] > 255)
-				return false;
-			subnet->net.ipv4.address.x[i] = x[i];
-		}
-
-		return true;
-	}
-
-	if(sscanf(subnetstr, "%hx:%hx:%hx:%hx:%hx:%hx:%hx:%hx#%d",
-			  &x[0], &x[1], &x[2], &x[3], &x[4], &x[5], &x[6], &x[7], &weight) >= 8) {
-		subnet->type = SUBNET_IPV6;
-		subnet->net.ipv6.prefixlength = 128;
-		subnet->weight = weight;
-
-		for(i = 0; i < 8; i++)
-			subnet->net.ipv6.address.x[i] = htons(x[i]);
-
-		return true;
-	}
-
-	if(sscanf(subnetstr, "%hx:%hx:%hx:%hx:%hx:%hx#%d",
-			  &x[0], &x[1], &x[2], &x[3], &x[4], &x[5], &weight) >= 6) {
-		subnet->type = SUBNET_MAC;
-		subnet->weight = weight;
-
-		for(i = 0; i < 6; i++)
-			subnet->net.mac.address.x[i] = x[i];
-
-		return true;
-	}
-
-	return false;
-}
-
-bool net2str(char *netstr, int len, const subnet_t *subnet) {
-	if(!netstr || !subnet) {
-		logger(LOG_ERR, "net2str() was called with netstr=%p, subnet=%p!", netstr, subnet);
-		return false;
-	}
-
-	switch (subnet->type) {
-		case SUBNET_MAC:
-			snprintf(netstr, len, "%hx:%hx:%hx:%hx:%hx:%hx#%d",
-					 subnet->net.mac.address.x[0],
-					 subnet->net.mac.address.x[1],
-					 subnet->net.mac.address.x[2],
-					 subnet->net.mac.address.x[3],
-					 subnet->net.mac.address.x[4],
-					 subnet->net.mac.address.x[5],
-					 subnet->weight);
-			break;
-
-		case SUBNET_IPV4:
-			snprintf(netstr, len, "%hu.%hu.%hu.%hu/%d#%d",
-					 subnet->net.ipv4.address.x[0],
-					 subnet->net.ipv4.address.x[1],
-					 subnet->net.ipv4.address.x[2],
-					 subnet->net.ipv4.address.x[3],
-					 subnet->net.ipv4.prefixlength,
-					 subnet->weight);
-			break;
-
-		case SUBNET_IPV6:
-			snprintf(netstr, len, "%hx:%hx:%hx:%hx:%hx:%hx:%hx:%hx/%d#%d",
-					 ntohs(subnet->net.ipv6.address.x[0]),
-					 ntohs(subnet->net.ipv6.address.x[1]),
-					 ntohs(subnet->net.ipv6.address.x[2]),
-					 ntohs(subnet->net.ipv6.address.x[3]),
-					 ntohs(subnet->net.ipv6.address.x[4]),
-					 ntohs(subnet->net.ipv6.address.x[5]),
-					 ntohs(subnet->net.ipv6.address.x[6]),
-					 ntohs(subnet->net.ipv6.address.x[7]),
-					 subnet->net.ipv6.prefixlength,
-					 subnet->weight);
-			break;
-
-		default:
-			logger(LOG_ERR,
-				   "net2str() was called with unknown subnet type %d, exiting!",
-				   subnet->type);
-			exit(0);
-	}
-
-	return true;
-}
-
 /* Subnet lookup routines */
 
 subnet_t *lookup_subnet(const node_t *owner, const subnet_t *subnet) {
@@ -331,26 +110,16 @@ subnet_t *lookup_subnet(const node_t *owner, const subnet_t *subnet) {
 }
 
 subnet_t *lookup_subnet_mac(const node_t *owner, const mac_t *address) {
-	subnet_t *p, *r = NULL;
-	splay_node_t *n;
-	int i;
+	subnet_t *r = NULL;
 
 	// Check if this address is cached
 
-	for(i = 0; i < 2; i++) {
-		if(!cache_mac_valid[i])
-			continue;
-		if(owner && cache_mac_subnet[i] && cache_mac_subnet[i]->owner != owner)
-			continue;
-		if(!memcmp(address, &cache_mac_address[i], sizeof *address))
-			return cache_mac_subnet[i];
-	}
+	if((r = hash_search(mac_cache, address)))
+		return r;
 
 	// Search all subnets for a matching one
 
-	for(n = owner ? owner->subnet_tree->head : subnet_tree->head; n; n = n->next) {
-		p = n->data;
-		
+	for splay_each(subnet_t, p, owner ? owner->subnet_tree : subnet_tree) {
 		if(!p || p->type != SUBNET_MAC)
 			continue;
 
@@ -363,33 +132,23 @@ subnet_t *lookup_subnet_mac(const node_t *owner, const mac_t *address) {
 
 	// Cache the result
 
-	cache_mac_slot = !cache_mac_slot;
-	memcpy(&cache_mac_address[cache_mac_slot], address, sizeof *address);
-	cache_mac_subnet[cache_mac_slot] = r;
-	cache_mac_valid[cache_mac_slot] = true;
+	if(r)
+		hash_insert(mac_cache, address, r);
 
 	return r;
 }
 
 subnet_t *lookup_subnet_ipv4(const ipv4_t *address) {
-	subnet_t *p, *r = NULL;
-	splay_node_t *n;
-	int i;
+	subnet_t *r = NULL;
 
 	// Check if this address is cached
 
-	for(i = 0; i < 2; i++) {
-		if(!cache_ipv4_valid[i])
-			continue;
-		if(!memcmp(address, &cache_ipv4_address[i], sizeof *address))
-			return cache_ipv4_subnet[i];
-	}
+	if((r = hash_search(ipv4_cache, address)))
+		return r;
 
 	// Search all subnets for a matching one
 
-	for(n = subnet_tree->head; n; n = n->next) {
-		p = n->data;
-		
+	for splay_each(subnet_t, p, subnet_tree) {
 		if(!p || p->type != SUBNET_IPV4)
 			continue;
 
@@ -402,33 +161,23 @@ subnet_t *lookup_subnet_ipv4(const ipv4_t *address) {
 
 	// Cache the result
 
-	cache_ipv4_slot = !cache_ipv4_slot;
-	memcpy(&cache_ipv4_address[cache_ipv4_slot], address, sizeof *address);
-	cache_ipv4_subnet[cache_ipv4_slot] = r;
-	cache_ipv4_valid[cache_ipv4_slot] = true;
+	if(r)
+		hash_insert(ipv4_cache, address, r);
 
 	return r;
 }
 
 subnet_t *lookup_subnet_ipv6(const ipv6_t *address) {
-	subnet_t *p, *r = NULL;
-	splay_node_t *n;
-	int i;
+	subnet_t *r = NULL;
 
 	// Check if this address is cached
 
-	for(i = 0; i < 2; i++) {
-		if(!cache_ipv6_valid[i])
-			continue;
-		if(!memcmp(address, &cache_ipv6_address[i], sizeof *address))
-			return cache_ipv6_subnet[i];
-	}
+	if((r = hash_search(ipv6_cache, address)))
+		return r;
 
 	// Search all subnets for a matching one
 
-	for(n = subnet_tree->head; n; n = n->next) {
-		p = n->data;
-		
+	for splay_each(subnet_t, p, subnet_tree) {
 		if(!p || p->type != SUBNET_IPV6)
 			continue;
 
@@ -441,24 +190,20 @@ subnet_t *lookup_subnet_ipv6(const ipv6_t *address) {
 
 	// Cache the result
 
-	cache_ipv6_slot = !cache_ipv6_slot;
-	memcpy(&cache_ipv6_address[cache_ipv6_slot], address, sizeof *address);
-	cache_ipv6_subnet[cache_ipv6_slot] = r;
-	cache_ipv6_valid[cache_ipv6_slot] = true;
+	if(r)
+		hash_insert(ipv6_cache, address, r);
 
 	return r;
 }
 
 void subnet_update(node_t *owner, subnet_t *subnet, bool up) {
-	splay_node_t *node;
-	int i;
-	char *envp[9] = {NULL};
 	char netstr[MAXNETSTR];
 	char *name, *address, *port;
 	char empty[] = "";
 
 	// Prepare environment variables to be passed to the script
 
+	char *envp[9] = {NULL};
 	xasprintf(&envp[0], "NETNAME=%s", netname ? : "");
 	xasprintf(&envp[1], "DEVICE=%s", device ? : "");
 	xasprintf(&envp[2], "INTERFACE=%s", iface ? : "");
@@ -469,15 +214,17 @@ void subnet_update(node_t *owner, subnet_t *subnet, bool up) {
 		// 4 and 5 are reserved for SUBNET and WEIGHT
 		xasprintf(&envp[6], "REMOTEADDRESS=%s", address);
 		xasprintf(&envp[7], "REMOTEPORT=%s", port);
+		free(port);
+		free(address);
 	}
 
 	name = up ? "subnet-up" : "subnet-down";
 
 	if(!subnet) {
-		for(node = owner->subnet_tree->head; node; node = node->next) {
-			subnet = node->data;
+		for splay_each(subnet_t, subnet, owner->subnet_tree) {
 			if(!net2str(netstr, sizeof netstr, subnet))
 				continue;
+
 			// Strip the weight from the subnet, and put it in its own environment variable
 			char *weight = strchr(netstr, '#');
 			if(weight)
@@ -512,20 +259,18 @@ void subnet_update(node_t *owner, subnet_t *subnet, bool up) {
 		}
 	}
 
-	for(i = 0; envp[i] && i < 8; i++)
+	for(int i = 0; envp[i] && i < 8; i++)
 		free(envp[i]);
 }
 
 bool dump_subnets(connection_t *c) {
-	char netstr[MAXNETSTR];
-	subnet_t *subnet;
-	splay_node_t *node;
+	for splay_each(subnet_t, subnet, subnet_tree) {
+		char netstr[MAXNETSTR];
 
-	for(node = subnet_tree->head; node; node = node->next) {
-		subnet = node->data;
 		if(!net2str(netstr, sizeof netstr, subnet))
 			continue;
-		send_request(c, "%d %d %s owner %s",
+
+		send_request(c, "%d %d %s %s",
 				CONTROL, REQ_DUMP_SUBNETS,
 				netstr, subnet->owner->name);
 	}

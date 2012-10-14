@@ -1,7 +1,7 @@
 /*
     protocol_misc.c -- handle the meta-protocol, miscellaneous functions
     Copyright (C) 1999-2005 Ivo Timmermans,
-                  2000-2009 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2012 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -40,17 +40,17 @@ bool send_status(connection_t *c, int statusno, const char *statusstring) {
 	return send_request(c, "%d %d %s", STATUS, statusno, statusstring);
 }
 
-bool status_h(connection_t *c, char *request) {
+bool status_h(connection_t *c, const char *request) {
 	int statusno;
 	char statusstring[MAX_STRING_SIZE];
 
 	if(sscanf(request, "%*d %d " MAX_STRING, &statusno, statusstring) != 2) {
-		logger(LOG_ERR, "Got bad %s from %s (%s)", "STATUS",
+		logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s)", "STATUS",
 			   c->name, c->hostname);
 		return false;
 	}
 
-	ifdebug(STATUS) logger(LOG_NOTICE, "Status message from %s (%s): %d: %s",
+	logger(DEBUG_STATUS, LOG_NOTICE, "Status message from %s (%s): %d: %s",
 			   c->name, c->hostname, statusno, statusstring);
 
 	return true;
@@ -63,17 +63,17 @@ bool send_error(connection_t *c, int err, const char *errstring) {
 	return send_request(c, "%d %d %s", ERROR, err, errstring);
 }
 
-bool error_h(connection_t *c, char *request) {
+bool error_h(connection_t *c, const char *request) {
 	int err;
 	char errorstring[MAX_STRING_SIZE];
 
 	if(sscanf(request, "%*d %d " MAX_STRING, &err, errorstring) != 2) {
-		logger(LOG_ERR, "Got bad %s from %s (%s)", "ERROR",
+		logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s)", "ERROR",
 			   c->name, c->hostname);
 		return false;
 	}
 
-	ifdebug(ERROR) logger(LOG_NOTICE, "Error message from %s (%s): %d: %s",
+	logger(DEBUG_ERROR, LOG_NOTICE, "Error message from %s (%s): %d: %s",
 			   c->name, c->hostname, err, errorstring);
 
 	return false;
@@ -83,7 +83,7 @@ bool send_termreq(connection_t *c) {
 	return send_request(c, "%d", TERMREQ);
 }
 
-bool termreq_h(connection_t *c, char *request) {
+bool termreq_h(connection_t *c, const char *request) {
 	return false;
 }
 
@@ -94,7 +94,7 @@ bool send_ping(connection_t *c) {
 	return send_request(c, "%d", PING);
 }
 
-bool ping_h(connection_t *c, char *request) {
+bool ping_h(connection_t *c, const char *request) {
 	return send_pong(c);
 }
 
@@ -102,13 +102,19 @@ bool send_pong(connection_t *c) {
 	return send_request(c, "%d", PONG);
 }
 
-bool pong_h(connection_t *c, char *request) {
+bool pong_h(connection_t *c, const char *request) {
 	c->status.pinged = false;
 
 	/* Succesful connection, reset timeout if this is an outgoing connection. */
 
-	if(c->outgoing)
+	if(c->outgoing) {
 		c->outgoing->timeout = 0;
+		c->outgoing->cfg = NULL;
+		if(c->outgoing->ai)
+			freeaddrinfo(c->outgoing->ai);
+		c->outgoing->ai = NULL;
+		c->outgoing->aip = NULL;
+	}
 
 	return true;
 }
@@ -117,7 +123,7 @@ bool pong_h(connection_t *c, char *request) {
 
 bool send_tcppacket(connection_t *c, const vpn_packet_t *packet) {
 	/* If there already is a lot of data in the outbuf buffer, discard this packet.
-           We use a very simple Random Early Drop algorithm. */
+	   We use a very simple Random Early Drop algorithm. */
 
 	if(2.0 * c->outbuf.len / (float)maxoutbufsize - 1 > (float)rand()/(float)RAND_MAX)
 		return true;
@@ -128,11 +134,11 @@ bool send_tcppacket(connection_t *c, const vpn_packet_t *packet) {
 	return send_meta(c, (char *)packet->data, packet->len);
 }
 
-bool tcppacket_h(connection_t *c, char *request) {
+bool tcppacket_h(connection_t *c, const char *request) {
 	short int len;
 
 	if(sscanf(request, "%*d %hd", &len) != 1) {
-		logger(LOG_ERR, "Got bad %s from %s (%s)", "PACKET", c->name,
+		logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s)", "PACKET", c->name,
 			   c->hostname);
 		return false;
 	}
