@@ -2,8 +2,8 @@ Source: tinc
 Section: net
 Priority: optional
 Maintainer: Guus Sliepen <guus@debian.org>
-Standards-Version: 3.9.2
-Build-Depends: libssl-dev (>>1.0.0), debhelper (>= 7.0.50~), texi2html, texinfo, zlib1g-dev, liblzo2-dev, libncurses5-dev, libevent-dev
+Standards-Version: 3.9.3
+Build-Depends: libssl-dev (>>1.0.0), debhelper (>= 9), texi2html, texinfo, zlib1g-dev, liblzo2-dev, libncurses5-dev, libevent-dev, libreadline-dev
 Homepage: http://www.tinc-vpn.org/
 
 Package: tinc
@@ -14,3 +14,15 @@ Description: Virtual Private Network daemon
  (VPN). One daemon can handle multiple connections, so you can
  create an entire (moderately sized) VPN with only one daemon per
  participating computer.
+
+Package: tinc-gui
+Architecture: all
+Depends: ${misc:Depends}, python, python-wxgtk2.8, tinc (>= 1.1~pre3-1)
+Description: graphical user interface for tinc
+ tinc is a daemon with which you can create a virtual private network
+ (VPN). One daemon can handle multiple connections, so you can
+ create an entire (moderately sized) VPN with only one daemon per
+ participating computer.
+ .
+ This package contains a GUI that can interact with a running tinc daemon,
+ showing the known nodes, edges and subnets of a VPN.
