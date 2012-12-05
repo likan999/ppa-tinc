@@ -1,3 +1,13 @@
+tinc (1.1~pre4-1) experimental; urgency=low
+
+  [ Gian Piero ]
+  * Allow resource limits to be set in /etc/default/tinc. Closes: #690685
+
+  [ Guus Sliepen ]
+  * New upstream release.
+
+ -- Guus Sliepen <guus@debian.org>  Wed, 05 Dec 2012 23:05:01 +0100
+
 tinc (1.1~pre3-1) experimental; urgency=low
 
   * New upstream release.
@@ -25,6 +35,34 @@ tinc (1.1~pre2-1) experimental; urgency=low
     probably should go into upstream makefile instead
 
  -- Michael Tokarev <mjt@tls.msk.ru>  Sun, 07 Aug 2011 12:57:15 +0400
+
+tinc (1.0.19-2) unstable; urgency=low
+
+  * Fix behaviour of tinc-pidfile. Closes: #679130
+  * Enable parallel building in debian/rules.
+
+ -- Guus Sliepen <guus@debian.org>  Tue, 26 Jun 2012 18:28:34 +0200
+
+tinc (1.0.19-1) unstable; urgency=low
+
+  * New upstream release.
+  * Bump debian/compat so tinc gets built with hardening flags.
+  * Allow tinc-pidfile in /etc/network/interfaces.
+
+ -- Guus Sliepen <guus@debian.org>  Mon, 25 Jun 2012 20:29:22 +0200
+
+tinc (1.0.18-1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- Guus Sliepen <guus@debian.org>  Sun, 25 Mar 2012 18:52:15 +0200
+
+tinc (1.0.17-1) unstable; urgency=low
+
+  * New upstream release.
+  * Enable support for UML and VDE.
+
+ -- Guus Sliepen <guus@debian.org>  Sat, 10 Mar 2012 14:50:00 +0100
 
 tinc (1.0.16-1) unstable; urgency=low
 
