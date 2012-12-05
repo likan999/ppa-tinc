@@ -64,9 +64,6 @@
 /* Define to 1 if you have the `ECDSA_verify' function. */
 #undef HAVE_ECDSA_VERIFY
 
-/* Define to 1 if you have the <event.h> header file. */
-#undef HAVE_EVENT_H
-
 /* Define to 1 if you have the `EVP_EncryptInit_ex' function. */
 #undef HAVE_EVP_ENCRYPTINIT_EX
 

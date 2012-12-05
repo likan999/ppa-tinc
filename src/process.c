@@ -25,6 +25,7 @@
 #include "control.h"
 #include "device.h"
 #include "edge.h"
+#include "event.h"
 #include "logger.h"
 #include "net.h"
 #include "node.h"
@@ -127,7 +128,7 @@ DWORD WINAPI controlhandler(DWORD request, DWORD type, LPVOID boe, LPVOID bah) {
 			return ERROR_CALL_NOT_IMPLEMENTED;
 	}
 
-	event_loopexit(NULL);
+	event_exit();
 	status.dwWaitHint = 30000;
 	status.dwCurrentState = SERVICE_STOP_PENDING;
 	SetServiceStatus(statushandle, &status);

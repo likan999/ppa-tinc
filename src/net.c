@@ -74,7 +74,7 @@ void purge(void) {
 				if(e->to == n)
 					return;
 
-			if(!strictsubnets || !n->subnet_tree->head)
+			if(!autoconnect && (!strictsubnets || !n->subnet_tree->head))
 				/* in strictsubnets mode do not delete nodes with subnets */
 				node_del(n);
 		}
@@ -137,18 +137,16 @@ void terminate_connection(connection_t *c, bool report) {
   end does not reply in time, we consider them dead
   and close the connection.
 */
-static void timeout_handler(int fd, short events, void *event) {
-	time_t now = time(NULL);
-
+static void timeout_handler(void *data) {
 	for list_each(connection_t, c, connection_list) {
 		if(c->status.control)
 			continue;
 
-		if(c->last_ping_time + pingtimeout <= now) {
+		if(c->last_ping_time + pingtimeout <= now.tv_sec) {
 			if(c->status.active) {
 				if(c->status.pinged) {
-					logger(DEBUG_CONNECTIONS, LOG_INFO, "%s (%s) didn't respond to PING in %ld seconds", c->name, c->hostname, (long)now - c->last_ping_time);
-				} else if(c->last_ping_time + pinginterval <= now) {
+					logger(DEBUG_CONNECTIONS, LOG_INFO, "%s (%s) didn't respond to PING in %ld seconds", c->name, c->hostname, (long)now.tv_sec - c->last_ping_time);
+				} else if(c->last_ping_time + pinginterval <= now.tv_sec) {
 					send_ping(c);
 					continue;
 				} else {
@@ -163,6 +161,15 @@ static void timeout_handler(int fd, short events, void *event) {
 			terminate_connection(c, c->status.active);
 		}
 	}
+
+	timeout_set(data, &(struct timeval){pingtimeout, rand() % 100000});
+}
+
+static void periodic_handler(void *data) {
+	/* Check if there are too many contradicting ADD_EDGE and DEL_EDGE messages.
+	   This usually only happens when another node has the same Name as this node.
+	   If so, sleep for a short while to prevent a storm of contradicting messages.
+	*/
 
 	if(contradicting_del_edge > 100 && contradicting_add_edge > 100) {
 		logger(DEBUG_ALWAYS, LOG_WARNING, "Possible node with same Name as us! Sleeping %d seconds.", sleeptime);
@@ -179,11 +186,100 @@ static void timeout_handler(int fd, short events, void *event) {
 	contradicting_add_edge = 0;
 	contradicting_del_edge = 0;
 
-	event_add(event, &(struct timeval){pingtimeout, 0});
+	/* If AutoConnect is set, check if we need to make or break connections. */
+
+	if(autoconnect && node_tree->count > 1) {
+		/* Count number of active connections */
+		int nc = 0;
+		for list_each(connection_t, c, connection_list) {
+			if(c->status.active && !c->status.control)
+				nc++;
+		}
+
+		if(nc < autoconnect) {
+			/* Not enough active connections, try to add one.
+			   Choose a random node, if we don't have a connection to it,
+			   and we are not already trying to make one, create an
+			   outgoing connection to this node.
+			*/
+			int r = rand() % node_tree->count;
+			int i = 0;
+
+			for splay_each(node_t, n, node_tree) {
+				if(i++ != r)
+					continue;
+
+				if(n->connection)
+					break;
+
+				bool found = false;
+
+				for list_each(outgoing_t, outgoing, outgoing_list) {
+					if(!strcmp(outgoing->name, n->name)) {
+						found = true;
+						break;
+					}
+				}
+
+				if(!found) {
+					logger(DEBUG_CONNECTIONS, LOG_INFO, "Autoconnecting to %s", n->name);
+					outgoing_t *outgoing = xmalloc_and_zero(sizeof *outgoing);
+					outgoing->name = xstrdup(n->name);
+					list_insert_tail(outgoing_list, outgoing);
+					setup_outgoing_connection(outgoing);
+				}
+				break;
+			}
+		} else if(nc > autoconnect) {
+			/* Too many active connections, try to remove one.
+			   Choose a random outgoing connection to a node
+			   that has at least one other connection.
+			*/
+			int r = rand() % nc;
+			int i = 0;
+
+			for list_each(connection_t, c, connection_list) {
+				if(!c->status.active || c->status.control)
+					continue;
+
+				if(i++ != r)
+					continue;
+
+				if(!c->outgoing || !c->node || c->node->edge_tree->count < 2)
+					break;
+
+				logger(DEBUG_CONNECTIONS, LOG_INFO, "Autodisconnecting from %s", c->name);
+				list_delete(outgoing_list, c->outgoing);
+				c->outgoing = NULL;
+				terminate_connection(c, c->status.active);
+				break;
+			}
+		}
+
+		if(nc >= autoconnect) {
+			/* If we have enough active connections,
+			   remove any pending outgoing connections.
+			*/
+			for list_each(outgoing_t, o, outgoing_list) {
+				bool found = false;
+				for list_each(connection_t, c, connection_list) {
+					if(c->outgoing == o) {
+						found = true;
+						break;
+					}
+				}
+				if(!found) {
+					logger(DEBUG_CONNECTIONS, LOG_INFO, "Cancelled outgoing connection to %s", o->name);
+					list_delete_node(outgoing_list, node);
+				}
+			}
+		}
+	}
+
+	timeout_set(data, &(struct timeval){5, rand() % 100000});
 }
 
-void handle_meta_connection_data(int fd, short events, void *data) {
-	connection_t *c = data;
+void handle_meta_connection_data(connection_t *c) {
 	int result;
 	socklen_t len = sizeof result;
 
@@ -207,19 +303,19 @@ void handle_meta_connection_data(int fd, short events, void *data) {
 	}
 }
 
-static void sigterm_handler(int signal, short events, void *data) {
-	logger(DEBUG_ALWAYS, LOG_NOTICE, "Got %s signal", strsignal(signal));
-	event_loopexit(NULL);
+static void sigterm_handler(void *data) {
+	logger(DEBUG_ALWAYS, LOG_NOTICE, "Got %s signal", strsignal(((signal_t *)data)->signum));
+	event_exit();
 }
 
-static void sighup_handler(int signal, short events, void *data) {
-	logger(DEBUG_ALWAYS, LOG_NOTICE, "Got %s signal", strsignal(signal));
+static void sighup_handler(void *data) {
+	logger(DEBUG_ALWAYS, LOG_NOTICE, "Got %s signal", strsignal(((signal_t *)data)->signum));
 	reopenlogger();
 	reload_configuration();
 }
 
-static void sigalrm_handler(int signal, short events, void *data) {
-	logger(DEBUG_ALWAYS, LOG_NOTICE, "Got %s signal", strsignal(signal));
+static void sigalrm_handler(void *data) {
+	logger(DEBUG_ALWAYS, LOG_NOTICE, "Got %s signal", strsignal(((signal_t *)data)->signum));
 	retry();
 }
 
@@ -233,7 +329,7 @@ int reload_configuration(void) {
 
 	if(!read_server_config()) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Unable to reread configuration file, exitting.");
-		event_loopexit(NULL);
+		event_exit();
 		return EINVAL;
 	}
 
@@ -332,8 +428,7 @@ int reload_configuration(void) {
 void retry(void) {
 	for list_each(connection_t, c, connection_list) {
 		if(c->outgoing && !c->node) {
-			if(timeout_initialized(&c->outgoing->ev))
-				event_del(&c->outgoing->ev);
+			timeout_del(&c->outgoing->ev);
 			if(c->status.connecting)
 				close(c->socket);
 			c->outgoing->timeout = 0;
@@ -346,40 +441,38 @@ void retry(void) {
   this is where it all happens...
 */
 int main_loop(void) {
-	struct event timeout_event;
+	timeout_t pingtimer = {{0}};
+	timeout_t periodictimer = {{0}};
 
-	timeout_set(&timeout_event, timeout_handler, &timeout_event);
-	event_add(&timeout_event, &(struct timeval){pingtimeout, 0});
+	timeout_add(&pingtimer, timeout_handler, &pingtimer, &(struct timeval){pingtimeout, rand() % 100000});
+	timeout_add(&periodictimer, periodic_handler, &periodictimer, &(struct timeval){pingtimeout, rand() % 100000});
 
 #ifndef HAVE_MINGW
-	struct event sighup_event;
-	struct event sigterm_event;
-	struct event sigquit_event;
-	struct event sigalrm_event;
+	signal_t sighup = {0};
+	signal_t sigterm = {0};
+	signal_t sigquit = {0};
+	signal_t sigalrm = {0};
 
-	signal_set(&sighup_event, SIGHUP, sighup_handler, NULL);
-	signal_add(&sighup_event, NULL);
-	signal_set(&sigterm_event, SIGTERM, sigterm_handler, NULL);
-	signal_add(&sigterm_event, NULL);
-	signal_set(&sigquit_event, SIGQUIT, sigterm_handler, NULL);
-	signal_add(&sigquit_event, NULL);
-	signal_set(&sigalrm_event, SIGALRM, sigalrm_handler, NULL);
-	signal_add(&sigalrm_event, NULL);
+	signal_add(&sighup, sighup_handler, &sighup, SIGHUP);
+	signal_add(&sigterm, sigterm_handler, &sigterm, SIGTERM);
+	signal_add(&sigquit, sigterm_handler, &sigquit, SIGQUIT);
+	signal_add(&sigalrm, sigalrm_handler, &sigalrm, SIGALRM);
 #endif
 
-	if(event_loop(0) < 0) {
+	if(!event_loop()) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Error while waiting for input: %s", strerror(errno));
 		return 1;
 	}
 
 #ifndef HAVE_MINGW
-	signal_del(&sighup_event);
-	signal_del(&sigterm_event);
-	signal_del(&sigquit_event);
-	signal_del(&sigalrm_event);
+	signal_del(&sighup);
+	signal_del(&sigalrm);
+	signal_del(&sigquit);
+	signal_del(&sigterm);
 #endif
 
-	event_del(&timeout_event);
+	timeout_del(&periodictimer);
+	timeout_del(&pingtimer);
 
 	return 0;
 }

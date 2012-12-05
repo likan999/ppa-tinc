@@ -58,6 +58,20 @@ signal_running() {
   done
 }
 
+setlimits() {
+  while [ $# -gt 0 ]; do
+    parm=$1 ; shift
+    if [ -n "$1" -a "${1#-}" = "$1" ]; then
+      value=$1 ; shift
+      ulimit $parm $value
+    else
+      ulimit $parm
+    fi
+  done
+}
+
+test -n "$LIMITS" && setlimits $LIMITS
+
 case "$1" in
   start)
     foreach_net "Starting $DESC:" start

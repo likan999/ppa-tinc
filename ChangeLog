@@ -1,3 +1,267 @@
+commit 5b7f42bca4dbfee7a5fa2bc119f4739baaeb2f55
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Wed Dec 5 22:32:10 2012 +0100
+
+    Releasing 1.1pre4.
+
+commit 4c16094e949e1f17461ac744118076a3cec437e8
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Wed Dec 5 21:42:43 2012 +0100
+
+    Fix whitespace.
+
+commit 4f8abf1b29b117c5d593bfa7703966fd88e9eace
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Wed Dec 5 21:40:49 2012 +0100
+
+    Scale packet counters similar to byte counters.
+
+commit d5f0ff5df86d06825110527ddc252b1268e31479
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Wed Dec 5 21:33:01 2012 +0100
+
+    Don't use nested functions.
+    
+    This allows tinc to be compiled with Clang.
+
+commit eb80105ea855f2c7ee0ea467574acf86cf455a77
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Wed Dec 5 14:42:21 2012 +0100
+
+    Fix compiler warnings on OpenBSD.
+
+commit 5e3607b616538eac7bb70d78d4f20d847a1c3064
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Mon Dec 3 13:09:40 2012 +0100
+
+    Remove GraphDumpFile from the manual and manpages.
+    
+    This option is not supported in tinc 1.1, "tincctl dump graph" can be used
+    instead.
+
+commit a717b9bcfbe811787fd6718fb3f8fb3f272bcfb9
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Mon Dec 3 13:08:03 2012 +0100
+
+    Add option to dump only a list of reachable nodes.
+
+commit 75c619e372f02f8225d158fd514f01bd04857d3b
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Mon Dec 3 10:41:28 2012 +0100
+
+    More fixes for Windows.
+    
+    In particular, Windows does support many of the timer* macros, except timeradd
+    and timersub.
+
+commit d53384c2de6d2824b9adcec111301d86e6b25f8e
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Mon Dec 3 09:08:21 2012 +0100
+
+    Fix compiler error on Windows.
+
+commit 76816e119b7d38a14823d430aafeff362dfbfd41
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Mon Dec 3 09:07:23 2012 +0100
+
+    Fix crash in timeout handling.
+
+commit d19b00606576d19ef206e363ac709daf3bd00f25
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Mon Dec 3 09:02:08 2012 +0100
+
+    Set a node's pointers to zero before trying to insert it into a tree.
+
+commit d2b19be1a0dd3c4987aa926117f5bf281892c78b
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Thu Nov 29 14:35:08 2012 +0100
+
+    Fix use of unitialised values in hash tables.
+    
+    Not only was Valgrind unhappy about it, it could also result in cache misses.
+
+commit d9c70767aa6da8b62b4a1034d5f07892603beddd
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Thu Nov 29 14:32:12 2012 +0100
+
+    Fix check for expired events.
+    
+    This would trigger a infinite loop if a timeout expired and the next timeout
+    was not expired yet, but less than 1 second from being expired.
+
+commit 8825cddd0d8ed6dad00924ef382139da51ca3fc4
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Thu Nov 29 12:37:04 2012 +0100
+
+    Allow multiple timeouts to expire at the exact same time.
+
+commit 6bc5d626a8726fc23365ee705761a3c666a08ad4
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Thu Nov 29 12:28:23 2012 +0100
+
+    Drop libevent and use our own event handling again.
+    
+    There are several reasons for this:
+    
+    - MacOS/X doesn't support polling the tap device using kqueue, requiring a
+      workaround to fall back to select().
+    - On Windows only sockets are properly handled, therefore tinc uses a second
+      thread that does a blocking ReadFile() on the TAP-Win32/64 device. However,
+      this does not mix well with libevent.
+    - Libevent, event just the core, is quite large, and although it is easy to get
+      and install on many platforms, it can be a burden.
+    - Libev is more lightweight and seems technically superior, but it doesn't
+      abstract away all the platform differences (for example, async events are not
+      supported on Windows).
+
+commit d30b9e1272fef18070d37d10b2b3e4bb2fc07f59
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Mon Nov 19 14:20:50 2012 +0100
+
+    Ensure MTU probe replies are sent back the same way they came in.
+    
+    Also sprinkle some comments over mtu_probe_h().
+
+commit 3c1b7047332f4b5e9d5ae7109e696b33712a5fb2
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Mon Nov 19 13:50:17 2012 +0100
+
+    Improve UDP address selection.
+    
+    We don't need to search the whole edge tree, we can use the node's own edge
+    tree since each edge has a pointer to its reverse. Also, we do need to make
+    sure we try the reflexive address often.
+
+commit f57129ce3439f3826c12f15feb5df05e5ad8cab9
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sat Nov 17 22:48:06 2012 +0100
+
+    Try all known addresses of node during PMTU discovery, now also for SPTPS.
+
+commit 30404650b28bf72d0b05b55393f2dd492434f9f3
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sat Nov 17 22:14:52 2012 +0100
+
+    Choose a suitable socket when updating a node's UDP address.
+
+commit 8f9ee895224b39347783f3119343efc3bdaa3511
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Thu Nov 15 11:24:18 2012 +0100
+
+    Also don't use poll() on MacOS/X.
+
+commit 8a77df9e28114cbfd83351070fdb266cf31fc310
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Thu Nov 15 11:13:40 2012 +0100
+
+    Disable support for kqueue on MacOS/X.
+    
+    Apparently MacOS/X doesn't support kqueue events on character devices.
+
+commit 818c92e6583006bf2e38f1027044925df6cf0ca0
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Wed Nov 14 10:44:35 2012 +0100
+
+    Remove text saying you must have one of PrivateKey or PrivateKeyFile in tinc.conf.
+
+commit e8bf81794f412b27261be0f2aa4eb287352041af
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Tue Nov 13 15:05:41 2012 +0100
+
+    Send broadcast packets using a random socket, and properly support IPv6.
+    
+    Before it would always use the first socket, and always send an IPv4 broadcast packet. That
+    works fine in a lot of situations, but it is better to try all sockets, and to send IPv6 packets
+    on IPv6 sockets. This is especially important for users that are on IPv6-only networks or that
+    have multiple physical network interfaces, although in the latter case it probably requires
+    them to use the ListenAddress variable to create a separate socket for each interface.
+
+commit 0870c7c32cf8a24f234fc066df867747ddb1ddc7
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Tue Nov 13 15:01:43 2012 +0100
+
+    Don't take the address of a variable whose scope is about to disappear.
+
+commit bb3d7f3b31d4a429d1c31c6621d82f34dd552482
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Nov 11 19:01:28 2012 +0100
+
+    Fix configure script help text for --enable options.
+
+commit 5bfbb8f6c58307a8109f556caa30be122cc4d39f
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Nov 11 19:01:02 2012 +0100
+
+    Fix index entry for section about readline library.
+
+commit 5766518589a5e6cc43ba77a4049059ead05fb300
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Nov 11 18:53:23 2012 +0100
+
+    Mention in the manual that support for LZO and zlib can be disabled.
+
+commit 6ec4596557d658f6c15c2cb9a96152c8c476118a
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Nov 11 18:45:40 2012 +0100
+
+    Mention libcurses and libreadline in the manual.
+
+commit 0ee139e91431527015b7132e4c36f8d4ec09f66b
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sat Nov 10 23:45:22 2012 +0100
+
+    Make sure PMTU discovery works in switch mode with VLAN tags.
+    
+    Before, when tinc saw a packet larger than the PMTU with a VLAN tag, it would
+    not know what to do with it, and would just forward it via TCP. Now, tinc
+    handles 802.1q packets correctly, as long as there is only one tag.
+
+commit ade4fccad6857f3d6d548e52bc94ab23751e4fef
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sat Nov 10 23:13:05 2012 +0100
+
+    Using alloca() for a constant sized buffer is very silly.
+    
+    Cppcheck said using alloca() in the 21st century is silly anyway.
+
+commit b355476e917f377abb6434657933fcf4ffe6870a
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sat Nov 10 23:09:31 2012 +0100
+
+    Fix potential buffer overflow reading the PID file.
+    
+    Found by cppcheck.
+
+commit edc08b73a9e353bde6db4c73866a6a730a1a7cb4
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Oct 21 17:45:16 2012 +0200
+
+    Slightly randomize all timeouts.
+
+commit 717ea66d7ba0c23f27d86b3d5c6992b751135455
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Oct 21 17:35:13 2012 +0200
+
+    Add the AutoConnect option.
+    
+    When set to a non-zero value, tinc will try to maintain exactly that number of
+    meta connections to other nodes.  If there are not enough connections, it will
+    periodically try to set up an outgoing connection to a random node.  If there
+    are too many connections, it will periodically try to remove an outgoing
+    connection.
+
+commit 1f8b70efa0dedbd3642e0ee82a640d125664af34
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Oct 21 17:34:53 2012 +0200
+
+    Keep track of the number of nodes in a tree.
+
+commit 0006c754f2e61e108aa2dd5a6ddd2e9b50d51bd6
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Wed Oct 17 13:51:02 2012 +0200
+
+    Fix warnings from groff.
+
 commit 0db9e471ea53b48687ea247c855cd95ec453530c
 Author: Guus Sliepen <guus@tinc-vpn.org>
 Date:   Sun Oct 14 19:22:30 2012 +0200

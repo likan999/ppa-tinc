@@ -339,7 +339,8 @@ having them installed, configure will give you an error message, and stop.
 * OpenSSL::
 * zlib::
 * lzo::
-* libevent::
+* libcurses::
+* libreadline::
 @end menu
 
 
@@ -352,7 +353,7 @@ For all cryptography-related functions, tinc uses the functions provided
 by the OpenSSL library.
 
 If this library is not installed, you wil get an error when configuring
-tinc for build.  Support for running tinc without having OpenSSL
+tinc for build.  Support for running tinc with other cryptographic libraries
 installed @emph{may} be added in the future.
 
 You can use your operating system's package manager to install this if
@@ -415,9 +416,11 @@ Markus F.X.J. Oberhumer
 For the optional compression of UDP packets, tinc uses the functions provided
 by the zlib library.
 
-If this library is not installed, you wil get an error when configuring
-tinc for build.  Support for running tinc without having zlib
-installed @emph{may} be added in the future.
+If this library is not installed, you wil get an error when running the
+configure script.  You can either install the zlib library, or disable support
+for zlib compression by using the "--disable-zlib" option when running the
+configure script. Note that if you disable support for zlib, the resulting
+binary will not work correctly on VPNs where zlib compression is used.
 
 You can use your operating system's package manager to install this if
 available.  Make sure you install the development AND runtime versions
@@ -435,11 +438,13 @@ default).
 @subsection lzo
 
 @cindex lzo
-Another form of compression is offered using the lzo library.
+Another form of compression is offered using the LZO library.
 
-If this library is not installed, you wil get an error when configuring
-tinc for build.  Support for running tinc without having lzo
-installed @emph{may} be added in the future.
+If this library is not installed, you wil get an error when running the
+configure script.  You can either install the LZO library, or disable support
+for LZO compression by using the "--disable-lzo" option when running the
+configure script. Note that if you disable support for LZO, the resulting
+binary will not work correctly on VPNs where LZO compression is used.
 
 You can use your operating system's package manager to install this if
 available.  Make sure you install the development AND runtime versions
@@ -453,24 +458,48 @@ default).
 
 
 @c ==================================================================
-@node       libevent
-@subsection libevent
+@node       libcurses
+@subsection libcurses
 
-@cindex libevent
-For the main event loop, tinc uses the libevent library.
+@cindex libcurses
+For the "tincctl top" command, tinc requires a curses library.
 
-If this library is not installed, you wil get an error when configuring
-tinc for build.
+If this library is not installed, you wil get an error when running the
+configure script.  You can either install a suitable curses library, or disable
+all functionality that depends on a curses library by using the
+"--disable-curses" option when running the configure script.
+
+There are several curses libraries. It is recommended that you install
+"ncurses" (@url{http://invisible-island.net/ncurses/}),
+however other curses libraries should also work.
+In particular, "PDCurses" (@url{http://pdcurses.sourceforge.net/})
+is recommended if you want to compile tinc for Windows.
+
+You can use your operating system's package manager to install this if
+available. Make sure you install the development AND runtime versions
+of this package.
+
+
+@c ==================================================================
+@node       libreadline
+@subsection libreadline
+
+@cindex libreadline
+For the "tincctl" command's shell functionality, tinc uses the readline library.
+
+If this library is not installed, you wil get an error when running the
+configure script.  You can either install a suitable readline library, or
+disable all functionality that depends on a readline library by using the
+"--disable-readline" option when running the configure script.
 
 You can use your operating system's package manager to install this if
 available.  Make sure you install the development AND runtime versions
 of this package.
 
-If you have to install libevent manually, you can get the source code
-from @url{http://libevent.org/}. Instructions on how to configure,
-build and install this package are included within the package.  Please
-make sure you build development and runtime libraries (which is the
-default).
+If you have to install libreadline manually, you can get the source code from
+@url{http://www.gnu.org/software/readline/}. Instructions on how to configure,
+build and install this package are included within the package.  Please make
+sure you build development and runtime libraries (which is the default).
 
 
 @c
@@ -805,6 +834,14 @@ This option affects the address family of listening and outgoing sockets.
 If any is selected, then depending on the operating system
 both IPv4 and IPv6 or just IPv6 listening sockets will be created.
 
+@cindex AutoConnect
+@item AutoConnect = <count> (0) [experimental]
+If set to a non-zero value,
+tinc will try to only have count meta connections to other nodes,
+by automatically making or breaking connections to known nodes.
+Higher values increase redundancy but also increase meta data overhead.
+When using this option, a good value is 3.
+
 @cindex BindToAddress
 @item BindToAddress = <@var{address}> [<@var{port}>]
 If your computer has more than one IPv4 or IPv6 address, tinc
@@ -990,16 +1027,6 @@ This is less efficient, but allows the kernel to apply its routing and firewall 
 and can also help debugging.
 @end table
 
-@cindex GraphDumpFile
-@item GraphDumpFile = <@var{filename}>
-If this option is present,
-tinc will dump the current network graph to the file @var{filename}
-every minute, unless there were no changes to the graph.
-The file is in a format that can be read by graphviz tools.
-If @var{filename} starts with a pipe symbol |,
-then the rest of the filename is interpreted as a shell command
-that is executed, the graph is then sent to stdin.
-
 @cindex Hostnames
 @item Hostnames = <yes|no> (no)
 This option selects whether IP addresses (both real and on the VPN)
@@ -1105,10 +1132,6 @@ accidental eavesdropping if you are editting the configuration file.
 This is the full path name of the RSA private key file that was
 generated by @samp{tincctl generate-keys}.  It must be a full path, not a
 relative directory.
-
-Note that there must be exactly one of PrivateKey
-or PrivateKeyFile
-specified in the configuration file.
 
 @cindex ProcessPriority
 @item ProcessPriority = <low|normal|high>
@@ -2199,8 +2222,9 @@ Generate public/private keypair of @var{bits} length. If @var{bits} is not speci
 but will default to the configuration directory (you can use the -c or -n
 option).
 
-@item dump nodes
+@item dump [reachable] nodes
 Dump a list of all known nodes in the VPN.
+If the reachable keyword is used, only lists reachable nodes.
 
 @item dump edges
 Dump a list of all known connections in the VPN.

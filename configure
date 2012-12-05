@@ -738,7 +738,6 @@ enable_uml
 enable_vde
 enable_tunemu
 with_windows2000
-with_libgcrypt
 enable_curses
 with_curses
 with_curses_include
@@ -747,9 +746,6 @@ enable_readline
 with_readline
 with_readline_include
 with_readline_lib
-with_libevent
-with_libevent_include
-with_libevent_lib
 enable_zlib
 with_zlib
 with_zlib_include
@@ -1393,9 +1389,9 @@ Optional Features:
   --enable-dependency-tracking   do not reject slow dependency extractors
   --enable-maintainer-mode  enable make rules and dependencies not useful
 			  (and sometimes confusing) to the casual installer
-  --disable-uml           enable support for User Mode Linux
-  --disable-vde           enable support for Virtual Distributed Ethernet
-  --disable-tunemu        enable support for the tunemu driver
+  --enable-uml            enable support for User Mode Linux
+  --enable-vde            enable support for Virtual Distributed Ethernet
+  --enable-tunemu         enable support for the tunemu driver
   --disable-curses        disable curses support
   --disable-readline      disable readline support
   --disable-zlib          disable zlib compression support
@@ -1408,7 +1404,6 @@ Optional Packages:
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
   --without-windows2000   compile with support for Windows 2000. This disables
                           support for tunneling over existing IPv6 networks.
-  --with-libgcrypt        enable use of libgcrypt instead of OpenSSL]
   --with-curses=DIR       curses base directory, or:
   --with-curses-include=DIR
                           curses headers directory
@@ -1417,10 +1412,6 @@ Optional Packages:
   --with-readline-include=DIR
                           readline headers directory
   --with-readline-lib=DIR readline library directory
-  --with-libevent=DIR     libevent base directory, or:
-  --with-libevent-include=DIR
-                          libevent headers directory
-  --with-libevent-lib=DIR libevent library directory
   --with-zlib=DIR         zlib base directory, or:
   --with-zlib-include=DIR zlib headers directory
   --with-zlib-lib=DIR     zlib library directory
@@ -4104,7 +4095,7 @@ fi
 
 # Define the identity of the package.
  PACKAGE=tinc
- VERSION=1.1pre3
+ VERSION=1.1pre4
 
 
 cat >>confdefs.h <<_ACEOF
@@ -5929,12 +5920,6 @@ rm -f confcache
 
 
 
-# Check whether --with-libgcrypt was given.
-if test "${with_libgcrypt+set}" = set; then :
-  withval=$with_libgcrypt;
-fi
-
-
 
   # Check whether --enable-curses was given.
 if test "${enable_curses+set}" = set; then :
@@ -6142,95 +6127,6 @@ fi
 
 fi
 
-
-
-
-
-# Check whether --with-libevent was given.
-if test "${with_libevent+set}" = set; then :
-  withval=$with_libevent; libevent="$withval"
-     CPPFLAGS="$CPPFLAGS -I$withval/include"
-     LDFLAGS="$LDFLAGS -L$withval/lib"
-
-fi
-
-
-
-# Check whether --with-libevent-include was given.
-if test "${with_libevent_include+set}" = set; then :
-  withval=$with_libevent_include; libevent_include="$withval"
-     CPPFLAGS="$CPPFLAGS -I$withval"
-
-fi
-
-
-
-# Check whether --with-libevent-lib was given.
-if test "${with_libevent_lib+set}" = set; then :
-  withval=$with_libevent_lib; libevent_lib="$withval"
-     LDFLAGS="$LDFLAGS -L$withval"
-
-fi
-
-
-  for ac_header in event.h
-do :
-  ac_fn_c_check_header_mongrel "$LINENO" "event.h" "ac_cv_header_event_h" "$ac_includes_default"
-if test "x$ac_cv_header_event_h" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_EVENT_H 1
-_ACEOF
-
-else
-  as_fn_error $? "\"libevent header files not found.\"" "$LINENO" 5; break
-
-fi
-
-done
-
-
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for event_init in -levent" >&5
-$as_echo_n "checking for event_init in -levent... " >&6; }
-if ${ac_cv_lib_event_event_init+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-levent  $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char event_init ();
-int
-main ()
-{
-return event_init ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_event_event_init=yes
-else
-  ac_cv_lib_event_event_init=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_event_event_init" >&5
-$as_echo "$ac_cv_lib_event_event_init" >&6; }
-if test "x$ac_cv_lib_event_event_init" = xyes; then :
-  LIBS="-levent $LIBS"
-else
-  as_fn_error $? "\"libevent libraries not found.\"" "$LINENO" 5
-
-fi
 
 
 

@@ -1135,7 +1135,6 @@ AC_SUBST([am__untar])
 
 m4_include([m4/attribute.m4])
 m4_include([m4/curses.m4])
-m4_include([m4/libevent.m4])
 m4_include([m4/lzo.m4])
 m4_include([m4/openssl.m4])
 m4_include([m4/readline.m4])

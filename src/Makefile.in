@@ -62,10 +62,9 @@ DIST_COMMON = $(noinst_HEADERS) $(srcdir)/Makefile.am \
 	$(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/attribute.m4 \
-	$(top_srcdir)/m4/curses.m4 $(top_srcdir)/m4/libevent.m4 \
-	$(top_srcdir)/m4/lzo.m4 $(top_srcdir)/m4/openssl.m4 \
-	$(top_srcdir)/m4/readline.m4 $(top_srcdir)/m4/zlib.m4 \
-	$(top_srcdir)/configure.in
+	$(top_srcdir)/m4/curses.m4 $(top_srcdir)/m4/lzo.m4 \
+	$(top_srcdir)/m4/openssl.m4 $(top_srcdir)/m4/readline.m4 \
+	$(top_srcdir)/m4/zlib.m4 $(top_srcdir)/configure.in
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 mkinstalldirs = $(install_sh) -d
@@ -95,8 +94,8 @@ am__tincd_SOURCES_DIST = utils.c getopt.c getopt1.c list.c \
 	netutl.c node.c process.c protocol.c protocol_auth.c \
 	protocol_edge.c protocol_misc.c protocol_key.c \
 	protocol_subnet.c route.c sptps.c subnet.c subnet_parse.c \
-	tincd.c dummy_device.c raw_socket_device.c multicast_device.c \
-	uml_device.c vde_device.c bsd/tunemu.c
+	event.c tincd.c dummy_device.c raw_socket_device.c \
+	multicast_device.c uml_device.c vde_device.c bsd/tunemu.c
 @UML_TRUE@am__objects_1 = uml_device.$(OBJEXT)
 @VDE_TRUE@am__objects_2 = vde_device.$(OBJEXT)
 @TUNEMU_TRUE@am__objects_3 = tunemu.$(OBJEXT)
@@ -112,9 +111,10 @@ am_tincd_OBJECTS = utils.$(OBJEXT) getopt.$(OBJEXT) getopt1.$(OBJEXT) \
 	protocol_edge.$(OBJEXT) protocol_misc.$(OBJEXT) \
 	protocol_key.$(OBJEXT) protocol_subnet.$(OBJEXT) \
 	route.$(OBJEXT) sptps.$(OBJEXT) subnet.$(OBJEXT) \
-	subnet_parse.$(OBJEXT) tincd.$(OBJEXT) dummy_device.$(OBJEXT) \
-	raw_socket_device.$(OBJEXT) multicast_device.$(OBJEXT) \
-	$(am__objects_1) $(am__objects_2) $(am__objects_3)
+	subnet_parse.$(OBJEXT) event.$(OBJEXT) tincd.$(OBJEXT) \
+	dummy_device.$(OBJEXT) raw_socket_device.$(OBJEXT) \
+	multicast_device.$(OBJEXT) $(am__objects_1) $(am__objects_2) \
+	$(am__objects_3)
 nodist_tincd_OBJECTS = device.$(OBJEXT) cipher.$(OBJEXT) \
 	crypto.$(OBJEXT) ecdh.$(OBJEXT) ecdsa.$(OBJEXT) \
 	digest.$(OBJEXT) prf.$(OBJEXT) rsa.$(OBJEXT)
@@ -251,7 +251,7 @@ tincd_SOURCES = utils.c getopt.c getopt1.c list.c splay_tree.c \
 	net.c net_packet.c net_setup.c net_socket.c netutl.c node.c \
 	process.c protocol.c protocol_auth.c protocol_edge.c \
 	protocol_misc.c protocol_key.c protocol_subnet.c route.c \
-	sptps.c subnet.c subnet_parse.c tincd.c dummy_device.c \
+	sptps.c subnet.c subnet_parse.c event.c tincd.c dummy_device.c \
 	raw_socket_device.c multicast_device.c $(am__append_1) \
 	$(am__append_2) $(am__append_3)
 nodist_tincd_SOURCES = \
@@ -273,7 +273,7 @@ DEFAULT_INCLUDES =
 noinst_HEADERS = \
 	xalloc.h utils.h getopt.h list.h splay_tree.h dropin.h fake-getaddrinfo.h fake-getnameinfo.h fake-gai-errnos.h ipv6.h ipv4.h ethernet.h \
 	buffer.h conf.h connection.h control.h control_common.h device.h edge.h graph.h info.h logger.h meta.h net.h netutl.h node.h process.h \
-	protocol.h route.h subnet.h sptps.h tincctl.h top.h bsd/tunemu.h hash.h
+	protocol.h route.h subnet.h sptps.h tincctl.h top.h bsd/tunemu.h hash.h event.h
 
 nodist_noinst_HEADERS = \
 	cipher.h crypto.h ecdh.h ecdsa.h digest.h prf.h rsa.h ecdsagen.h rsagen.h
@@ -383,6 +383,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ecdsa.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ecdsagen.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/edge.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/event.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fake-getaddrinfo.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fake-getnameinfo.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/getopt.Po@am__quote@

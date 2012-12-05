@@ -450,11 +450,6 @@ int main2(int argc, char **argv) {
 	}
 #endif
 
-	if(!event_init()) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Error initializing libevent!");
-		return 1;
-	}
-
 	/* Setup sockets and open device. */
 
 	if(!setup_network())
