@@ -1,6 +1,6 @@
 /*
     node.h -- header for node.c
-    Copyright (C) 2001-2012 Guus Sliepen <guus@tinc-vpn.org>,
+    Copyright (C) 2001-2013 Guus Sliepen <guus@tinc-vpn.org>,
                   2001-2005 Ivo Timmermans
 
     This program is free software; you can redistribute it and/or modify
@@ -77,6 +77,9 @@ typedef struct node_t {
 
 	uint32_t sent_seqno;                    /* Sequence number last sent to this node */
 	uint32_t received_seqno;                /* Sequence number last received from this node */
+	uint32_t received;                      /* Total valid packets received from this node */
+	uint32_t prev_received_seqno;
+	uint32_t prev_received;
 	uint32_t farfuture;                     /* Packets in a row that have arrived from the far future */
 	unsigned char* late;                    /* Bitfield marking late packets */
 
@@ -85,6 +88,11 @@ typedef struct node_t {
 	length_t maxmtu;                        /* Probed maximum MTU */
 	int mtuprobes;                          /* Number of probes */
 	timeout_t mtutimeout;                   /* Probe event */
+	struct timeval probe_time;              /* Time the last probe was sent or received */
+	int probe_counter;                      /* Number of probes received since last burst was sent */
+	float rtt;                              /* Last measured round trip time */
+	float bandwidth;                        /* Last measured bandwidth */
+	float packetloss;                       /* Last measured packet loss rate */
 
 	uint64_t in_packets;
 	uint64_t in_bytes;

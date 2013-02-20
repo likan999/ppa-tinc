@@ -1,7 +1,7 @@
 /*
     process.c -- process management functions
     Copyright (C) 1999-2005 Ivo Timmermans,
-                  2000-2012 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2013 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -27,6 +27,7 @@
 #include "edge.h"
 #include "event.h"
 #include "logger.h"
+#include "names.h"
 #include "net.h"
 #include "node.h"
 #include "process.h"
@@ -38,17 +39,12 @@
 bool do_detach = true;
 bool sigalrm = false;
 
-extern char *identname;
 extern char **g_argv;
 extern bool use_logfile;
 
 /* Some functions the less gifted operating systems might lack... */
 
 #ifdef HAVE_MINGW
-extern char *identname;
-extern char *program_name;
-extern char **g_argv;
-
 static SC_HANDLE manager = NULL;
 static SC_HANDLE service = NULL;
 static SERVICE_STATUS status = {0};
@@ -263,8 +259,8 @@ bool execute_script(const char *name, char **envp) {
 		}
 	}
 
-#ifdef WEXITSTATUS
 	if(status != -1) {
+#ifdef WEXITSTATUS
 		if(WIFEXITED(status)) {          /* Child exited by itself */
 			if(WEXITSTATUS(status)) {
 				logger(DEBUG_ALWAYS, LOG_ERR, "Script %s exited with non-zero status %d",
@@ -279,11 +275,11 @@ bool execute_script(const char *name, char **envp) {
 			logger(DEBUG_ALWAYS, LOG_ERR, "Script %s terminated abnormally", name);
 			return false;
 		}
+#endif
 	} else {
 		logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s", "system", strerror(errno));
 		return false;
 	}
-#endif
 #endif
 	return true;
 }

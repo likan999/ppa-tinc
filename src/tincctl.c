@@ -1,6 +1,6 @@
 /*
     tincctl.c -- Controlling a running tincd
-    Copyright (C) 2007-2012 Guus Sliepen <guus@tinc-vpn.org>
+    Copyright (C) 2007-2013 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -31,6 +31,7 @@
 #include "control_common.h"
 #include "ecdsagen.h"
 #include "info.h"
+#include "names.h"
 #include "rsagen.h"
 #include "utils.h"
 #include "tincctl.h"
@@ -39,10 +40,6 @@
 #ifdef HAVE_MINGW
 #define mkdir(a, b) mkdir(a)
 #endif
-
-
-/* The name this program was run with. */
-static char *program_name = NULL;
 
 static char **orig_argv;
 static int orig_argc;
@@ -54,12 +51,7 @@ static bool show_help = false;
 static bool show_version = false;
 
 static char *name = NULL;
-static char *identname = NULL;          /* program name for syslog */
-static char *pidfilename = NULL;        /* pid file location */
-static char *confdir = NULL;
 static char controlcookie[1025];
-char *netname = NULL;
-char *confbase = NULL;
 static char *tinc_conf = NULL;
 static char *hosts_dir = NULL;
 struct timeval now;
@@ -107,10 +99,9 @@ static void version(void) {
 }
 
 static void usage(bool status) {
-	if(status)
-		fprintf(stderr, "Try `%s --help\' for more information.\n",
-				program_name);
-	else {
+	if(status) {
+		fprintf(stderr, "Try `%s --help\' for more information.\n", program_name);
+	} else {
 		printf("Usage: %s [options] command\n\n", program_name);
 		printf("Valid options are:\n"
 				"  -c, --config=DIR        Read configuration options from DIR.\n"
@@ -153,6 +144,8 @@ static void usage(bool status) {
 				"  export                     Export host configuration of local node to standard output\n"
 				"  export-all                 Export all host configuration files to standard output\n"
 				"  import [--force]           Import host configuration file(s) from standard input\n"
+				"  exchange [--force]         Same as export followed by import\n"
+				"  exchange-all [--force]     Same as export-all followed by import\n"
 				"\n");
 		printf("Report bugs to tinc@tinc-vpn.org.\n");
 	}
@@ -453,62 +446,6 @@ static bool rsa_keygen(int bits, bool ask) {
 	return true;
 }
 
-/*
-  Set all files and paths according to netname
-*/
-static void make_names(void) {
-#ifdef HAVE_MINGW
-	HKEY key;
-	char installdir[1024] = "";
-	long len = sizeof installdir;
-#endif
-
-	if(netname)
-		xasprintf(&identname, "tinc.%s", netname);
-	else
-		identname = xstrdup("tinc");
-
-#ifdef HAVE_MINGW
-	if(!RegOpenKeyEx(HKEY_LOCAL_MACHINE, "SOFTWARE\\tinc", 0, KEY_READ, &key)) {
-		if(!RegQueryValueEx(key, NULL, 0, 0, installdir, &len)) {
-			if(!confbase) {
-				if(netname)
-					xasprintf(&confbase, "%s" SLASH "%s", installdir, netname);
-				else
-					xasprintf(&confbase, "%s", installdir);
-			}
-		}
-		if(!pidfilename)
-			xasprintf(&pidfilename, "%s" SLASH "pid", confbase);
-		RegCloseKey(key);
-	}
-
-	if(!*installdir) {
-#endif
-	confdir = xstrdup(CONFDIR);
-
-	if(!pidfilename)
-		xasprintf(&pidfilename, "%s" SLASH "run" SLASH "%s.pid", LOCALSTATEDIR, identname);
-
-	if(netname) {
-		if(!confbase)
-			xasprintf(&confbase, CONFDIR SLASH "tinc" SLASH "%s", netname);
-		else
-			fprintf(stderr, "Both netname and configuration directory given, using the latter...\n");
-	} else {
-		if(!confbase)
-			xasprintf(&confbase, CONFDIR SLASH "tinc");
-	}
-
-#ifdef HAVE_MINGW
-	} else
-		confdir = xstrdup(installdir);
-#endif
-
-	xasprintf(&tinc_conf, "%s" SLASH "tinc.conf", confbase);
-	xasprintf(&hosts_dir, "%s" SLASH "hosts", confbase);
-}
-
 static char buffer[4096];
 static size_t blen = 0;
 
@@ -729,6 +666,26 @@ static bool connect_tincd(bool verbose) {
 	}
 #endif
 
+#ifndef HAVE_MINGW
+	struct sockaddr_un sa;
+	sa.sun_family = AF_UNIX;
+	strncpy(sa.sun_path, unixsocketname, sizeof sa.sun_path);
+
+	fd = socket(AF_UNIX, SOCK_STREAM, 0);
+	if(fd < 0) {
+		if(verbose)
+			fprintf(stderr, "Cannot create UNIX socket: %s\n", sockstrerror(sockerrno));
+		return false;
+	}
+
+	if(connect(fd, (struct sockaddr *)&sa, sizeof sa) < 0) {
+		if(verbose)
+			fprintf(stderr, "Cannot connect to UNIX socket %s: %s\n", unixsocketname, sockstrerror(sockerrno));
+		close(fd);
+		fd = -1;
+		return false;
+	}
+#else
 	struct addrinfo hints = {
 		.ai_family = AF_UNSPEC,
 		.ai_socktype = SOCK_STREAM,
@@ -769,6 +726,7 @@ static bool connect_tincd(bool verbose) {
 	}
 
 	freeaddrinfo(res);
+#endif
 
 	char data[4096];
 	int version;
@@ -854,6 +812,11 @@ static int cmd_start(int argc, char *argv[]) {
 }
 
 static int cmd_stop(int argc, char *argv[]) {
+	if(argc > 1) {
+		fprintf(stderr, "Too many arguments!\n");
+		return 1;
+	}
+
 #ifndef HAVE_MINGW
 	if(!connect_tincd(true)) {
 		if(pid) {
@@ -871,16 +834,10 @@ static int cmd_stop(int argc, char *argv[]) {
 	}
 
 	sendline(fd, "%d %d", CONTROL, REQ_STOP);
-	if(!recvline(fd, line, sizeof line) || sscanf(line, "%d %d %d", &code, &req, &result) != 3 || code != CONTROL || req != REQ_STOP || result) {
-		fprintf(stderr, "Could not stop tinc daemon.\n");
-		return 1;
-	}
 
-	// Wait for tincd to close the connection...
-	fd_set r;
-	FD_ZERO(&r);
-	FD_SET(fd, &r);
-	select(fd + 1, &r, NULL, NULL, NULL);
+	while(recvline(fd, line, sizeof line)) {
+		// Wait for tincd to close the connection...
+	}
 #else
 	if(!remove_service())
 		return 1;
@@ -898,6 +855,11 @@ static int cmd_restart(int argc, char *argv[]) {
 }
 
 static int cmd_reload(int argc, char *argv[]) {
+	if(argc > 1) {
+		fprintf(stderr, "Too many arguments!\n");
+		return 1;
+	}
+
 	if(!connect_tincd(true))
 		return 1;
 
@@ -1070,6 +1032,11 @@ static int cmd_dump(int argc, char *argv[]) {
 }
 
 static int cmd_purge(int argc, char *argv[]) {
+	if(argc > 1) {
+		fprintf(stderr, "Too many arguments!\n");
+		return 1;
+	}
+
 	if(!connect_tincd(true))
 		return 1;
 
@@ -1105,6 +1072,11 @@ static int cmd_debug(int argc, char *argv[]) {
 }
 
 static int cmd_retry(int argc, char *argv[]) {
+	if(argc > 1) {
+		fprintf(stderr, "Too many arguments!\n");
+		return 1;
+	}
+
 	if(!connect_tincd(true))
 		return 1;
 
@@ -1164,6 +1136,11 @@ static int cmd_disconnect(int argc, char *argv[]) {
 }
 
 static int cmd_top(int argc, char *argv[]) {
+	if(argc > 1) {
+		fprintf(stderr, "Too many arguments!\n");
+		return 1;
+	}
+
 #ifdef HAVE_CURSES
 	if(!connect_tincd(true))
 		return 1;
@@ -1177,6 +1154,11 @@ static int cmd_top(int argc, char *argv[]) {
 }
 
 static int cmd_pcap(int argc, char *argv[]) {
+	if(argc > 2) {
+		fprintf(stderr, "Too many arguments!\n");
+		return 1;
+	}
+
 	if(!connect_tincd(true))
 		return 1;
 
@@ -1185,6 +1167,11 @@ static int cmd_pcap(int argc, char *argv[]) {
 }
 
 static int cmd_log(int argc, char *argv[]) {
+	if(argc > 2) {
+		fprintf(stderr, "Too many arguments!\n");
+		return 1;
+	}
+
 	if(!connect_tincd(true))
 		return 1;
 
@@ -1193,6 +1180,11 @@ static int cmd_log(int argc, char *argv[]) {
 }
 
 static int cmd_pid(int argc, char *argv[]) {
+	if(argc > 1) {
+		fprintf(stderr, "Too many arguments!\n");
+		return 1;
+	}
+
 	if(!connect_tincd(true) && !pid)
 		return 1;
 
@@ -1613,7 +1605,10 @@ static int cmd_init(int argc, char *argv[]) {
 		return 1;
 	}
 
-	if(argc < 2) {
+	if(argc > 2) {
+		fprintf(stderr, "Too many arguments!\n");
+		return 1;
+	} else if(argc < 2) {
 		if(tty) {
 			char buf[1024];
 			fprintf(stdout, "Enter the Name you want your tinc node to have: ");
@@ -1692,14 +1687,29 @@ static int cmd_init(int argc, char *argv[]) {
 }
 
 static int cmd_generate_keys(int argc, char *argv[]) {
+	if(argc > 2) {
+		fprintf(stderr, "Too many arguments!\n");
+		return 1;
+	}
+
 	return !(rsa_keygen(argc > 1 ? atoi(argv[1]) : 2048, true) && ecdsa_keygen(true));
 }
 
 static int cmd_generate_rsa_keys(int argc, char *argv[]) {
+	if(argc > 2) {
+		fprintf(stderr, "Too many arguments!\n");
+		return 1;
+	}
+
 	return !rsa_keygen(argc > 1 ? atoi(argv[1]) : 2048, true);
 }
 
 static int cmd_generate_ecdsa_keys(int argc, char *argv[]) {
+	if(argc > 1) {
+		fprintf(stderr, "Too many arguments!\n");
+		return 1;
+	}
+
 	return !ecdsa_keygen(true);
 }
 
@@ -1709,6 +1719,11 @@ static int cmd_help(int argc, char *argv[]) {
 }
 
 static int cmd_version(int argc, char *argv[]) {
+	if(argc > 1) {
+		fprintf(stderr, "Too many arguments!\n");
+		return 1;
+	}
+
 	version();
 	return 0;
 }
@@ -1811,14 +1826,29 @@ static int export(const char *name, FILE *out) {
 }
 
 static int cmd_export(int argc, char *argv[]) {
+	if(argc > 1) {
+		fprintf(stderr, "Too many arguments!\n");
+		return 1;
+	}
+
 	char *name = get_my_name();
 	if(!name)
 		return 1;
 
-	return export(name, stdout);
+	int result = export(name, stdout);
+	if(!tty)
+		fclose(stdout);
+
+	free(name);
+	return result;
 }
 
 static int cmd_export_all(int argc, char *argv[]) {
+	if(argc > 1) {
+		fprintf(stderr, "Too many arguments!\n");
+		return 1;
+	}
+
 	DIR *dir = opendir(hosts_dir);
 	if(!dir) {
 		fprintf(stderr, "Could not open host configuration directory %s: %s\n", hosts_dir, strerror(errno));
@@ -1842,21 +1872,30 @@ static int cmd_export_all(int argc, char *argv[]) {
 	}
 
 	closedir(dir);
+	if(!tty)
+		fclose(stdout);
 	return result;
 }
 
 static int cmd_import(int argc, char *argv[]) {
+	if(argc > 1) {
+		fprintf(stderr, "Too many arguments!\n");
+		return 1;
+	}
+
 	FILE *in = stdin;
 	FILE *out = NULL;
 
 	char buf[4096];
 	char name[4096];
-	char *filename;
+	char *filename = NULL;
 	int count = 0;
 	bool firstline = true;
 
 	while(fgets(buf, sizeof buf, in)) {
 		if(sscanf(buf, "Name = %s", name) == 1) {
+			firstline = false;
+
 			if(!check_id(name)) {
 				fprintf(stderr, "Invalid Name in input!\n");
 				return 1;
@@ -1881,7 +1920,6 @@ static int cmd_import(int argc, char *argv[]) {
 			}
 
 			count++;
-			firstline = false;
 			continue;
 		} else if(firstline) {
 			fprintf(stderr, "Junk at the beginning of the input, ignoring.\n");
@@ -1910,6 +1948,14 @@ static int cmd_import(int argc, char *argv[]) {
 		fprintf(stderr, "No host configuration files imported.\n");
 		return 1;
 	}
+}
+
+static int cmd_exchange(int argc, char *argv[]) {
+	return cmd_export(argc, argv) ?: cmd_import(argc, argv);
+}
+
+static int cmd_exchange_all(int argc, char *argv[]) {
+	return cmd_export_all(argc, argv) ?: cmd_import(argc, argv);
 }
 
 static const struct {
@@ -1942,6 +1988,8 @@ static const struct {
 	{"export", cmd_export},
 	{"export-all", cmd_export_all},
 	{"import", cmd_import},
+	{"exchange", cmd_exchange},
+	{"exchange-all", cmd_exchange_all},
 	{NULL, NULL},
 };
 
@@ -2189,6 +2237,8 @@ int main(int argc, char *argv[]) {
 		return 1;
 
 	make_names();
+	xasprintf(&tinc_conf, "%s" SLASH "tinc.conf", confbase);
+	xasprintf(&hosts_dir, "%s" SLASH "hosts", confbase);
 
 	if(show_version) {
 		version();

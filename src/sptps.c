@@ -1,6 +1,6 @@
 /*
     sptps.c -- Simple Peer-to-Peer Security
-    Copyright (C) 2011-2012 Guus Sliepen <guus@tinc-vpn.org>,
+    Copyright (C) 2011-2013 Guus Sliepen <guus@tinc-vpn.org>,
                   2010      Brandon L. Black <blblack@gmail.com>
 
     This program is free software; you can redistribute it and/or modify
@@ -439,6 +439,17 @@ static bool sptps_receive_data_datagram(sptps_t *s, const char *data, size_t len
 		return receive_handshake(s, data + 5, len - 5);
 	}
 
+	// Check HMAC.
+	uint16_t netlen = htons(len - 21);
+
+	char buffer[len + 23];
+
+	memcpy(buffer, &netlen, 2);
+	memcpy(buffer + 2, data, len);
+
+	if(!digest_verify(&s->indigest, buffer, len - 14, buffer + len - 14))
+		return error(s, EIO, "Invalid HMAC");
+
 	// Replay protection using a sliding window of configurable size.
 	// s->inseqno is expected sequence number
 	// seqno is received sequence number
@@ -473,19 +484,13 @@ static bool sptps_receive_data_datagram(sptps_t *s, const char *data, size_t len
 	if(seqno > s->inseqno)
 		s->inseqno = seqno + 1;
 
-	uint16_t netlen = htons(len - 21);
+	if(!s->inseqno)
+		s->received = 0;
+	else
+		s->received++;
 
-	char buffer[len + 23];
-
-	memcpy(buffer, &netlen, 2);
-	memcpy(buffer + 2, data, len);
-
+	// Decrypt.
 	memcpy(&seqno, buffer + 2, 4);
-
-	// Check HMAC and decrypt.
-	if(!digest_verify(&s->indigest, buffer, len - 14, buffer + len - 14))
-		return error(s, EIO, "Invalid HMAC");
-
 	cipher_set_counter(&s->incipher, &seqno, sizeof seqno);
 	if(!cipher_counter_xor(&s->incipher, buffer + 6, len - 4, buffer + 6))
 		return false;

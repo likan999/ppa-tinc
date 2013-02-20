@@ -1,7 +1,7 @@
 /*
     device.c -- Interaction with Linux ethertap and tun/tap device
     Copyright (C) 2001-2005 Ivo Timmermans,
-                  2001-2012 Guus Sliepen <guus@tinc-vpn.org>
+                  2001-2013 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -26,6 +26,7 @@
 #include "conf.h"
 #include "device.h"
 #include "logger.h"
+#include "names.h"
 #include "net.h"
 #include "route.h"
 #include "utils.h"

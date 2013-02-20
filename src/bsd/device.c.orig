@@ -1,7 +1,7 @@
 /*
     device.c -- Interaction BSD tun/tap device
     Copyright (C) 2001-2005 Ivo Timmermans,
-                  2001-2013 Guus Sliepen <guus@tinc-vpn.org>
+                  2001-2012 Guus Sliepen <guus@tinc-vpn.org>
                   2009      Grzegorz Dymarek <gregd72002@googlemail.com>
 
     This program is free software; you can redistribute it and/or modify
@@ -24,7 +24,6 @@
 #include "conf.h"
 #include "device.h"
 #include "logger.h"
-#include "names.h"
 #include "net.h"
 #include "route.h"
 #include "utils.h"
@@ -79,8 +78,13 @@ static bool setup_device(void) {
 
 	if(get_config_string(lookup_config(config_tree, "DeviceType"), &type)) {
 		if(!strcasecmp(type, "tun"))
+<<<<<<< HEAD
 			/* use default */;
+#ifdef HAVE_TUNEMU
+=======
+			/* use default */;	
 #ifdef ENABLE_TUNEMU
+>>>>>>> 2a3e343... Fix support for tunemu on iOS devices.
 		else if(!strcasecmp(type, "tunemu"))
 			device_type = DEVICE_TYPE_TUNEMU;
 #endif

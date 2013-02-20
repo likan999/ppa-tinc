@@ -1,7 +1,7 @@
 /*
     net.c -- most of the network code
     Copyright (C) 1998-2005 Ivo Timmermans,
-                  2000-2012 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2013 Guus Sliepen <guus@tinc-vpn.org>
                   2006      Scott Lamb <slamb@slamb.org>
                   2011      Loïc Grenié <loic.grenie@gmail.com>
 
@@ -29,6 +29,7 @@
 #include "graph.h"
 #include "logger.h"
 #include "meta.h"
+#include "names.h"
 #include "net.h"
 #include "netutl.h"
 #include "process.h"
@@ -280,29 +281,13 @@ static void periodic_handler(void *data) {
 }
 
 void handle_meta_connection_data(connection_t *c) {
-	int result;
-	socklen_t len = sizeof result;
-
-	if(c->status.connecting) {
-		c->status.connecting = false;
-
-		getsockopt(c->socket, SOL_SOCKET, SO_ERROR, &result, &len);
-
-		if(!result)
-			finish_connecting(c);
-		else {
-			logger(DEBUG_CONNECTIONS, LOG_DEBUG, "Error while connecting to %s (%s): %s", c->name, c->hostname, sockstrerror(result));
-			terminate_connection(c, false);
-			return;
-		}
-	}
-
 	if (!receive_meta(c)) {
 		terminate_connection(c, c->status.active);
 		return;
 	}
 }
 
+#ifndef HAVE_MINGW
 static void sigterm_handler(void *data) {
 	logger(DEBUG_ALWAYS, LOG_NOTICE, "Got %s signal", strsignal(((signal_t *)data)->signum));
 	event_exit();
@@ -318,6 +303,7 @@ static void sigalrm_handler(void *data) {
 	logger(DEBUG_ALWAYS, LOG_NOTICE, "Got %s signal", strsignal(((signal_t *)data)->signum));
 	retry();
 }
+#endif
 
 int reload_configuration(void) {
 	char *fname;
@@ -451,11 +437,13 @@ int main_loop(void) {
 	signal_t sighup = {0};
 	signal_t sigterm = {0};
 	signal_t sigquit = {0};
+	signal_t sigint = {0};
 	signal_t sigalrm = {0};
 
 	signal_add(&sighup, sighup_handler, &sighup, SIGHUP);
 	signal_add(&sigterm, sigterm_handler, &sigterm, SIGTERM);
 	signal_add(&sigquit, sigterm_handler, &sigquit, SIGQUIT);
+	signal_add(&sigint, sigterm_handler, &sigint, SIGINT);
 	signal_add(&sigalrm, sigalrm_handler, &sigalrm, SIGALRM);
 #endif
 

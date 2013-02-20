@@ -1,6 +1,6 @@
 /*
     logger.c -- logging code
-    Copyright (C) 2004-2012 Guus Sliepen <guus@tinc-vpn.org>
+    Copyright (C) 2004-2013 Guus Sliepen <guus@tinc-vpn.org>
                   2004-2005 Ivo Timmermans
 
     This program is free software; you can redistribute it and/or modify
@@ -22,6 +22,7 @@
 
 #include "conf.h"
 #include "meta.h"
+#include "names.h"
 #include "logger.h"
 #include "connection.h"
 #include "control_common.h"
@@ -30,7 +31,6 @@
 debug_t debug_level = DEBUG_NOTHING;
 static logmode_t logmode = LOGMODE_STDERR;
 static pid_t logpid;
-extern char *logfilename;
 static FILE *logfile = NULL;
 #ifdef HAVE_MINGW
 static HANDLE loghandle = NULL;

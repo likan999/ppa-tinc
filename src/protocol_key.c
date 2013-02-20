@@ -1,7 +1,7 @@
 /*
     protocol_key.c -- handle the meta-protocol, key exchange
     Copyright (C) 1999-2005 Ivo Timmermans,
-                  2000-2012 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2013 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -278,6 +278,7 @@ bool send_ans_key(node_t *to) {
 	// Reset sequence number and late packet window
 	mykeyused = true;
 	to->received_seqno = 0;
+	to->received = 0;
 	if(replaywin) memset(to->late, 0, replaywin);
 
 	return send_request(to->nexthop->connection, "%d %s %s %s %d %d %d %d", ANS_KEY,
