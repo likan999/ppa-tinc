@@ -1,3 +1,9 @@
+tinc (1.0.13-1+squeeze1) squeeze-security; urgency=high
+
+  * Drop packets forwarded via TCP if they are too big (CVE-2013-1428).
+
+ -- Guus Sliepen <guus@debian.org>  Fri, 12 Apr 2013 20:40:15 +0000
+
 tinc (1.0.13-1) unstable; urgency=low
 
   * New upstream release.
