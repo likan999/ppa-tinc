@@ -1,3 +1,17 @@
+tinc (1.0.19-3~bpo60+1) squeeze-backports; urgency=high
+
+  * Rebuild for squeeze-backports.
+  * Build-depend on libvdeplug2-dev, not libvdeplug-dev,
+    as it is how it is named in squeeze.
+
+ -- Michael Tokarev <mjt@tls.msk.ru>  Tue, 23 Apr 2013 08:35:41 +0400
+
+tinc (1.0.19-3) unstable; urgency=high
+
+  * Drop packets forwarded via TCP if they are too big (CVE-2013-1428).
+
+ -- Guus Sliepen <guus@debian.org>  Fri, 12 Apr 2013 22:52:10 +0200
+
 tinc (1.0.19-2) unstable; urgency=low
 
   * Fix behaviour of tinc-pidfile. Closes: #679130
