@@ -1,5 +1,5 @@
 usr/sbin/tincd
-usr/sbin/tincctl
+usr/sbin/tinc
 usr/share/man
 etc
 usr/share/doc/tinc

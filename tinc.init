@@ -19,7 +19,7 @@
 # Based on Lubomir Bulej's Redhat init script.
 
 DAEMON="/usr/sbin/tincd"
-CONTROL="/usr/sbin/tincctl"
+CONTROL="/usr/sbin/tinc"
 NAME="tinc"
 DESC="tinc daemons"
 TCONF="/etc/tinc"
