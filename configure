@@ -4095,7 +4095,7 @@ fi
 
 # Define the identity of the package.
  PACKAGE=tinc
- VERSION=1.1pre6
+ VERSION=1.1pre7
 
 
 cat >>confdefs.h <<_ACEOF

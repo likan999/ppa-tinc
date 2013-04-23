@@ -52,7 +52,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-sbin_PROGRAMS = tincd$(EXEEXT) tincctl$(EXEEXT) sptps_test$(EXEEXT)
+sbin_PROGRAMS = tincd$(EXEEXT) tinc$(EXEEXT) sptps_test$(EXEEXT)
 @UML_TRUE@am__append_1 = uml_device.c
 @VDE_TRUE@am__append_2 = vde_device.c
 @TUNEMU_TRUE@am__append_3 = bsd/tunemu.c
@@ -79,14 +79,14 @@ am_sptps_test_OBJECTS = logger.$(OBJEXT) cipher.$(OBJEXT) \
 	sptps_test.$(OBJEXT) utils.$(OBJEXT)
 sptps_test_OBJECTS = $(am_sptps_test_OBJECTS)
 sptps_test_LDADD = $(LDADD)
-am_tincctl_OBJECTS = utils.$(OBJEXT) getopt.$(OBJEXT) \
-	getopt1.$(OBJEXT) dropin.$(OBJEXT) info.$(OBJEXT) \
-	list.$(OBJEXT) subnet_parse.$(OBJEXT) tincctl.$(OBJEXT) \
-	top.$(OBJEXT) names.$(OBJEXT)
-nodist_tincctl_OBJECTS = ecdsagen.$(OBJEXT) rsagen.$(OBJEXT)
-tincctl_OBJECTS = $(am_tincctl_OBJECTS) $(nodist_tincctl_OBJECTS)
+am_tinc_OBJECTS = utils.$(OBJEXT) getopt.$(OBJEXT) getopt1.$(OBJEXT) \
+	dropin.$(OBJEXT) info.$(OBJEXT) list.$(OBJEXT) \
+	subnet_parse.$(OBJEXT) tincctl.$(OBJEXT) top.$(OBJEXT) \
+	names.$(OBJEXT)
+nodist_tinc_OBJECTS = ecdsagen.$(OBJEXT) rsagen.$(OBJEXT)
+tinc_OBJECTS = $(am_tinc_OBJECTS) $(nodist_tinc_OBJECTS)
 am__DEPENDENCIES_1 =
-tincctl_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+tinc_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am__tincd_SOURCES_DIST = utils.c getopt.c getopt1.c list.c \
 	splay_tree.c dropin.c fake-getaddrinfo.c fake-getnameinfo.c \
 	hash.c buffer.c conf.c connection.c control.c edge.c graph.c \
@@ -128,10 +128,9 @@ COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
 LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
-SOURCES = $(sptps_test_SOURCES) $(tincctl_SOURCES) \
-	$(nodist_tincctl_SOURCES) $(tincd_SOURCES) \
-	$(nodist_tincd_SOURCES)
-DIST_SOURCES = $(sptps_test_SOURCES) $(tincctl_SOURCES) \
+SOURCES = $(sptps_test_SOURCES) $(tinc_SOURCES) $(nodist_tinc_SOURCES) \
+	$(tincd_SOURCES) $(nodist_tincd_SOURCES)
+DIST_SOURCES = $(sptps_test_SOURCES) $(tinc_SOURCES) \
 	$(am__tincd_SOURCES_DIST)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
@@ -258,18 +257,18 @@ tincd_SOURCES = utils.c getopt.c getopt1.c list.c splay_tree.c \
 nodist_tincd_SOURCES = \
 	device.c cipher.c crypto.c ecdh.c ecdsa.c digest.c prf.c rsa.c
 
-tincctl_SOURCES = \
+tinc_SOURCES = \
 	utils.c getopt.c getopt1.c dropin.c \
 	info.c list.c subnet_parse.c tincctl.c top.c names.c
 
-nodist_tincctl_SOURCES = \
+nodist_tinc_SOURCES = \
 	ecdsagen.c rsagen.c
 
 sptps_test_SOURCES = \
 	logger.c cipher.c crypto.c ecdh.c ecdsa.c digest.c prf.c \
 	sptps.c sptps_test.c utils.c
 
-tincctl_LDADD = $(READLINE_LIBS) $(CURSES_LIBS)
+tinc_LDADD = $(READLINE_LIBS) $(CURSES_LIBS)
 DEFAULT_INCLUDES = 
 noinst_HEADERS = \
 	xalloc.h utils.h getopt.h list.h splay_tree.h dropin.h fake-getaddrinfo.h fake-getnameinfo.h fake-gai-errnos.h ipv6.h ipv4.h ethernet.h \
@@ -357,9 +356,9 @@ clean-sbinPROGRAMS:
 sptps_test$(EXEEXT): $(sptps_test_OBJECTS) $(sptps_test_DEPENDENCIES) $(EXTRA_sptps_test_DEPENDENCIES) 
 	@rm -f sptps_test$(EXEEXT)
 	$(LINK) $(sptps_test_OBJECTS) $(sptps_test_LDADD) $(LIBS)
-tincctl$(EXEEXT): $(tincctl_OBJECTS) $(tincctl_DEPENDENCIES) $(EXTRA_tincctl_DEPENDENCIES) 
-	@rm -f tincctl$(EXEEXT)
-	$(LINK) $(tincctl_OBJECTS) $(tincctl_LDADD) $(LIBS)
+tinc$(EXEEXT): $(tinc_OBJECTS) $(tinc_DEPENDENCIES) $(EXTRA_tinc_DEPENDENCIES) 
+	@rm -f tinc$(EXEEXT)
+	$(LINK) $(tinc_OBJECTS) $(tinc_LDADD) $(LIBS)
 tincd$(EXEEXT): $(tincd_OBJECTS) $(tincd_DEPENDENCIES) $(EXTRA_tincd_DEPENDENCIES) 
 	@rm -f tincd$(EXEEXT)
 	$(LINK) $(tincd_OBJECTS) $(tincd_LDADD) $(LIBS)

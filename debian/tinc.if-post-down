@@ -3,7 +3,7 @@
 set -e
 
 if [ "$IF_TINC_NET" ] ; then
-	tincctl -n "$IF_TINC_NET" stop
+	tinc -n "$IF_TINC_NET" stop
 	sleep 0.1
 	i=0;
 	while [ -f "/var/run/tinc.$IF_TINC_NET.pid" ] ; do

@@ -52,6 +52,7 @@ char *proxyuser;
 char *proxypass;
 proxytype_t proxytype;
 int autoconnect;
+bool disablebuggypeers;
 
 char *scriptinterpreter;
 char *scriptextension;
@@ -598,6 +599,8 @@ bool setup_myself_reloadable(void) {
 
 	get_config_int(lookup_config(config_tree, "AutoConnect"), &autoconnect);
 
+	get_config_bool(lookup_config(config_tree, "DisableBuggyPeers"), &disablebuggypeers);
+
 	return true;
 }
 
@@ -751,7 +754,7 @@ static bool setup_myself(void) {
 	myself->nexthop = myself;
 	myself->via = myself;
 	myself->status.reachable = true;
-	myself->last_state_change = time(NULL);
+	myself->last_state_change = now.tv_sec;
 	myself->status.sptps = experimental;
 	node_add(myself);
 
@@ -958,7 +961,7 @@ static bool setup_myself(void) {
 		return false;
 	}
 
-	last_config_check = time(NULL);
+	last_config_check = now.tv_sec;
 
 	return true;
 }
