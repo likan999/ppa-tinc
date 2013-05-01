@@ -41,7 +41,7 @@ foreach_net() {
   egrep '^[ ]*[a-zA-Z0-9_-]+' $NETSFILE | while read net args; do
     echo -n " $net"
     case "$1" in
-      start) $CONTROL -n $net start -- $EXTRA $args ;;
+      start|restart) $CONTROL -n $net $1 $EXTRA $args ;;
       *) $CONTROL -n $net $1 ;;
     esac
   done

@@ -1,3 +1,18 @@
+tinc (1.1~pre7-2) experimental; urgency=low
+
+  [ Gian Piero Carrubba ]
+  * Init script fails to pass extra arguments to tincd. Closes: #704701
+    + Remove the '--' as it is passed unaltered to tincd, preventing it to read
+      trailing parameters.
+    + Pass extra arguments also when restarting the daemon.
+  * Set process limits when started by ifupdown. Closes: #704702
+
+  [ Guus Sliepen ]
+  * Check whether the tincd process is still running in the if-post-down script.
+    Closes: #704708
+
+ -- Guus Sliepen <guus@debian.org>  Wed, 01 May 2013 10:41:31 +0200
+
 tinc (1.1~pre7-1) experimental; urgency=high
 
   * New upstream release.
@@ -13,7 +28,7 @@ tinc (1.1~pre6-1) experimental; urgency=low
 
 tinc (1.1~pre4-1) experimental; urgency=low
 
-  [ Gian Piero ]
+  [ Gian Piero Carrubba ]
   * Allow resource limits to be set in /etc/default/tinc. Closes: #690685
 
   [ Guus Sliepen ]
