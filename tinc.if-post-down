@@ -6,7 +6,11 @@ if [ "$IF_TINC_NET" ] ; then
 	tinc -n "$IF_TINC_NET" stop
 	sleep 0.1
 	i=0;
-	while [ -f "/var/run/tinc.$IF_TINC_NET.pid" ] ; do
+	while read pid rest < /var/run/tinc.$IF_TINC_NET.pid ; do
+		if [ ! -e "/proc/$pid" ] ; then
+			exit 0
+		fi
+		
 		if [ $i = '30' ] ; then
 			echo 'Failed to stop tinc daemon!'
 			exit 1
