@@ -1,6 +1,6 @@
 /*
     graph.c -- graph algorithms
-    Copyright (C) 2001-2012 Guus Sliepen <guus@tinc-vpn.org>,
+    Copyright (C) 2001-2013 Guus Sliepen <guus@tinc-vpn.org>,
                   2001-2005 Ivo Timmermans
 
     This program is free software; you can redistribute it and/or modify
@@ -287,10 +287,13 @@ static void sssp_bfs(void) {
 
 			subnet_update(n, NULL, n->status.reachable);
 
-			if(!n->status.reachable)
+			if(!n->status.reachable) {
 				update_node_udp(n, NULL);
-			else if(n->connection)
+				memset(&n->status, 0, sizeof n->status);
+				n->options = 0;
+			} else if(n->connection) {
 				send_ans_key(n);
+			}
 		}
 	}
 }
@@ -315,7 +318,7 @@ void dump_graph(void) {
 	node_t *n;
 	edge_t *e;
 	char *filename = NULL, *tmpname = NULL;
-	FILE *file;
+	FILE *file, *pipe = NULL;
 	
 	if(!graph_changed || !get_config_string(lookup_config(config_tree, "GraphDumpFile"), &filename))
 		return;
@@ -325,7 +328,7 @@ void dump_graph(void) {
 	ifdebug(PROTOCOL) logger(LOG_NOTICE, "Dumping graph");
 	
 	if(filename[0] == '|') {
-		file = popen(filename + 1, "w");
+		file = pipe = popen(filename + 1, "w");
 	} else {
 		xasprintf(&tmpname, "%s.new", filename);
 		file = fopen(tmpname, "w");
@@ -353,8 +356,8 @@ void dump_graph(void) {
 
 	fprintf(file, "}\n");	
 	
-	if(filename[0] == '|') {
-		pclose(file);
+	if(pipe) {
+		pclose(pipe);
 	} else {
 		fclose(file);
 #ifdef HAVE_MINGW

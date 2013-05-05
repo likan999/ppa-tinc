@@ -29,17 +29,22 @@
 #include "utils.h"
 #include "xalloc.h"
 
-#ifdef HAVE_TUNEMU
+#ifdef ENABLE_TUNEMU
 #include "bsd/tunemu.h"
 #endif
 
-#define DEFAULT_DEVICE "/dev/tun0"
+#define DEFAULT_TUN_DEVICE "/dev/tun0"
+#if defined(HAVE_FREEBSD) || defined(HAVE_NETBSD)
+#define DEFAULT_TAP_DEVICE "/dev/tap0"
+#else
+#define DEFAULT_TAP_DEVICE "/dev/tun0"
+#endif
 
 typedef enum device_type {
 	DEVICE_TYPE_TUN,
 	DEVICE_TYPE_TUNIFHEAD,
 	DEVICE_TYPE_TAP,
-#ifdef HAVE_TUNEMU
+#ifdef ENABLE_TUNEMU
 	DEVICE_TYPE_TUNEMU,
 #endif
 } device_type_t;
@@ -50,7 +55,7 @@ char *iface = NULL;
 static char *device_info = NULL;
 static uint64_t device_total_in = 0;
 static uint64_t device_total_out = 0;
-#if defined(TUNEMU)
+#if defined(ENABLE_TUNEMU)
 static device_type_t device_type = DEVICE_TYPE_TUNEMU;
 #elif defined(HAVE_OPENBSD) || defined(HAVE_FREEBSD) || defined(HAVE_DRAGONFLY)
 static device_type_t device_type = DEVICE_TYPE_TUNIFHEAD;
@@ -61,8 +66,12 @@ static device_type_t device_type = DEVICE_TYPE_TUN;
 static bool setup_device(void) {
 	char *type;
 
-	if(!get_config_string(lookup_config(config_tree, "Device"), &device))
-		device = xstrdup(DEFAULT_DEVICE);
+	if(!get_config_string(lookup_config(config_tree, "Device"), &device)) {
+		if(routing_mode == RMODE_ROUTER)
+			device = xstrdup(DEFAULT_TUN_DEVICE);
+		else
+			device = xstrdup(DEFAULT_TAP_DEVICE);
+	}
 
 	if(!get_config_string(lookup_config(config_tree, "Interface"), &iface))
 		iface = xstrdup(strrchr(device, '/') ? strrchr(device, '/') + 1 : device);
@@ -70,7 +79,7 @@ static bool setup_device(void) {
 	if(get_config_string(lookup_config(config_tree, "DeviceType"), &type)) {
 		if(!strcasecmp(type, "tun"))
 			/* use default */;	
-#ifdef HAVE_TUNEMU
+#ifdef ENABLE_TUNEMU
 		else if(!strcasecmp(type, "tunemu"))
 			device_type = DEVICE_TYPE_TUNEMU;
 #endif
@@ -90,7 +99,7 @@ static bool setup_device(void) {
 	}
 
 	switch(device_type) {
-#ifdef HAVE_TUNEMU
+#ifdef ENABLE_TUNEMU
 		case DEVICE_TYPE_TUNEMU: {
 			char dynamic_name[256] = "";
         		device_fd = tunemu_open(dynamic_name);
@@ -167,7 +176,7 @@ static bool setup_device(void) {
 			
 #endif
 			break;
-#ifdef HAVE_TUNEMU
+#ifdef ENABLE_TUNEMU
 		case DEVICE_TYPE_TUNEMU:
         		device_info = "BSD tunemu device";
 			break;
@@ -181,7 +190,7 @@ static bool setup_device(void) {
 
 static void close_device(void) {
 	switch(device_type) {
-#ifdef HAVE_TUNEMU
+#ifdef ENABLE_TUNEMU
 		case DEVICE_TYPE_TUNEMU:
 			tunemu_close(device_fd);
 			break;
@@ -199,7 +208,7 @@ static bool read_packet(vpn_packet_t *packet) {
 
 	switch(device_type) {
 		case DEVICE_TYPE_TUN:
-#ifdef HAVE_TUNEMU
+#ifdef ENABLE_TUNEMU
 		case DEVICE_TYPE_TUNEMU:
 			if(device_type == DEVICE_TYPE_TUNEMU)
 				lenin = tunemu_read(device_fd, packet->data + 14, MTU - 14);
@@ -229,6 +238,7 @@ static bool read_packet(vpn_packet_t *packet) {
 					return false;
 			}
 
+			memset(packet->data, 0, 12);
 			packet->len = lenin + 14;
 			break;
 
@@ -260,6 +270,7 @@ static bool read_packet(vpn_packet_t *packet) {
 					return false;
 			}
 
+			memset(packet->data, 0, 12);
 			packet->len = lenin + 10;
 			break;
 		}
@@ -336,7 +347,7 @@ static bool write_packet(vpn_packet_t *packet) {
 			}
 			break;
 
-#ifdef HAVE_TUNEMU
+#ifdef ENABLE_TUNEMU
 		case DEVICE_TYPE_TUNEMU:
 			if(tunemu_write(device_fd, packet->data + 14, packet->len - 14) < 0) {
 				logger(LOG_ERR, "Error while writing to %s %s: %s", device_info,

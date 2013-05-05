@@ -1,7 +1,7 @@
 /*
     protocol.c -- handle the meta-protocol, basic functions
     Copyright (C) 1999-2005 Ivo Timmermans,
-                  2000-2012 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2013 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -125,7 +125,7 @@ void forward_request(connection_t *from) {
 bool receive_request(connection_t *c) {
 	int request;
 
-	if(proxytype == PROXY_HTTP && c->allow_request == ID) {
+	if(c->outgoing && proxytype == PROXY_HTTP && c->allow_request == ID) {
 		if(!c->buffer[0] || c->buffer[0] == '\r')
 			return true;
 		if(!strncasecmp(c->buffer, "HTTP/1.1 ", 9)) {

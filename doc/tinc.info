@@ -8,7 +8,7 @@ END-INFO-DIR-ENTRY
    This is the info manual for tinc version 1.0.19, a Virtual Private
 Network daemon.
 
-   Copyright (C) 1998-2012 Ivo Timmermans, Guus Sliepen
+   Copyright (C) 1998-2013 Ivo Timmermans, Guus Sliepen
 <guus@tinc-vpn.org> and Wessel Dankers <wsl@tinc-vpn.org>.
 
    Permission is granted to make and distribute verbatim copies of this
@@ -147,7 +147,7 @@ will most likely compile and run, but it will not be able to send or
 receive data packets.
 
    For an up to date list of supported platforms, please check the list
-on our website: `http://www.tinc-vpn.org/platforms'.
+on our website: `http://www.tinc-vpn.org/platforms/'.
 
 
 File: tinc.info,  Node: Preparations,  Next: Installation,  Prev: Introduction,  Up: Top
@@ -209,7 +209,9 @@ File: tinc.info,  Node: Configuration of FreeBSD kernels,  Next: Configuration o
 --------------------------------------
 
 For FreeBSD version 4.1 and higher, tun and tap drivers are included in
-the default kernel configuration.  Using tap devices is recommended.
+the default kernel configuration.  The tap driver can be loaded with
+`kldload if_tap', or by adding `if_tap_load="YES"' to
+`/boot/loader.conf'.
 
 
 File: tinc.info,  Node: Configuration of OpenBSD kernels,  Next: Configuration of NetBSD kernels,  Prev: Configuration of FreeBSD kernels,  Up: Configuring the kernel
@@ -303,8 +305,8 @@ For all cryptography-related functions, tinc uses the functions provided
 by the OpenSSL library.
 
    If this library is not installed, you wil get an error when
-configuring tinc for build.  Support for running tinc without having
-OpenSSL installed _may_ be added in the future.
+configuring tinc for build.  Support for running tinc with other
+cryptographic libraries installed _may_ be added in the future.
 
    You can use your operating system's package manager to install this
 if available.  Make sure you install the development AND runtime
@@ -359,9 +361,12 @@ File: tinc.info,  Node: zlib,  Next: lzo,  Prev: OpenSSL,  Up: Libraries
 For the optional compression of UDP packets, tinc uses the functions
 provided by the zlib library.
 
-   If this library is not installed, you wil get an error when
-configuring tinc for build.  Support for running tinc without having
-zlib installed _may_ be added in the future.
+   If this library is not installed, you wil get an error when running
+the configure script.  You can either install the zlib library, or
+disable support for zlib compression by using the "-disable-zlib"
+option when running the configure script. Note that if you disable
+support for zlib, the resulting binary will not work correctly on VPNs
+where zlib compression is used.
 
    You can use your operating system's package manager to install this
 if available.  Make sure you install the development AND runtime
@@ -379,11 +384,14 @@ File: tinc.info,  Node: lzo,  Prev: zlib,  Up: Libraries
 2.2.3 lzo
 ---------
 
-Another form of compression is offered using the lzo library.
+Another form of compression is offered using the LZO library.
 
-   If this library is not installed, you wil get an error when
-configuring tinc for build.  Support for running tinc without having lzo
-installed _may_ be added in the future.
+   If this library is not installed, you wil get an error when running
+the configure script.  You can either install the LZO library, or
+disable support for LZO compression by using the "-disable-lzo" option
+when running the configure script. Note that if you disable support for
+LZO, the resulting binary will not work correctly on VPNs where LZO
+compression is used.
 
    You can use your operating system's package manager to install this
 if available.  Make sure you install the development AND runtime
@@ -408,9 +416,9 @@ startup scripts and sample configurations.
    If you cannot use one of the precompiled packages, or you want to
 compile tinc for yourself, you can use the source.  The source is
 distributed under the GNU General Public License (GPL).  Download the
-source from the download page (http://www.tinc-vpn.org/download), which
-has the checksums of these files listed; you may wish to check these
-with md5sum before continuing.
+source from the download page (http://www.tinc-vpn.org/download/),
+which has the checksums of these files listed; you may wish to check
+these with md5sum before continuing.
 
    Tinc comes in a convenient autoconf/automake package, which you can
 just treat the same as any other package.  Which is just untar it, type
@@ -451,7 +459,7 @@ File: tinc.info,  Node: Darwin (MacOS/X) build environment,  Next: Cygwin (Windo
 In order to build tinc on Darwin, you need to install the MacOS/X
 Developer Tools from
 `http://developer.apple.com/tools/macosxtools.html' and a recent
-version of Fink from `http://fink.sourceforge.net/'.
+version of Fink from `http://www.finkproject.org/'.
 
    After installation use fink to download and install the following
 packages: autoconf25, automake, dlcompat, m4, openssl, zlib and lzo.
@@ -570,7 +578,7 @@ Do you want to run tinc in router mode or switch mode?  These questions
 can only be answered by yourself, you will not find the answers in this
 documentation.  Make sure you have an adequate understanding of
 networks in general.  A good resource on networking is the Linux
-Network Administrators Guide (http://www.linuxdoc.org/LDP/nag2/).
+Network Administrators Guide (http://www.tldp.org/LDP/nag2/).
 
    If you have everything clearly pictured in your mind, proceed in the
 following order: First, generate the configuration files (`tinc.conf',
@@ -860,7 +868,8 @@ Hostnames = <yes|no> (no)
      responding.
 
      This does not affect resolving hostnames to IP addresses from the
-     configuration file.
+     configuration file, but whether hostnames should be resolved while
+     logging.
 
 Interface = <INTERFACE>
      Defines the name of the interface corresponding to the virtual
@@ -956,9 +965,6 @@ PrivateKeyFile = <PATH> (`/etc/tinc/NETNAME/rsa_key.priv')
      This is the full path name of the RSA private key file that was
      generated by `tincd --generate-keys'.  It must be a full path, not
      a relative directory.
-
-     Note that there must be exactly one of PrivateKey or PrivateKeyFile
-     specified in the configuration file.
 
 ProcessPriority = <low|normal|high>
      When this option is used the priority of the tincd process will be
@@ -1116,7 +1122,7 @@ Subnet = <ADDRESS[/PREFIXLENGTH[#WEIGHT]]>
      Prefixlength is the number of bits set to 1 in the netmask part;
      for example: netmask 255.255.255.0 would become /24, 255.255.252.0
      becomes /22. This conforms to standard CIDR notation as described
-     in RFC1519 (ftp://ftp.isi.edu/in-notes/rfc1519.txt)
+     in RFC1519 (http://www.ietf.org/rfc/rfc1519.txt)
 
      A Subnet can be given a weight to indicate its priority over
      identical Subnets owned by different nodes. The default weight is
@@ -2470,7 +2476,7 @@ Concept Index
 * example:                               Example configuration.
                                                               (line   6)
 * exec:                                  Main configuration variables.
-                                                              (line 311)
+                                                              (line 309)
 * Forwarding:                            Main configuration variables.
                                                               (line 152)
 * frame type:                            The UDP tunnel.      (line   6)
@@ -2479,41 +2485,41 @@ Concept Index
 * Hostnames:                             Main configuration variables.
                                                               (line 180)
 * http:                                  Main configuration variables.
-                                                              (line 308)
+                                                              (line 306)
 * hub:                                   Main configuration variables.
-                                                              (line 232)
+                                                              (line 233)
 * ID:                                    Authentication protocol.
                                                               (line  10)
 * IndirectData:                          Host configuration variables.
                                                               (line  34)
 * INTERFACE:                             Scripts.             (line  58)
 * Interface:                             Main configuration variables.
-                                                              (line 190)
+                                                              (line 191)
 * IRC:                                   Contact information. (line   9)
 * key generation:                        Generating keypairs. (line   6)
 * KEY_CHANGED:                           The meta-protocol.   (line  64)
 * KeyExpire:                             Main configuration variables.
-                                                              (line 237)
+                                                              (line 238)
 * libraries:                             Libraries.           (line   6)
 * license:                               OpenSSL.             (line  36)
 * LocalDiscovery:                        Main configuration variables.
-                                                              (line 198)
+                                                              (line 199)
 * lzo:                                   lzo.                 (line   6)
 * MACExpire:                             Main configuration variables.
-                                                              (line 243)
+                                                              (line 244)
 * MACLength:                             Host configuration variables.
                                                               (line  42)
 * meta-protocol:                         The meta-connection. (line  18)
 * META_KEY:                              Authentication protocol.
                                                               (line  10)
 * Mode:                                  Main configuration variables.
-                                                              (line 209)
+                                                              (line 210)
 * multicast:                             Main configuration variables.
                                                               (line  99)
 * multiple networks:                     Multiple networks.   (line   6)
 * NAME:                                  Scripts.             (line  52)
 * Name:                                  Main configuration variables.
-                                                              (line 248)
+                                                              (line 249)
 * netmask:                               Network interfaces.  (line  34)
 * NETNAME:                               Scripts.             (line  49)
 * netname:                               Multiple networks.   (line   6)
@@ -2526,9 +2532,9 @@ Concept Index
                                                               (line  67)
 * PING:                                  The meta-protocol.   (line  89)
 * PingInterval:                          Main configuration variables.
-                                                              (line 259)
+                                                              (line 260)
 * PingTimeout:                           Main configuration variables.
-                                                              (line 263)
+                                                              (line 264)
 * platforms:                             Supported platforms. (line   6)
 * PMTU:                                  Host configuration variables.
                                                               (line  47)
@@ -2539,17 +2545,17 @@ Concept Index
                                                               (line  55)
 * port numbers:                          Other files.         (line  17)
 * PriorityInheritance:                   Main configuration variables.
-                                                              (line 269)
+                                                              (line 270)
 * private:                               Virtual Private Networks.
                                                               (line  10)
 * PrivateKey:                            Main configuration variables.
-                                                              (line 274)
+                                                              (line 275)
 * PrivateKeyFile:                        Main configuration variables.
-                                                              (line 280)
+                                                              (line 281)
 * ProcessPriority:                       Main configuration variables.
-                                                              (line 288)
+                                                              (line 286)
 * Proxy:                                 Main configuration variables.
-                                                              (line 293)
+                                                              (line 291)
 * PublicKey:                             Host configuration variables.
                                                               (line  59)
 * PublicKeyFile:                         Host configuration variables.
@@ -2560,11 +2566,11 @@ Concept Index
 * REMOTEADDRESS:                         Scripts.             (line  67)
 * REMOTEPORT:                            Scripts.             (line  70)
 * ReplayWindow:                          Main configuration variables.
-                                                              (line 316)
+                                                              (line 314)
 * REQ_KEY:                               The meta-protocol.   (line  64)
 * requirements:                          Libraries.           (line   6)
 * router:                                Main configuration variables.
-                                                              (line 212)
+                                                              (line 213)
 * runtime options:                       Runtime options.     (line   9)
 * scalability:                           tinc.                (line  19)
 * scripts:                               Scripts.             (line   6)
@@ -2572,11 +2578,11 @@ Concept Index
                                                               (line  18)
 * signals:                               Signals.             (line   6)
 * socks4:                                Main configuration variables.
-                                                              (line 297)
+                                                              (line 295)
 * socks5:                                Main configuration variables.
-                                                              (line 302)
+                                                              (line 300)
 * StrictSubnets:                         Main configuration variables.
-                                                              (line 327)
+                                                              (line 325)
 * SUBNET:                                Scripts.             (line  74)
 * Subnet:                                Host configuration variables.
                                                               (line  74)
@@ -2584,7 +2590,7 @@ Concept Index
                                                               (line  96)
 * SVPN:                                  Security.            (line  11)
 * switch:                                Main configuration variables.
-                                                              (line 221)
+                                                              (line 222)
 * TCP:                                   The meta-connection. (line  10)
 * TCPonly:                               Host configuration variables.
                                                               (line 103)
@@ -2598,16 +2604,16 @@ Concept Index
 * tunifhead:                             Main configuration variables.
                                                               (line 134)
 * TunnelServer:                          Main configuration variables.
-                                                              (line 332)
+                                                              (line 330)
 * tunnohead:                             Main configuration variables.
                                                               (line 128)
 * UDP <1>:                               Encryption of network packets.
                                                               (line  12)
 * UDP:                                   The UDP tunnel.      (line  30)
 * UDPRcvBuf:                             Main configuration variables.
-                                                              (line 339)
+                                                              (line 337)
 * UDPSndBuf:                             Main configuration variables.
-                                                              (line 344)
+                                                              (line 342)
 * UML:                                   Main configuration variables.
                                                               (line 110)
 * Universal tun/tap:                     Configuration of Linux kernels.
@@ -2632,61 +2638,61 @@ Node: Introduction1109
 Node: Virtual Private Networks1919
 Node: tinc3645
 Node: Supported platforms5172
-Node: Preparations5870
-Node: Configuring the kernel6126
-Node: Configuration of Linux kernels6535
-Node: Configuration of FreeBSD kernels7390
-Node: Configuration of OpenBSD kernels7780
-Node: Configuration of NetBSD kernels8388
-Node: Configuration of Solaris kernels8793
-Node: Configuration of Darwin (MacOS/X) kernels9454
-Node: Configuration of Windows10143
-Node: Libraries10657
-Node: OpenSSL11045
-Node: zlib13321
-Node: lzo14150
-Node: Installation14937
-Node: Building and installing tinc15952
-Node: Darwin (MacOS/X) build environment16611
-Node: Cygwin (Windows) build environment17179
-Node: MinGW (Windows) build environment17767
-Node: System files18291
-Node: Device files18556
-Node: Other files18972
-Node: Configuration19585
-Node: Configuration introduction19896
-Node: Multiple networks21169
-Node: How connections work22595
-Node: Configuration files23817
-Node: Main configuration variables25204
-Node: Host configuration variables40987
-Node: Scripts46347
-Node: How to configure49117
-Node: Generating keypairs50380
-Node: Network interfaces50879
-Node: Example configuration52727
-Node: Running tinc58050
-Node: Runtime options58640
-Node: Signals61940
-Node: Debug levels63132
-Node: Solving problems64068
-Node: Error messages65620
-Node: Sending bug reports69633
-Node: Technical information70585
-Node: The connection70816
-Node: The UDP tunnel71128
-Node: The meta-connection74189
-Node: The meta-protocol75658
-Node: Security80667
-Node: Authentication protocol81797
-Node: Encryption of network packets86801
-Node: Security issues88174
-Node: Platform specific information89791
-Node: Interface configuration90019
-Node: Routes92472
-Node: About us94388
-Node: Contact information94563
-Node: Authors94967
-Node: Concept Index95372
+Node: Preparations5871
+Node: Configuring the kernel6127
+Node: Configuration of Linux kernels6536
+Node: Configuration of FreeBSD kernels7391
+Node: Configuration of OpenBSD kernels7856
+Node: Configuration of NetBSD kernels8464
+Node: Configuration of Solaris kernels8869
+Node: Configuration of Darwin (MacOS/X) kernels9530
+Node: Configuration of Windows10219
+Node: Libraries10733
+Node: OpenSSL11121
+Node: zlib13409
+Node: lzo14435
+Node: Installation15415
+Node: Building and installing tinc16431
+Node: Darwin (MacOS/X) build environment17090
+Node: Cygwin (Windows) build environment17657
+Node: MinGW (Windows) build environment18245
+Node: System files18769
+Node: Device files19034
+Node: Other files19450
+Node: Configuration20063
+Node: Configuration introduction20374
+Node: Multiple networks21643
+Node: How connections work23069
+Node: Configuration files24291
+Node: Main configuration variables25678
+Node: Host configuration variables41406
+Node: Scripts46763
+Node: How to configure49533
+Node: Generating keypairs50796
+Node: Network interfaces51295
+Node: Example configuration53143
+Node: Running tinc58466
+Node: Runtime options59056
+Node: Signals62356
+Node: Debug levels63548
+Node: Solving problems64484
+Node: Error messages66036
+Node: Sending bug reports70049
+Node: Technical information71001
+Node: The connection71232
+Node: The UDP tunnel71544
+Node: The meta-connection74605
+Node: The meta-protocol76074
+Node: Security81083
+Node: Authentication protocol82213
+Node: Encryption of network packets87217
+Node: Security issues88590
+Node: Platform specific information90207
+Node: Interface configuration90435
+Node: Routes92888
+Node: About us94804
+Node: Contact information94979
+Node: Authors95383
+Node: Concept Index95788
 
 End Tag Table

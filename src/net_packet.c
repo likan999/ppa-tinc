@@ -1,7 +1,7 @@
 /*
     net_packet.c -- Handles in- and outgoing VPN packets
     Copyright (C) 1998-2005 Ivo Timmermans,
-                  2000-2012 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2013 Guus Sliepen <guus@tinc-vpn.org>
                   2010      Timothy Redaelli <timothy@redaelli.eu>
                   2010      Brandon Black <blblack@gmail.com>
 
@@ -70,11 +70,15 @@ bool localdiscovery = false;
    mtuprobes ==    32: send 1 burst, sleep pingtimeout second
    mtuprobes ==    33: no response from other side, restart PMTU discovery process
 
-   Probes are sent in batches of three, with random sizes between the lower and
-   upper boundaries for the MTU thus far discovered.
+   Probes are sent in batches of at least three, with random sizes between the
+   lower and upper boundaries for the MTU thus far discovered.
 
-   In case local discovery is enabled, a fourth packet is added to each batch,
+   After the initial discovery, a fourth packet is added to each batch with a
+   size larger than the currently known PMTU, to test if the PMTU has increased.
+
+   In case local discovery is enabled, another packet is added to each batch,
    which will be broadcast to the local network.
+
 */
 
 void send_mtu_probe(node_t *n) {
@@ -126,11 +130,16 @@ void send_mtu_probe(node_t *n) {
 		timeout = pingtimeout;
 	}
 
-	for(i = 0; i < 3 + localdiscovery; i++) {
-		if(n->maxmtu <= n->minmtu)
+	for(i = 0; i < 4 + localdiscovery; i++) {
+		if(i == 0) {
+			if(n->mtuprobes < 30 || n->maxmtu + 8 >= MTU)
+				continue;
+			len = n->maxmtu + 8;
+		} else if(n->maxmtu <= n->minmtu) {
 			len = n->maxmtu;
-		else
+		} else {
 			len = n->minmtu + 1 + rand() % (n->maxmtu - n->minmtu);
+		}
 
 		if(len < 64)
 			len = 64;
@@ -138,7 +147,7 @@ void send_mtu_probe(node_t *n) {
 		memset(packet.data, 0, 14);
 		RAND_pseudo_bytes(packet.data + 14, len - 14);
 		packet.len = len;
-		if(i >= 3 && n->mtuprobes <= 10)
+		if(i >= 4 && n->mtuprobes <= 10)
 			packet.priority = -1;
 		else
 			packet.priority = 0;
@@ -164,6 +173,13 @@ void mtu_probe_h(node_t *n, vpn_packet_t *packet, length_t len) {
 		send_udppacket(n, packet);
 	} else {
 		if(n->mtuprobes > 30) {
+			if (len == n->maxmtu + 8) {
+				ifdebug(TRAFFIC) logger(LOG_INFO, "Increase in PMTU to %s (%s) detected, restarting PMTU discovery", n->name, n->hostname);
+				n->maxmtu = MTU;
+				n->mtuprobes = 10;
+				return;
+			}
+
 			if(n->minmtu)
 				n->mtuprobes = 30;
 			else
@@ -378,6 +394,9 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 void receive_tcppacket(connection_t *c, const char *buffer, int len) {
 	vpn_packet_t outpkt;
 
+	if(len > sizeof outpkt.data)
+		return;
+
 	outpkt.len = len;
 	if(c->options & OPTION_TCPONLY)
 		outpkt.priority = 0;
@@ -500,17 +519,27 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 	struct sockaddr *sa;
 	socklen_t sl;
 	int sock;
+	sockaddr_t broadcast;
 
 	/* Overloaded use of priority field: -1 means local broadcast */
 
 	if(origpriority == -1 && n->prevedge) {
-		struct sockaddr_in in;
-		in.sin_family = AF_INET;
-		in.sin_addr.s_addr = -1;
-		in.sin_port = n->prevedge->address.in.sin_port;
-		sa = (struct sockaddr *)&in;
-		sl = sizeof in;
-		sock = 0;
+		sock = rand() % listen_sockets;
+		memset(&broadcast, 0, sizeof broadcast);
+		if(listen_socket[sock].sa.sa.sa_family == AF_INET6) {
+			broadcast.in6.sin6_family = AF_INET6;
+			broadcast.in6.sin6_addr.s6_addr[0x0] = 0xff;
+			broadcast.in6.sin6_addr.s6_addr[0x1] = 0x02;
+			broadcast.in6.sin6_addr.s6_addr[0xf] = 0x01;
+			broadcast.in6.sin6_port = n->prevedge->address.in.sin_port;
+			broadcast.in6.sin6_scope_id = listen_socket[sock].sa.in6.sin6_scope_id;
+		} else {
+			broadcast.in.sin_family = AF_INET;
+			broadcast.in.sin_addr.s_addr = -1;
+			broadcast.in.sin_port = n->prevedge->address.in.sin_port;
+		}
+		sa = &broadcast.sa;
+		sl = SALEN(broadcast.sa);
 	} else {
 		if(origpriority == -1)
 			origpriority = 0;
