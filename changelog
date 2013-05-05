@@ -1,3 +1,10 @@
+tinc (1.0.21-1) unstable; urgency=low
+
+  * New upstream release.
+    - Includes fix for CVE-2013-1428.
+
+ -- Guus Sliepen <guus@debian.org>  Sun, 05 May 2013 10:42:33 +0200
+
 tinc (1.0.19-3) unstable; urgency=high
 
   * Drop packets forwarded via TCP if they are too big (CVE-2013-1428).
