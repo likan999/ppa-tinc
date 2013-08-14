@@ -1,3 +1,15 @@
+tinc (1.1~pre8-1) experimental; urgency=low
+
+  * New upstream release.
+    - Handles whitespace between command line flags and optional arguments.
+      Closes: #710267
+  * Bump Standards-Version.
+  * Source /lib/lsb/init-functions in the init.d script.
+  * Don't use texi2html anymore, use automake's install-html target which uses
+    makeinfo.
+
+ -- Guus Sliepen <guus@debian.org>  Wed, 14 Aug 2013 15:34:41 +0200
+
 tinc (1.1~pre7-2) experimental; urgency=low
 
   [ Gian Piero Carrubba ]
