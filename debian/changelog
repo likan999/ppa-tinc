@@ -1,9 +1,3 @@
-tinc (1.0.22-1~bpo70+1) wheezy-backports; urgency=low
-
-  * Rebuilt for wheezy-backports.
-
- -- Guus Sliepen <guus@debian.org>  Sun, 18 Aug 2013 14:37:57 +0000
-
 tinc (1.0.22-1) unstable; urgency=low
 
   * New upstream release.
