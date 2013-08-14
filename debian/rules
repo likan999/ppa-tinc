@@ -16,6 +16,7 @@
 
 override_dh_auto_configure:
 	dh_auto_configure -- --enable-uml --enable-vde
+	$(MAKE) clean
 
 override_dh_auto_install:
 	dh_auto_install -- install-html
