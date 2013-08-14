@@ -58,25 +58,22 @@ char *scriptinterpreter;
 char *scriptextension;
 
 bool node_read_ecdsa_public_key(node_t *n) {
-	if(ecdsa_active(&n->ecdsa))
+	if(ecdsa_active(n->ecdsa))
 		return true;
 
 	splay_tree_t *config_tree;
 	FILE *fp;
-	char *pubname = NULL, *hcfname = NULL;
+	char *pubname = NULL;
 	char *p;
-	bool result = false;
-
-	xasprintf(&hcfname, "%s" SLASH "hosts" SLASH "%s", confbase, n->name);
 
 	init_configuration(&config_tree);
-	if(!read_config_file(config_tree, hcfname))
+	if(!read_host_config(config_tree, n->name))
 		goto exit;
 
 	/* First, check for simple ECDSAPublicKey statement */
 
 	if(get_config_string(lookup_config(config_tree, "ECDSAPublicKey"), &p)) {
-		result = ecdsa_set_base64_public_key(&n->ecdsa, p);
+		n->ecdsa = ecdsa_set_base64_public_key(p);
 		free(p);
 		goto exit;
 	}
@@ -93,28 +90,35 @@ bool node_read_ecdsa_public_key(node_t *n) {
 		goto exit;
 	}
 
-	result = ecdsa_read_pem_public_key(&n->ecdsa, fp);
+	n->ecdsa = ecdsa_read_pem_public_key(fp);
 	fclose(fp);
 
 exit:
 	exit_configuration(&config_tree);
-	free(hcfname);
 	free(pubname);
-	return result;
+	return n->ecdsa;
 }
 
 bool read_ecdsa_public_key(connection_t *c) {
+	if(ecdsa_active(c->ecdsa))
+		return true;
+
 	FILE *fp;
 	char *fname;
 	char *p;
-	bool result;
+
+	if(!c->config_tree) {
+		init_configuration(&c->config_tree);
+		if(!read_host_config(c->config_tree, c->name))
+			return false;
+	}
 
 	/* First, check for simple ECDSAPublicKey statement */
 
 	if(get_config_string(lookup_config(c->config_tree, "ECDSAPublicKey"), &p)) {
-		result = ecdsa_set_base64_public_key(&c->ecdsa, p);
+		c->ecdsa = ecdsa_set_base64_public_key(p);
 		free(p);
-		return result;
+		return c->ecdsa;
 	}
 
 	/* Else, check for ECDSAPublicKeyFile statement and read it */
@@ -131,27 +135,29 @@ bool read_ecdsa_public_key(connection_t *c) {
 		return false;
 	}
 
-	result = ecdsa_read_pem_public_key(&c->ecdsa, fp);
+	c->ecdsa = ecdsa_read_pem_public_key(fp);
 	fclose(fp);
 
-	if(!result)
+	if(!c->ecdsa)
 		logger(DEBUG_ALWAYS, LOG_ERR, "Parsing ECDSA public key file `%s' failed.", fname);
 	free(fname);
-	return result;
+	return c->ecdsa;
 }
 
 bool read_rsa_public_key(connection_t *c) {
+	if(ecdsa_active(c->ecdsa))
+		return true;
+
 	FILE *fp;
 	char *fname;
 	char *n;
-	bool result;
 
 	/* First, check for simple PublicKey statement */
 
 	if(get_config_string(lookup_config(c->config_tree, "PublicKey"), &n)) {
-		result = rsa_set_hex_public_key(&c->rsa, n, "FFFF");
+		c->rsa = rsa_set_hex_public_key(n, "FFFF");
 		free(n);
-		return result;
+		return c->rsa;
 	}
 
 	/* Else, check for PublicKeyFile statement and read it */
@@ -167,19 +173,18 @@ bool read_rsa_public_key(connection_t *c) {
 		return false;
 	}
 
-	result = rsa_read_pem_public_key(&c->rsa, fp);
+	c->rsa = rsa_read_pem_public_key(fp);
 	fclose(fp);
 
-	if(!result)
+	if(!c->rsa)
 		logger(DEBUG_ALWAYS, LOG_ERR, "Reading RSA public key file `%s' failed: %s", fname, strerror(errno));
 	free(fname);
-	return result;
+	return c->rsa;
 }
 
 static bool read_ecdsa_private_key(void) {
 	FILE *fp;
 	char *fname;
-	bool result;
 
 	/* Check for PrivateKeyFile statement and read it */
 
@@ -190,6 +195,8 @@ static bool read_ecdsa_private_key(void) {
 
 	if(!fp) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Error reading ECDSA private key file `%s': %s", fname, strerror(errno));
+		if(errno == ENOENT)
+			logger(DEBUG_ALWAYS, LOG_INFO, "Create an ECDSA keypair with `tinc -n %s generate-ecdsa-keys'.", netname ?: ".");
 		free(fname);
 		return false;
 	}
@@ -207,20 +214,43 @@ static bool read_ecdsa_private_key(void) {
 		logger(DEBUG_ALWAYS, LOG_WARNING, "Warning: insecure file permissions for ECDSA private key file `%s'!", fname);
 #endif
 
-	result = ecdsa_read_pem_private_key(&myself->connection->ecdsa, fp);
+	myself->connection->ecdsa = ecdsa_read_pem_private_key(fp);
 	fclose(fp);
 
-	if(!result)
+	if(!myself->connection->ecdsa)
 		logger(DEBUG_ALWAYS, LOG_ERR, "Reading ECDSA private key file `%s' failed: %s", fname, strerror(errno));
 	free(fname);
-	return result;
+	return myself->connection->ecdsa;
+}
+
+static bool read_invitation_key(void) {
+	FILE *fp;
+	char *fname;
+
+	if(invitation_key) {
+		ecdsa_free(invitation_key);
+		invitation_key = NULL;
+	}
+
+	xasprintf(&fname, "%s" SLASH "invitations" SLASH "ecdsa_key.priv", confbase);
+
+	fp = fopen(fname, "r");
+
+	if(fp) {
+		invitation_key = ecdsa_read_pem_private_key(fp);
+		fclose(fp);
+		if(!invitation_key)
+			logger(DEBUG_ALWAYS, LOG_ERR, "Reading ECDSA private key file `%s' failed: %s", fname, strerror(errno));
+	}
+
+	free(fname);
+	return invitation_key;
 }
 
 static bool read_rsa_private_key(void) {
 	FILE *fp;
 	char *fname;
 	char *n, *d;
-	bool result;
 
 	/* First, check for simple PrivateKey statement */
 
@@ -230,10 +260,10 @@ static bool read_rsa_private_key(void) {
 			free(d);
 			return false;
 		}
-		result = rsa_set_hex_private_key(&myself->connection->rsa, n, "FFFF", d);
+		myself->connection->rsa = rsa_set_hex_private_key(n, "FFFF", d);
 		free(n);
 		free(d);
-		return result;
+		return myself->connection->rsa;
 	}
 
 	/* Else, check for PrivateKeyFile statement and read it */
@@ -263,13 +293,13 @@ static bool read_rsa_private_key(void) {
 		logger(DEBUG_ALWAYS, LOG_WARNING, "Warning: insecure file permissions for RSA private key file `%s'!", fname);
 #endif
 
-	result = rsa_read_pem_private_key(&myself->connection->rsa, fp);
+	myself->connection->rsa = rsa_read_pem_private_key(fp);
 	fclose(fp);
 
-	if(!result)
+	if(!myself->connection->rsa)
 		logger(DEBUG_ALWAYS, LOG_ERR, "Reading RSA private key file `%s' failed: %s", fname, strerror(errno));
 	free(fname);
-	return result;
+	return myself->connection->rsa;
 }
 
 static timeout_t keyexpire_timeout;
@@ -310,14 +340,10 @@ void load_all_subnets(void) {
 		//	continue;
 		#endif
 
-		char *fname;
-		xasprintf(&fname, "%s" SLASH "hosts" SLASH "%s", confbase, ent->d_name);
-
 		splay_tree_t *config_tree;
 		init_configuration(&config_tree);
 		read_config_options(config_tree, ent->d_name);
-		read_config_file(config_tree, fname);
-		free(fname);
+		read_host_config(config_tree, ent->d_name);
 
 		if(!n) {
 			n = new_node();
@@ -418,6 +444,7 @@ bool setup_myself_reloadable(void) {
 	char *fmode = NULL;
 	char *bmode = NULL;
 	char *afname = NULL;
+	char *address = NULL;
 	char *space;
 	bool choice;
 
@@ -507,6 +534,16 @@ bool setup_myself_reloadable(void) {
 
 	get_config_bool(lookup_config(config_tree, "DirectOnly"), &directonly);
 	get_config_bool(lookup_config(config_tree, "LocalDiscovery"), &localdiscovery);
+
+	memset(&localdiscovery_address, 0, sizeof localdiscovery_address);
+	if(get_config_string(lookup_config(config_tree, "LocalDiscoveryAddress"), &address)) {
+		struct addrinfo *ai = str2addrinfo(address, myport, SOCK_DGRAM);
+		free(address);
+		if(!ai)
+			return false;
+		memcpy(&localdiscovery_address, ai->ai_addr, ai->ai_addrlen);
+	}
+
 
 	if(get_config_string(lookup_config(config_tree, "Mode"), &rmode)) {
 		if(!strcasecmp(rmode, "router"))
@@ -601,6 +638,8 @@ bool setup_myself_reloadable(void) {
 
 	get_config_bool(lookup_config(config_tree, "DisableBuggyPeers"), &disablebuggypeers);
 
+	read_invitation_key();
+
 	return true;
 }
 
@@ -609,7 +648,6 @@ bool setup_myself_reloadable(void) {
 */
 static bool setup_myself(void) {
 	char *name, *hostname, *cipher, *digest, *type;
-	char *fname = NULL;
 	char *address = NULL;
 
 	if(!(name = get_name())) {
@@ -621,10 +659,7 @@ static bool setup_myself(void) {
 	myself->connection = new_connection();
 	myself->name = name;
 	myself->connection->name = xstrdup(name);
-	xasprintf(&fname, "%s" SLASH "hosts" SLASH "%s", confbase, name);
-	read_config_options(config_tree, name);
-	read_config_file(config_tree, fname);
-	free(fname);
+	read_host_config(config_tree, name);
 
 	if(!get_config_string(lookup_config(config_tree, "Port"), &myport))
 		myport = xstrdup("655");
@@ -676,7 +711,12 @@ static bool setup_myself(void) {
 	get_config_bool(lookup_config(config_tree, "TunnelServer"), &tunnelserver);
 	strictsubnets |= tunnelserver;
 
-
+	if(get_config_int(lookup_config(config_tree, "MaxConnectionBurst"), &max_connection_burst)) {
+		if(max_connection_burst <= 0) {
+			logger(DEBUG_ALWAYS, LOG_ERR, "MaxConnectionBurst cannot be negative!");
+			return false;
+		}
+	}
 
 	if(get_config_int(lookup_config(config_tree, "UDPRcvBuf"), &udp_rcvbuf)) {
 		if(udp_rcvbuf <= 0) {
@@ -707,7 +747,7 @@ static bool setup_myself(void) {
 	if(!get_config_string(lookup_config(config_tree, "Cipher"), &cipher))
 		cipher = xstrdup("blowfish");
 
-	if(!cipher_open_by_name(&myself->incipher, cipher)) {
+	if(!(myself->incipher = cipher_open_by_name(cipher))) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Unrecognized cipher type!");
 		return false;
 	}
@@ -730,7 +770,7 @@ static bool setup_myself(void) {
 	if(!get_config_string(lookup_config(config_tree, "Digest"), &digest))
 		digest = xstrdup("sha1");
 
-	if(!digest_open_by_name(&myself->indigest, digest, maclength)) {
+	if(!(myself->indigest = digest_open_by_name(digest, maclength))) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Unrecognized digest type!");
 		return false;
 	}
@@ -793,12 +833,11 @@ static bool setup_myself(void) {
 		io_add(&device_io, handle_device_data, NULL, device_fd, IO_READ);
 
 	/* Run tinc-up script to further initialize the tap interface */
-	char *envp[5];
+	char *envp[5] = {NULL};
 	xasprintf(&envp[0], "NETNAME=%s", netname ? : "");
 	xasprintf(&envp[1], "DEVICE=%s", device ? : "");
 	xasprintf(&envp[2], "INTERFACE=%s", iface ? : "");
 	xasprintf(&envp[3], "NAME=%s", myself->name);
-	envp[4] = NULL;
 
 	execute_script("tinc-up", envp);
 
@@ -829,7 +868,12 @@ static bool setup_myself(void) {
 
 	unlink(unixsocketname);
 
-	if(bind(unix_fd, (struct sockaddr *)&sa, sizeof sa) < 0) {
+	mode_t mask = umask(0);
+	umask(mask | 077);
+	int result = bind(unix_fd, (struct sockaddr *)&sa, sizeof sa);
+	umask(mask);
+
+	if(result < 0) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Could not bind UNIX socket to %s: %s", unixsocketname, sockstrerror(errno));
 		return false;
 	}
@@ -914,8 +958,7 @@ static bool setup_myself(void) {
 			free(address);
 
 			if(err || !ai) {
-				logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s", "getaddrinfo",
-					   gai_strerror(err));
+				logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s", "getaddrinfo", err == EAI_SYSTEM ? strerror(err) : gai_strerror(err));
 				return false;
 			}
 
@@ -1031,12 +1074,11 @@ void close_network_connections(void) {
 	close(unix_socket.fd);
 #endif
 
-	char *envp[5];
+	char *envp[5] = {NULL};
 	xasprintf(&envp[0], "NETNAME=%s", netname ? : "");
 	xasprintf(&envp[1], "DEVICE=%s", device ? : "");
 	xasprintf(&envp[2], "INTERFACE=%s", iface ? : "");
 	xasprintf(&envp[3], "NAME=%s", myself->name);
-	envp[4] = NULL;
 
 	exit_requests();
 	exit_edges();

@@ -1,6 +1,6 @@
 /*
     splay_tree.h -- header file for splay_tree.c
-    Copyright (C) 2004-2012 Guus Sliepen <guus@tinc-vpn.org>
+    Copyright (C) 2004-2013 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -64,10 +64,10 @@ typedef struct splay_tree_t {
 
 /* (De)constructors */
 
-extern splay_tree_t *splay_alloc_tree(splay_compare_t, splay_action_t);
+extern splay_tree_t *splay_alloc_tree(splay_compare_t, splay_action_t) __attribute__ ((__malloc__));
 extern void splay_free_tree(splay_tree_t *);
 
-extern splay_node_t *splay_alloc_node(void);
+extern splay_node_t *splay_alloc_node(void) __attribute__ ((__malloc__));
 extern void splay_free_node(splay_tree_t *tree, splay_node_t *);
 
 /* Insertion and deletion */

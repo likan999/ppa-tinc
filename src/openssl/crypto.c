@@ -1,6 +1,6 @@
 /*
     crypto.c -- Cryptographic miscellaneous functions and initialisation
-    Copyright (C) 2007 Guus Sliepen <guus@tinc-vpn.org>
+    Copyright (C) 2007-2013 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,13 +17,13 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#include "system.h"
+#include "../system.h"
 
 #include <openssl/rand.h>
 #include <openssl/evp.h>
 #include <openssl/engine.h>
 
-#include "crypto.h"
+#include "../crypto.h"
 
 void crypto_init(void) {
 	RAND_load_file("/dev/urandom", 1024);
@@ -31,7 +31,13 @@ void crypto_init(void) {
 	ENGINE_load_builtin_engines();
 	ENGINE_register_all_complete();
 
+	ERR_load_crypto_strings();
 	OpenSSL_add_all_algorithms();
+
+	if(!RAND_status()) {
+		fprintf(stderr, "Not enough entropy for the PRNG!\n");
+		abort();
+	}
 }
 
 void crypto_exit(void) {

@@ -124,7 +124,7 @@ bool send_req_key(node_t *to) {
 static bool req_key_ext_h(connection_t *c, const char *request, node_t *from, int reqno) {
 	switch(reqno) {
 		case REQ_PUBKEY: {
-			char *pubkey = ecdsa_get_base64_public_key(&myself->connection->ecdsa);
+			char *pubkey = ecdsa_get_base64_public_key(myself->connection->ecdsa);
 			send_request(from->nexthop->connection, "%d %s %s %d %s", REQ_KEY, myself->name, from->name, ANS_PUBKEY, pubkey);
 			free(pubkey);
 			return true;
@@ -137,7 +137,7 @@ static bool req_key_ext_h(connection_t *c, const char *request, node_t *from, in
 			}
 
 			char pubkey[MAX_STRING_SIZE];
-			if(sscanf(request, "%*d %*s %*s %*d " MAX_STRING, pubkey) != 1 || !ecdsa_set_base64_public_key(&from->ecdsa, pubkey)) {
+			if(sscanf(request, "%*d %*s %*s %*d " MAX_STRING, pubkey) != 1 || !(from->ecdsa = ecdsa_set_base64_public_key(pubkey))) {
 				logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s): %s", "ANS_PUBKEY", from->name, from->hostname, "invalid pubkey");
 				return true;
 			}
@@ -158,11 +158,12 @@ static bool req_key_ext_h(connection_t *c, const char *request, node_t *from, in
 				logger(DEBUG_ALWAYS, LOG_DEBUG, "Got REQ_KEY from %s while we already started a SPTPS session!", from->name);
 
 			char buf[MAX_STRING_SIZE];
-			if(sscanf(request, "%*d %*s %*s %*d " MAX_STRING, buf) != 1) {
+			int len;
+
+			if(sscanf(request, "%*d %*s %*s %*d " MAX_STRING, buf) != 1 || !(len = b64decode(buf, buf, strlen(buf)))) {
 				logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s): %s", "REQ_SPTPS_START", from->name, from->hostname, "invalid SPTPS data");
 				return true;
 			}
-			int len = b64decode(buf, buf, strlen(buf));
 
 			char label[25 + strlen(from->name) + strlen(myself->name)];
 			snprintf(label, sizeof label, "tinc UDP key expansion %s %s", from->name, myself->name);
@@ -182,11 +183,11 @@ static bool req_key_ext_h(connection_t *c, const char *request, node_t *from, in
 			}
 
 			char buf[MAX_STRING_SIZE];
-			if(sscanf(request, "%*d %*s %*s %*d " MAX_STRING, buf) != 1) {
+			int len;
+			if(sscanf(request, "%*d %*s %*s %*d " MAX_STRING, buf) != 1 || !(len = b64decode(buf, buf, strlen(buf)))) {
 				logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s): %s", "REQ_SPTPS", from->name, from->hostname, "invalid SPTPS data");
 				return true;
 			}
-			int len = b64decode(buf, buf, strlen(buf));
 			sptps_receive_data(&from->sptps, buf, len);
 			return true;
 		}
@@ -259,19 +260,24 @@ bool send_ans_key(node_t *to) {
 	if(to->status.sptps)
 		abort();
 
-	size_t keylen = cipher_keylength(&myself->incipher);
+	size_t keylen = cipher_keylength(myself->incipher);
 	char key[keylen * 2 + 1];
 
-	cipher_close(&to->incipher);
-	digest_close(&to->indigest);
+	cipher_close(to->incipher);
+	digest_close(to->indigest);
 
-	cipher_open_by_nid(&to->incipher, cipher_get_nid(&myself->incipher));
-	digest_open_by_nid(&to->indigest, digest_get_nid(&myself->indigest), digest_length(&myself->indigest));
+	to->incipher = cipher_open_by_nid(cipher_get_nid(myself->incipher));
+	to->indigest = digest_open_by_nid(digest_get_nid(myself->indigest), digest_length(myself->indigest));
 	to->incompression = myself->incompression;
 
+	if(!to->incipher || !to->indigest)
+		abort();
+
 	randomize(key, keylen);
-	cipher_set_key(&to->incipher, key, false);
-	digest_set_key(&to->indigest, key, keylen);
+	if(!cipher_set_key(to->incipher, key, false))
+		abort();
+	if(!digest_set_key(to->indigest, key, keylen))
+		abort();
 
 	bin2hex(key, key, keylen);
 
@@ -283,9 +289,9 @@ bool send_ans_key(node_t *to) {
 
 	return send_request(to->nexthop->connection, "%d %s %s %s %d %d %d %d", ANS_KEY,
 						myself->name, to->name, key,
-						cipher_get_nid(&to->incipher),
-						digest_get_nid(&to->indigest),
-						(int)digest_length(&to->indigest),
+						cipher_get_nid(to->incipher),
+						digest_get_nid(to->indigest),
+						(int)digest_length(to->indigest),
 						to->incompression);
 }
 
@@ -353,8 +359,8 @@ bool ans_key_h(connection_t *c, const char *request) {
 	}
 
 	/* Don't use key material until every check has passed. */
-	cipher_close(&from->outcipher);
-	digest_close(&from->outdigest);
+	cipher_close(from->outcipher);
+	digest_close(from->outdigest);
 	from->status.validkey = false;
 
 	if(compression < 0 || compression > 11) {
@@ -370,7 +376,7 @@ bool ans_key_h(connection_t *c, const char *request) {
 		char buf[strlen(key)];
 		int len = b64decode(key, buf, strlen(key));
 
-		if(!sptps_receive_data(&from->sptps, buf, len))
+		if(!len || !sptps_receive_data(&from->sptps, buf, len))
 			logger(DEBUG_ALWAYS, LOG_ERR, "Error processing SPTPS data from %s (%s)", from->name, from->hostname);
 
 		if(from->status.validkey) {
@@ -380,7 +386,7 @@ bool ans_key_h(connection_t *c, const char *request) {
 				update_node_udp(from, &sa);
 			}
 
-			if(from->options & OPTION_PMTU_DISCOVERY)
+			if(from->options & OPTION_PMTU_DISCOVERY && !(from->options & OPTION_TCPONLY))
 				send_mtu_probe(from);
 		}
 
@@ -389,17 +395,17 @@ bool ans_key_h(connection_t *c, const char *request) {
 
 	/* Check and lookup cipher and digest algorithms */
 
-	if(!cipher_open_by_nid(&from->outcipher, cipher)) {
+	if(!(from->outcipher = cipher_open_by_nid(cipher))) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Node %s (%s) uses unknown cipher!", from->name, from->hostname);
 		return false;
 	}
 
-	if(!digest_open_by_nid(&from->outdigest, digest, maclength)) {
+	if(!(from->outdigest = digest_open_by_nid(digest, maclength))) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Node %s (%s) uses unknown digest!", from->name, from->hostname);
 		return false;
 	}
 
-	if(maclength != digest_length(&from->outdigest)) {
+	if(maclength != digest_length(from->outdigest)) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Node %s (%s) uses bogus MAC length!", from->name, from->hostname);
 		return false;
 	}
@@ -408,15 +414,17 @@ bool ans_key_h(connection_t *c, const char *request) {
 
 	keylen = hex2bin(key, key, sizeof key);
 
-	if(keylen != cipher_keylength(&from->outcipher)) {
+	if(keylen != cipher_keylength(from->outcipher)) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Node %s (%s) uses wrong keylength!", from->name, from->hostname);
 		return true;
 	}
 
 	/* Update our copy of the origin's packet key */
 
-	cipher_set_key(&from->outcipher, key, true);
-	digest_set_key(&from->outdigest, key, keylen);
+	if(!cipher_set_key(from->outcipher, key, true))
+		return false;
+	if(!digest_set_key(from->outdigest, key, keylen))
+		return false;
 
 	from->status.validkey = true;
 	from->sent_seqno = 0;
@@ -427,7 +435,7 @@ bool ans_key_h(connection_t *c, const char *request) {
 		update_node_udp(from, &sa);
 	}
 
-	if(from->options & OPTION_PMTU_DISCOVERY)
+	if(from->options & OPTION_PMTU_DISCOVERY && !(from->options & OPTION_TCPONLY))
 		send_mtu_probe(from);
 
 	return true;

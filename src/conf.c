@@ -71,7 +71,7 @@ void exit_configuration(splay_tree_t ** config_tree) {
 }
 
 config_t *new_config(void) {
-	return xmalloc_and_zero(sizeof(config_t));
+	return xzalloc(sizeof(config_t));
 }
 
 void free_config(config_t *cfg) {
@@ -373,9 +373,10 @@ bool read_server_config(void) {
 	read_config_options(config_tree, NULL);
 
 	xasprintf(&fname, "%s" SLASH "tinc.conf", confbase);
+	errno = 0;
 	x = read_config_file(config_tree, fname);
 
-	if(!x)
+	if(!x && errno)
 		logger(DEBUG_ALWAYS, LOG_ERR, "Failed to read `%s': %s", fname, strerror(errno));
 
 	free(fname);

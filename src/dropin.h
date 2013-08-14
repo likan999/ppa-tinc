@@ -1,7 +1,7 @@
 /*
     dropin.h -- header file for dropin.c
     Copyright (C) 2000-2005 Ivo Timmermans,
-                  2000-2011 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2013 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -61,6 +61,13 @@ extern int usleep(long long usec);
 	if((r)->tv_usec < 0)\
 		(r)->tv_sec--, (r)->tv_usec += 1000000;\
 } while (0)
+#endif
+
+#ifdef HAVE_MINGW
+#define mkdir(a, b) mkdir(a)
+#ifndef SHUT_RDWR
+#define SHUT_RDWR SD_BOTH
+#endif
 #endif
 
 #endif /* __DROPIN_H__ */

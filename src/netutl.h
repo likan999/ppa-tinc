@@ -1,7 +1,7 @@
 /*
     netutl.h -- header file for netutl.c
     Copyright (C) 1998-2005 Ivo Timmermans
-                  2000-2012 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2013 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -25,10 +25,10 @@
 
 extern bool hostnames;
 
-extern struct addrinfo *str2addrinfo(const char *, const char *, int);
+extern struct addrinfo *str2addrinfo(const char *, const char *, int) __attribute__ ((__malloc__));
 extern sockaddr_t str2sockaddr(const char *, const char *);
 extern void sockaddr2str(const sockaddr_t *, char **, char **);
-extern char *sockaddr2hostname(const sockaddr_t *);
+extern char *sockaddr2hostname(const sockaddr_t *) __attribute__ ((__malloc__));
 extern int sockaddrcmp(const sockaddr_t *, const sockaddr_t *);
 extern int sockaddrcmp_noport(const sockaddr_t *, const sockaddr_t *);
 extern void sockaddrunmap(sockaddr_t *);

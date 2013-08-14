@@ -41,6 +41,8 @@ int contradicting_add_edge = 0;
 int contradicting_del_edge = 0;
 static int sleeptime = 10;
 time_t last_config_check = 0;
+static timeout_t pingtimer;
+static timeout_t periodictimer;
 
 /* Purge edges and subnets of unreachable nodes. Use carefully. */
 
@@ -224,7 +226,7 @@ static void periodic_handler(void *data) {
 
 				if(!found) {
 					logger(DEBUG_CONNECTIONS, LOG_INFO, "Autoconnecting to %s", n->name);
-					outgoing_t *outgoing = xmalloc_and_zero(sizeof *outgoing);
+					outgoing_t *outgoing = xzalloc(sizeof *outgoing);
 					outgoing->name = xstrdup(n->name);
 					list_insert_tail(outgoing_list, outgoing);
 					setup_outgoing_connection(outgoing);
@@ -296,7 +298,8 @@ static void sigterm_handler(void *data) {
 static void sighup_handler(void *data) {
 	logger(DEBUG_ALWAYS, LOG_NOTICE, "Got %s signal", strsignal(((signal_t *)data)->signum));
 	reopenlogger();
-	reload_configuration();
+	if(reload_configuration())
+		exit(1);
 }
 
 static void sigalrm_handler(void *data) {
@@ -306,7 +309,7 @@ static void sigalrm_handler(void *data) {
 #endif
 
 int reload_configuration(void) {
-	char *fname;
+	char *fname = NULL;
 
 	/* Reread our own configuration file */
 
@@ -314,8 +317,7 @@ int reload_configuration(void) {
 	init_configuration(&config_tree);
 
 	if(!read_server_config()) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Unable to reread configuration file, exitting.");
-		event_exit();
+		logger(DEBUG_ALWAYS, LOG_ERR, "Unable to reread configuration file.");
 		return EINVAL;
 	}
 
@@ -412,24 +414,27 @@ int reload_configuration(void) {
 }
 
 void retry(void) {
-	for list_each(connection_t, c, connection_list) {
-		if(c->outgoing && !c->node) {
-			timeout_del(&c->outgoing->ev);
-			if(c->status.connecting)
-				close(c->socket);
-			c->outgoing->timeout = 0;
-			terminate_connection(c, c->status.active);
-		}
+	/* Reset the reconnection timers for all outgoing connections */
+	for list_each(outgoing_t, outgoing, outgoing_list) {
+		outgoing->timeout = 0;
+		if(outgoing->ev.cb)
+			timeout_set(&outgoing->ev, &(struct timeval){0, 0});
 	}
+
+	/* Check for outgoing connections that are in progress, and reset their ping timers */
+	for list_each(connection_t, c, connection_list) {
+		if(c->outgoing && !c->node)
+			c->last_ping_time = 0;
+	}
+
+	/* Kick the ping timeout handler */
+	timeout_set(&pingtimer, &(struct timeval){0, 0});
 }
 
 /*
   this is where it all happens...
 */
 int main_loop(void) {
-	timeout_t pingtimer = {{0}};
-	timeout_t periodictimer = {{0}};
-
 	timeout_add(&pingtimer, timeout_handler, &pingtimer, &(struct timeval){pingtimeout, rand() % 100000});
 	timeout_add(&periodictimer, periodic_handler, &periodictimer, &(struct timeval){pingtimeout, rand() % 100000});
 
@@ -454,9 +459,10 @@ int main_loop(void) {
 
 #ifndef HAVE_MINGW
 	signal_del(&sighup);
-	signal_del(&sigalrm);
-	signal_del(&sigquit);
 	signal_del(&sigterm);
+	signal_del(&sigquit);
+	signal_del(&sigint);
+	signal_del(&sigalrm);
 #endif
 
 	timeout_del(&periodictimer);
