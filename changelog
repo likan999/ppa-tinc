@@ -1,3 +1,10 @@
+tinc (1.1~pre8-2) experimental; urgency=low
+
+  * Run make clean after the configure step to get rid of .o files that were
+    accidentily left in the orig.tar.gz.
+
+ -- Guus Sliepen <guus@debian.org>  Wed, 14 Aug 2013 16:13:43 +0200
+
 tinc (1.1~pre8-1) experimental; urgency=low
 
   * New upstream release.
