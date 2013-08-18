@@ -15,16 +15,8 @@
 override_dh_auto_configure:
 	dh_auto_configure -- --enable-uml --enable-vde
 
-override_dh_auto_build:
-	dh_auto_build
-	cd doc && $(MAKE) texi2html 
-
 override_dh_auto_install:
-	dh_auto_install
-	# Guess where texi2html installed its output today...
-	[ -f doc/tinc/tinc.html ] \
-		&& mv doc/tinc/*.html debian/tinc/usr/share/doc/tinc/ \
-		|| mv doc/*.html debian/tinc/usr/share/doc/tinc/
+	dh_auto_install -- install-html
 	# Remove info dir file
 	rm -f debian/tinc/usr/share/info/dir
 

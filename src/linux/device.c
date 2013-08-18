@@ -1,7 +1,7 @@
 /*
     device.c -- Interaction with Linux ethertap and tun/tap device
     Copyright (C) 2001-2005 Ivo Timmermans,
-                  2001-2012 Guus Sliepen <guus@tinc-vpn.org>
+                  2001-2013 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -94,6 +94,8 @@ static bool setup_device(void) {
 		device_type = DEVICE_TYPE_TUN;
 		device_info = "Linux tun/tap device (tun mode)";
 	} else {
+		if (routing_mode == RMODE_ROUTER)
+			overwrite_mac = true;
 		ifr.ifr_flags = IFF_TAP | IFF_NO_PI;
 		device_type = DEVICE_TYPE_TAP;
 		device_info = "Linux tun/tap device (tap mode)";
