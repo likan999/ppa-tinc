@@ -18,6 +18,8 @@
 #
 # Based on Lubomir Bulej's Redhat init script.
 
+. /lib/lsb/init-functions
+
 DAEMON="/usr/sbin/tincd"
 NAME="tinc"
 DESC="tinc daemons"
