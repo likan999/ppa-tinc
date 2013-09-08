@@ -23,5 +23,9 @@ override_dh_auto_install:
 	# Remove info dir file
 	rm -f debian/tinc/usr/share/info/dir
 
+override_dh_auto_test:
+	# Don't run the tests, it involves starting tinc daemons and making network connections.
+	# I don't think the autobuilders will like this.
+
 override_dh_installinit:
 	dh_installinit -R
