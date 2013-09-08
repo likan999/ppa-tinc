@@ -113,6 +113,34 @@ static bool bind_to_interface(int sd) {
 	return true;
 }
 
+static bool bind_to_address(connection_t *c) {
+	int s = -1;
+
+	for(int i = 0; i < listen_sockets; i++) {
+		if(listen_socket[i].sa.sa.sa_family != c->address.sa.sa_family)
+			continue;
+		if(s >= 0)
+			return false;
+		s = i;
+	}
+
+	if(s < 0)
+		return false;
+
+	sockaddr_t sa = listen_socket[s].sa;
+	if(sa.sa.sa_family == AF_INET)
+		sa.in.sin_port = 0;
+	else if(sa.sa.sa_family == AF_INET6)
+		sa.in6.sin6_port = 0;
+
+	if(bind(c->socket, &sa.sa, SALEN(sa.sa))) {
+		logger(DEBUG_CONNECTIONS, LOG_WARNING, "Can't bind outgoing socket: %s", strerror(errno));
+		return false;
+	}
+
+	return true;
+}
+
 int setup_listen_socket(const sockaddr_t *sa) {
 	int nfd;
 	char *addrstr;
@@ -481,6 +509,7 @@ begin:
 #endif
 
 		bind_to_interface(c->socket);
+		bind_to_address(c);
 	}
 
 	/* Connect */
@@ -573,10 +602,22 @@ void handle_new_meta_connection(void *data, int flags) {
 		tarpit = -1;
 	}
 
-	if(prev_time == now.tv_sec && !sockaddrcmp_noport(&sa, &prev_sa)) {
-		// if so, keep the connection open but ignore it completely.
-		tarpit = fd;
-		return;
+	if(!sockaddrcmp_noport(&sa, &prev_sa)) {
+		static int samehost_burst;
+		static int samehost_burst_time;
+
+		if(now.tv_sec - samehost_burst_time > samehost_burst)
+			samehost_burst = 0;
+		else
+			samehost_burst -= now.tv_sec - samehost_burst_time;
+
+		samehost_burst_time = now.tv_sec;
+		samehost_burst++;
+
+		if(samehost_burst > max_connection_burst) {
+			tarpit = fd;
+			return;
+		}
 	}
 
 	memcpy(&prev_sa, &sa, sizeof sa);

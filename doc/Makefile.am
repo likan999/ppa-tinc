@@ -6,7 +6,7 @@ man_MANS = tincd.8 tinc.8 tinc.conf.5 tinc-gui.8
 
 EXTRA_DIST = tincinclude.texi.in tincd.8.in tinc.8.in tinc.conf.5.in tinc-gui.8.in sample-config.tar.gz
 
-CLEANFILES = *.html tinc.info tincd.8 tinc.8 tinc.conf.5 tinc-gui.8 tincinclude.texi
+CLEANFILES = *.html tincd.8 tinc.8 tinc.conf.5 tinc-gui.8 tincinclude.texi
 
 # Use `ginstall' in the definition of man_MANS to avoid
 # confusion with the `install' target.  The install rule transforms `ginstall'
@@ -18,9 +18,6 @@ transform = s/ginstall/install/; @program_transform_name@
 
 sample-config.tar.gz: sample-config
 	GZIP=$(GZIP_ENV) $(AMTAR) chozf sample-config.tar.gz --exclude .svn sample-config
-
-texi2html: tinc.texi
-	texi2html -split=chapter tinc.texi
 
 tincd.8.html: tincd.8
 	w3mman2html $? > $@

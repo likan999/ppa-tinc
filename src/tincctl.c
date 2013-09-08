@@ -39,12 +39,6 @@
 #include "tincctl.h"
 #include "top.h"
 
-#ifdef HAVE_MINGW
-#define SCRIPTEXTENSION ".bat"
-#else
-#define SCRIPTEXTENSION ""
-#endif
-
 static char **orig_argv;
 static int orig_argc;
 
@@ -71,10 +65,8 @@ static bool force = false;
 bool tty = true;
 bool confbasegiven = false;
 bool netnamegiven = false;
-
-#ifdef HAVE_MINGW
-static struct WSAData wsa_state;
-#endif
+char *scriptinterpreter = NULL;
+char *scriptextension = "";
 
 static struct option const long_options[] = {
 	{"config", required_argument, NULL, 'c'},
@@ -685,14 +677,6 @@ bool connect_tincd(bool verbose) {
 	}
 
 	fclose(f);
-
-#ifdef HAVE_MINGW
-	if(WSAStartup(MAKEWORD(2, 2), &wsa_state)) {
-		if(verbose)
-			fprintf(stderr, "System call `%s' failed: %s", "WSAStartup", winerror(GetLastError()));
-		return false;
-	}
-#endif
 
 #ifndef HAVE_MINGW
 	struct sockaddr_un sa;
@@ -1622,7 +1606,7 @@ static int cmd_config(int argc, char *argv[]) {
 	if(action < 0 && !removed) {
 		remove(tmpfile);
 		fprintf(stderr, "No configuration variables deleted.\n");
-		return *value;
+		return *value != 0;
 	}
 
 	// Replace the configuration file with the new one
@@ -1755,7 +1739,7 @@ static int cmd_init(int argc, char *argv[]) {
 		return 1;
 	}
 
-	if(strcmp(confdir, confbase) && mkdir(confdir, 0755) && errno != EEXIST) {
+	if(!confbase_given && mkdir(confdir, 0755) && errno != EEXIST) {
 		fprintf(stderr, "Could not create directory %s: %s\n", confdir, strerror(errno));
 		return 1;
 	}
@@ -2369,6 +2353,15 @@ int main(int argc, char *argv[]) {
 		usage(false);
 		return 0;
 	}
+
+#ifdef HAVE_MINGW
+	static struct WSAData wsa_state;
+
+	if(WSAStartup(MAKEWORD(2, 2), &wsa_state)) {
+		fprintf(stderr, "System call `%s' failed: %s", "WSAStartup", winerror(GetLastError()));
+		return false;
+	}
+#endif
 
 	srand(time(NULL));
 	crypto_init();

@@ -1,7 +1,7 @@
 dnl Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.61)
-AC_INIT([tinc], [1.1pre8])
+AC_INIT([tinc], [1.1pre9])
 AC_CONFIG_SRCDIR([src/tincd.c])
 AC_GNU_SOURCE
 AM_INIT_AUTOMAKE([check-news std-options subdir-objects -Wall])
@@ -201,8 +201,8 @@ else
 	tinc_OPENSSL
 fi
 	
-AM_CONDITIONAL(OPENSSL, test "$openssl" = true)
-AM_CONDITIONAL(GCRYPT, test "$grypt" = true)
+AM_CONDITIONAL(OPENSSL, test -n "$openssl")
+AM_CONDITIONAL(GCRYPT, test "$gcrypt" = true)
 
 dnl Check if support for jumbograms is requested 
 AC_ARG_ENABLE(jumbograms,
@@ -212,6 +212,6 @@ AC_ARG_ENABLE(jumbograms,
   ]
 )
 
-AC_CONFIG_FILES([Makefile src/Makefile doc/Makefile m4/Makefile gui/Makefile])
+AC_CONFIG_FILES([Makefile src/Makefile doc/Makefile m4/Makefile gui/Makefile test/Makefile])
 
 AC_OUTPUT

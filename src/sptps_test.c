@@ -19,6 +19,8 @@
 
 #include "system.h"
 
+#include <getopt.h>
+
 #include "crypto.h"
 #include "ecdsa.h"
 #include "sptps.h"
@@ -31,7 +33,8 @@ bool send_meta(void *c, const char *msg , int len) { return false; }
 char *logfilename = NULL;
 struct timeval now;
 
-ecdsa_t *mykey, *hiskey;
+static bool readonly;
+static bool writeonly;
 
 static bool send_data(void *handle, uint8_t type, const char *data, size_t len) {
 	char hex[len * 2 + 1];
@@ -45,27 +48,102 @@ static bool send_data(void *handle, uint8_t type, const char *data, size_t len) 
 
 static bool receive_record(void *handle, uint8_t type, const char *data, uint16_t len) {
 	fprintf(stderr, "Received type %d record of %hu bytes:\n", type, len);
-	fwrite(data, len, 1, stdout);
+	if(!writeonly)
+		fwrite(data, len, 1, stdout);
 	return true;
 }
 
+static struct option const long_options[] = {
+	{"datagram", no_argument, NULL, 'd'},
+	{"quit", no_argument, NULL, 'q'},
+	{"readonly", no_argument, NULL, 'r'},
+	{"writeonly", no_argument, NULL, 'w'},
+	{"packet-loss", required_argument, NULL, 'L'},
+	{"replay-window", required_argument, NULL, 'W'},
+	{"help", no_argument, NULL, 1},
+	{NULL, 0, NULL, 0}
+};
+
+const char *program_name;
+
+static void usage() {
+	fprintf(stderr, "Usage: %s [options] my_ecdsa_key_file his_ecdsa_key_file [host] port\n\n", program_name);
+	fprintf(stderr, "Valid options are:\n"
+			"  -d, --datagram          Enable datagram mode.\n"
+			"  -q, --quit              Quit when EOF occurs on stdin.\n"
+			"  -r, --readonly          Only send data from the socket to stdout.\n"
+			"  -w, --writeonly         Only send data from stdin to the socket.\n"
+			"  -L, --packet-loss RATE  Fake packet loss of RATE percent.\n"
+			"  -R, --replay-window N   Set replay window to N bytes.\n"
+			"\n");
+	fprintf(stderr, "Report bugs to tinc@tinc-vpn.org.\n");
+}
+
 int main(int argc, char *argv[]) {
+	program_name = argv[0];
 	bool initiator = false;
 	bool datagram = false;
+	int packetloss = 0;
+	int r;
+	int option_index = 0;
+	ecdsa_t *mykey = NULL, *hiskey = NULL;
+	bool quit = false;
 
-	if(argc > 1 && !strcmp(argv[1], "-d")) {
-		datagram = true;
-		argc--;
-		argv++;
+	while((r = getopt_long(argc, argv, "dqrwL:W:", long_options, &option_index)) != EOF) {
+		switch (r) {
+			case 0:   /* long option */
+				break;
+
+			case 'd': /* datagram mode */
+				datagram = true;
+				break;
+
+			case 'q': /* close connection on EOF from stdin */
+				quit = true;
+				break;
+
+			case 'r': /* read only */
+				readonly = true;
+				break;
+
+			case 'w': /* write only */
+				writeonly = true;
+				break;
+
+			case 'L': /* packet loss rate */
+				packetloss = atoi(optarg);
+				break;
+
+			case 'W': /* replay window size */
+				sptps_replaywin = atoi(optarg);
+				break;
+
+			case '?': /* wrong options */
+				usage();
+				return 1;
+
+			case 1: /* help */
+				usage();
+				return 0;
+
+			default:
+				break;
+		}
 	}
 
-	if(argc < 4) {
-		fprintf(stderr, "Usage: %s [-d] my_ecdsa_key_file his_ecdsa_key_file [host] port\n", argv[0]);
+	argc -= optind - 1;
+	argv += optind - 1;
+
+	if(argc < 4 || argc > 5) {
+		fprintf(stderr, "Wrong number of arguments.\n");
+		usage();
 		return 1;
 	}
 
 	if(argc > 4)
 		initiator = true;
+
+	srand(time(NULL));
 
 #ifdef HAVE_MINGW
 	static struct WSAData wsa_state;
@@ -159,12 +237,16 @@ int main(int argc, char *argv[]) {
 		return 1;
 
 	while(true) {
+		if(writeonly && readonly)
+			break;
+
 		char buf[65535] = "";
 
 		fd_set fds;
 		FD_ZERO(&fds);
 #ifndef HAVE_MINGW
-		FD_SET(0, &fds);
+		if(!readonly && s.instate)
+			FD_SET(0, &fds);
 #endif
 		FD_SET(sock, &fds);
 		if(select(sock + 1, &fds, NULL, NULL, NULL) <= 0)
@@ -172,12 +254,19 @@ int main(int argc, char *argv[]) {
 
 		if(FD_ISSET(0, &fds)) {
 			ssize_t len = read(0, buf, sizeof buf);
+			fprintf(stderr, "%zd\n", len);
 			if(len < 0) {
 				fprintf(stderr, "Could not read from stdin: %s\n", strerror(errno));
 				return 1;
 			}
-			if(len == 0)
-				break;
+			if(len == 0) {
+				if(quit)
+					break;
+				readonly = true;
+				continue;
+			}
+			if(buf[0] == '#')
+				s.outseqno = atoi(buf + 1);
 			if(buf[0] == '^')
 				sptps_send_record(&s, SPTPS_HANDSHAKE, NULL, 0);
 			else if(buf[0] == '$') {
@@ -202,7 +291,11 @@ int main(int argc, char *argv[]) {
 			char hex[len * 2 + 1];
 			bin2hex(buf, hex, len);
 			fprintf(stderr, "Received %d bytes of data:\n%s\n", (int)len, hex);
-			if(!sptps_receive_data(&s, buf, len))
+			if((rand() % 100) < packetloss) {
+				fprintf(stderr, "Dropped.\n");
+				continue;
+			}
+			if(!sptps_receive_data(&s, buf, len) && !datagram)
 				return 1;
 		}
 	}

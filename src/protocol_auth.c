@@ -26,6 +26,7 @@
 #include "control_common.h"
 #include "cipher.h"
 #include "crypto.h"
+#include "device.h"
 #include "digest.h"
 #include "ecdsa.h"
 #include "edge.h"
@@ -39,6 +40,7 @@
 #include "prf.h"
 #include "protocol.h"
 #include "rsa.h"
+#include "script.h"
 #include "sptps.h"
 #include "utils.h"
 #include "xalloc.h"
@@ -174,6 +176,25 @@ static bool finalize_invitation(connection_t *c, const char *data, uint16_t len)
 	fclose(f);
 
 	logger(DEBUG_CONNECTIONS, LOG_INFO, "Key succesfully received from %s (%s)", c->name, c->hostname);
+
+	// Call invitation-accepted script
+	char *envp[7] = {NULL};
+	char *address, *port;
+
+	xasprintf(&envp[0], "NETNAME=%s", netname ? : "");
+        xasprintf(&envp[1], "DEVICE=%s", device ? : "");
+        xasprintf(&envp[2], "INTERFACE=%s", iface ? : "");
+        xasprintf(&envp[3], "NODE=%s", c->name);
+	sockaddr2str(&c->address, &address, &port);
+	xasprintf(&envp[4], "REMOTEADDRESS=%s", address);
+	xasprintf(&envp[5], "NAME=%s", myself->name);
+
+	execute_script("invitation-accepted", envp);
+
+	for(int i = 0; envp[i] && i < 7; i++)
+		free(envp[i]);
+
+	sptps_send_record(&c->sptps, 2, data, 0);
 	return true;
 }
 
@@ -189,8 +210,19 @@ static bool receive_invitation_sptps(void *handle, uint8_t type, const char *dat
 	if(type != 0 || len != 18 || c->status.invitation_used)
 		return false;
 
+	// Recover the filename from the cookie and the key
+	digest_t *digest = digest_open_by_name("sha256", 18);
+	if(!digest)
+		abort();
+	char *fingerprint = ecdsa_get_base64_public_key(invitation_key);
+	char hashbuf[18 + strlen(fingerprint)];
 	char cookie[25];
-	b64encode_urlsafe(data, cookie, 18);
+	memcpy(hashbuf, data, 18);
+	memcpy(hashbuf + 18, fingerprint, sizeof hashbuf - 18);
+	digest_create(digest, hashbuf, sizeof hashbuf, cookie);
+	b64encode_urlsafe(cookie, cookie, 18);
+	digest_close(digest);
+	free(fingerprint);
 
 	char filename[PATH_MAX], usedname[PATH_MAX];
 	snprintf(filename, sizeof filename, "%s" SLASH "invitations" SLASH "%s", confbase, cookie);
