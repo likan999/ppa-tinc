@@ -950,12 +950,23 @@ it does a lookup if your DNS server is not responding.
 This does not affect resolving hostnames to IP addresses from the
 configuration file, but whether hostnames should be resolved while logging.
 
+@cindex IffOneQueue
+@item IffOneQueue = <yes|no> (no) [experimental]
+(Linux only) Set IFF_ONE_QUEUE flag on TUN/TAP devices.
+
 @cindex Interface
 @item Interface = <@var{interface}>
 Defines the name of the interface corresponding to the virtual network device.
 Depending on the operating system and the type of device this may or may not actually set the name of the interface.
 Under Windows, this variable is used to select which network interface will be used.
 If you specified a Device, this variable is almost always already correctly set.
+
+@cindex KeyExpire
+@item KeyExpire = <@var{seconds}> (3600)
+This option controls the time the encryption keys used to encrypt the data
+are valid.  It is common practice to change keys at regular intervals to
+make it even harder for crackers, even though it is thought to be nearly
+impossible to crack a single key.
 
 @cindex LocalDiscovery
 @item LocalDiscovery = <yes | no> (no) [experimental]
@@ -966,6 +977,15 @@ which normally would prevent the peers from learning each other's LAN address.
 
 Currently, local discovery is implemented by sending broadcast packets to the LAN during path MTU discovery.
 This feature may not work in all possible situations.
+
+@cindex MACExpire
+@item MACExpire = <@var{seconds}> (600)
+This option controls the amount of time MAC addresses are kept before they are removed.
+This only has effect when Mode is set to "switch".
+
+@cindex MaxTimeout
+@item MaxTimeout = <@var{seconds}> (900)
+This is the maximum delay before trying to reconnect to other tinc daemons.
 
 @cindex Mode
 @item Mode = <router|switch|hub> (router)
@@ -995,18 +1015,6 @@ This mode is almost the same as the switch mode, but instead
 every packet will be broadcast to the other daemons
 while no routing table is managed.
 @end table
-
-@cindex KeyExpire
-@item KeyExpire = <@var{seconds}> (3600)
-This option controls the time the encryption keys used to encrypt the data
-are valid.  It is common practice to change keys at regular intervals to
-make it even harder for crackers, even though it is thought to be nearly
-impossible to crack a single key.
-
-@cindex MACExpire
-@item MACExpire = <@var{seconds}> (600)
-This option controls the amount of time MAC addresses are kept before they are removed.
-This only has effect when Mode is set to "switch".
 
 @cindex Name
 @item Name = <@var{name}> [required]
@@ -1052,7 +1060,7 @@ When this option is used the priority of the tincd process will be adjusted.
 Increasing the priority may help to reduce latency and packet loss on the VPN.
 
 @cindex Proxy
-@item Proxy = socks4 | socks4 | http | exec @var{...} [experimental]
+@item Proxy = socks4 | socks5 | http | exec @var{...} [experimental]
 Use a proxy when making outgoing connections.
 The following proxy types are currently supported:
 
@@ -1063,7 +1071,7 @@ Connects to the proxy using the SOCKS version 4 protocol.
 Optionally, a @var{username} can be supplied which will be passed on to the proxy server.
 
 @cindex socks5
-@item socks4 <@var{address}> <@var{port}> [<@var{username}> <@var{password}>]
+@item socks5 <@var{address}> <@var{port}> [<@var{username}> <@var{password}>]
 Connect to the proxy using the SOCKS version 5 protocol.
 If a @var{username} and @var{password} are given, basic username/password authentication will be used,
 otherwise no authentication will be used.
@@ -1089,9 +1097,8 @@ reordering. Setting this to zero will disable replay tracking completely and
 pass all traffic, but leaves tinc vulnerable to replay-based attacks on your
 traffic.
 
-
 @cindex StrictSubnets
-@item StrictSubnets <yes|no> (no) [experimental]
+@item StrictSubnets = <yes|no> (no) [experimental]
 When this option is enabled tinc will only use Subnet statements which are
 present in the host config files in the local
 @file{@value{sysconfdir}/tinc/@var{netname}/hosts/} directory.

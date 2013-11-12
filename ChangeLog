@@ -1,3 +1,17 @@
+Version 1.0.23                                           October 19 2013
+------------------------------------------------------------------------
+
+Guus Sliepen (9):
+      Check for writability when waiting for a socket to finish connecting.
+      Don't send PING requests on connections which are not active yet.
+      Fix segfault when Name = $HOST but $HOST is not set.
+      Fix typos in the documentation.
+      Modernize the build system.
+      Get rid of the splay tree implementation.
+      Add description of IffOneQueue and MaxTimeout to the info manual.
+      Clean up child processes from proxy type exec.
+      Releasing 1.0.23.
+
 Version 1.0.22                                            August 13 2013
 ------------------------------------------------------------------------
 
