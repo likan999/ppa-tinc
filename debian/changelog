@@ -1,3 +1,13 @@
+tinc (1.0.23-2) unstable; urgency=low
+
+  * Use if-statements instead of && in shell scripts. Closes: #731279
+    The && operator does not clear the error status, and if the next statement
+    in a shell script does not change the error status it would cause the
+    script to prematurely exit. Thanks to Peter Reinholdtsen for spotting it.
+  * Use absolute path to tincd in the if-post-down script.
+
+ -- Guus Sliepen <guus@debian.org>  Thu, 05 Dec 2013 09:41:13 +0000
+
 tinc (1.0.23-1) unstable; urgency=low
 
   * New upstream release.

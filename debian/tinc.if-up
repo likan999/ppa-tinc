@@ -2,7 +2,8 @@
 
 set -e
 
-[ "$METHOD" = loopback ] && exit 0
-[ -n "$IF_TINC_NET" ] && exit 0
+if [ "$METHOD" = loopback -o -n "$IF_TINC_NET" ]; then
+	exit 0
+fi
 
 invoke-rc.d tinc alarm || exit 0
