@@ -1,7 +1,7 @@
 /*
     utils.c -- gathering of some stupid small functions
     Copyright (C) 1999-2005 Ivo Timmermans
-                  2000-2009 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2014 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -77,4 +77,19 @@ unsigned int bitfield_to_int(const void *bitfield, size_t size) {
 		size = sizeof value;
 	memcpy(&value, bitfield, size);
 	return value;
+}
+
+/**
+ * As memcmp(), but constant-time.
+ * Returns 0 when data is equal, non-zero otherwise.
+ */
+int memcmp_constant_time (const void *a, const void *b, size_t size) {
+  const uint8_t *a1 = a, *b1 = b;
+  int ret = 0;
+  size_t i;
+
+  for (i = 0; i < size; i++)
+      ret |= *a1++ ^ *b1++;
+
+  return ret;
 }

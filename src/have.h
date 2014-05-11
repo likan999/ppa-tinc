@@ -1,7 +1,7 @@
 /*
     have.h -- include headers which are known to exist
     Copyright (C) 1998-2005 Ivo Timmermans
-                  2003-2011 Guus Sliepen <guus@tinc-vpn.org>
+                  2003-2014 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -38,6 +38,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <limits.h>
 
 #ifdef HAVE_MINGW
 #include <w32api.h>

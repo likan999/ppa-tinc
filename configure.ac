@@ -1,7 +1,7 @@
 dnl Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.61)
-AC_INIT([tinc], [1.0.23])
+AC_INIT([tinc], [1.0.24])
 AC_CONFIG_SRCDIR([src/tincd.c])
 AM_INIT_AUTOMAKE([1.11 check-news std-options subdir-objects nostdinc -Wall])
 AC_CONFIG_HEADERS([config.h])
@@ -105,7 +105,7 @@ AC_ARG_ENABLE(tunemu,
 )
 
 AC_ARG_WITH(windows2000,
-  AS_HELP_STRING([--without-windows2000], [compile with support for Windows 2000. This disables support for tunneling over existing IPv6 networks.]),
+  AS_HELP_STRING([--with-windows2000], [compile with support for Windows 2000. This disables support for tunneling over existing IPv6 networks.]),
   [ AS_IF([test "x$with_windows2000" = "xyes"],
       [AC_DEFINE(WITH_WINDOWS2000, 1, [Compile with support for Windows 2000])])
   ]
@@ -129,17 +129,40 @@ if test -d /sw/lib ; then
   LIBS="$LIBS -L/sw/lib"
 fi
 
+dnl Compiler hardening flags
+dnl No -fstack-protector-all because it doesn't work on all platforms or architectures.
+
+AC_ARG_ENABLE([hardening], AS_HELP_STRING([--disable-hardening], [disable compiler and linker hardening flags]))
+AS_IF([test "x$enable_hardening" != "xno"],
+  [AX_CHECK_COMPILE_FLAG([-DFORTIFY_SOURCE=2], [CPPFLAGS="$CPPFLAGS -DFORITFY_SOURCE=2"])
+   AX_CHECK_COMPILE_FLAG([-fno-strict-overflow], [CPPFLAGS="$CPPFLAGS -fno-strict-overflow"])
+   AX_CHECK_COMPILE_FLAG([-fwrapv], [CPPFLAGS="$CPPFLAGS -fwrapv"])
+   case $host_os in
+     *mingw*)
+       AX_CHECK_LINK_FLAG([-Wl,--dynamicbase], [LDFLAGS="$LDFLAGS -Wl,--dynamicbase"])
+       AX_CHECK_LINK_FLAG([-Wl,--nxcompat], [LDFLAGS="$LDFLAGS -Wl,--nxcompat"])
+       ;;
+     *)
+       AX_CHECK_COMPILE_FLAG([-fPIE], [CPPFLAGS="$CPPFLAGS -fPIE"])
+       AX_CHECK_LINK_FLAG([-pie], [LDFLAGS="$LDFLAGS -pie"])
+       ;;
+   esac
+   AX_CHECK_LINK_FLAG([-Wl,-z,relro], [LDFLAGS="$LDFLAGS -Wl,-z,relro"])
+   AX_CHECK_LINK_FLAG([-Wl,-z,now], [LDFLAGS="$LDFLAGS -Wl,-z,now"])
+  ]
+);
+
 dnl Checks for libraries.
 
 dnl Checks for header files.
 dnl We do this in multiple stages, because unlike Linux all the other operating systems really suck and don't include their own dependencies.
 
 AC_HEADER_STDC
-AC_CHECK_HEADERS([stdbool.h syslog.h sys/file.h sys/ioctl.h sys/mman.h sys/param.h sys/resource.h sys/socket.h sys/time.h time.h sys/uio.h sys/wait.h netdb.h arpa/inet.h dirent.h])
+AC_CHECK_HEADERS([stdbool.h syslog.h sys/file.h sys/ioctl.h sys/mman.h sys/param.h sys/resource.h sys/socket.h sys/time.h time.h sys/uio.h sys/wait.h netdb.h arpa/inet.h arpa/nameser.h dirent.h])
 AC_CHECK_HEADERS([net/if.h net/if_types.h linux/if_tun.h net/if_tun.h net/tun/if_tun.h net/if_tap.h net/tap/if_tap.h net/ethernet.h net/if_arp.h netinet/in_systm.h netinet/in.h netinet/in6.h netpacket/packet.h],
   [], [], [#include "src/have.h"]
 )
-AC_CHECK_HEADERS([netinet/if_ether.h netinet/ip.h netinet/ip6.h],
+AC_CHECK_HEADERS([netinet/if_ether.h netinet/ip.h netinet/ip6.h resolv.h],
   [], [], [#include "src/have.h"]
 )
 AC_CHECK_HEADERS([netinet/tcp.h netinet/ip_icmp.h netinet/icmp6.h],
@@ -179,6 +202,11 @@ AC_CHECK_DECLS([freeaddrinfo, gai_strerror, getaddrinfo, getnameinfo],
   [], [], [#include "src/have.h"]
 )
 
+AC_CHECK_DECLS([res_init], [], [], [
+  #include <netinet/in.h>
+  #include <resolv.h>
+])
+
 AC_CACHE_SAVE
 
 dnl These are defined in files in m4/
@@ -187,9 +215,9 @@ tinc_ZLIB
 tinc_LZO
 tinc_OPENSSL
 
-dnl Check if support for jumbograms is requested 
+dnl Check if support for jumbograms is requested
 AC_ARG_ENABLE(jumbograms,
-  AS_HELP_STRING([--disable-jumbograms], [enable support for jumbograms (packets up to 9000 bytes)]),
+  AS_HELP_STRING([--enable-jumbograms], [enable support for jumbograms (packets up to 9000 bytes)]),
   [ AS_IF([test "x$enable_jumbograms" = "xyes"],
       [ AC_DEFINE(ENABLE_JUMBOGRAMS, 1, [Support for jumbograms (packets up to 9000 bytes)]) ])
   ]

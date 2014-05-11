@@ -1,7 +1,7 @@
 /*
     device.c -- Interaction with Linux ethertap and tun/tap device
     Copyright (C) 2001-2005 Ivo Timmermans,
-                  2001-2013 Guus Sliepen <guus@tinc-vpn.org>
+                  2001-2014 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -107,17 +107,21 @@ static bool setup_device(void) {
 		ifr.ifr_flags |= IFF_ONE_QUEUE;
 #endif
 
-	if(iface)
+	if(iface) {
 		strncpy(ifr.ifr_name, iface, IFNAMSIZ);
+		ifr.ifr_name[IFNAMSIZ - 1] = 0;
+	}
 
 	if(!ioctl(device_fd, TUNSETIFF, &ifr)) {
 		strncpy(ifrname, ifr.ifr_name, IFNAMSIZ);
-		if(iface) free(iface);
+		ifrname[IFNAMSIZ - 1] = 0;
+		free(iface);
 		iface = xstrdup(ifrname);
 	} else if(!ioctl(device_fd, (('T' << 8) | 202), &ifr)) {
 		logger(LOG_WARNING, "Old ioctl() request was needed for %s", device);
 		strncpy(ifrname, ifr.ifr_name, IFNAMSIZ);
-		if(iface) free(iface);
+		ifrname[IFNAMSIZ - 1] = 0;
+		free(iface);
 		iface = xstrdup(ifrname);
 	} else
 #endif
@@ -126,8 +130,7 @@ static bool setup_device(void) {
 			overwrite_mac = true;
 		device_info = "Linux ethertap device";
 		device_type = DEVICE_TYPE_ETHERTAP;
-		if(iface)
-			free(iface);
+		free(iface);
 		iface = xstrdup(strrchr(device, '/') ? strrchr(device, '/') + 1 : device);
 	}
 

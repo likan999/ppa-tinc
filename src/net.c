@@ -1,7 +1,7 @@
 /*
     net.c -- most of the network code
     Copyright (C) 1998-2005 Ivo Timmermans,
-                  2000-2012 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2014 Guus Sliepen <guus@tinc-vpn.org>
                   2006      Scott Lamb <slamb@slamb.org>
 		  2011      Loïc Grenié <loic.grenie@gmail.com>
 
@@ -40,6 +40,14 @@
 #include "route.h"
 #include "subnet.h"
 #include "xalloc.h"
+
+#ifdef HAVE_ARPA_NAMESER_H
+#include <arpa/nameser.h>
+#endif
+
+#ifdef HAVE_RESOLV_H
+#include <resolv.h>
+#endif
 
 bool do_purge = false;
 volatile bool running = false;
@@ -182,6 +190,12 @@ void terminate_connection(connection_t *c, bool report) {
 		closesocket(c->socket);
 
 	if(c->edge) {
+		if(!c->node) {
+			logger(LOG_ERR, "Connection to %s (%s) has an edge but node is NULL!", c->name, c->hostname);
+			// And that should never happen.
+			abort();
+		}
+
 		if(report && !tunnelserver)
 			send_del_edge(everyone, c->edge);
 
@@ -494,6 +508,9 @@ int main_loop(void) {
 			avl_node_t *node;
 			logger(LOG_INFO, "Flushing event queue");
 			expire_events();
+#if HAVE_DECL_RES_INIT
+			res_init();
+#endif
 			for(node = connection_tree->head; node; node = node->next) {
 				connection_t *c = node->data;
 				if(c->status.active)

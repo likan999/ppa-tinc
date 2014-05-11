@@ -2,7 +2,7 @@
     avl_tree.c -- avl_ tree and linked list convenience
     Copyright (C) 1998 Michael H. Buselli
                   2000-2005 Ivo Timmermans,
-                  2000-2006 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2014 Guus Sliepen <guus@tinc-vpn.org>
                   2000-2005 Wessel Dankers <wsl@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
@@ -168,14 +168,12 @@ static void avl_rebalance(avl_tree_t *tree, avl_node_t *node)
 						child->right->parent = child;
 					gchild->right = node;
 
-					if(gchild->right)
-						gchild->right->parent = gchild;
+					gchild->right->parent = gchild;
 					gchild->left = child;
 
-					if(gchild->left)
-						gchild->left->parent = gchild;
-					*superparent = gchild;
+					gchild->left->parent = gchild;
 
+					*superparent = gchild;
 					gchild->parent = parent;
 #ifdef AVL_COUNT
 					node->count = AVL_CALC_COUNT(node);
@@ -224,12 +222,10 @@ static void avl_rebalance(avl_tree_t *tree, avl_node_t *node)
 						child->left->parent = child;
 					gchild->left = node;
 
-					if(gchild->left)
-						gchild->left->parent = gchild;
+					gchild->left->parent = gchild;
 					gchild->right = child;
 
-					if(gchild->right)
-						gchild->right->parent = gchild;
+					gchild->right->parent = gchild;
 
 					*superparent = gchild;
 					gchild->parent = parent;
@@ -600,6 +596,8 @@ void avl_unlink_node(avl_tree_t *tree, avl_node_t *node)
 		balnode = parent;
 	} else {
 		subst = node->prev;
+		if(!subst) // This only happens if node is not actually in a tree at all.
+			abort();
 
 		if(subst == left) {
 			balnode = subst;

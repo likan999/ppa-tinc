@@ -15,7 +15,7 @@
 
 This is the info manual for @value{PACKAGE} version @value{VERSION}, a Virtual Private Network daemon.
 
-Copyright @copyright{} 1998-2013 Ivo Timmermans,
+Copyright @copyright{} 1998-2014 Ivo Timmermans,
 Guus Sliepen <guus@@tinc-vpn.org> and
 Wessel Dankers <wsl@@tinc-vpn.org>.
 
@@ -39,7 +39,7 @@ permission notice identical to this one.
 @vskip 0pt plus 1filll
 This is the info manual for @value{PACKAGE} version @value{VERSION}, a Virtual Private Network daemon.
 
-Copyright @copyright{} 1998-2013 Ivo Timmermans,
+Copyright @copyright{} 1998-2014 Ivo Timmermans,
 Guus Sliepen <guus@@tinc-vpn.org> and
 Wessel Dankers <wsl@@tinc-vpn.org>.
 
@@ -718,6 +718,9 @@ The actual configuration of the daemon is done in the file
 @file{@value{sysconfdir}/tinc/@var{netname}/tinc.conf} and at least one other file in the directory
 @file{@value{sysconfdir}/tinc/@var{netname}/hosts/}.
 
+An optionnal directory @file{@value{sysconfdir}/tinc/@var{netname}/conf.d} can be added from which
+any .conf file will be read.
+
 These file consists of comments (lines started with a #) or assignments
 in the form of
 
@@ -1102,6 +1105,8 @@ traffic.
 When this option is enabled tinc will only use Subnet statements which are
 present in the host config files in the local
 @file{@value{sysconfdir}/tinc/@var{netname}/hosts/} directory.
+Subnets learned via connections to other nodes and which are not
+present in the local host config files are ignored.
 
 @cindex TunnelServer
 @item TunnelServer = <yes|no> (no) [experimental]
@@ -1134,6 +1139,8 @@ This variable is only required if you want to connect to this host.  It
 must resolve to the external IP address where the host can be reached,
 not the one that is internal to the VPN.
 If no port is specified, the default Port is used.
+Multiple Address variables can be specified, in which case each address will be
+tried until a working connection has been established.
 
 @cindex Cipher
 @item Cipher = <@var{cipher}> (blowfish)

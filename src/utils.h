@@ -1,7 +1,7 @@
 /*
     utils.h -- header file for utils.c
     Copyright (C) 1999-2005 Ivo Timmermans
-                  2000-2009 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2014 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -41,5 +41,7 @@ extern const char *winerror(int);
 #endif
 
 extern unsigned int bitfield_to_int(const void *bitfield, size_t size);
+
+int memcmp_constant_time (const void *a, const void *b, size_t size);
 
 #endif							/* __TINC_UTILS_H__ */

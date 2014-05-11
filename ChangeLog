@@ -1,3 +1,55 @@
+Version 1.0.24                                               May 11 2014
+------------------------------------------------------------------------
+
+Guus Sliepen (26):
+      Mention in the manual that multiple Address staments are allowed.
+      If no Port is specified, set myport to actual port of first listening socket.
+      Enable compiler hardening flags by default.
+      Update support for Solaris.
+      Include <limits.h> for PATH_MAX.
+      Stricter check for raw socket support.
+      Use hardcoded value for TUNNEWPPA if net/if_tun.h is missing on Solaris.
+      Fix incorrectly merged bits from 80cd2ff73071941a5356555b85a00ee90dfd0e16.
+      Don't enable -fstack-protector-all.
+      Remove or lower the priority of some debug messages.
+      Clarify StrictSubnets.
+      Attribution for various contributors.
+      Handle errors from TAP-Win32/64 adapter in a better way.
+      Remove useless variable 'hard' from try_harder().
+      Merge pull request #14 from luckyhacky/master
+      Add an autoconf check for res_init().
+      Nexthop calculation should always use the shortest path.
+      Fix issues found by Coverity.
+      Fix warnings found by GCC 4.9.
+      Fix a few more issues found by Coverity.
+      Fix a few more issues found by Coverity.
+      Drop h and hh length modifiers from printf format strings.
+      Fix a bug that could prevent tinc from starting correctly on Windows.
+      FIx the autoconf checks for res_init().
+      Remove the warnings when IP_DONTFRAGMENT/IPV6-DONTFRAG is not supported.
+      Releasing 1.0.24.
+
+Steffan Karger (3):
+      Use constant time memcmp() when comparing packet HMACs.
+      Use cryptographically strong random when generating keys.
+      Check RAND_bytes() return value, fail when getting random fails.
+
+Florent Clairambault (2):
+      Adding "conf.d" configuration dir support.
+      Adding some documentation around the /etc/tinc/$NET/conf.d directory.
+
+Armin Fisslthaler (1):
+      reload /etc/resolv.conf in SIGALRM handler
+
+Loic Dachary (1):
+      fix documentation typo
+
+Vilbrekin (1):
+      Update android build instructions. Disable PIE as this is not supported on some devices.
+
+luckyhacky (1):
+      update to openssl version 1.0.1g due to lack of heartbleed bug in prior version of openssl
+
 Version 1.0.23                                           October 19 2013
 ------------------------------------------------------------------------
 

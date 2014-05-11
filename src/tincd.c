@@ -1,7 +1,7 @@
 /*
     tincd.c -- the main file for tincd
     Copyright (C) 1998-2005 Ivo Timmermans
-                  2000-2013 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2014 Guus Sliepen <guus@tinc-vpn.org>
                   2008      Max Rijevski <maksuf@gmail.com>
                   2009      Michael Tokarev <mjt@tls.msk.ru>
                   2010      Julien Muchembled <jm@jmuchemb.eu>
@@ -162,6 +162,11 @@ static bool parse_options(int argc, char **argv) {
 				break;
 
 			case 'c':				/* config file */
+				if(confbase) {
+					fprintf(stderr, "Only one configuration directory can be given.\n");
+					usage(true);
+					return false;
+				}
 				confbase = xstrdup(optarg);
 				break;
 
@@ -229,6 +234,11 @@ static bool parse_options(int argc, char **argv) {
 
 			case 'n':				/* net name given */
 				/* netname "." is special: a "top-level name" */
+				if(netname) {
+					fprintf(stderr, "Only one netname can be given.\n");
+					usage(true);
+					return false;
+				}
 				netname = strcmp(optarg, ".") != 0 ? xstrdup(optarg) : NULL;
 				break;
 
@@ -281,11 +291,22 @@ static bool parse_options(int argc, char **argv) {
 				use_logfile = true;
 				if(!optarg && optind < argc && *argv[optind] != '-')
 					optarg = argv[optind++];
-				if(optarg)
+				if(optarg) {
+					if(logfilename) {
+						fprintf(stderr, "Only one logfile can be given.\n");
+						usage(true);
+						return false;
+					}
 					logfilename = xstrdup(optarg);
+				}
 				break;
 
 			case 5:					/* write PID to a file */
+				if(pidfilename) {
+					fprintf(stderr, "Only one pidfile can be given.\n");
+					usage(true);
+					return false;
+				}
 				pidfilename = xstrdup(optarg);
 				break;
 
@@ -350,7 +371,6 @@ static void indicator(int a, int b, void *p) {
 static bool keygen(int bits) {
 	RSA *rsa_key;
 	FILE *f;
-	char *name = get_name();
 	char *pubname, *privname;
 
 	fprintf(stderr, "Generating %d bits keys:\n", bits);
@@ -378,10 +398,14 @@ static bool keygen(int bits) {
 	PEM_write_RSAPrivateKey(f, rsa_key, NULL, NULL, 0, NULL, NULL);
 	fclose(f);
 
-	if(name)
+	char *name = get_name();
+
+	if(name) {
 		xasprintf(&pubname, "%s/hosts/%s", confbase, name);
-	else
+		free(name);
+	} else {
 		xasprintf(&pubname, "%s/rsa_key.pub", confbase);
+	}
 
 	f = ask_and_open(pubname, "public RSA key");
 	free(pubname);
@@ -392,7 +416,6 @@ static bool keygen(int bits) {
 	fputc('\n', f);
 	PEM_write_RSAPublicKey(f, rsa_key);
 	fclose(f);
-	free(name);
 
 	return true;
 }
@@ -526,7 +549,7 @@ int main(int argc, char **argv) {
 	if(show_version) {
 		printf("%s version %s (built %s %s, protocol %d)\n", PACKAGE,
 			   VERSION, __DATE__, __TIME__, PROT_CURRENT);
-		printf("Copyright (C) 1998-2013 Ivo Timmermans, Guus Sliepen and others.\n"
+		printf("Copyright (C) 1998-2014 Ivo Timmermans, Guus Sliepen and others.\n"
 				"See the AUTHORS file for a complete list.\n\n"
 				"tinc comes with ABSOLUTELY NO WARRANTY.  This is free software,\n"
 				"and you are welcome to redistribute it under certain conditions;\n"

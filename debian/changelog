@@ -1,3 +1,16 @@
+tinc (1.0.24-1) unstable; urgency=medium
+
+  [ Guus Sliepen ]
+  * New upstream release
+  * Add a debian/watch file.
+  * Bump Standards-Version.
+
+  [ Gian Piero Carrubba ]
+  * Allow resource limits to be set in /etc/default/tinc.
+    Closes: #690685, #704702
+
+ -- Guus Sliepen <guus@debian.org>  Sun, 11 May 2014 21:17:13 +0200
+
 tinc (1.0.23-2) unstable; urgency=low
 
   * Use if-statements instead of && in shell scripts. Closes: #731279

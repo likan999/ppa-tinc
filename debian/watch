@@ -1,0 +1,2 @@
+version=3
+opts=pgpsigurlmangle=s/$/.sig/ http://www.tinc-vpn.org/packages/tinc-(1\.0\.\d+)\.tar\.gz

@@ -1,7 +1,7 @@
 /*
     net_packet.c -- Handles in- and outgoing VPN packets
     Copyright (C) 1998-2005 Ivo Timmermans,
-                  2000-2013 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2014 Guus Sliepen <guus@tinc-vpn.org>
                   2010      Timothy Redaelli <timothy@redaelli.eu>
                   2010      Brandon Black <blblack@gmail.com>
 
@@ -269,7 +269,7 @@ static bool try_mac(const node_t *n, const vpn_packet_t *inpkt) {
 
 	HMAC(n->indigest, n->inkey, n->inkeylength, (unsigned char *) &inpkt->seqno, inpkt->len - n->inmaclength, (unsigned char *)hmac, NULL);
 
-	return !memcmp(hmac, (char *) &inpkt->seqno + inpkt->len - n->inmaclength, n->inmaclength);
+	return !memcmp_constant_time(hmac, (char *) &inpkt->seqno + inpkt->len - n->inmaclength, n->inmaclength);
 }
 
 static void receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
@@ -302,7 +302,7 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 		HMAC(n->indigest, n->inkey, n->inkeylength,
 			 (unsigned char *) &inpkt->seqno, inpkt->len, (unsigned char *)hmac, NULL);
 
-		if(memcmp(hmac, (char *) &inpkt->seqno + inpkt->len, n->inmaclength)) {
+		if(memcmp_constant_time(hmac, (char *) &inpkt->seqno + inpkt->len, n->inmaclength)) {
 			ifdebug(TRAFFIC) logger(LOG_DEBUG, "Got unauthenticated packet from %s (%s)",
 					   n->name, n->hostname);
 			return;
@@ -664,7 +664,6 @@ static node_t *try_harder(const sockaddr_t *from, const vpn_packet_t *pkt) {
 	avl_node_t *node;
 	edge_t *e;
 	node_t *n = NULL;
-	bool hard = false;
 	static time_t last_hard_try = 0;
 
 	for(node = edge_weight_tree->head; node; node = node->next) {
@@ -673,11 +672,8 @@ static node_t *try_harder(const sockaddr_t *from, const vpn_packet_t *pkt) {
 		if(e->to == myself)
 			continue;
 
-		if(sockaddrcmp_noport(from, &e->address)) {
-			if(last_hard_try == now)
-				continue;
-			hard = true;
-		}
+		if(last_hard_try == now && sockaddrcmp_noport(from, &e->address))
+			continue;
 
 		if(!try_mac(e->to, pkt))
 			continue;
@@ -685,9 +681,6 @@ static node_t *try_harder(const sockaddr_t *from, const vpn_packet_t *pkt) {
 		n = e->to;
 		break;
 	}
-
-	if(hard)
-		last_hard_try = now;
 
 	last_hard_try = now;
 	return n;
