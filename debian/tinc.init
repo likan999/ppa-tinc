@@ -73,28 +73,45 @@ test -n "$LIMITS" && setlimits $LIMITS
 start() {
   $DAEMON $EXTRA -n "$@"
 }
+
 stop() {
-  $DAEMON -n $1 -k
+  [ -f /var/run/tinc.$1.pid ] || return
+  read pid rest </var/run/tinc.$1.pid || return
+  kill -0 "$pid" 2>/dev/null || return
+
+  $DAEMON -n $1 -k || return
+
+  i=0;
+  sleep 0.5
+
+  # Wait for the pidfile to disappear
+  while [ -f /var/run/tinc.$1.pid ]; do
+    # And check that there is an actual process running
+    kill -0 "$pid" 2>/dev/null || return
+
+    if [ $i = '10' ] ; then
+      # It's still alive, kill it again and give up
+        $DAEMON -n $1 -k && sleep 0.5
+      break
+    else
+      echo -n "."
+      i=$(($i+1))
+    fi
+
+    sleep 0.5
+  done
 }
+
 reload() {
   $DAEMON -n $1 -kHUP
 }
+
 alarm() {
   $DAEMON -n $1 -kALRM
 }
+
 restart() {
   stop "$@"
-  sleep 0.5
-  i=0;
-  while [ -f /var/run/tinc.$1.pid ] ; do
-	if [ $i = '10' ] ; then
-		break
-	else
-		echo -n "."
-		sleep 0.5
-		i=$(($i+1))
-	fi		
-  done
   start "$@"
 }
 

@@ -1,3 +1,21 @@
+tinc (1.0.24-2~bpo70+1) wheezy-backports; urgency=medium
+
+  * Backport to wheezy-backports.
+  * Add myself to Uploaders.
+
+ -- Micah Anderson <micah@debian.org>  Mon, 23 Jun 2014 09:46:54 -0400
+
+tinc (1.0.24-2) unstable; urgency=medium
+
+  * Improve the init script: stopping tinc now waits for the process to
+    terminate. If that doesn't happen in 5 seconds, it will send the TERM
+    signal again (which helps if tinc is waiting for a script to finish
+    executing). It now also detects whether the process mentioned in the PID
+    file is actually running, and if not it will exit early and without
+    warnings. Closes: #748107
+
+ -- Guus Sliepen <guus@debian.org>  Wed, 14 May 2014 21:44:16 +0200
+
 tinc (1.0.24-1) unstable; urgency=medium
 
   [ Guus Sliepen ]
