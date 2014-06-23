@@ -5,6 +5,7 @@ Maintainer: Guus Sliepen <guus@debian.org>
 Standards-Version: 3.9.5
 Build-Depends: libssl-dev, debhelper (>= 9), gettext, texinfo, zlib1g-dev, liblzo2-dev, libvdeplug-dev
 Homepage: http://www.tinc-vpn.org/
+Uploaders: Micah Anderson <micah@debian.org>
 
 Package: tinc
 Architecture: any
