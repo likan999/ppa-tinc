@@ -1,3 +1,11 @@
+tinc (1.0.24-2.1) unstable; urgency=medium
+
+  * NMU after getting go ahead from guus on #tinc
+  * Add a -dbg package which contains the debugging symbols for tinc
+    Thanks hark@puscii.nl (Closes: #752561)
+
+ -- Micah Anderson <micah@debian.org>  Tue, 24 Jun 2014 14:01:47 -0400
+
 tinc (1.0.24-2) unstable; urgency=medium
 
   * Improve the init script: stopping tinc now waits for the process to
