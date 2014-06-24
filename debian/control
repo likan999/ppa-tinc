@@ -14,3 +14,16 @@ Description: Virtual Private Network daemon
  (VPN). One daemon can handle multiple connections, so you can
  create an entire (moderately sized) VPN with only one daemon per
  participating computer.
+
+Package: tinc-dbg
+Architecture: any
+Section: debug
+Priority: extra
+Depends: ${shlibs:Depends}, ${misc:Depends}, tinc (= ${binary:Version})
+Description: debugging symbols for tinc
+ tinc is a daemon with which you can create a virtual private network
+ (VPN). One daemon can handle multiple connections, so you can
+ create an entire (moderately sized) VPN with only one daemon per
+ participating computer.
+ .
+ This package contains the debugging symbols for tinc.
