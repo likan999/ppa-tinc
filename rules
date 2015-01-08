@@ -28,4 +28,4 @@ override_dh_auto_test:
 	# I don't think the autobuilders will like this.
 
 override_dh_installinit:
-	dh_installinit -R
+	dh_installinit -r

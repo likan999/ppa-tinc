@@ -5,3 +5,4 @@ usr/share/man/man5
 usr/share/man/man8/tincd.*
 usr/share/man/man8/tinc.*
 usr/share/info
+debian/*.service /lib/systemd/system/
