@@ -1,7 +1,7 @@
 /*
     net_socket.c -- Handle various kinds of sockets.
     Copyright (C) 1998-2005 Ivo Timmermans,
-                  2000-2013 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2014 Guus Sliepen <guus@tinc-vpn.org>
                   2006      Scott Lamb <slamb@slamb.org>
                   2009      Florian Forster <octo@verplant.org>
 
@@ -103,7 +103,7 @@ static bool bind_to_interface(int sd) {
 	status = setsockopt(sd, SOL_SOCKET, SO_BINDTODEVICE, (void *)&ifr, sizeof(ifr));
 	if(status) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Can't bind to interface %s: %s", iface,
-				strerror(errno));
+				sockstrerror(sockerrno));
 		return false;
 	}
 #else /* if !defined(SOL_SOCKET) || !defined(SO_BINDTODEVICE) */
@@ -116,7 +116,7 @@ static bool bind_to_interface(int sd) {
 static bool bind_to_address(connection_t *c) {
 	int s = -1;
 
-	for(int i = 0; i < listen_sockets; i++) {
+	for(int i = 0; i < listen_sockets && listen_socket[i].bindto; i++) {
 		if(listen_socket[i].sa.sa.sa_family != c->address.sa.sa_family)
 			continue;
 		if(s >= 0)
@@ -134,7 +134,7 @@ static bool bind_to_address(connection_t *c) {
 		sa.in6.sin6_port = 0;
 
 	if(bind(c->socket, &sa.sa, SALEN(sa.sa))) {
-		logger(DEBUG_CONNECTIONS, LOG_WARNING, "Can't bind outgoing socket: %s", strerror(errno));
+		logger(DEBUG_CONNECTIONS, LOG_WARNING, "Can't bind outgoing socket: %s", sockstrerror(sockerrno));
 		return false;
 	}
 
@@ -179,7 +179,7 @@ int setup_listen_socket(const sockaddr_t *sa) {
 		if(setsockopt(nfd, SOL_SOCKET, SO_BINDTODEVICE, (void *)&ifr, sizeof ifr)) {
 			closesocket(nfd);
 			logger(DEBUG_ALWAYS, LOG_ERR, "Can't bind to interface %s: %s", iface,
-				   strerror(sockerrno));
+				   sockstrerror(sockerrno));
 			return -1;
 		}
 #else
@@ -247,10 +247,10 @@ int setup_vpn_in_socket(const sockaddr_t *sa) {
 	setsockopt(nfd, SOL_SOCKET, SO_BROADCAST, (void *)&option, sizeof option);
 
 	if(udp_rcvbuf && setsockopt(nfd, SOL_SOCKET, SO_RCVBUF, (void *)&udp_rcvbuf, sizeof(udp_rcvbuf)))
-		logger(DEBUG_ALWAYS, LOG_WARNING, "Can't set UDP SO_RCVBUF to %i: %s", udp_rcvbuf, strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_WARNING, "Can't set UDP SO_RCVBUF to %i: %s", udp_rcvbuf, sockstrerror(sockerrno));
 
 	if(udp_sndbuf && setsockopt(nfd, SOL_SOCKET, SO_SNDBUF, (void *)&udp_sndbuf, sizeof(udp_sndbuf)))
-		logger(DEBUG_ALWAYS, LOG_WARNING, "Can't set UDP SO_SNDBUF to %i: %s", udp_sndbuf, strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_WARNING, "Can't set UDP SO_SNDBUF to %i: %s", udp_sndbuf, sockstrerror(sockerrno));
 
 #if defined(IPPROTO_IPV6) && defined(IPV6_V6ONLY)
 	if(sa->sa.sa_family == AF_INET6)
@@ -271,8 +271,6 @@ int setup_vpn_in_socket(const sockaddr_t *sa) {
 		option = 1;
 		setsockopt(nfd, IPPROTO_IP, IP_DONTFRAGMENT, (void *)&option, sizeof(option));
 	}
-#else
-#warning No way to disable IPv4 fragmentation
 #endif
 
 #if defined(SOL_IPV6) && defined(IPV6_MTU_DISCOVER) && defined(IPV6_PMTUDISC_DO)
@@ -285,8 +283,6 @@ int setup_vpn_in_socket(const sockaddr_t *sa) {
 		option = 1;
 		setsockopt(nfd, IPPROTO_IPV6, IPV6_DONTFRAG, (void *)&option, sizeof(option));
 	}
-#else
-#warning No way to disable IPv6 fragmentation
 #endif
 
 	if (!bind_to_interface(nfd)) {
@@ -334,7 +330,7 @@ static void do_outgoing_pipe(connection_t *c, char *command) {
 	int fd[2];
 
 	if(socketpair(AF_UNIX, SOCK_STREAM, 0, fd)) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Could not create socketpair: %s", strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, "Could not create socketpair: %s", sockstrerror(sockerrno));
 		return;
 	}
 
@@ -383,16 +379,16 @@ static void handle_meta_write(connection_t *c) {
 
 	ssize_t outlen = send(c->socket, c->outbuf.data + c->outbuf.offset, c->outbuf.len - c->outbuf.offset, 0);
 	if(outlen <= 0) {
-		if(!errno || errno == EPIPE) {
+		if(!sockerrno || sockerrno == EPIPE) {
 			logger(DEBUG_CONNECTIONS, LOG_NOTICE, "Connection closed by %s (%s)", c->name, c->hostname);
 		} else if(sockwouldblock(sockerrno)) {
 			logger(DEBUG_CONNECTIONS, LOG_DEBUG, "Sending %d bytes to %s (%s) would block", c->outbuf.len - c->outbuf.offset, c->name, c->hostname);
 			return;
 		} else {
-			logger(DEBUG_CONNECTIONS, LOG_ERR, "Could not send %d bytes of data to %s (%s): %s", c->outbuf.len - c->outbuf.offset, c->name, c->hostname, strerror(errno));
+			logger(DEBUG_CONNECTIONS, LOG_ERR, "Could not send %d bytes of data to %s (%s): %s", c->outbuf.len - c->outbuf.offset, c->name, c->hostname, sockstrerror(sockerrno));
 		}
 
-		terminate_connection(c, c->status.active);
+		terminate_connection(c, c->edge);
 		return;
 	}
 
@@ -405,19 +401,38 @@ static void handle_meta_io(void *data, int flags) {
 	connection_t *c = data;
 
 	if(c->status.connecting) {
-		c->status.connecting = false;
+		/*
+		   The event loop does not protect against spurious events. Verify that we are actually connected
+		   by issuing an empty send() call.
 
-		int result;
-		socklen_t len = sizeof result;
-		getsockopt(c->socket, SOL_SOCKET, SO_ERROR, (void *)&result, &len);
-
-		if(!result)
-			finish_connecting(c);
-		else {
-			logger(DEBUG_CONNECTIONS, LOG_DEBUG, "Error while connecting to %s (%s): %s", c->name, c->hostname, sockstrerror(result));
-			terminate_connection(c, false);
+		   Note that the behavior of send() on potentially unconnected sockets differ between platforms:
+		   +------------+-----------+-------------+-----------+
+		   |   Event    |   POSIX   |    Linux    |  Windows  |
+		   +------------+-----------+-------------+-----------+
+		   | Spurious   | ENOTCONN  | EWOULDBLOCK | ENOTCONN  |
+		   | Failed     | ENOTCONN  | (cause)     | ENOTCONN  |
+		   | Successful | (success) | (success)   | (success) |
+		   +------------+-----------+-------------+-----------+
+		*/
+		if (send(c->socket, NULL, 0, 0) != 0) {
+			if (sockwouldblock(sockerrno))
+				return;
+			int socket_error;
+			if (!socknotconn(sockerrno))
+				socket_error = sockerrno;
+			else {
+				socklen_t len = sizeof socket_error;
+				getsockopt(c->socket, SOL_SOCKET, SO_ERROR, (void *)&socket_error, &len);
+			}
+			if (socket_error) {
+				logger(DEBUG_CONNECTIONS, LOG_DEBUG, "Error while connecting to %s (%s): %s", c->name, c->hostname, sockstrerror(socket_error));
+				terminate_connection(c, false);
+			}
 			return;
 		}
+
+		c->status.connecting = false;
+		finish_connecting(c);
 	}
 
 	if(flags & IO_WRITE)
@@ -547,6 +562,39 @@ begin:
 	return true;
 }
 
+// Find edges pointing to this node, and use them to build a list of unique, known addresses.
+static struct addrinfo *get_known_addresses(node_t *n) {
+	struct addrinfo *ai = NULL;
+
+	for splay_each(edge_t, e, n->edge_tree) {
+		if(!e->reverse)
+			continue;
+
+		bool found = false;
+		for(struct addrinfo *aip = ai; aip; aip = aip->ai_next) {
+			if(!sockaddrcmp(&e->reverse->address, (sockaddr_t *)aip->ai_addr)) {
+				found = true;
+				break;
+			}
+		}
+		if(found)
+			continue;
+
+		struct addrinfo *nai = xzalloc(sizeof *nai);
+		if(ai)
+			ai->ai_next = nai;
+		ai = nai;
+		ai->ai_family = e->reverse->address.sa.sa_family;
+		ai->ai_socktype = SOCK_STREAM;
+		ai->ai_protocol = IPPROTO_TCP;
+		ai->ai_addrlen = SALEN(e->reverse->address.sa);
+		ai->ai_addr = xmalloc(ai->ai_addrlen);
+		memcpy(ai->ai_addr, &e->reverse->address, ai->ai_addrlen);
+	}
+
+	return ai;
+}
+
 void setup_outgoing_connection(outgoing_t *outgoing) {
 	timeout_del(&outgoing->ev);
 
@@ -564,8 +612,12 @@ void setup_outgoing_connection(outgoing_t *outgoing) {
 	outgoing->cfg = lookup_config(outgoing->config_tree, "Address");
 
 	if(!outgoing->cfg) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "No address specified for %s", outgoing->name);
-		return;
+		if(n)
+			outgoing->aip = outgoing->ai = get_known_addresses(n);
+		if(!outgoing->ai) {
+			logger(DEBUG_ALWAYS, LOG_ERR, "No address known for %s", outgoing->name);
+			return;
+		}
 	}
 
 	do_outgoing_connection(outgoing);
@@ -594,7 +646,6 @@ void handle_new_meta_connection(void *data, int flags) {
 	// Check if we get many connections from the same host
 
 	static sockaddr_t prev_sa;
-	static time_t prev_time;
 	static int tarpit = -1;
 
 	if(tarpit >= 0) {
@@ -621,7 +672,6 @@ void handle_new_meta_connection(void *data, int flags) {
 	}
 
 	memcpy(&prev_sa, &sa, sizeof sa);
-	prev_time = now.tv_sec;
 
 	// Check if we get many connections from different hosts
 
@@ -770,7 +820,7 @@ void try_outgoing_connections(void) {
 		if(c->outgoing && c->outgoing->timeout == -1) {
 			c->outgoing = NULL;
 			logger(DEBUG_CONNECTIONS, LOG_INFO, "No more outgoing connection to %s", c->name);
-			terminate_connection(c, c->status.active);
+			terminate_connection(c, c->edge);
 		}
 	}
 

@@ -1,3 +1,17 @@
+tinc (1.1~pre11-1) experimental; urgency=medium
+
+  * New upstream release.
+  * Update NEWS.Debian to reflect that tincctl has been renamed to tinc.
+    Closes: #729889
+  * Warn about incompatibility with previous 1.1preX releases, and that new
+    Ed25519 keys should be generated.
+  * Add native systemd service files.
+  * Automatically convert networks listed in nets.boot to systemd service
+    instances on upgrade.
+  * Don't restart tinc on upgrade for now.
+
+ -- Guus Sliepen <guus@debian.org>  Thu, 08 Jan 2015 14:51:34 +0100
+
 tinc (1.1~pre9-1) experimental; urgency=low
 
   * New upstream release.

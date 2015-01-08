@@ -19,13 +19,15 @@
 
 #include "../system.h"
 
-#include <openssl/pem.h>
-#include <openssl/err.h>
-#include <openssl/obj_mac.h>
+#include "ed25519.h"
 
 #define __TINC_ECDSA_INTERNAL__
-typedef EC_KEY ecdsa_t;
+typedef struct {
+	uint8_t private[64];
+	uint8_t public[32];
+} ecdsa_t;
 
+#include "../crypto.h"
 #include "../ecdsagen.h"
 #include "../utils.h"
 #include "../xalloc.h"
@@ -33,38 +35,37 @@ typedef EC_KEY ecdsa_t;
 // Generate ECDSA key
 
 ecdsa_t *ecdsa_generate(void) {
-	ecdsa_t *ecdsa = EC_KEY_new_by_curve_name(NID_secp521r1);
+	ecdsa_t *ecdsa = xzalloc(sizeof *ecdsa);
 
-	if(!ecdsa || !EC_KEY_generate_key(ecdsa)) {
-		fprintf(stderr, "Generating EC key failed: %s", ERR_error_string(ERR_get_error(), NULL));
-		ecdsa_free(ecdsa);
-		return false;
-	}
-
-	EC_KEY_set_asn1_flag(ecdsa, OPENSSL_EC_NAMED_CURVE);
-	EC_KEY_set_conv_form(ecdsa, POINT_CONVERSION_COMPRESSED);
+	uint8_t seed[32];
+	randomize(seed, sizeof seed);
+	ed25519_create_keypair(ecdsa->public, ecdsa->private, seed);
 
 	return ecdsa;
 }
 
 // Write PEM ECDSA keys
 
+static bool write_pem(FILE *fp, const char *type, void *buf, size_t size) {
+	fprintf(fp, "-----BEGIN %s-----\n", type);
+
+	char base64[65];
+	while(size) {
+		size_t todo = size > 48 ? 48 : size;
+		b64encode(buf, base64, todo);
+		fprintf(fp, "%s\n", base64);
+		buf += todo;
+		size -= todo;
+	}
+
+	fprintf(fp, "-----END %s-----\n", type);
+	return !ferror(fp);
+}
+
 bool ecdsa_write_pem_public_key(ecdsa_t *ecdsa, FILE *fp) {
-	BIO *out = BIO_new(BIO_s_file());
-	if(!out)
-		return false;
-	BIO_set_fp(out, fp, BIO_NOCLOSE);
-	bool result = PEM_write_bio_EC_PUBKEY(out, ecdsa);
-	BIO_free(out);
-	return result;
+	return write_pem(fp, "ED25519 PUBLIC KEY", ecdsa->public, sizeof ecdsa->public);
 }
 
 bool ecdsa_write_pem_private_key(ecdsa_t *ecdsa, FILE *fp) {
-	BIO *out = BIO_new(BIO_s_file());
-	if(!out)
-		return false;
-	BIO_set_fp(out, fp, BIO_NOCLOSE);
-	bool result = PEM_write_bio_ECPrivateKey(out, ecdsa, NULL, NULL, 0, NULL, NULL);
-	BIO_free(out);
-	return result;
+	return write_pem(fp, "ED25519 PRIVATE KEY", ecdsa->private, sizeof *ecdsa);
 }

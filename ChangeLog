@@ -1,3 +1,240 @@
+Version 1.1pre11                                        December 27 2014
+------------------------------------------------------------------------
+
+Etienne Dechamps (68):
+      Move Solaris if_fd to local scope.
+      Make device close cleaner.
+      Cleanly remove the device FD from the event loop before closing it.
+      Add DeviceStandby option to only enable the device when nodes are reachable.
+      Make DeviceStandby control network interface link status on Windows.
+      Fix Windows includes.
+      Fix errno references when handling socket errors.
+      Protect against spurious connection events.
+      Fix connection event error handling.
+      Use native Windows events for the event loop.
+      Make the event loop expose a Windows event interface.
+      Use a Windows event to stop tinc when running as a service.
+      Remove the TAP-Win32 reader thread.
+      Add local address information to edges.
+      Use edge local addresses for local discovery.
+      Remove broadcast-based local discovery mechanism.
+      Enable LocalDiscovery by default.
+      Implement sptps_verify_datagram().
+      Make broadcast addresses configurable.
+      Make IPv4 multicast space 224.0.0.0/4 broadcast by default.
+      Regenerate build date and time every time tinc is built.
+      Use git description as the tinc version.
+      Rewrite, fix and improve str2net().
+      When printing MAC addresses, always use trailing zeroes.
+      Don't print subnet prefix lengths and weights for one-host subnets.
+      Canonicalize IPv6 addresses as per RFC 5952 before printing them.
+      Fix tinc event loop reentrancy from timeout handlers.
+      Make sure myport is set correctly when running with Port = 0.
+      Fix event loop io tree inconsistency on Windows.
+      Fix a typo (FORTIFY_SOURCE).
+      Handle the "no local address" case in send_sptps_data().
+      Don't initialize outpkt to an unused value.
+      Remove redundant connection_t::status.active field.
+      Only declare the origpriority variable if we support priority.
+      Remove an unnecessary pointer dereference in execute_script().
+      Fix callback signature for TAP-Win32 device_handle_read().
+      Remove unused variable in TAP-Win32 setup_device().
+      Remove unused device stats variables.
+      Resolve KEY_EVENT conflict between Windows and ncurses.
+      Check if devops is valid before closing the device.
+      Shutdown cleanly when receiving a Windows console shutdown request.
+      Fix "tinc start" on Windows when the path contains spaces.
+      Improve subprocess behavior in tinc start command.
+      Add documentation about using system-assigned ports.
+      Verify seqno early in sptps_verify_datagram().
+      Add a non-interactive mode to tinc commands.
+      Only read from TAP-Win32 if the device is enabled.
+      Handle TAP-Win32 immediate reads correctly.
+      Clarify copyright ownership for code authored by Etienne Dechamps.
+      Remove Google from the list of copyright owners.
+      Fix undefined HOST_NAME_MAX on Windows.
+      Don't enable the device if the reachable count is zero.
+      Fix wrong identifier in SO_NOSIGPIPE call.
+      Fix default TAP device on Darwin.
+      Ignore the Interface option if device rename is impossible.
+      Fix default device path selection on BSD.
+      Preemptively mirror REQ_PUBKEY messages from nodes with unknown keys.
+      Fix protocol version check for type 2 MTU probe replies.
+      Invalidate UDP information on address changes.
+      Introduce node IDs.
+      Change vpn_packet_t::seqno from uint32_t to uint8_t[4].
+      Prepend source node ID information to UDP datagrams.
+      Add UDP datagram relay support to SPTPS.
+      Don't send MTU probes to nodes we can't reach directly.
+      Make sure to discover MTU with relays.
+      Query the Linux device for its MAC address.
+      Don't spontaneously start SPTPS with neighbors.
+      Use plain old PACKET for TCP packets sent directly to a neighbor.
+
+Guus Sliepen (68):
+      Really fix compiling under Windows.
+      Add missing attribution for 1.1pre10 to the NEWS file.
+      Add "network" command to list or switch networks.
+      Rewind the file before trying to use PEM_read_RSA_PUBKEY().
+      Handle a disconnecting tincd better.
+      Fix return value of b64encode().
+      Use Ed25519 keys.
+      Properly initialize buffers.
+      Merge branch '1.1-ed25519' into 1.1
+      Use the ChaCha-Poly1305 cipher for the SPTPS protocol.
+      sptps_test: allow using a tun device instead of stdio.
+      Put brackets around IPv6 addresses in invitation URL, even if there is no port number.
+      Nexthop calculation should always use the shortest path.
+      Fix compiler warnings.
+      Change AutoConnect from int to bool.
+      Use void pointers to opaque buffers.
+      Add missing closedir().
+      Fix a crash when we have a malformed public ECDSA key of another node.
+      Fix PMTU discovery via datagram SPTPS.
+      Add sanity checks when generating new RSA keys.
+      Rename ECDSA to Ed25519.
+      Implement a PEM-like format for Ed25519 keys.
+      Allow Cipher and Digest "none".
+      Fix base64 decoding of Ed25519 keys.
+      Return non-zero exit code when "tinc get" does not find the requested variable.
+      Unconditionally return non-zero exit code when "tinc del" does not find the requested variable.
+      Remove the warnings when IP_DONTFRAGMENT/IPV6-DONTFRAG is not supported.
+      Merge branch 'winevents-clean' of https://github.com/dechamps/tinc into 1.1
+      Give getsockopt() a reference to a socklen_t.
+      Fix compiler warnings.
+      Fix segmentation fault when dumping subnets.
+      Fix incorrect format qualifiers.
+      Reserve legacy active bit in connection_status_t.
+      Fix a potential file descriptor leak.
+      Fix unsafe use of strncpy() and sprintf().
+      Merge branch 'winwarnings' of https://github.com/dechamps/tinc into 1.1
+      Merge branch 'ctrl' of https://github.com/dechamps/tinc into 1.1
+      Merge branch 'tincstart' of https://github.com/dechamps/tinc into 1.1
+      Merge branch 'keysegfault' of https://github.com/dechamps/tinc into 1.1
+      Revert "Use git description as the tinc version."
+      Fix compiler warnings.
+      Check validity of Ed25519 key during an upgrade.
+      Log an error message with the node's name when receiving bad SPTPS packets.
+      Better log messages when we already know the peer's key during an upgrade.
+      Add an explicit hash_delete() function.
+      Cache node IDs in a hash table for faster lookups.
+      Avoid memmove() for legacy UDP packets.
+      Make UDP packet handling more efficient.
+      Changes that should have been in commit 46fa12e666badb79e480c4b2399787551f8266d0.
+      Fix segfault when receiving UDP packets with an unknown source address.
+      Fix reception of SPTPS UDP packets.
+      Avoid using OpenSSL's random number functions.
+      Don't pass uninitialized bytes to ioctl().
+      Don't use myself->name in device_disable(), it's already freed.
+      Fix memory leaks found by Valgrind.
+      Use void pointers for opaque data blobs in the SPTPS code.
+      Add a variable offset to vpn_packet_t, drop sptps_packet_t.
+      Merge remote-tracking branch 'groxxda/gui-fixes' into 1.1
+      Allow running tinc without RSA keys.
+      Update THANKS file.
+      Check whether res_init() really lives in libresolv.
+      BSD make doesn't like .PHONY .c files.
+      We don't depend on ECDH functions from OpenSSL anymore.
+      Linux doesn't like .PHONY .o files.
+      Remove AES-GCM support.
+      Better default paths for log and PID files on Windows.
+      Add BroadcastSubnet and DeviceStandby options to the manual and completion.
+      Releasing 1.1pre11.
+
+Sven-Haegar Koch (4):
+      Fix exit code of "tinc get".
+      commandline.test: Adding test that fetching non-existing config setting really fails.
+      Do not disconnect when no ecdsa key is known yet.
+      Try handling the case when the first side knows the ecdsa key of
+
+William A. Kennington III (3):
+      utils: Refactor get_name's functionality into util for global access
+      utils: Refactor check_id out of protocol for global access
+      tincctl: Use replace_name to properly replace and validate input hostnames
+
+Baptiste Jonglez (2):
+      Clarify man page regarding the IndirectData option
+      Fix typos in the manual page
+
+Alexis Hildebrandt (1):
+      Add support to link against libresolv Mac OS X
+
+Armin Fisslthaler (1):
+      reload /etc/resolv.conf in SIGALRM handler
+
+Franz Pletz (1):
+      tinc-gui: Use /usr/bin/env to resolve path to python
+
+Saverio Proto (1):
+      Fix typo in comment
+
+groxxda (1):
+      tinc-gui: Don't assign broadcast subnets to any node, fix parsing of Edges, fix diplay of Subnet.weight.
+
+Version 1.1pre10                                        February 07 2014
+------------------------------------------------------------------------
+
+Guus Sliepen (52):
+      Wrong date for the 1.1pre9 release in the NEWS.
+      Avoid using BIOs.
+      Add a benchmark for the SPTPS protocol.
+      Don't leak memory during the key generation speed test.
+      Link sptps_speed with -lrt.
+      Fix segfault when Name = $HOST but $HOST is not set.
+      Fix typos in the documentation.
+      Use AES-256-GCM for the SPTPS protocol.
+      Fix sending empty SPTPS records.
+      Clean up child processes from proxy type exec.
+      Make sptps_test less verbose by default.
+      Fix sending bulk data starting with a newline.
+      Fix two warnings from Clang's static analyzer.
+      Remove an unused variable.
+      Make LocalDiscovery work for SPTPS packets.
+      Allow "none" for Cipher and Digest again.
+      Mention in the manual that multiple Address staments are allowed.
+      If no Port is specified, set myport to actual port of first listening socket.
+      Update support for Solaris.
+      Include <limits.h> for PATH_MAX.
+      Stricter check for raw socket support.
+      Avoid using a variable named "sun". Solaris doesn't like it.
+      Use hardcoded value for TUNNEWPPA if net/if_tun.h is missing on Solaris.
+      Prefer ncurses over curses.
+      Don't print device statistics when exiting tinc.
+      Allow running without ECDSA keys If ExperimentalProtocol is not explicitly set.
+      Give full path to unconfigured tinc-up script.
+      Don't print an error when no ECDSA key is known for a node using the legacy protocol.
+      Remove erroneous warning about SPTPS being disabled.
+      Enable compiler hardening flags by default.
+      Add our own autoconf check for libgcrypt.
+      Don't enable -fstack-protector-all.
+      Fix handling of --with-libgcrypt.
+      Clarify StrictSubnets.
+      Update the documentation of the tinc command.
+      Add index entries for the CLI commands.
+      Let tinc-gui use correct address family when connecting to tincd via TCP.
+      Document clearly that tinc depends on curses and readline libraries.
+      Document that 1.1 uses AES-256 in GCM mode.
+      Add the ListenAddress option.
+      Test two tinc daemons using network namespaces.
+      Add missing newlines when copying variables from tinc.conf to an invitation file.
+      Don't ask questions if we are not running interactively.
+      Document Weight and also allow it to be set from tinc.conf.
+      Use addresses learned from other nodes when making outgoing connections.
+      Attribution for various contributors.
+      Handle errors from TAP-Win32/64 adapter in a better way.
+      Attribution for Dennis Joachimsthaler.
+      Update copyright notices.
+      Fix compiling for Windows.
+      Check whether OpenSSL has support for GCM.
+      Releasing 1.1pre10.
+
+Dennis Joachimsthaler (2):
+      Fix tinc-gui on Windows.
+      Ensure tinc-gui running in 64 bits mode can find tinc's 32 bit registry key.
+
+Florent Clairambault (1):
+      Adding "conf.d" configuration dir support.
+
 Version 1.1pre9                                        September 08 2013
 ------------------------------------------------------------------------
 

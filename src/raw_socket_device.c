@@ -32,11 +32,8 @@
 #include "route.h"
 #include "xalloc.h"
 
-#if defined(PF_PACKET) && defined(ETH_P_ALL) && defined(AF_PACKET)
+#if defined(PF_PACKET) && defined(ETH_P_ALL) && defined(AF_PACKET) && defined(SIOCGIFINDEX)
 static char *device_info;
-
-static uint64_t device_total_in = 0;
-static uint64_t device_total_out = 0;
 
 static bool setup_device(void) {
 	struct ifreq ifr;
@@ -86,24 +83,23 @@ static bool setup_device(void) {
 }
 
 static void close_device(void) {
-	close(device_fd);
+	close(device_fd); device_fd = -1;
 
-	free(device);
-	free(iface);
+	free(device); device = NULL;
+	free(iface); iface = NULL;
+	device_info = NULL;
 }
 
 static bool read_packet(vpn_packet_t *packet) {
 	int inlen;
 
-	if((inlen = read(device_fd, packet->data, MTU)) <= 0) {
+	if((inlen = read(device_fd, DATA(packet), MTU)) <= 0) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Error while reading from %s %s: %s", device_info,
 			   device, strerror(errno));
 		return false;
 	}
 
 	packet->len = inlen;
-
-	device_total_in += packet->len;
 
 	logger(DEBUG_TRAFFIC, LOG_DEBUG, "Read packet of %d bytes from %s", packet->len,
 			   device_info);
@@ -115,21 +111,13 @@ static bool write_packet(vpn_packet_t *packet) {
 	logger(DEBUG_TRAFFIC, LOG_DEBUG, "Writing packet of %d bytes to %s",
 			   packet->len, device_info);
 
-	if(write(device_fd, packet->data, packet->len) < 0) {
+	if(write(device_fd, DATA(packet), packet->len) < 0) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Can't write to %s %s: %s", device_info, device,
 			   strerror(errno));
 		return false;
 	}
 
-	device_total_out += packet->len;
-
 	return true;
-}
-
-static void dump_device_stats(void) {
-	logger(DEBUG_ALWAYS, LOG_DEBUG, "Statistics for %s %s:", device_info, device);
-	logger(DEBUG_ALWAYS, LOG_DEBUG, " total bytes in:  %10"PRIu64, device_total_in);
-	logger(DEBUG_ALWAYS, LOG_DEBUG, " total bytes out: %10"PRIu64, device_total_out);
 }
 
 const devops_t raw_socket_devops = {
@@ -137,7 +125,6 @@ const devops_t raw_socket_devops = {
 	.close = close_device,
 	.read = read_packet,
 	.write = write_packet,
-	.dump_stats = dump_device_stats,
 };
 
 #else
@@ -152,6 +139,5 @@ const devops_t raw_socket_devops = {
 	.close = NULL,
 	.read = NULL,
 	.write = NULL,
-	.dump_stats = NULL,
 };
 #endif

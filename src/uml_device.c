@@ -38,9 +38,6 @@ static int write_fd = -1;
 static int state = 0;
 static char *device_info;
 
-static uint64_t device_total_in = 0;
-static uint64_t device_total_out = 0;
-
 enum request_type { REQ_NEW_CONTROL };
 
 static struct request {
@@ -159,22 +156,29 @@ static bool setup_device(void) {
 }
 
 void close_device(void) {
-	if(listen_fd >= 0)
-		close(listen_fd);
+	if(listen_fd >= 0) {
+		close(listen_fd); listen_fd = -1;
+	}
 
-	if(request_fd >= 0)
-		close(request_fd);
+	if(request_fd >= 0) {
+		close(request_fd); request_fd = -1;
+	}
 
-	if(data_fd >= 0)
-		close(data_fd);
+	if(data_fd >= 0) {
+		close(data_fd); data_fd = -1;
+	}
 
-	if(write_fd >= 0)
-		close(write_fd);
+	if(write_fd >= 0) {
+		close(write_fd); write_fd = -1;
+	}
 
 	unlink(device);
 
-	free(device);
-	if(iface) free(iface);
+	free(device); device = NULL;
+	if(iface) {
+		free(iface); iface = NULL;
+	}
+	device_info = NULL;
 }
 
 static bool read_packet(vpn_packet_t *packet) {
@@ -240,7 +244,7 @@ static bool read_packet(vpn_packet_t *packet) {
 		}
 
 		case 2: {
-			if((inlen = read(data_fd, packet->data, MTU)) <= 0) {
+			if((inlen = read(data_fd, DATA(packet), MTU)) <= 0) {
 				logger(DEBUG_ALWAYS, LOG_ERR, "Error while reading from %s %s: %s", device_info,
 					   device, strerror(errno));
 				event_exit();
@@ -248,8 +252,6 @@ static bool read_packet(vpn_packet_t *packet) {
 			}
 
 			packet->len = inlen;
-
-			device_total_in += packet->len;
 
 			logger(DEBUG_TRAFFIC, LOG_DEBUG, "Read packet of %d bytes from %s", packet->len,
 					   device_info);
@@ -273,7 +275,7 @@ static bool write_packet(vpn_packet_t *packet) {
 	logger(DEBUG_TRAFFIC, LOG_DEBUG, "Writing packet of %d bytes to %s",
 			   packet->len, device_info);
 
-	if(write(write_fd, packet->data, packet->len) < 0) {
+	if(write(write_fd, DATA(packet), packet->len) < 0) {
 		if(errno != EINTR && errno != EAGAIN) {
 			logger(DEBUG_ALWAYS, LOG_ERR, "Can't write to %s %s: %s", device_info, device, strerror(errno));
 			event_exit();
@@ -282,15 +284,7 @@ static bool write_packet(vpn_packet_t *packet) {
 		return false;
 	}
 
-	device_total_out += packet->len;
-
 	return true;
-}
-
-static void dump_device_stats(void) {
-	logger(DEBUG_ALWAYS, LOG_DEBUG, "Statistics for %s %s:", device_info, device);
-	logger(DEBUG_ALWAYS, LOG_DEBUG, " total bytes in:  %10"PRIu64, device_total_in);
-	logger(DEBUG_ALWAYS, LOG_DEBUG, " total bytes out: %10"PRIu64, device_total_out);
 }
 
 const devops_t uml_devops = {
@@ -298,5 +292,4 @@ const devops_t uml_devops = {
 	.close = close_device,
 	.read = read_packet,
 	.write = write_packet,
-	.dump_stats = dump_device_stats,
 };

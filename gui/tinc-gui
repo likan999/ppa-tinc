@@ -1,7 +1,8 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 # tinc-gui -- GUI for controlling a running tincd
-# Copyright (C) 2009-2012 Guus Sliepen <guus@tinc-vpn.org>
+# Copyright (C) 2009-2014 Guus Sliepen <guus@tinc-vpn.org>
+#                    2014 Dennis Joachimsthaler <dennis@efjot.de>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,7 +28,7 @@ import time
 from wx.lib.mixins.listctrl import ColumnSorterMixin
 from wx.lib.mixins.listctrl import ListCtrlAutoWidthMixin
 
-if platform.system == 'Windows':
+if platform.system() == 'Windows':
 	import _winreg
 
 # Classes to interface with a running tinc daemon
@@ -77,8 +78,8 @@ class Edge:
 		self.to = args[1]
 		self.address = args[2]
 		self.port = args[4]
-		self.options = int(args[5], 16)
-		self.weight = int(args[6])
+		self.options = int(args[-2], 16)
+		self.weight = int(args[-1])
 
 class Subnet:
 	def parse(self, args):
@@ -130,7 +131,11 @@ class VPN:
 		else:
 			# otherwise connect via TCP
 			print(unixfile + " does not exist.");
-			s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+			if ':' in info[2]:
+				af = socket.AF_INET6
+			else:
+				af = socket.AF_INET
+			s = socket.socket(af, socket.SOCK_STREAM)
 			s.connect((info[2], int(info[4])))
 
 		self.sf = s.makefile()
@@ -187,6 +192,8 @@ class VPN:
 				subnet.parse(resp[2:])
 				subnet.visited = True
 				self.subnets[(resp[2], resp[3])] = subnet
+				if subnet.owner == "(broadcast)":
+					continue
 				self.nodes[subnet.owner].subnets[resp[2]] = subnet
 			elif resp[1] == '6':
 				if len(resp) < 9:
@@ -233,10 +240,16 @@ class VPN:
 		return int(resp[2])
 
 	def __init__(self, netname = None, pidfile = None):
-		if platform.system == 'Windows':
+		if platform.system() == 'Windows':
+			sam = _winreg.KEY_READ
+			if platform.machine().endswith('64'):
+				sam = sam | _winreg.KEY_WOW64_64KEY
 			try:
-				reg = _winreg.ConnectRegistry(None, HKEY_LOCAL_MACHINE)
-				key = _winreg.OpenKey(reg, "SOFTWARE\\tinc")
+				reg = _winreg.ConnectRegistry(None, _winreg.HKEY_LOCAL_MACHINE)
+				try:
+					key = _winreg.OpenKey(reg, "SOFTWARE\\tinc", 0, sam)
+				except WindowsError:
+					key = _winreg.OpenKey(reg, "SOFTWARE\\Wow6432Node\\tinc", 0, sam)
 				VPN.confdir = _winreg.QueryValue(key, None)
 			except WindowsError:
 				pass
@@ -252,7 +265,7 @@ class VPN:
 		if pidfile != None:
 			self.pidfile = pidfile
 		else:
-			if platform.system == 'Windows':
+			if platform.system() == 'Windows':
 				self.pidfile = os.path.join(self.confbase, 'pid')
 			else:
 				if netname:
@@ -524,7 +537,7 @@ class SubnetsPage(wx.Panel):
 				self.list.InsertStringItem(i, subnet.address + '/' + subnet.prefixlen)
 			else:
 				self.list.SetStringItem(i, 0, subnet.address + '/' + subnet.prefixlen)
-			self.list.SetStringItem(i, 1, subnet.weight)
+			self.list.SetStringItem(i, 1, str(subnet.weight))
 			self.list.SetStringItem(i, 2, subnet.owner)
 			self.list.itemDataMap[i] = (subnet.address + '/' + subnet.prefixlen, subnet.weight, subnet.owner)
 			self.list.SetItemData(i, i)

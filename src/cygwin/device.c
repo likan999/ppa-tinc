@@ -1,7 +1,7 @@
 /*
     device.c -- Interaction with Windows tap driver in a Cygwin environment
     Copyright (C) 2002-2005 Ivo Timmermans,
-                  2002-2013 Guus Sliepen <guus@tinc-vpn.org>
+                  2002-2014 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -39,9 +39,6 @@ static HANDLE device_handle = INVALID_HANDLE_VALUE;
 char *device = NULL;
 char *iface = NULL;
 static char *device_info = NULL;
-
-static uint64_t device_total_in = 0;
-static uint64_t device_total_out = 0;
 
 static pid_t reader_pid;
 static int sp[2];
@@ -218,26 +215,25 @@ static bool setup_device(void) {
 static void close_device(void) {
 	close(sp[0]);
 	close(sp[1]);
-	CloseHandle(device_handle);
+	CloseHandle(device_handle); device_handle = INVALID_HANDLE_VALUE;
 
 	kill(reader_pid, SIGKILL);
 
-	free(device);
-	free(iface);
+	free(device); device = NULL;
+	free(iface); iface = NULL;
+	device_info = NULL;
 }
 
 static bool read_packet(vpn_packet_t *packet) {
 	int inlen;
 
-	if((inlen = read(sp[0], packet->data, MTU)) <= 0) {
+	if((inlen = read(sp[0], DATA(packet), MTU)) <= 0) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Error while reading from %s %s: %s", device_info,
 			   device, strerror(errno));
 		return false;
 	}
 
 	packet->len = inlen;
-
-	device_total_in += packet->len;
 
 	logger(DEBUG_TRAFFIC, LOG_DEBUG, "Read packet of %d bytes from %s", packet->len,
 			   device_info);
@@ -251,20 +247,12 @@ static bool write_packet(vpn_packet_t *packet) {
 	logger(DEBUG_TRAFFIC, LOG_DEBUG, "Writing packet of %d bytes to %s",
 			   packet->len, device_info);
 
-	if(!WriteFile (device_handle, packet->data, packet->len, &outlen, NULL)) {
+	if(!WriteFile (device_handle, DATA(packet), packet->len, &outlen, NULL)) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Error while writing to %s %s: %s", device_info, device, winerror(GetLastError()));
 		return false;
 	}
 
-	device_total_out += packet->len;
-
 	return true;
-}
-
-static void dump_device_stats(void) {
-	logger(DEBUG_ALWAYS, LOG_DEBUG, "Statistics for %s %s:", device_info, device);
-	logger(DEBUG_ALWAYS, LOG_DEBUG, " total bytes in:  %10"PRIu64, device_total_in);
-	logger(DEBUG_ALWAYS, LOG_DEBUG, " total bytes out: %10"PRIu64, device_total_out);
 }
 
 const devops_t os_devops = {
@@ -272,5 +260,4 @@ const devops_t os_devops = {
 	.close = close_device,
 	.read = read_packet,
 	.write = write_packet,
-	.dump_stats = dump_device_stats,
 };

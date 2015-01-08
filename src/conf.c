@@ -1,10 +1,11 @@
 /*
     conf.c -- configuration code
-    Copyright (C) 1998 Robert van der Meulen
+    Copyright (C) 1998      Robert van der Meulen
                   1998-2005 Ivo Timmermans
-                  2000-2013 Guus Sliepen <guus@tinc-vpn.org>
+                  2000      Cris van Pelt
                   2010-2011 Julien Muchembled <jm@jmuchemb.eu>
-                  2000 Cris van Pelt
+                  2000-2013 Guus Sliepen <guus@tinc-vpn.org>
+                  2013      Florent Clairambault <florent@clairambault.fr>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -375,6 +376,29 @@ bool read_server_config(void) {
 	xasprintf(&fname, "%s" SLASH "tinc.conf", confbase);
 	errno = 0;
 	x = read_config_file(config_tree, fname);
+
+	// We will try to read the conf files in the "conf.d" dir
+	if (x) {
+		char * dname;
+		xasprintf(&dname, "%s" SLASH "conf.d", confbase);
+		DIR *dir = opendir (dname);
+		// If we can find this dir
+		if (dir) { 
+			struct dirent *ep;
+			// We list all the files in it
+			while (x && (ep = readdir (dir))) {
+				size_t l = strlen(ep->d_name);
+				// And we try to read the ones that end with ".conf"
+				if (l > 5 && !strcmp(".conf", & ep->d_name[ l - 5 ])) {
+					free(fname);
+					xasprintf(&fname, "%s" SLASH "%s", dname, ep->d_name);
+					x = read_config_file(config_tree, fname);
+				}
+			}
+			closedir (dir);
+		}
+		free(dname);
+	}
 
 	if(!x && errno)
 		logger(DEBUG_ALWAYS, LOG_ERR, "Failed to read `%s': %s", fname, strerror(errno));

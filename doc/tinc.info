@@ -1,14 +1,14 @@
-This is tinc.info, produced by makeinfo version 5.1 from tinc.texi.
+This is tinc.info, produced by makeinfo version 5.2 from tinc.texi.
 
 INFO-DIR-SECTION Networking tools
 START-INFO-DIR-ENTRY
 * tinc: (tinc).              The tinc Manual.
 END-INFO-DIR-ENTRY
 
-This is the info manual for tinc version 1.1pre9, a Virtual Private
+This is the info manual for tinc version 1.1pre10, a Virtual Private
 Network daemon.
 
-   Copyright (C) 1998-2013 Ivo Timmermans, Guus Sliepen
+   Copyright (C) 1998-2014 Ivo Timmermans, Guus Sliepen
 <guus@tinc-vpn.org> and Wessel Dankers <wsl@tinc-vpn.org>.
 
    Permission is granted to make and distribute verbatim copies of this
@@ -286,9 +286,9 @@ File: tinc.info,  Node: Libraries,  Prev: Configuring the kernel,  Up: Preparati
 =============
 
 Before you can configure or build tinc, you need to have the OpenSSL,
-zlib and lzo libraries installed on your system.  If you try to
-configure tinc without having them installed, configure will give you an
-error message, and stop.
+zlib, lzo, curses and readline libraries installed on your system.  If
+you try to configure tinc without having them installed, configure will
+give you an error message, and stop.
 
 * Menu:
 
@@ -724,6 +724,9 @@ The actual configuration of the daemon is done in the file
 '/etc/tinc/NETNAME/tinc.conf' and at least one other file in the
 directory '/etc/tinc/NETNAME/hosts/'.
 
+An optionnal directory '/etc/tinc/NETNAME/conf.d' can be added from
+which any .conf file will be read.
+
 These file consists of comments (lines started with a #) or assignments
 in the form of
 
@@ -767,23 +770,16 @@ AddressFamily = <ipv4|ipv6|any> (any)
      system both IPv4 and IPv6 or just IPv6 listening sockets will be
      created.
 
-AutoConnect = <count> (0) [experimental]
-     If set to a non-zero value, tinc will try to only have count meta
-     connections to other nodes, by automatically making or breaking
-     connections to known nodes.  Higher values increase redundancy but
-     also increase meta data overhead.  When using this option, a good
-     value is 3.
+AutoConnect = <yes|no> (no) [experimental]
+     If set to yes, tinc will automatically set up meta connections to
+     other nodes, without requiring CONNECTTO variables.
 
 BindToAddress = <ADDRESS> [<PORT>]
-     If your computer has more than one IPv4 or IPv6 address, tinc will
-     by default listen on all of them for incoming connections.
-     Multiple BindToAddress variables may be specified, in which case
-     listening sockets for each specified address are made.
-
-     If no PORT is specified, the socket will be bound to the port
-     specified by the Port option, or to port 655 if neither is given.
-     To only bind to a specific port but not to a specific address, use
-     "*" for the ADDRESS.
+     This is the same as ListenAddress, however the address given with
+     the BindToAddress option will also be used for outgoing
+     connections.  This is useful if your computer has more than one
+     IPv4 or IPv6 address, and you want tinc to only use a specific one
+     for outgoing packets.
 
 BindToInterface = <INTERFACE> [experimental]
      If you have more than one network interface in your computer, tinc
@@ -815,6 +811,18 @@ Broadcast = <no | mst | direct> (mst) [experimental]
           broadcast packets will only be sent to nodes which we have a
           meta connection to.
 
+BroadcastSubnet = ADDRESS[/PREFIXLENGTH]
+     Declares a broadcast subnet.  Any packet with a destination address
+     falling into such a subnet will be routed as a broadcast (provided
+     all nodes have it declared).  This is most useful to declare subnet
+     broadcast addresses (e.g.  10.42.255.255), otherwise tinc won't
+     know what to do with them.
+
+     Note that global broadcast addresses (MAC ff:ff:ff:ff:ff:ff, IPv4
+     255.255.255.255), as well as multicast space (IPv4 224.0.0.0/4,
+     IPv6 ff00::/8) are always considered broadcast addresses and don't
+     need to be declared.
+
 ConnectTo = <NAME>
      Specifies which other tinc daemon to connect to on startup.
      Multiple ConnectTo variables may be specified, in which case
@@ -822,9 +830,9 @@ ConnectTo = <NAME>
      names should be known to this tinc daemon (i.e., there should be a
      host configuration file for the name on the ConnectTo line).
 
-     If you don't specify a host with ConnectTo, tinc won't try to
-     connect to other daemons at all, and will instead just listen for
-     incoming connections.
+     If you don't specify a host with ConnectTo and don't enable
+     AutoConnect, tinc won't try to connect to other daemons at all, and
+     will instead just listen for incoming connections.
 
 DecrementTTL = <yes | no> (no) [experimental]
      When enabled, tinc will decrement the Time To Live field in IPv4
@@ -841,6 +849,13 @@ Device = <DEVICE> ('/dev/tap0', '/dev/net/tun' or other depending on platform)
      per daemon.  Under Windows, use INTERFACE instead of DEVICE.  Note
      that you can only use one device per daemon.  See also *note Device
      files::.
+
+DeviceStandby = <yes | no> (no)
+     When disabled, tinc calls 'tinc-up' on startup, and 'tinc-down' on
+     shutdown.  When enabled, tinc will only call 'tinc-up' when at
+     least one node is reachable, and will call 'tinc-down' as soon as
+     no nodes are reachable.  On Windows, this also determines when the
+     virtual network interface "cable" is "plugged".
 
 DeviceType = <TYPE> (platform dependent)
      The type of the virtual network device.  Tinc will normally
@@ -914,16 +929,16 @@ DirectOnly = <yes|no> (no) [experimental]
      IndirectData option, packets for nodes for which we do not have a
      meta connection with are also dropped.
 
-ECDSAPrivateKeyFile = <PATH> ('/etc/tinc/NETNAME/ecdsa_key.priv')
-     The file in which the private ECDSA key of this tinc daemon
+Ed25519PrivateKeyFile = <PATH> ('/etc/tinc/NETNAME/ed25519_key.priv')
+     The file in which the private Ed25519 key of this tinc daemon
      resides.  This is only used if ExperimentalProtocol is enabled.
 
 ExperimentalProtocol = <yes|no> (yes)
      When this option is enabled, the SPTPS protocol will be used when
      connecting to nodes that also support it.  Ephemeral ECDH will be
-     used for key exchanges, and ECDSA will be used instead of RSA for
-     authentication.  When enabled, an ECDSA key must have been
-     generated before with 'tinc generate-ecdsa-keys'.
+     used for key exchanges, and Ed25519 will be used instead of RSA for
+     authentication.  When enabled, an Ed25519 key must have been
+     generated before with 'tinc generate-ed25519-keys'.
 
 Forwarding = <off|internal|kernel> (internal) [experimental]
      This option selects the way indirect packets are forwarded.
@@ -963,6 +978,18 @@ Interface = <INTERFACE>
      Under Windows, this variable is used to select which network
      interface will be used.  If you specified a Device, this variable
      is almost always already correctly set.
+
+ListenAddress = <ADDRESS> [<PORT>]
+     If your computer has more than one IPv4 or IPv6 address, tinc will
+     by default listen on all of them for incoming connections.  This
+     option can be used to restrict which addresses tinc listens on.
+     Multiple ListenAddress variables may be specified, in which case
+     listening sockets for each specified address are made.
+
+     If no PORT is specified, the socket will listen on the port
+     specified by the Port option, or to port 655 if neither is given.
+     To only listen on a specific port but not to a specific address,
+     use "*" for the ADDRESS.
 
 LocalDiscovery = <yes | no> (no)
      When enabled, tinc will try to detect peers that are on the same
@@ -1065,7 +1092,7 @@ ProcessPriority = <low|normal|high>
      adjusted.  Increasing the priority may help to reduce latency and
      packet loss on the VPN.
 
-Proxy = socks4 | socks4 | http | exec ... [experimental]
+Proxy = socks4 | socks5 | http | exec ... [experimental]
      Use a proxy when making outgoing connections.  The following proxy
      types are currently supported:
 
@@ -1074,7 +1101,7 @@ Proxy = socks4 | socks4 | http | exec ... [experimental]
           Optionally, a USERNAME can be supplied which will be passed on
           to the proxy server.
 
-     socks4 <ADDRESS> <PORT> [<USERNAME> <PASSWORD>]
+     socks5 <ADDRESS> <PORT> [<USERNAME> <PASSWORD>]
           Connect to the proxy using the SOCKS version 5 protocol.  If a
           USERNAME and PASSWORD are given, basic username/password
           authentication will be used, otherwise no authentication will
@@ -1099,10 +1126,12 @@ ReplayWindow = <bytes> (16)
      pass all traffic, but leaves tinc vulnerable to replay-based
      attacks on your traffic.
 
-StrictSubnets <yes|no> (no) [experimental]
+StrictSubnets = <yes|no> (no) [experimental]
      When this option is enabled tinc will only use Subnet statements
      which are present in the host config files in the local
-     '/etc/tinc/NETNAME/hosts/' directory.
+     '/etc/tinc/NETNAME/hosts/' directory.  Subnets learned via
+     connections to other nodes and which are not present in the local
+     host config files are ignored.
 
 TunnelServer = <yes|no> (no) [experimental]
      When this option is enabled tinc will no longer forward information
@@ -1131,7 +1160,9 @@ Address = <IP ADDRESS|HOSTNAME> [<port>] [recommended]
      This variable is only required if you want to connect to this host.
      It must resolve to the external IP address where the host can be
      reached, not the one that is internal to the VPN. If no port is
-     specified, the default Port is used.
+     specified, the default Port is used.  Multiple Address variables
+     can be specified, in which case each address will be tried until a
+     working connection has been established.
 
 Cipher = <CIPHER> (blowfish)
      The symmetric cipher algorithm used to encrypt UDP packets using
@@ -1233,6 +1264,12 @@ TCPonly = <yes|no> (no)
      useful for those who want to run a tinc daemon from behind a
      masquerading firewall, or if UDP packet routing is disabled
      somehow.  Setting this options also implicitly sets IndirectData.
+
+Weight = <weight>
+     If this variable is set, it overrides the weight given to
+     connections made with another host.  A higher weight means a lower
+     priority is given to this connection when broadcasting or
+     forwarding packets.
 
 
 File: tinc.info,  Node: Scripts,  Next: How to configure,  Prev: Host configuration variables,  Up: Configuration files
@@ -1353,10 +1390,10 @@ contents:
 
      Name = NAME
 
-It will also create private RSA and ECDSA keys, which will be stored in
-the files 'rsa_key.priv' and 'ecdsa_key.priv'.  It will also create a
-host configuration file 'hosts/NAME', which will contain the
-corresponding public RSA and ECDSA keys.
+It will also create private RSA and Ed25519 keys, which will be stored
+in the files 'rsa_key.priv' and 'ed25519_key.priv'.  It will also create
+a host configuration file 'hosts/NAME', which will contain the
+corresponding public RSA and Ed25519 keys.
 
 Finally, on UNIX operating systems, it will create an executable script
 'tinc-up', which will initially not do anything except warning that you
@@ -1375,7 +1412,7 @@ should run the following command:
 
 This will add a Subnet statement to your host configuration file.  Try
 opening the file '/etc/tinc/NETNAME/hosts/NAME' in an editor.  You
-should now see a file containing the public RSA and ECDSA keys (which
+should now see a file containing the public RSA and Ed25519 keys (which
 looks like a bunch of random characters), and the following line at the
 bottom:
 
@@ -1657,9 +1694,9 @@ Key files
 A, B, C and D all have their own public/private keypairs:
 
 The private RSA key is stored in '/etc/tinc/company/rsa_key.priv', the
-private ECDSA key is stored in '/etc/tinc/company/ecdsa_key.priv', and
-the public RSA and ECDSA keys are put into the host configuration file
-in the '/etc/tinc/company/hosts/' directory.
+private Ed25519 key is stored in '/etc/tinc/company/ed25519_key.priv',
+and the public RSA and Ed25519 keys are put into the host configuration
+file in the '/etc/tinc/company/hosts/' directory.
 
 Starting
 ........
@@ -1997,10 +2034,16 @@ File: tinc.info,  Node: Controlling tinc,  Next: Technical information,  Prev: R
 6 Controlling tinc
 ******************
 
-You can control and inspect a running tincd through the tinc command.  A
-quick example:
+You can start, stop, control and inspect a running tincd through the
+tinc command.  A quick example:
 
      tinc -n NETNAME reload
+
+If tinc is started without a command, it will act as a shell; it will
+display a prompt, and commands can be entered on the prompt.  If tinc is
+compiled with libreadline, history and command completion are available
+on the prompt.  One can also pipe a script containing commands through
+tinc.  In that case, lines starting with a # symbol will be ignored.
 
 * Menu:
 
@@ -2052,8 +2095,8 @@ File: tinc.info,  Node: tinc commands,  Next: tinc examples,  Prev: tinc environ
 =================
 
 'init [NAME]'
-     Create initial configuration files and RSA and ECDSA keypairs with
-     default length.  If no NAME for this node is given, it will be
+     Create initial configuration files and RSA and Ed25519 keypairs
+     with default length.  If no NAME for this node is given, it will be
      asked for.
 
 'get VARIABLE'
@@ -2126,12 +2169,12 @@ File: tinc.info,  Node: tinc commands,  Next: tinc examples,  Prev: tinc environ
      Shows the PID of the currently running 'tincd'.
 
 'generate-keys [BITS]'
-     Generate both RSA and ECDSA keypairs (see below) and exit.  tinc
+     Generate both RSA and Ed25519 keypairs (see below) and exit.  tinc
      will ask where you want to store the files, but will default to the
      configuration directory (you can use the -c or -n option).
 
-'generate-ecdsa-keys'
-     Generate public/private ECDSA keypair and exit.
+'generate-ed25519-keys'
+     Generate public/private Ed25519 keypair and exit.
 
 'generate-rsa-keys [BITS]'
      Generate public/private RSA keypair and exit.  If BITS is omitted,
@@ -2195,6 +2238,10 @@ File: tinc.info,  Node: tinc commands,  Next: tinc examples,  Prev: tinc environ
      file or piped through a program that can parse it directly, such as
      tcpdump.
 
+'network'
+     If NETNAME is given, switch to that network.  Otherwise, display a
+     list of all networks for which configuration files exist.
+
 
 File: tinc.info,  Node: tinc examples,  Next: tinc top,  Prev: tinc commands,  Up: Controlling tinc
 
@@ -2207,7 +2254,7 @@ Examples of some commands:
      tinc -n vpn pcap | tcpdump -r -
      tinc -n vpn top
 
-Example of configuring tinc using the tinc command:
+Examples of changing the configuration using tinc:
 
      tinc -n vpn init foo
      tinc -n vpn add Subnet 192.168.1.0/24
@@ -2776,11 +2823,11 @@ The expanded key is used as follows:
 Where initiator_cipher_key is the key used by session initiator to
 encrypt messages sent to the responder.
 
-When using 521 bits EC keys, the AES-256-CTR cipher and HMAC-SHA-256
-digest algorithm, the sizes are as follows:
+When using 256 bits Ed25519 keys, the AES-256-CTR cipher and
+HMAC-SHA-256 digest algorithm, the sizes are as follows:
 
-     ECDH_SIZE:       67 (= ceil(521/8) + 1)
-     ECDSA_SIZE:     141 (= 2 * ceil(521/8) + 9)
+     ECDH_SIZE:       32 (= 256/8)
+     ECDSA_SIZE:      64 (= 2 * 256/8)
      CIPHER_KEYSIZE:  48 (= 256/8 + 128/8)
      DIGEST_KEYSIZE:  32 (= 256/8)
 
@@ -3019,6 +3066,7 @@ Concept Index
 
 * ACK:                                   Legacy authentication protocol.
                                                               (line   6)
+* add:                                   tinc commands.       (line  22)
 * Address:                               Host configuration variables.
                                                               (line   6)
 * AddressFamily:                         Main configuration variables.
@@ -3031,83 +3079,107 @@ Concept Index
 * binary package:                        Building and installing tinc.
                                                               (line   9)
 * BindToAddress:                         Main configuration variables.
-                                                              (line  19)
+                                                              (line  16)
 * BindToInterface:                       Main configuration variables.
-                                                              (line  30)
+                                                              (line  23)
 * Broadcast:                             Main configuration variables.
-                                                              (line  40)
+                                                              (line  33)
+* BroadcastSubnet:                       Main configuration variables.
+                                                              (line  53)
 * Cabal:                                 Security.            (line   6)
 * CHALLENGE:                             Legacy authentication protocol.
                                                               (line   6)
 * CHAL_REPLY:                            Legacy authentication protocol.
                                                               (line   6)
 * CIDR notation:                         Host configuration variables.
-                                                              (line  94)
+                                                              (line  96)
 * Cipher:                                Host configuration variables.
-                                                              (line  12)
+                                                              (line  14)
 * ClampMSS:                              Host configuration variables.
-                                                              (line  20)
+                                                              (line  22)
 * client:                                How connections work.
                                                               (line  18)
 * command line:                          Runtime options.     (line   9)
+* command line interface:                Controlling tinc.    (line   6)
 * Compression:                           Host configuration variables.
-                                                              (line  26)
+                                                              (line  28)
 * connection:                            The connection.      (line   6)
 * ConnectTo:                             Main configuration variables.
-                                                              (line  60)
+                                                              (line  65)
 * daemon:                                Running tinc.        (line  11)
 * data-protocol:                         The meta-connection. (line  18)
+* debug:                                 tinc commands.       (line 121)
 * debug level:                           Runtime options.     (line  17)
 * debug levels:                          Debug levels.        (line   6)
 * DecrementTTL:                          Main configuration variables.
-                                                              (line  71)
+                                                              (line  76)
+* del:                                   tinc commands.       (line  26)
 * DEL_EDGE:                              The meta-protocol.   (line  46)
 * DEL_SUBNET:                            The meta-protocol.   (line  46)
 * Device:                                Main configuration variables.
-                                                              (line  80)
+                                                              (line  85)
 * DEVICE:                                Scripts.             (line  60)
 * device files:                          Device files.        (line   6)
+* DeviceStandby:                         Main configuration variables.
+                                                              (line  92)
 * DeviceType:                            Main configuration variables.
-                                                              (line  87)
+                                                              (line  99)
 * Digest:                                Host configuration variables.
-                                                              (line  31)
+                                                              (line  33)
 * DirectOnly:                            Main configuration variables.
-                                                              (line 152)
+                                                              (line 164)
+* disconnect:                            tinc commands.       (line 136)
 * dummy:                                 Main configuration variables.
-                                                              (line  94)
-* ECDSAPrivateKeyFile:                   Main configuration variables.
-                                                              (line 159)
+                                                              (line 106)
+* dump:                                  tinc commands.       (line  94)
+* Ed25519PrivateKeyFile:                 Main configuration variables.
+                                                              (line 171)
+* edit:                                  tinc commands.       (line  31)
 * encapsulating:                         The UDP tunnel.      (line  30)
 * encryption:                            Encryption of network packets.
                                                               (line   6)
 * environment variables:                 Scripts.             (line  48)
 * example:                               Example configuration.
                                                               (line   6)
+* exchange:                              tinc commands.       (line  47)
+* exchange-all:                          tinc commands.       (line  50)
 * exec:                                  Main configuration variables.
-                                                              (line 328)
+                                                              (line 352)
 * ExperimentalProtocol:                  Main configuration variables.
-                                                              (line 163)
+                                                              (line 175)
+* export:                                tinc commands.       (line  35)
+* export-all:                            tinc commands.       (line  39)
 * Forwarding:                            Main configuration variables.
-                                                              (line 170)
+                                                              (line 182)
 * frame type:                            The UDP tunnel.      (line   6)
+* generate-ed25519-keys:                 tinc commands.       (line  85)
+* generate-keys:                         tinc commands.       (line  80)
+* generate-rsa-keys:                     tinc commands.       (line  88)
+* get:                                   tinc commands.       (line  11)
+* graph:                                 tinc commands.       (line 107)
 * Hostnames:                             Main configuration variables.
-                                                              (line 190)
+                                                              (line 202)
 * http:                                  Main configuration variables.
-                                                              (line 325)
+                                                              (line 349)
 * hub:                                   Main configuration variables.
-                                                              (line 246)
+                                                              (line 270)
 * ID:                                    Legacy authentication protocol.
                                                               (line   6)
+* import:                                tinc commands.       (line  42)
 * IndirectData:                          Host configuration variables.
-                                                              (line  38)
+                                                              (line  40)
+* info:                                  tinc commands.       (line 114)
+* init:                                  tinc commands.       (line   6)
 * Interface:                             Main configuration variables.
-                                                              (line 201)
+                                                              (line 213)
 * INTERFACE:                             Scripts.             (line  63)
 * INVITATION_FILE:                       Scripts.             (line  86)
 * INVITATION_URL:                        Scripts.             (line  90)
+* invite:                                tinc commands.       (line  53)
 * IRC:                                   Contact information. (line   9)
+* join:                                  tinc commands.       (line  58)
 * KeyExpire:                             Main configuration variables.
-                                                              (line 251)
+                                                              (line 275)
 * KEY_CHANGED:                           The meta-protocol.   (line  63)
 * legacy authentication protocol:        Legacy authentication protocol.
                                                               (line   6)
@@ -3115,27 +3187,30 @@ Concept Index
 * libraries:                             Libraries.           (line   6)
 * libreadline:                           libreadline.         (line   6)
 * license:                               OpenSSL.             (line  35)
+* ListenAddress:                         Main configuration variables.
+                                                              (line 221)
 * LocalDiscovery:                        Main configuration variables.
-                                                              (line 209)
+                                                              (line 233)
 * LocalDiscoveryAddress:                 Main configuration variables.
-                                                              (line 220)
+                                                              (line 244)
+* log:                                   tinc commands.       (line 124)
 * lzo:                                   lzo.                 (line   6)
 * MACExpire:                             Main configuration variables.
-                                                              (line 257)
+                                                              (line 281)
 * MACLength:                             Host configuration variables.
-                                                              (line  43)
+                                                              (line  45)
 * MaxConnectionBurst:                    Main configuration variables.
-                                                              (line 262)
+                                                              (line 286)
 * meta-protocol:                         The meta-connection. (line  18)
 * META_KEY:                              Legacy authentication protocol.
                                                               (line   6)
 * Mode:                                  Main configuration variables.
-                                                              (line 224)
+                                                              (line 248)
 * multicast:                             Main configuration variables.
-                                                              (line 106)
+                                                              (line 118)
 * multiple networks:                     Multiple networks.   (line   6)
 * Name:                                  Main configuration variables.
-                                                              (line 268)
+                                                              (line 292)
 * NAME:                                  Scripts.             (line  57)
 * netmask:                               Network interfaces.  (line  39)
 * netname:                               Multiple networks.   (line   6)
@@ -3144,101 +3219,114 @@ Concept Index
                                                               (line   6)
 * Network Administrators Guide:          Configuration introduction.
                                                               (line  15)
+* network [NETNAME]:                     tinc commands.       (line 150)
 * NODE:                                  Scripts.             (line  67)
 * OpenSSL:                               OpenSSL.             (line   6)
 * options:                               Runtime options.     (line   9)
+* pcap:                                  tinc commands.       (line 144)
 * PEM format:                            Host configuration variables.
-                                                              (line  70)
+                                                              (line  72)
+* pid:                                   tinc commands.       (line  77)
 * PING:                                  The meta-protocol.   (line  88)
 * PingInterval:                          Main configuration variables.
-                                                              (line 279)
+                                                              (line 303)
 * PingTimeout:                           Main configuration variables.
-                                                              (line 283)
+                                                              (line 307)
 * platforms:                             Supported platforms. (line   6)
 * PMTU:                                  Host configuration variables.
-                                                              (line  50)
+                                                              (line  52)
 * PMTUDiscovery:                         Host configuration variables.
-                                                              (line  53)
+                                                              (line  55)
 * PONG:                                  The meta-protocol.   (line  88)
 * Port:                                  Host configuration variables.
-                                                              (line  58)
+                                                              (line  60)
 * port numbers:                          Other files.         (line  17)
 * PriorityInheritance:                   Main configuration variables.
-                                                              (line 289)
+                                                              (line 313)
 * private:                               Virtual Private Networks.
                                                               (line  10)
 * PrivateKey:                            Main configuration variables.
-                                                              (line 294)
+                                                              (line 318)
 * PrivateKeyFile:                        Main configuration variables.
-                                                              (line 300)
+                                                              (line 324)
 * ProcessPriority:                       Main configuration variables.
-                                                              (line 305)
+                                                              (line 329)
 * Proxy:                                 Main configuration variables.
-                                                              (line 310)
+                                                              (line 334)
 * PublicKey:                             Host configuration variables.
-                                                              (line  62)
+                                                              (line  64)
 * PublicKeyFile:                         Host configuration variables.
-                                                              (line  65)
+                                                              (line  67)
+* purge:                                 tinc commands.       (line 118)
 * raw_socket:                            Main configuration variables.
-                                                              (line  99)
+                                                              (line 111)
 * release:                               Supported platforms. (line  14)
+* reload:                                tinc commands.       (line  72)
 * REMOTEADDRESS:                         Scripts.             (line  72)
 * REMOTEPORT:                            Scripts.             (line  75)
 * ReplayWindow:                          Main configuration variables.
-                                                              (line 333)
+                                                              (line 357)
 * requirements:                          Libraries.           (line   6)
 * REQ_KEY:                               The meta-protocol.   (line  63)
+* restart:                               tinc commands.       (line  69)
+* retry:                                 tinc commands.       (line 129)
 * router:                                Main configuration variables.
-                                                              (line 227)
+                                                              (line 251)
 * runtime options:                       Runtime options.     (line   9)
 * scalability:                           tinc.                (line  19)
 * scripts:                               Scripts.             (line   6)
 * server:                                How connections work.
                                                               (line  18)
+* set:                                   tinc commands.       (line  16)
+* shell:                                 Controlling tinc.    (line  11)
 * signals:                               Signals.             (line   6)
 * socks4:                                Main configuration variables.
-                                                              (line 314)
+                                                              (line 338)
 * socks5:                                Main configuration variables.
-                                                              (line 319)
+                                                              (line 343)
 * SPTPS:                                 Simple Peer-to-Peer Security.
                                                               (line   6)
+* start:                                 tinc commands.       (line  63)
+* stop:                                  tinc commands.       (line  66)
 * StrictSubnets:                         Main configuration variables.
-                                                              (line 344)
+                                                              (line 368)
 * Subnet:                                Host configuration variables.
-                                                              (line  77)
+                                                              (line  79)
 * SUBNET:                                Scripts.             (line  79)
 * SVPN:                                  Security.            (line  11)
 * switch:                                Main configuration variables.
-                                                              (line 235)
+                                                              (line 259)
 * TCP:                                   The meta-connection. (line  10)
 * TCPonly:                               Host configuration variables.
-                                                              (line 106)
+                                                              (line 108)
 * tinc:                                  Introduction.        (line   6)
 * TINC:                                  Security.            (line   6)
 * tinc-down:                             Scripts.             (line  18)
 * tinc-up:                               Scripts.             (line  10)
 * tinc-up <1>:                           Network interfaces.  (line  19)
 * tincd:                                 tinc.                (line  14)
+* top:                                   tinc commands.       (line 139)
+* top <1>:                               tinc top.            (line   6)
 * traditional VPNs:                      tinc.                (line  19)
 * tunifhead:                             Main configuration variables.
-                                                              (line 141)
+                                                              (line 153)
 * TunnelServer:                          Main configuration variables.
-                                                              (line 349)
+                                                              (line 375)
 * tunnohead:                             Main configuration variables.
-                                                              (line 135)
+                                                              (line 147)
 * UDP:                                   The UDP tunnel.      (line  30)
 * UDP <1>:                               Encryption of network packets.
                                                               (line  11)
 * UDPRcvBuf:                             Main configuration variables.
-                                                              (line 356)
+                                                              (line 382)
 * UDPSndBuf:                             Main configuration variables.
-                                                              (line 361)
+                                                              (line 387)
 * UML:                                   Main configuration variables.
-                                                              (line 117)
+                                                              (line 129)
 * Universal tun/tap:                     Configuration of Linux kernels.
                                                               (line   6)
 * VDE:                                   Main configuration variables.
-                                                              (line 122)
+                                                              (line 134)
 * virtual:                               Virtual Private Networks.
                                                               (line  18)
 * virtual network device:                The UDP tunnel.      (line   6)
@@ -3246,80 +3334,82 @@ Concept Index
                                                               (line   6)
 * vpnd:                                  tinc.                (line   6)
 * website:                               Contact information. (line   6)
+* Weight:                                Host configuration variables.
+                                                              (line 115)
 * WEIGHT:                                Scripts.             (line  82)
 * zlib:                                  zlib.                (line   6)
 
 
 
 Tag Table:
-Node: Top807
-Node: Introduction1127
-Node: Virtual Private Networks1931
-Node: tinc3643
-Node: Supported platforms5155
-Node: Preparations5851
-Node: Configuring the kernel6107
-Node: Configuration of Linux kernels6516
-Node: Configuration of FreeBSD kernels7365
-Node: Configuration of OpenBSD kernels7830
-Node: Configuration of NetBSD kernels8438
-Node: Configuration of Solaris kernels8840
-Node: Configuration of Darwin (MacOS/X) kernels9501
-Node: Configuration of Windows10190
-Node: Libraries10703
-Node: OpenSSL11121
-Node: zlib13393
-Node: lzo14411
-Node: libcurses15401
-Node: libreadline16311
-Node: Installation17248
-Node: Building and installing tinc18257
-Node: Darwin (MacOS/X) build environment18913
-Node: Cygwin (Windows) build environment19477
-Node: MinGW (Windows) build environment20061
-Node: System files20579
-Node: Device files20844
-Node: Other files21257
-Node: Configuration21870
-Node: Configuration introduction22157
-Node: Multiple networks23678
-Node: How connections work25046
-Node: Configuration files27607
-Node: Main configuration variables29135
-Node: Host configuration variables45893
-Node: Scripts51364
-Node: How to configure54765
-Node: Network interfaces59241
-Node: Example configuration61620
-Node: Running tinc66713
-Node: Runtime options67300
-Node: Signals70160
-Node: Debug levels71009
-Node: Solving problems71945
-Node: Error messages73371
-Node: Sending bug reports77688
-Node: Controlling tinc78635
-Node: tinc runtime options79012
-Node: tinc environment variables79699
-Node: tinc commands80028
-Node: tinc examples85138
-Node: tinc top85701
-Node: Technical information87286
-Node: The connection87521
-Node: The UDP tunnel87833
-Node: The meta-connection90878
-Node: The meta-protocol92336
-Node: Security97319
-Node: Legacy authentication protocol98656
-Node: Simple Peer-to-Peer Security103273
-Node: Encryption of network packets108933
-Node: Security issues111562
-Node: Platform specific information113297
-Node: Interface configuration113525
-Node: Routes115966
-Node: About us117877
-Node: Contact information118052
-Node: Authors118454
-Node: Concept Index118856
+Node: Top808
+Node: Introduction1128
+Node: Virtual Private Networks1932
+Node: tinc3644
+Node: Supported platforms5156
+Node: Preparations5852
+Node: Configuring the kernel6108
+Node: Configuration of Linux kernels6517
+Node: Configuration of FreeBSD kernels7366
+Node: Configuration of OpenBSD kernels7831
+Node: Configuration of NetBSD kernels8439
+Node: Configuration of Solaris kernels8841
+Node: Configuration of Darwin (MacOS/X) kernels9502
+Node: Configuration of Windows10191
+Node: Libraries10704
+Node: OpenSSL11140
+Node: zlib13412
+Node: lzo14430
+Node: libcurses15420
+Node: libreadline16330
+Node: Installation17267
+Node: Building and installing tinc18276
+Node: Darwin (MacOS/X) build environment18932
+Node: Cygwin (Windows) build environment19496
+Node: MinGW (Windows) build environment20080
+Node: System files20598
+Node: Device files20863
+Node: Other files21276
+Node: Configuration21889
+Node: Configuration introduction22176
+Node: Multiple networks23697
+Node: How connections work25065
+Node: Configuration files27626
+Node: Main configuration variables29258
+Node: Host configuration variables47397
+Node: Scripts53256
+Node: How to configure56657
+Node: Network interfaces61141
+Node: Example configuration63520
+Node: Running tinc68619
+Node: Runtime options69206
+Node: Signals72066
+Node: Debug levels72915
+Node: Solving problems73851
+Node: Error messages75277
+Node: Sending bug reports79594
+Node: Controlling tinc80541
+Node: tinc runtime options81287
+Node: tinc environment variables81974
+Node: tinc commands82303
+Node: tinc examples87567
+Node: tinc top88129
+Node: Technical information89714
+Node: The connection89949
+Node: The UDP tunnel90261
+Node: The meta-connection93306
+Node: The meta-protocol94764
+Node: Security99747
+Node: Legacy authentication protocol101084
+Node: Simple Peer-to-Peer Security105701
+Node: Encryption of network packets111346
+Node: Security issues113975
+Node: Platform specific information115710
+Node: Interface configuration115938
+Node: Routes118379
+Node: About us120290
+Node: Contact information120465
+Node: Authors120867
+Node: Concept Index121269
 
 End Tag Table
