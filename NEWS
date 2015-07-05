@@ -1,4 +1,29 @@
-Version 1.0.24               May 11 2013
+Version 1.0.26               July 5 2015
+
+ * Tinc now forces glibc to reload /etc/resolv.conf for every hostname lookup.
+
+ * Fixed --logfile without a filename on Windows.
+
+ * Ensure tinc can be compiled when using musl libc.
+
+Thanks to Jo-Philipp Wich for his contribution to this version of tinc.
+
+Version 1.0.25               December 22 2014
+
+ * Documentation updates.
+
+ * Support linking against -lresolv on Mac OS X.
+
+ * Fix scripts on Windows when using the ScriptsInterpreter option.
+
+ * Allow a minimum reconnect timeout to be specified.
+
+ * Support PriorityInheritance on IPv6 sockets.
+
+Thanks to David Pflug, Baptiste Jonglez, Alexis Hildebrandt, Borg, Jochen Voss,
+Tomislav Čohar and VittGam for their contributions to this version of tinc.
+
+Version 1.0.24               May 11 2014
 
  * Various compiler hardening flags are enabled by default.
 

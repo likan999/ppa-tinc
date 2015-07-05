@@ -1,7 +1,7 @@
 /*
     process.c -- process management functions
     Copyright (C) 1999-2005 Ivo Timmermans,
-                  2000-2013 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2015 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -347,17 +347,59 @@ bool detach(void) {
 	return true;
 }
 
+#ifdef HAVE_PUTENV
+void unputenv(char *p) {
+	char *e = strchr(p, '=');
+	if(!e)
+		return;
+	int len = e - p;
+#ifndef HAVE_UNSETENV
+#ifdef HAVE_MINGW
+	// Windows requires putenv("FOO=") to unset %FOO%
+	len++;
+#endif
+#endif
+	char var[len + 1];
+	memcpy(var, p, len);
+	var[len] = 0;
+#ifdef HAVE_UNSETENV
+	unsetenv(var);
+#else
+	// We must keep what we putenv() around in memory.
+	// To do this without memory leaks, keep things in a list and reuse if possible.
+	static list_t list = {};
+	for(list_node_t *node = list.head; node; node = node->next) {
+		char *data = node->data;
+		if(!strcmp(data, var)) {
+			putenv(data);
+			return;
+		}
+	}
+	char *data = xstrdup(var);
+	list_insert_tail(&list, data);
+	putenv(data);
+#endif
+}
+#else
+void putenv(const char *p) {}
+void unputenv(const char *p) {}
+#endif
+
 bool execute_script(const char *name, char **envp) {
 #ifdef HAVE_SYSTEM
-	int status, len;
 	char *scriptname;
-	int i;
 	char *interpreter = NULL;
+	config_t *cfg_interpreter;
+	int status, len, i;
 
+	cfg_interpreter = lookup_config(config_tree, "ScriptsInterpreter");
 #ifndef HAVE_MINGW
 	len = xasprintf(&scriptname, "\"%s/%s\"", confbase, name);
 #else
-	len = xasprintf(&scriptname, "\"%s/%s.bat\"", confbase, name);
+	if(cfg_interpreter)
+		len = xasprintf(&scriptname, "\"%s/%s\"", confbase, name);
+	else
+		len = xasprintf(&scriptname, "\"%s/%s.bat\"", confbase, name);
 #endif
 	if(len < 0)
 		return false;
@@ -365,14 +407,13 @@ bool execute_script(const char *name, char **envp) {
 	scriptname[len - 1] = '\0';
 
 	/* First check if there is a script */
-
 	if(access(scriptname + 1, F_OK)) {
 		free(scriptname);
 		return true;
 	}
 
 	// Custom scripts interpreter
-	if(get_config_string(lookup_config(config_tree, "ScriptsInterpreter"), &interpreter)) {
+	if(get_config_string(cfg_interpreter, &interpreter)) {
 		// Force custom scripts interpreter allowing execution of scripts on android without execution flag (such as on /sdcard)
 		free(scriptname);
 		len = xasprintf(&scriptname, "%s \"%s/%s\"", interpreter, confbase, name);
@@ -383,12 +424,10 @@ bool execute_script(const char *name, char **envp) {
 
 	ifdebug(STATUS) logger(LOG_INFO, "Executing script %s", name);
 
-#ifdef HAVE_PUTENV
 	/* Set environment */
 	
 	for(i = 0; envp[i]; i++)
 		putenv(envp[i]);
-#endif
 
 	scriptname[len - 1] = '\"';
 	status = system(scriptname);
@@ -397,15 +436,8 @@ bool execute_script(const char *name, char **envp) {
 
 	/* Unset environment */
 
-	for(i = 0; envp[i]; i++) {
-		char *e = strchr(envp[i], '=');
-		if(e) {
-			char p[e - envp[i] + 1];
-			strncpy(p, envp[i], e - envp[i]);
-			p[e - envp[i]] = '\0';
-			putenv(p);
-		}
-	}
+	for(i = 0; envp[i]; i++)
+		unputenv(envp[i]);
 
 	if(status != -1) {
 #ifdef WEXITSTATUS

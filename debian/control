@@ -2,7 +2,7 @@ Source: tinc
 Section: net
 Priority: optional
 Maintainer: Guus Sliepen <guus@debian.org>
-Standards-Version: 3.9.5
+Standards-Version: 3.9.6
 Build-Depends: libssl-dev, debhelper (>= 9), gettext, texinfo, zlib1g-dev, liblzo2-dev, libvdeplug-dev
 Homepage: http://www.tinc-vpn.org/
 
@@ -14,16 +14,3 @@ Description: Virtual Private Network daemon
  (VPN). One daemon can handle multiple connections, so you can
  create an entire (moderately sized) VPN with only one daemon per
  participating computer.
-
-Package: tinc-dbg
-Architecture: any
-Section: debug
-Priority: extra
-Depends: ${shlibs:Depends}, ${misc:Depends}, tinc (= ${binary:Version})
-Description: debugging symbols for tinc
- tinc is a daemon with which you can create a virtual private network
- (VPN). One daemon can handle multiple connections, so you can
- create an entire (moderately sized) VPN with only one daemon per
- participating computer.
- .
- This package contains the debugging symbols for tinc.

@@ -1,7 +1,7 @@
 /*
     net_setup.c -- Setup.
     Copyright (C) 1998-2005 Ivo Timmermans,
-                  2000-2014 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2015 Guus Sliepen <guus@tinc-vpn.org>
                   2006      Scott Lamb <slamb@slamb.org>
                   2010      Brandon Black <blblack@gmail.com>
 
@@ -539,7 +539,12 @@ static bool setup_myself(void) {
 
 #if !defined(SOL_IP) || !defined(IP_TOS)
 	if(priorityinheritance)
-		logger(LOG_WARNING, "%s not supported on this platform", "PriorityInheritance");
+		logger(LOG_WARNING, "%s not supported on this platform for IPv4 connection", "PriorityInheritance");
+#endif
+
+#if !defined(IPPROTO_IPV6) || !defined(IPV6_TCLASS)
+	if(priorityinheritance)
+		logger(LOG_WARNING, "%s not supported on this platform for IPv6 connection", "PriorityInheritance");
 #endif
 
 	if(!get_config_int(lookup_config(config_tree, "MACExpire"), &macexpire))
@@ -552,6 +557,18 @@ static bool setup_myself(void) {
 		}
 	} else
 		maxtimeout = 900;
+
+	if(get_config_int(lookup_config(config_tree, "MinTimeout"), &mintimeout)) {
+			if(mintimeout < 0) {
+				logger(LOG_ERR, "Bogus minimum timeout!");
+				return false;
+			}
+			if(mintimeout > maxtimeout) {
+				logger(LOG_WARNING, "Minimum timeout (%d s) cannot be larger than maximum timeout (%d s). Correcting !", mintimeout, maxtimeout );
+				mintimeout=maxtimeout;
+			}
+		} else
+			mintimeout = 0;
 
 	if(get_config_int(lookup_config(config_tree, "UDPRcvBuf"), &udp_rcvbuf)) {
 		if(udp_rcvbuf <= 0) {
@@ -713,6 +730,12 @@ static bool setup_myself(void) {
 	xasprintf(&envp[2], "INTERFACE=%s", iface ? : "");
 	xasprintf(&envp[3], "NAME=%s", myself->name);
 
+#ifdef HAVE_MINGW
+	Sleep(1000);
+#endif
+#ifdef HAVE_CYGWIN
+	sleep(1);
+#endif
 	execute_script("tinc-up", envp);
 
 	for(i = 0; i < 4; i++)
@@ -790,6 +813,10 @@ static bool setup_myself(void) {
 			hint.ai_protocol = IPPROTO_TCP;
 			hint.ai_flags = AI_PASSIVE;
 
+#if HAVE_DECL_RES_INIT
+			// ensure glibc reloads /etc/resolv.conf.
+			res_init();
+#endif
 			err = getaddrinfo(address && *address ? address : NULL, port, &hint, &ai);
 			free(address);
 

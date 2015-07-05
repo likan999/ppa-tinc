@@ -1,7 +1,7 @@
 /*
     tincd.c -- the main file for tincd
     Copyright (C) 1998-2005 Ivo Timmermans
-                  2000-2014 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2015 Guus Sliepen <guus@tinc-vpn.org>
                   2008      Max Rijevski <maksuf@gmail.com>
                   2009      Michael Tokarev <mjt@tls.msk.ru>
                   2010      Julien Muchembled <jm@jmuchemb.eu>
@@ -97,7 +97,7 @@ char *pidfilename = NULL;			/* pid file location */
 char *logfilename = NULL;			/* log file location */
 char **g_argv;					/* a copy of the cmdline arguments */
 
-static int status;
+static int status = 1;
 
 static struct option const long_options[] = {
 	{"config", required_argument, NULL, 'c'},
@@ -438,14 +438,14 @@ static void make_names(void) {
 #ifdef HAVE_MINGW
 	if(!RegOpenKeyEx(HKEY_LOCAL_MACHINE, "SOFTWARE\\tinc", 0, KEY_READ, &key)) {
 		if(!RegQueryValueEx(key, NULL, 0, 0, (LPBYTE)installdir, &len)) {
-			if(!logfilename)
-				xasprintf(&logfilename, "%s/log/%s.log", identname);
 			if(!confbase) {
 				if(netname)
 					xasprintf(&confbase, "%s/%s", installdir, netname);
 				else
 					xasprintf(&confbase, "%s", installdir);
 			}
+			if(!logfilename)
+				xasprintf(&logfilename, "%s/tinc.log", confbase);
 		}
 		RegCloseKey(key);
 		if(*installdir)
@@ -549,7 +549,7 @@ int main(int argc, char **argv) {
 	if(show_version) {
 		printf("%s version %s (built %s %s, protocol %d)\n", PACKAGE,
 			   VERSION, __DATE__, __TIME__, PROT_CURRENT);
-		printf("Copyright (C) 1998-2014 Ivo Timmermans, Guus Sliepen and others.\n"
+		printf("Copyright (C) 1998-2015 Ivo Timmermans, Guus Sliepen and others.\n"
 				"See the AUTHORS file for a complete list.\n\n"
 				"tinc comes with ABSOLUTELY NO WARRANTY.  This is free software,\n"
 				"and you are welcome to redistribute it under certain conditions;\n"

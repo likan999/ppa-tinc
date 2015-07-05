@@ -12,15 +12,11 @@
 %:
 	dh $@ --parallel
 
-.PHONY: override_dh_strip
-override_dh_strip:
-	dh_strip --dbg-package=tinc-dbg
-
 override_dh_auto_configure:
 	dh_auto_configure -- --enable-uml --enable-vde
 
 override_dh_auto_install:
-	dh_auto_install --destdir=debian/tinc -- install-html
+	dh_auto_install -- install-html
 	# Remove info dir file
 	rm -f debian/tinc/usr/share/info/dir
 

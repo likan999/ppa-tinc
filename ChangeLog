@@ -1,20 +1,64 @@
+Version 1.0.26                                              July 05 2015
+------------------------------------------------------------------------
+
+Guus Sliepen (14):
+      Use VittGam's real name.
+      Attribution for Saverio Proto.
+      Always call res_init() before getaddrinfo().
+      Fix --logfile without a filename on Windows.
+      Never call putenv() with data on the stack.
+      Return non-zero exit code when encountering configuration errors during startup.
+      Fix autoconf check for function attributes.
+      Fix spelling of FORTIFY_SOURCE.
+      Update copyright notices.
+      Attribution for various contributors.
+      Only check for -fno-strict-overflow if -fwrapv does not work.
+      Fix unputenv() on Windows.
+      Don't try to call res_init() if ./configure told us it doesn't exist.
+      Releasing 1.0.26.
+
+Jo-Philipp Wich (1):
+      fix musl compatibility
+
+Version 1.0.25                                          December 22 2014
+------------------------------------------------------------------------
+
+Guus Sliepen (7):
+      Fix date of last NEWS entry.
+      Remember ToS/Diffserv priority for each socket individually.
+      Attribution for various contributors.
+      Automatically choose a tap device on Mac OS X when using switch Mode.
+      Update documentation for Mac OS X.
+      Check whether res_init() really lives in libresolv.
+      Releasing 1.0.25.
+
+Borg (3):
+      Fixed scripts calling under Win32.
+      Get MAC of TAP device.
+      Fixed tinc-up script calling on Win32.
+
+Alexis Hildebrandt (1):
+      Add support to link against libresolv Mac OS X
+
+Baptiste Jonglez (1):
+      Use the description from the 1.1 man page for the IndirectData option
+
+David Pflug (1):
+      Update README.android
+
+Jochen Voss (1):
+      Fix some typos in the manual.
+
+Tomislav Čohar (1):
+      Configure minimum reconnect timeouts.
+
+VittGam (1):
+      Support ToS/DiffServ priority handling for IPv6 meta and UDP connections.
+
 Version 1.0.24                                               May 11 2014
 ------------------------------------------------------------------------
 
-Guus Sliepen (26):
-      Mention in the manual that multiple Address staments are allowed.
-      If no Port is specified, set myport to actual port of first listening socket.
-      Enable compiler hardening flags by default.
-      Update support for Solaris.
-      Include <limits.h> for PATH_MAX.
-      Stricter check for raw socket support.
-      Use hardcoded value for TUNNEWPPA if net/if_tun.h is missing on Solaris.
-      Fix incorrectly merged bits from 80cd2ff73071941a5356555b85a00ee90dfd0e16.
-      Don't enable -fstack-protector-all.
-      Remove or lower the priority of some debug messages.
-      Clarify StrictSubnets.
-      Attribution for various contributors.
-      Handle errors from TAP-Win32/64 adapter in a better way.
+Guus Sliepen (13):
       Remove useless variable 'hard' from try_harder().
       Merge pull request #14 from luckyhacky/master
       Add an autoconf check for res_init().
@@ -34,21 +78,39 @@ Steffan Karger (3):
       Use cryptographically strong random when generating keys.
       Check RAND_bytes() return value, fail when getting random fails.
 
-Florent Clairambault (2):
-      Adding "conf.d" configuration dir support.
-      Adding some documentation around the /etc/tinc/$NET/conf.d directory.
-
 Armin Fisslthaler (1):
       reload /etc/resolv.conf in SIGALRM handler
 
 Loic Dachary (1):
       fix documentation typo
 
-Vilbrekin (1):
-      Update android build instructions. Disable PIE as this is not supported on some devices.
-
 luckyhacky (1):
       update to openssl version 1.0.1g due to lack of heartbleed bug in prior version of openssl
+
+refs/tags/1.0.23-android-1                                 March 11 2014
+------------------------------------------------------------------------
+
+Guus Sliepen (13):
+      Mention in the manual that multiple Address staments are allowed.
+      If no Port is specified, set myport to actual port of first listening socket.
+      Enable compiler hardening flags by default.
+      Update support for Solaris.
+      Include <limits.h> for PATH_MAX.
+      Stricter check for raw socket support.
+      Use hardcoded value for TUNNEWPPA if net/if_tun.h is missing on Solaris.
+      Fix incorrectly merged bits from 80cd2ff73071941a5356555b85a00ee90dfd0e16.
+      Don't enable -fstack-protector-all.
+      Remove or lower the priority of some debug messages.
+      Clarify StrictSubnets.
+      Attribution for various contributors.
+      Handle errors from TAP-Win32/64 adapter in a better way.
+
+Florent Clairambault (2):
+      Adding "conf.d" configuration dir support.
+      Adding some documentation around the /etc/tinc/$NET/conf.d directory.
+
+Vilbrekin (1):
+      Update android build instructions. Disable PIE as this is not supported on some devices.
 
 Version 1.0.23                                           October 19 2013
 ------------------------------------------------------------------------
