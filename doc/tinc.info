@@ -1,14 +1,14 @@
-This is tinc.info, produced by makeinfo version 5.2 from tinc.texi.
+This is tinc.info, produced by makeinfo version 6.1 from tinc.texi.
 
 INFO-DIR-SECTION Networking tools
 START-INFO-DIR-ENTRY
 * tinc: (tinc).              The tinc Manual.
 END-INFO-DIR-ENTRY
 
-This is the info manual for tinc version 1.0.25, a Virtual Private
+This is the info manual for tinc version 1.0.27, a Virtual Private
 Network daemon.
 
-   Copyright (C) 1998-2014 Ivo Timmermans, Guus Sliepen
+   Copyright (C) 1998-2016 Ivo Timmermans, Guus Sliepen
 <guus@tinc-vpn.org> and Wessel Dankers <wsl@tinc-vpn.org>.
 
    Permission is granted to make and distribute verbatim copies of this
@@ -257,9 +257,15 @@ File: tinc.info,  Node: Configuration of Darwin (Mac OS X) kernels,  Next: Confi
 ------------------------------------------------
 
 Tinc on Darwin relies on a tunnel driver for its data acquisition from
-the kernel.  Tinc supports either the driver from
+the kernel.  OS X version 10.6.8 and later have a built-in tun driver
+called "utun".  Tinc also supports the driver from
 <http://tuntaposx.sourceforge.net/>, which supports both tun and tap
 style devices.
+
+   By default, tinc expects the tuntaposx driver to be installed.  To
+use the utun driver, set add 'Device = utunX' to 'tinc.conf', where X is
+the desired number for the utun interface.  You can also omit the
+number, in which case the first free number will be chosen.
 
 
 File: tinc.info,  Node: Configuration of Windows,  Prev: Configuration of Darwin (Mac OS X) kernels,  Up: Configuring the kernel
@@ -816,6 +822,11 @@ DeviceType = <TYPE> (platform dependent)
           followed by an IP header.  This mode should support both IPv4
           and IPv6 packets.
 
+     utun (OS X)
+          Set type to utun.  This is only supported on OS X version
+          10.6.8 and higher, but doesn't require the tuntaposx module.
+          This mode should support both IPv4 and IPv6 packets.
+
      tap (BSD and Linux)
           Set type to tap.  Tinc will expect packets read from the
           virtual network device to start with an Ethernet header.
@@ -931,15 +942,15 @@ Mode = <router|switch|hub> (router)
           routing table is managed.
 
 Name = <NAME> [required]
-     This is a symbolic name for this connection.  The name should
-     consist only of alphanumeric and underscore characters (a-z, A-Z,
-     0-9 and _).
+     This is a symbolic name for this connection.  The name must consist
+     only of alphanumeric and underscore characters (a-z, A-Z, 0-9 and
+     _).
 
      If Name starts with a $, then the contents of the environment
      variable that follows will be used.  In that case, invalid
      characters will be converted to underscores.  If Name is $HOST, but
      no such environment variable exist, the hostname will be read using
-     the gethostnname() system call.
+     the gethostname() system call.
 
 PingInterval = <SECONDS> (60)
      The number of seconds of inactivity that tinc will wait before
@@ -972,7 +983,7 @@ ProcessPriority = <low|normal|high>
      adjusted.  Increasing the priority may help to reduce latency and
      packet loss on the VPN.
 
-Proxy = socks4 | socks5 | http | exec ... [experimental]
+Proxy = socks4 | socks5 | http | exec ... [experimental]
      Use a proxy when making outgoing connections.  The following proxy
      types are currently supported:
 
@@ -1152,16 +1163,27 @@ File: tinc.info,  Node: Scripts,  Next: How to configure,  Prev: Host configurat
 -------------
 
 Apart from reading the server and host configuration files, tinc can
-also run scripts at certain moments.  Under Windows (not Cygwin), the
-scripts should have the extension .bat.
+also run scripts at certain moments.  Below is a list of filenames of
+scripts and a description of when they are run.  A script is only run if
+it exists and if it is executable.
+
+   Scripts are run synchronously; this means that tinc will temporarily
+stop processing packets until the called script finishes executing.
+This guarantees that scripts will execute in the exact same order as the
+events that trigger them.  If you need to run commands asynchronously,
+you have to ensure yourself that they are being run in the background.
+
+   Under Windows (not Cygwin), the scripts must have the extension .bat.
 
 '/etc/tinc/NETNAME/tinc-up'
      This is the most important script.  If it is present it will be
      executed right after the tinc daemon has been started and has
      connected to the virtual network device.  It should be used to set
      up the corresponding network interface, but can also be used to
-     start other things.  Under Windows you can use the Network
-     Connections control panel instead of creating this script.
+     start other things.
+
+     Under Windows you can use the Network Connections control panel
+     instead of creating this script.
 
 '/etc/tinc/NETNAME/tinc-down'
      This script is started right before the tinc daemon quits.
@@ -2449,86 +2471,86 @@ Concept Index
 * DEL_SUBNET:                            The meta-protocol.   (line  46)
 * Device:                                Main configuration variables.
                                                               (line  73)
-* DEVICE:                                Scripts.             (line  53)
+* DEVICE:                                Scripts.             (line  64)
 * device files:                          Device files.        (line   6)
 * DeviceType:                            Main configuration variables.
                                                               (line  79)
 * Digest:                                Host configuration variables.
                                                               (line  31)
 * DirectOnly:                            Main configuration variables.
-                                                              (line 144)
+                                                              (line 149)
 * dummy:                                 Main configuration variables.
                                                               (line  86)
 * encapsulating:                         The UDP tunnel.      (line  30)
 * encryption:                            Encryption of network packets.
                                                               (line   6)
-* environment variables:                 Scripts.             (line  42)
+* environment variables:                 Scripts.             (line  53)
 * example:                               Example configuration.
                                                               (line   6)
 * exec:                                  Main configuration variables.
-                                                              (line 314)
+                                                              (line 319)
 * Forwarding:                            Main configuration variables.
-                                                              (line 151)
+                                                              (line 156)
 * frame type:                            The UDP tunnel.      (line   6)
 * GraphDumpFile:                         Main configuration variables.
-                                                              (line 171)
+                                                              (line 176)
 * Hostnames:                             Main configuration variables.
-                                                              (line 179)
+                                                              (line 184)
 * http:                                  Main configuration variables.
-                                                              (line 311)
+                                                              (line 316)
 * hub:                                   Main configuration variables.
-                                                              (line 249)
+                                                              (line 254)
 * ID:                                    Authentication protocol.
                                                               (line  10)
 * IffOneQueue:                           Main configuration variables.
-                                                              (line 190)
+                                                              (line 195)
 * IndirectData:                          Host configuration variables.
                                                               (line  36)
 * Interface:                             Main configuration variables.
-                                                              (line 193)
-* INTERFACE:                             Scripts.             (line  56)
+                                                              (line 198)
+* INTERFACE:                             Scripts.             (line  67)
 * IRC:                                   Contact information. (line   9)
 * key generation:                        Generating keypairs. (line   6)
 * KeyExpire:                             Main configuration variables.
-                                                              (line 201)
+                                                              (line 206)
 * KEY_CHANGED:                           The meta-protocol.   (line  63)
 * libraries:                             Libraries.           (line   6)
 * license:                               OpenSSL.             (line  35)
 * LocalDiscovery:                        Main configuration variables.
-                                                              (line 207)
+                                                              (line 212)
 * lzo:                                   lzo.                 (line   6)
 * MACExpire:                             Main configuration variables.
-                                                              (line 218)
+                                                              (line 223)
 * MACLength:                             Host configuration variables.
                                                               (line  44)
 * MaxTimeout:                            Main configuration variables.
-                                                              (line 223)
+                                                              (line 228)
 * meta-protocol:                         The meta-connection. (line  18)
 * META_KEY:                              Authentication protocol.
                                                               (line  10)
 * Mode:                                  Main configuration variables.
-                                                              (line 227)
+                                                              (line 232)
 * multicast:                             Main configuration variables.
                                                               (line  98)
 * multiple networks:                     Multiple networks.   (line   6)
 * Name:                                  Main configuration variables.
-                                                              (line 254)
-* NAME:                                  Scripts.             (line  50)
+                                                              (line 259)
+* NAME:                                  Scripts.             (line  61)
 * netmask:                               Network interfaces.  (line  33)
 * netname:                               Multiple networks.   (line   6)
-* NETNAME:                               Scripts.             (line  47)
+* NETNAME:                               Scripts.             (line  58)
 * Network Administrators Guide:          Configuration introduction.
                                                               (line  15)
-* NODE:                                  Scripts.             (line  60)
+* NODE:                                  Scripts.             (line  71)
 * OpenSSL:                               OpenSSL.             (line   6)
 * options:                               Runtime options.     (line   9)
 * PEM format:                            Host configuration variables.
                                                               (line  69)
 * PING:                                  The meta-protocol.   (line  88)
 * PingInterval:                          Main configuration variables.
-                                                              (line 265)
+                                                              (line 270)
 * PingTimeout:                           Main configuration variables.
-                                                              (line 269)
+                                                              (line 274)
 * platforms:                             Supported platforms. (line   6)
 * PMTU:                                  Host configuration variables.
                                                               (line  49)
@@ -2539,17 +2561,17 @@ Concept Index
                                                               (line  57)
 * port numbers:                          Other files.         (line  17)
 * PriorityInheritance:                   Main configuration variables.
-                                                              (line 275)
+                                                              (line 280)
 * private:                               Virtual Private Networks.
                                                               (line  10)
 * PrivateKey:                            Main configuration variables.
-                                                              (line 280)
+                                                              (line 285)
 * PrivateKeyFile:                        Main configuration variables.
-                                                              (line 286)
-* ProcessPriority:                       Main configuration variables.
                                                               (line 291)
-* Proxy:                                 Main configuration variables.
+* ProcessPriority:                       Main configuration variables.
                                                               (line 296)
+* Proxy:                                 Main configuration variables.
+                                                              (line 301)
 * PublicKey:                             Host configuration variables.
                                                               (line  61)
 * PublicKeyFile:                         Host configuration variables.
@@ -2557,14 +2579,14 @@ Concept Index
 * raw_socket:                            Main configuration variables.
                                                               (line  91)
 * release:                               Supported platforms. (line  14)
-* REMOTEADDRESS:                         Scripts.             (line  65)
-* REMOTEPORT:                            Scripts.             (line  68)
+* REMOTEADDRESS:                         Scripts.             (line  76)
+* REMOTEPORT:                            Scripts.             (line  79)
 * ReplayWindow:                          Main configuration variables.
-                                                              (line 319)
+                                                              (line 324)
 * requirements:                          Libraries.           (line   6)
 * REQ_KEY:                               The meta-protocol.   (line  63)
 * router:                                Main configuration variables.
-                                                              (line 230)
+                                                              (line 235)
 * runtime options:                       Runtime options.     (line   9)
 * scalability:                           tinc.                (line  19)
 * scripts:                               Scripts.             (line   6)
@@ -2572,46 +2594,48 @@ Concept Index
                                                               (line  18)
 * signals:                               Signals.             (line   6)
 * socks4:                                Main configuration variables.
-                                                              (line 300)
-* socks5:                                Main configuration variables.
                                                               (line 305)
+* socks5:                                Main configuration variables.
+                                                              (line 310)
 * StrictSubnets:                         Main configuration variables.
-                                                              (line 330)
+                                                              (line 335)
 * Subnet:                                Host configuration variables.
                                                               (line  76)
-* SUBNET:                                Scripts.             (line  72)
+* SUBNET:                                Scripts.             (line  83)
 * Subnet weight:                         Host configuration variables.
                                                               (line  98)
 * SVPN:                                  Security.            (line  11)
 * switch:                                Main configuration variables.
-                                                              (line 238)
+                                                              (line 243)
 * TCP:                                   The meta-connection. (line  10)
 * TCPonly:                               Host configuration variables.
                                                               (line 105)
 * tinc:                                  Introduction.        (line   6)
 * TINC:                                  Security.            (line   6)
-* tinc-down:                             Scripts.             (line  18)
-* tinc-up:                               Scripts.             (line  10)
+* tinc-down:                             Scripts.             (line  29)
+* tinc-up:                               Scripts.             (line  19)
 * tinc-up <1>:                           Network interfaces.  (line  19)
 * tincd:                                 tinc.                (line  14)
 * traditional VPNs:                      tinc.                (line  19)
 * tunifhead:                             Main configuration variables.
                                                               (line 133)
 * TunnelServer:                          Main configuration variables.
-                                                              (line 337)
+                                                              (line 342)
 * tunnohead:                             Main configuration variables.
                                                               (line 127)
 * UDP:                                   The UDP tunnel.      (line  30)
 * UDP <1>:                               Encryption of network packets.
                                                               (line  12)
 * UDPRcvBuf:                             Main configuration variables.
-                                                              (line 344)
-* UDPSndBuf:                             Main configuration variables.
                                                               (line 349)
+* UDPSndBuf:                             Main configuration variables.
+                                                              (line 354)
 * UML:                                   Main configuration variables.
                                                               (line 109)
 * Universal tun/tap:                     Configuration of Linux kernels.
                                                               (line   6)
+* utun:                                  Main configuration variables.
+                                                              (line 140)
 * VDE:                                   Main configuration variables.
                                                               (line 114)
 * virtual:                               Virtual Private Networks.
@@ -2621,7 +2645,7 @@ Concept Index
                                                               (line   6)
 * vpnd:                                  tinc.                (line   6)
 * website:                               Contact information. (line   6)
-* WEIGHT:                                Scripts.             (line  75)
+* WEIGHT:                                Scripts.             (line  86)
 * zlib:                                  zlib.                (line   6)
 
 
@@ -2640,53 +2664,53 @@ Node: Configuration of OpenBSD kernels7852
 Node: Configuration of NetBSD kernels8460
 Node: Configuration of Solaris kernels8865
 Node: Configuration of Darwin (Mac OS X) kernels9527
-Node: Configuration of Windows10005
-Node: Libraries10519
-Node: OpenSSL10907
-Node: zlib13195
-Node: lzo14223
-Node: Installation15205
-Node: Building and installing tinc16220
-Node: Darwin (Mac OS X) build environment16880
-Node: Cygwin (Windows) build environment17462
-Node: MinGW (Windows) build environment18050
-Node: System files18574
-Node: Device files18839
-Node: Other files19255
-Node: Configuration19868
-Node: Configuration introduction20179
-Node: Multiple networks21447
-Node: How connections work22873
-Node: Configuration files24095
-Node: Main configuration variables25589
-Node: Host configuration variables41628
-Node: Scripts47131
-Node: How to configure49894
-Node: Generating keypairs51152
-Node: Network interfaces51651
-Node: Example configuration53499
-Node: Running tinc58824
-Node: Runtime options59414
-Node: Signals62716
-Node: Debug levels63907
-Node: Solving problems64843
-Node: Error messages66395
-Node: Sending bug reports70404
-Node: Technical information71351
-Node: The connection71582
-Node: The UDP tunnel71894
-Node: The meta-connection74955
-Node: The meta-protocol76424
-Node: Security81441
-Node: Authentication protocol82574
-Node: Encryption of network packets87619
-Node: Security issues88995
-Node: Platform specific information90622
-Node: Interface configuration90850
-Node: Routes93321
-Node: About us95335
-Node: Contact information95510
-Node: Authors95914
-Node: Concept Index96319
+Node: Configuration of Windows10346
+Node: Libraries10860
+Node: OpenSSL11248
+Node: zlib13536
+Node: lzo14564
+Node: Installation15546
+Node: Building and installing tinc16561
+Node: Darwin (Mac OS X) build environment17221
+Node: Cygwin (Windows) build environment17803
+Node: MinGW (Windows) build environment18391
+Node: System files18915
+Node: Device files19180
+Node: Other files19596
+Node: Configuration20209
+Node: Configuration introduction20520
+Node: Multiple networks21788
+Node: How connections work23214
+Node: Configuration files24436
+Node: Main configuration variables25930
+Node: Host configuration variables42187
+Node: Scripts47690
+Node: How to configure50956
+Node: Generating keypairs52214
+Node: Network interfaces52713
+Node: Example configuration54561
+Node: Running tinc59886
+Node: Runtime options60476
+Node: Signals63778
+Node: Debug levels64969
+Node: Solving problems65905
+Node: Error messages67457
+Node: Sending bug reports71466
+Node: Technical information72413
+Node: The connection72644
+Node: The UDP tunnel72956
+Node: The meta-connection76017
+Node: The meta-protocol77486
+Node: Security82503
+Node: Authentication protocol83636
+Node: Encryption of network packets88681
+Node: Security issues90057
+Node: Platform specific information91684
+Node: Interface configuration91912
+Node: Routes94383
+Node: About us96397
+Node: Contact information96572
+Node: Authors96976
+Node: Concept Index97381
 
 End Tag Table

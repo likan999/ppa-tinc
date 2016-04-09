@@ -2,7 +2,7 @@
     avl_tree.c -- avl_ tree and linked list convenience
     Copyright (C) 1998 Michael H. Buselli
                   2000-2005 Ivo Timmermans,
-                  2000-2014 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2015 Guus Sliepen <guus@tinc-vpn.org>
                   2000-2005 Wessel Dankers <wsl@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
@@ -122,8 +122,6 @@ static void avl_rebalance(avl_tree_t *tree, avl_node_t *node)
 	avl_node_t *gchild;
 	avl_node_t *parent;
 	avl_node_t **superparent;
-
-	parent = node;
 
 	while(node) {
 		parent = node->parent;

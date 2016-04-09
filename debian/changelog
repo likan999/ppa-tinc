@@ -1,3 +1,13 @@
+tinc (1.0.27-1) unstable; urgency=medium
+
+  * New upstream release.
+  * Bump Standards-Version.
+  * Add native systemd unit files.
+  * Automatically convert networks listed in nets.boot to systemd service
+    instances on upgrade.
+
+ -- Guus Sliepen <guus@debian.org>  Sun, 10 Apr 2016 01:39:16 +0200
+
 tinc (1.0.26-1) unstable; urgency=medium
 
   * New upstream release.

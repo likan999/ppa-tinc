@@ -1,0 +1,14 @@
+tinc (1.0.27-1) unstable; urgency=medium
+
+  This package now provides native systemd service files, allowing multiple
+  instances of tinc to be managed. Existing networks listed in
+  /etc/tinc/nets.boot will be converted to service instances once during this
+  upgrade. Afterwards, you can enable and disable networks using:
+  
+    systemctl enable tinc@<netname>
+    systemctl disable tinc@<netname>
+  
+  If you do not have systemd installed, the SysV init script will continue to
+  work as usual. For more information, see README.Debian.
+
+ -- Guus Sliepen <guus@debian.org>  Sun, 10 Apr 2016 01:33:55 +0200

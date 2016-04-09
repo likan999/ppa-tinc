@@ -1,7 +1,7 @@
 /*
     device.c -- Interaction with Windows tap driver in a Cygwin environment
     Copyright (C) 2002-2005 Ivo Timmermans,
-                  2002-2011 Guus Sliepen <guus@tinc-vpn.org>
+                  2002-2016 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -19,6 +19,7 @@
 */
 
 #include "../system.h"
+#include "../net.h"
 
 #include <w32api/windows.h>
 #include <w32api/winioctl.h>
@@ -26,7 +27,6 @@
 #include "../conf.h"
 #include "../device.h"
 #include "../logger.h"
-#include "../net.h"
 #include "../route.h"
 #include "../utils.h"
 #include "../xalloc.h"
@@ -60,6 +60,9 @@ static bool setup_device(void) {
 
 	get_config_string(lookup_config(config_tree, "Device"), &device);
 	get_config_string(lookup_config(config_tree, "Interface"), &iface);
+
+	if(device && iface)
+		logger(LOG_WARNING, "Warning: both Device and Interface specified, results may not be as expected");
 
 	/* Open registry and look for network adapters */
 
