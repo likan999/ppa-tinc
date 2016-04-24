@@ -1,3 +1,14 @@
+tinc (1.1~pre12-1) experimental; urgency=medium
+
+  * New upstream release.
+  * Bump Standards-Version.
+  * Depend on python-wxgtk3.0 for the GUI.
+  * Use dh --with python2.
+  * Add Build-Depends for dh-python.
+  * Update links in debian/control and debian/copyright.
+
+ -- Guus Sliepen <guus@debian.org>  Sun, 24 Apr 2016 14:51:14 +0200
+
 tinc (1.1~pre11-1) experimental; urgency=medium
 
   * New upstream release.

@@ -1,3 +1,304 @@
+Version 1.1pre12                                           April 24 2016
+------------------------------------------------------------------------
+
+Guus Sliepen (166):
+      Allow tinc to be compiled without OpenSSL.
+      Add missing nolegacy/crypto.c and prf.c.
+      Fixes for bugs in src/Makefile.am and tincctl.c introduced by cfe9285adf391ab66faeb5def811fe08e47a221a.
+      Fix indentation and some whitespace issues.
+      Use void pointers for opaque data blobs in the SHA512 code.
+      Use global "now" in try_udp() and try_mtu().
+      Remember whether we sent our key to another node.
+      Try to clarify the new code in net_packet.c a bit.
+      Correctly estimate the initial MTU for legacy packets.
+      Fix size of type 2 probe replies.
+      Proactively send our own key when we request another node's key.
+      Don't send probe replies if we don't have the other's key.
+      Fix segfault when sptps_test cannot open the key files.
+      Always keep UDP mappings alive for nodes that also have a meta-connection.
+      Immediately send our key when a meta-connection is established.
+      Only send small packets during UDP probes.
+      Remove RTT and packet loss estimation code.
+      Send MTU probes only once every PingInterval.
+      Move detection of PMTU decrease to try_mtu().
+      Keep track of the largest UDP packet size received from a node.
+      Move UDP probe reply code into its own function.
+      Send the size of the largest recently received packets in type 2 probe replies.
+      Send gratuitous type 2 probe replies.
+      Improve packet source detection.
+      Add the "fsck" command to the CLI.
+      Always call res_init() before getaddrinfo().
+      Make "tinc add" idempotent.
+      Document that --force should precede commands.
+      Suppress warnings about parsing Ed25519 keys when they are not present.
+      Merge remote-tracking branch 'dechamps/sptpsabort' into 1.1
+      Merge remote-tracking branch 'seehuhn/1.1' into 1.1
+      Fix the case where we detach and use --logfile.
+      --syslog and --logfile are mutually exclusive.
+      Merge remote-tracking branch 'dechamps/staticfix' into 1.1
+      Merge remote-tracking branch 'dechamps/fsckwin' into 1.1
+      Merge remote-tracking branch 'dechamps/winmtu' into 1.1
+      Merge remote-tracking branch 'dechamps/windevice' into 1.1
+      Always call res_init() before getaddrinfo().
+      Merge remote-tracking branch 'dechamps/wintapver' into 1.1
+      Allow one-sided upgrades to Ed25519.
+      Fix a possible segmentation fault during key upgrades.
+      Don't log an error message when receiving a TERMREQ.
+      Fix typo 0fda572c88d02b0b200ef81d72cc4da594fa0e38 that prevented some errors from being logged.
+      Remove "release-" from displayed git version.
+      Don't include build-time generated version_git.h in the tarball.
+      Really remove "release-" from the git-derived version string.
+      Fix invitations.
+      Fix receiving UDP packets from tinc 1.0.x nodes.
+      Use AF_UNSPEC instead of AF_UNKNOWN for unspecified local address in add_edge_h().
+      Be more liberal accepting ADD_EDGE messages with conflicting local address information.
+      Try all addresses for the hostname in an invitation URL.
+      Let sockaddr2str() handle AF_UNSPEC addresses.
+      Don't send local_address in ADD_EDGE messages if it's AF_UNSPEC.
+      Merge remote-tracking branches 'dechamps/sptpsrestart' and 'dechamps/keychanged' into 1.1
+      Remove info-in-builddir option from AM_INIT_AUTOMAKE().
+      Fix src/Makefile.am for *BSD.
+      Add newline at end of precomp_data.h and sc.h.
+      Add source of SPTPS errors to log messages.
+      Don't log seqno failures in sptps_verify_datagram().
+      If LOCALSTATEDIR is inaccessible, store the pid and socket files in the configuration directory.
+      Quit with an error message if ioctl(TUNSETIFF) fails.
+      Add "list" as an alias for "dump" in the CLI.
+      Allow dumping a list of outstanding invitations.
+      Allocate temporary filenames on the stack.
+      Fix check for LOCALSTATEDIR accessibility for the CLI.
+      Ensure "tinc start" knows if the daemon really started succesfully.
+      Don't write log messages to the umbilical pipe if we don't detach.
+      Use socketpair() instead of pipe() for the umbilical.
+      Set the CLOEXEC flag on the umbilical socket.
+      Update copyright notices.
+      Fix missing return value caused by the previous commit.
+      Fix autoconf check for function attributes.
+      Fix warnings about missing return value checks.
+      Fix receiving SPTPS data in sptps_speed and sptps_test.
+      Fix alignment of output of sptps_speed.
+      Fix crash is sptps_logger().
+      Don't #include OpenSSL headers when compiling without OpenSSL.
+      Coalesce two if statements that check for the same thing.
+      Call sockaddrfree(&e->local_address) in free_edge() instead of exit_edges().
+      Fix undefined behaviour when left-shifting signed integers.
+      Remove unused code that caused warnings about an uninitialized variable.
+      Use AC_CONFIG_MACRO_DIRS([m4]).
+      Make subnet caches static.
+      Fix the PRF function when compiling without OpenSSL.
+      Use AC_CONFIG_MACRO_DIR() instead of _DIRS().
+      In sssp_bfs(), never try to update myself.
+      Add -I m4 back to ACLOCAL_AMFLAGS.
+      Optionally install systemd service files.
+      Replace bare if statements with AS_IF in configure.ac.
+      Fix struct node_status_t.
+      Fix a few memory leaks in the CLI found by AddressSanitizer.
+      Avoid undefined behavior.
+      Update THANKS file.
+      Don't leave dead outgoing_t's in the outgoing_list.
+      list_delete() already free()s the deleted element.
+      Add support for recvmmsg().
+      Use static buffers for recvmmsg(), initialize them only as needed.
+      Only add a reflexive address when we're sure it's working.
+      Merge remote-tracking branch 'mweinelt/tinc-gui' into 1.1
+      Add the ability to sign and verify files.
+      Update .gitignore.
+      Only check for -fno-strict-overflow if -fwrapv does not work.
+      Use nostdinc instead of overriding DEFAULT_INCLUDES.
+      Improve performance of edge updates.
+      Fix forwarding of edge updates.
+      Clarify that scripts are called synchronously.
+      Small fixes for the documentation.
+      Add warnings for bad combinations of Device and Interface.
+      Fix for botched cherry-pick commit 60fb230.
+      Fix typo.
+      Don't compile getopt*.c if the system provides getopt_long().
+      Update .gitignore.
+      Update THANKS.
+      Use iface instead of interface.
+      Support ToS/DiffServ for IPv6 meta and UDP connections.
+      Fix --logfile without a filename on Windows.
+      Never call putenv() with data on the stack.
+      Update "now" after connect() when making outgoing connections.
+      Update support for BSD tun/tap devices, add support for OS X utun interfaces.
+      Explicitly mention that LibreSSL can be used as well.
+      Update links in the documentation.
+      Enable silent builds by default.
+      Really don't compile getopt*.c if the system provides getopt_long().
+      Remove elliptic curve stubs from gcrypt/, add PRF implementation.
+      Update .gitignore.
+      Make text files Markdown-compatible.
+      Remove checks for headers and functions that are in C99.
+      Fix compiling under MinGW.
+      Replace usleep() with nanosleep().
+      Use getcwd() instead of get_current_dir_name().
+      Fix typo in Makefile.am.
+      Fix version_get.h generation on BSD.
+      Remove checks for non-C99 compliant compilers.
+      Remove support for Windows 2000 and anything that doesn't support getaddrinfo().
+      Make some platform-specific header checks conditional.
+      Add version_git.h and sample-config.tar.gz to CLEANFILES.
+      Don't assume sa.sa_family is a short int.
+      Remove use of strcpy() and sprintf().
+      Don't use HAVE_SYSTEM, the autoconf check was removed.
+      Fix a non-working cast to get rid of a compiler warning.
+      Fix generation of version_git.h for some versions of BSD make.
+      Fix some compiler warnings from MinGW.
+      Fix conditional checking of tun/tap headers on DragonFly BSD.
+      Fix crash at startup when Device is not specified on OS X.
+      Stop using SOL_TCP, SOL_IP and SOL_IPV6.
+      Document how invitation files work.
+      Generate a tinc-up script from an invitation.
+      Move some stray #includes.
+      Allow gateways to be specified for routes.
+      Fix gateway parsing in invitation files.
+      Fix compiler warnings.
+      Add a test for tinc-up creation from invitations.
+      Chdir() to the configuration directory instead of /.
+      Use ifconfig_header().
+      Add stricter checks for netnames.
+      Handle special characters in sptps_test only if the --special option is given.
+      Don't call terminate_connection(myself->connection).
+      Speed up AutoConnect at startup.
+      Fix the "network" command in tinc shell.
+      Move documentation of invitations to the manual.
+      Have "tinc fsck" recognize Ed25519PublicKey statements.
+      Fix possible read of freed memory when verifying the signature of a file.
+      Fix a compiler warning on Windows.
+      Fix starting tinc as a service on Windows.
+      Don't check file permissions on Windows during fsck.
+      Releasing 1.1pre12.
+
+Etienne Dechamps (72):
+      Clarify the send_mtu_probe() function.
+      Add the try_tx() function.
+      Move try_sptps() closer to try_tx().
+      Add UDP discovery mechanism.
+      Move responsibility for local discovery to UDP discovery.
+      Remove PMTU discovery code redundant with UDP discovery.
+      Move PMTU discovery code into the TX path.
+      Move try_mtu() closer to try_tx().
+      Fix MTU as soon as possible.
+      Use -1 to identify the post-initial MTU discovery state.
+      Send one MTU probe at a time.
+      Remove bandwidth estimation code.
+      Use a smarter algorithm for choosing MTU discovery probe sizes.
+      Adjust MTU probe counts.
+      Don't send MTU probes smaller than 512 bytes.
+      Add IP_MTU-based maxmtu estimation.
+      Fine-tune the MTU discovery multiplier for the maxmtu < MTU case.
+      Recalculate and resend MTU probes if they are too large for the system.
+      Use a different UDP discovery interval if the tunnel is established.
+      Fix typo in logging statement.
+      Fix dynamic UDP SPTPS relaying.
+      Fix UDP/MTU discovery in intermediate SPTPS UDP relays.
+      Don't abort() willy-nilly in SPTPS code.
+      Add UDP_INFO protocol message.
+      Add MTU_INFO protocol message.
+      Throttle the rate of UDP_INFO messages.
+      Throttle the rate of MTU_INFO messages.
+      Don't send UDP probes past static relays.
+      Fix invalid getuid() call on Windows.
+      Fix HAVE_DECL_RES_INIT conditionals.
+      Make sure packet header structures are correctly packed on Windows.
+      When disabling the Windows device, wait for pending reads to complete.
+      Fix Windows device asynchronous write behavior.
+      Set the default for UDPRcvBuf and UDPSndBuf to 1M.
+      Increase the ReplayWindow default from 16 to 32.
+      Log TAP-Windows driver version on startup.
+      Warn about performance if using TAP-Windows >=9.21.
+      Use git description as the tinc version.
+      Use git describe to populate autoconf's VERSION.
+      Remove explicit distribution rules for m4 scripts.
+      Add support for out-of-tree ("VPATH") builds.
+      When relaying, send probes to the destination, not the source.
+      Use the correct originator node when relaying SPTPS UDP packets.
+      Expose the raw SPTPS send interface from net_packet.
+      Try to use UDP to relay SPTPS packets received over TCP.
+      Rename REQ_SPTPS to SPTPS_PACKET.
+      Only read one record at a time in sptps_receive_data().
+      Introduce raw TCP SPTPS packet transport.
+      Prevent SPTPS key regeneration packets from entering an UDP relay path.
+      Trivial: make sptps_receive_data_datagram() a little more readable.
+      Proactively restart the SPTPS tunnel if we get receive errors.
+      Don't send KEY_CHANGED messages if we don't support the legacy protocol.
+      Make sure the MIN() macro is defined.
+      Don't pollute the system header directory namespace.
+      Fix SPTPS condition in try_harder().
+      Don't parse node IDs if the sending node doesn't support them.
+      Fix direct UDP communciation with pre-relaying 1.1 nodes.
+      Fix crashes when trying unreachable nodes.
+      Don't set up an ongoing connection to myself.
+      Fix wrong format string type in send_sptps_tcppacket().
+      Fix invalid pointer use in get_my_hostname().
+      Don't try to relay packets to unreachable nodes.
+      Protect against callbacks removing items from the io tree.
+      Use a splay tree for node UDP addresses in order to avoid collisions.
+      Revert "Cache node IDs in a hash table for faster lookups."
+      Make sure the packet source MAC address is always set.
+      Add a new optional dependency on the miniupnpc library.
+      Add UPnP support to tincd.
+      Allow tinc to be built with miniupnpc on Windows.
+      Try to ensure we build correctly against various libminiupnpc versions.
+      Don't unset validkey when receiving SPTPS handshakes over ANS_KEY.
+      Add upnp.h to tincd SOURCES.
+
+thorkill (8):
+      Fixed 2 leaks in setup_myself()
+      Cleanup edges stored in edge_weight_tree on exit
+      Cleanup local_address in protocol_edge.c
+      Removed double break;
+      Included missing names.h
+      Make sure we do not allocate new edge when talking to old nodes and the same edge already exists
+      Prevent tinc from forgeting e->local_address
+      Do not access e->to->prevedge if not defined
+
+Vittorio Gambaletta (VittGam) (6):
+      Fix DecrementTTL option.
+      Fix source IP address for ICMP unreachable packets generated by tinc.
+      Try to reply with node address only when decrementing the TTL.
+      Fix DecrementTTL option for packets destined to the local node.
+      s/broadcast_packet_helper/route_broadcast/
+      Remove forward declaration for do_decrement_ttl.
+
+Martin Weinelt (5):
+      tinc-gui: Reformat codebase according to PEP8
+      tinc-gui: Update Node object to correctly parse responses
+      tinc-gui: Fix GetListCtrl method name in SuperListCtrl
+      tinc-gui: Use ArgumentParser, default to python2
+      tinc-gui: Properly initialize class attributes for VPN in __init__
+
+Sven-Haegar Koch (3):
+      Fixed variables.test testsuite after 'Make "tinc add" idempotent.' change.
+      Let sockaddr2hostname() handle AF_UNSPEC addresses.
+      Fix check for public key in invite-join.test.
+
+Florian Klink (2):
+      (read|append)_config_file: log open errors as LOG_DEBUG
+      setup_outgoing_connection: log to LOG_DEBUG on if no known address
+
+LunarShaddow (2):
+      fix typo
+      re-arrange include sequence to avoid a mingw introduced bug.
+
+Dato Simó (1):
+      Fix typo in tinc.texi.
+
+Jo-Philipp Wich (1):
+      fix musl compatibility
+
+Jochen Voss (1):
+      Add a new --syslog option for tincd.
+
+Nathan Stratton Treadway (1):
+      Fix invalid checksum generation.
+
+Pierre Emeriaud (1):
+      Fix typo in tincctl help.
+
+xentec (1):
+      Fix compile errors introduced in cfe9285adf391ab66faeb5def811fe08e47a221a
+
 Version 1.1pre11                                        December 27 2014
 ------------------------------------------------------------------------
 

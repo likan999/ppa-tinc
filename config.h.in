@@ -1,5 +1,8 @@
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
+/* Disable support for the legacy (tinc 1.0) protocol */
+#undef DISABLE_LEGACY
+
 /* Support for jumbograms (packets up to 9000 bytes) */
 #undef ENABLE_JUMBOGRAMS
 
@@ -36,22 +39,6 @@
 /* Darwin (MacOS/X) */
 #undef HAVE_DARWIN
 
-/* Define to 1 if you have the declaration of `freeaddrinfo', and to 0 if you
-   don't. */
-#undef HAVE_DECL_FREEADDRINFO
-
-/* Define to 1 if you have the declaration of `gai_strerror', and to 0 if you
-   don't. */
-#undef HAVE_DECL_GAI_STRERROR
-
-/* Define to 1 if you have the declaration of `getaddrinfo', and to 0 if you
-   don't. */
-#undef HAVE_DECL_GETADDRINFO
-
-/* Define to 1 if you have the declaration of `getnameinfo', and to 0 if you
-   don't. */
-#undef HAVE_DECL_GETNAMEINFO
-
 /* Define to 1 if you have the declaration of `OpenSSL_add_all_algorithms',
    and to 0 if you don't. */
 #undef HAVE_DECL_OPENSSL_ADD_ALL_ALGORITHMS
@@ -59,6 +46,9 @@
 /* Define to 1 if you have the declaration of `res_init', and to 0 if you
    don't. */
 #undef HAVE_DECL_RES_INIT
+
+/* Define to 1 if you have the `devname' function. */
+#undef HAVE_DEVNAME
 
 /* Define to 1 if you have the <dirent.h> header file. */
 #undef HAVE_DIRENT_H
@@ -71,6 +61,9 @@
 
 /* Define to 1 if you have the `fchmod' function. */
 #undef HAVE_FCHMOD
+
+/* Define to 1 if you have the `fdevname' function. */
+#undef HAVE_FDEVNAME
 
 /* Define to 1 if you have the `flock' function. */
 #undef HAVE_FLOCK
@@ -87,17 +80,17 @@
 /* Define to 1 if you have the <gcrypt.h> header file. */
 #undef HAVE_GCRYPT_H
 
+/* Define to 1 if you have the <getopt.h> header file. */
+#undef HAVE_GETOPT_H
+
+/* getopt_long() */
+#undef HAVE_GETOPT_LONG
+
 /* Define to 1 if you have the `gettimeofday' function. */
 #undef HAVE_GETTIMEOFDAY
 
-/* Define to 1 if you have the `get_current_dir_name' function. */
-#undef HAVE_GET_CURRENT_DIR_NAME
-
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
-
-/* Define to 1 if you have the `nsl' library (-lnsl). */
-#undef HAVE_LIBNSL
 
 /* Define to 1 if you have the `resolv' library (-lresolv). */
 #undef HAVE_LIBRESOLV
@@ -132,8 +125,17 @@
 /* MinGW */
 #undef HAVE_MINGW
 
+/* have miniupnpc support */
+#undef HAVE_MINIUPNPC
+
+/* Define to 1 if you have the <miniupnpc/miniupnpc.h> header file. */
+#undef HAVE_MINIUPNPC_MINIUPNPC_H
+
 /* Define to 1 if you have the `mlockall' function. */
 #undef HAVE_MLOCKALL
+
+/* Define to 1 if you have the `nanosleep' function. */
+#undef HAVE_NANOSLEEP
 
 /* NetBSD */
 #undef HAVE_NETBSD
@@ -189,6 +191,9 @@
 /* Define to 1 if you have the <net/if_types.h> header file. */
 #undef HAVE_NET_IF_TYPES_H
 
+/* Define to 1 if you have the <net/if_utun.h> header file. */
+#undef HAVE_NET_IF_UTUN_H
+
 /* Define to 1 if you have the <net/tap/if_tap.h> header file. */
 #undef HAVE_NET_TAP_IF_TAP_H
 
@@ -222,9 +227,6 @@
 /* Define to 1 if you have the `putenv' function. */
 #undef HAVE_PUTENV
 
-/* Define to 1 if you have the `random' function. */
-#undef HAVE_RANDOM
-
 /* Define to 1 if you have the `RAND_status' function. */
 #undef HAVE_RAND_STATUS
 
@@ -237,32 +239,20 @@
 /* Define to 1 if you have the <readline/readline.h> header file. */
 #undef HAVE_READLINE_READLINE_H
 
+/* Define to 1 if you have the `recvmmsg' function. */
+#undef HAVE_RECVMMSG
+
 /* Define to 1 if you have the <resolv.h> header file. */
 #undef HAVE_RESOLV_H
 
-/* Define to 1 if you have the `select' function. */
-#undef HAVE_SELECT
-
-/* Define to 1 if the system has the type `socklen_t'. */
-#undef HAVE_SOCKLEN_T
-
 /* Solaris/SunOS */
 #undef HAVE_SOLARIS
-
-/* Define to 1 if you have the <stdbool.h> header file. */
-#undef HAVE_STDBOOL_H
 
 /* Define to 1 if you have the <stdint.h> header file. */
 #undef HAVE_STDINT_H
 
 /* Define to 1 if you have the <stdlib.h> header file. */
 #undef HAVE_STDLIB_H
-
-/* Define to 1 if you have the `strdup' function. */
-#undef HAVE_STRDUP
-
-/* Define to 1 if you have the `strerror' function. */
-#undef HAVE_STRERROR
 
 /* Define to 1 if you have the <strings.h> header file. */
 #undef HAVE_STRINGS_H
@@ -272,12 +262,6 @@
 
 /* Define to 1 if you have the `strsignal' function. */
 #undef HAVE_STRSIGNAL
-
-/* Define to 1 if you have the `strtol' function. */
-#undef HAVE_STRTOL
-
-/* Define to 1 if the system has the type `struct addrinfo'. */
-#undef HAVE_STRUCT_ADDRINFO
 
 /* Define to 1 if the system has the type `struct arphdr'. */
 #undef HAVE_STRUCT_ARPHDR
@@ -294,12 +278,6 @@
 /* Define to 1 if the system has the type `struct icmp6_hdr'. */
 #undef HAVE_STRUCT_ICMP6_HDR
 
-/* Define to 1 if the system has the type `struct in6_addr'. */
-#undef HAVE_STRUCT_IN6_ADDR
-
-/* Define to 1 if the system has the type `struct in_addr'. */
-#undef HAVE_STRUCT_IN_ADDR
-
 /* Define to 1 if the system has the type `struct ip'. */
 #undef HAVE_STRUCT_IP
 
@@ -312,14 +290,8 @@
 /* Define to 1 if the system has the type `struct nd_opt_hdr'. */
 #undef HAVE_STRUCT_ND_OPT_HDR
 
-/* Define to 1 if the system has the type `struct sockaddr_in6'. */
-#undef HAVE_STRUCT_SOCKADDR_IN6
-
 /* Define to 1 if you have the <syslog.h> header file. */
 #undef HAVE_SYSLOG_H
-
-/* Define to 1 if you have the `system' function. */
-#undef HAVE_SYSTEM
 
 /* Define to 1 if you have the <sys/file.h> header file. */
 #undef HAVE_SYS_FILE_H
@@ -348,20 +320,11 @@
 /* Define to 1 if you have the <sys/types.h> header file. */
 #undef HAVE_SYS_TYPES_H
 
-/* Define to 1 if you have the <sys/uio.h> header file. */
-#undef HAVE_SYS_UIO_H
-
 /* Define to 1 if you have the <sys/un.h> header file. */
 #undef HAVE_SYS_UN_H
 
 /* Define to 1 if you have the <sys/wait.h> header file. */
 #undef HAVE_SYS_WAIT_H
-
-/* Define to 1 if you have the `time' function. */
-#undef HAVE_TIME
-
-/* Define to 1 if you have the <time.h> header file. */
-#undef HAVE_TIME_H
 
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
@@ -369,14 +332,8 @@
 /* Define to 1 if you have the `unsetenv' function. */
 #undef HAVE_UNSETENV
 
-/* Define to 1 if you have the `usleep' function. */
-#undef HAVE_USLEEP
-
 /* Define to 1 if you have the `vsyslog' function. */
 #undef HAVE_VSYSLOG
-
-/* Define to 1 if you have the `writev' function. */
-#undef HAVE_WRITEV
 
 /* have zlib compression support */
 #undef HAVE_ZLIB
@@ -414,12 +371,6 @@
 /* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS
 
-/* Define to 1 if you can safely include both <sys/time.h> and <time.h>. */
-#undef TIME_WITH_SYS_TIME
-
-/* Define to 1 if your <sys/time.h> declares `struct tm'. */
-#undef TM_IN_SYS_TIME
-
 /* Enable extensions on AIX 3, Interix.  */
 #ifndef _ALL_SOURCE
 # undef _ALL_SOURCE
@@ -445,9 +396,6 @@
 /* Version number of package */
 #undef VERSION
 
-/* Compile with support for Windows 2000 */
-#undef WITH_WINDOWS2000
-
 /* Define to 1 if on MINIX. */
 #undef _MINIX
 
@@ -466,16 +414,3 @@
 
 /* Defined if the __warn_unused_result__ attribute is not supported. */
 #undef __warn_unused_result__
-
-/* Define to empty if `const' does not conform to ANSI C. */
-#undef const
-
-/* Define to `int' if <sys/types.h> does not define. */
-#undef pid_t
-
-/* Define to `unsigned int' if <sys/types.h> does not define. */
-#undef size_t
-
-/* Define to empty if the keyword `volatile' does not work. Warning: valid
-   code using `volatile' can become incorrect without. Disable with care. */
-#undef volatile
