@@ -8,7 +8,7 @@ set -e
 
 case "$1" in
 	upgrade)
-		if dpkg --compare-versions "$2" '<' "1.1~pre11-1"; then
+		if dpkg --compare-versions "$2" '<<' "1.1~pre11-1"; then
 			if [ -f "$NETSFILE" ]; then
 				echo -n "Creating systemd service instances from nets.boot:"
 				mkdir -p "$WANTS"
