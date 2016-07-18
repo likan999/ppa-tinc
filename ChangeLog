@@ -1,3 +1,13 @@
+Version 1.0.28                                             April 10 2016
+------------------------------------------------------------------------
+
+Guus Sliepen (5):
+      Fix compiling bsd/device.c on systems without utun.
+      Really remove use of __DATE__ and __TIME__ to facilitate reproducible builds.
+      Add systemd service files.
+      Update .gitignore.
+      Releasing 1.0.28.
+
 Version 1.0.27                                             April 10 2016
 ------------------------------------------------------------------------
 

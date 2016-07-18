@@ -1,7 +1,7 @@
 dnl Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.61)
-AC_INIT([tinc], [1.0.27])
+AC_INIT([tinc], [1.0.28])
 AC_CONFIG_SRCDIR([src/tincd.c])
 AM_INIT_AUTOMAKE([1.11 check-news std-options subdir-objects nostdinc silent-rules -Wall])
 AC_CONFIG_HEADERS([config.h])
@@ -20,6 +20,8 @@ AC_PROG_CPP
 AC_PROG_INSTALL
 
 AM_PROG_CC_C_O
+
+PKG_PROG_PKG_CONFIG
 
 dnl Check and set OS
 
@@ -113,6 +115,21 @@ AC_ARG_WITH(windows2000,
       [AC_DEFINE(WITH_WINDOWS2000, 1, [Compile with support for Windows 2000])])
   ]
 )
+
+AC_ARG_WITH([systemdsystemunitdir],
+     [AS_HELP_STRING([--with-systemdsystemunitdir=DIR], [Directory for systemd service files])],,
+     [with_systemdsystemunitdir=auto])
+AS_IF([test "x$with_systemdsystemunitdir" = "xyes" -o "x$with_systemdsystemunitdir" = "xauto"], [
+     def_systemdsystemunitdir=$($PKG_CONFIG --variable=systemdsystemunitdir systemd)
+
+     AS_IF([test "x$def_systemdsystemunitdir" = "x"],
+   [AS_IF([test "x$with_systemdsystemunitdir" = "xyes"],
+    [AC_MSG_ERROR([systemd support requested but pkg-config unable to query systemd package])])
+    with_systemdsystemunitdir=no],
+   [with_systemdsystemunitdir="$def_systemdsystemunitdir"])])
+AS_IF([test "x$with_systemdsystemunitdir" != "xno"],
+      [AC_SUBST([systemdsystemunitdir], [$with_systemdsystemunitdir])])
+AM_CONDITIONAL([HAVE_SYSTEMD], [test "x$with_systemdsystemunitdir" != "xno"])
 
 AM_CONDITIONAL(LINUX, test "$linux" = true)
 AM_CONDITIONAL(BSD, test "$bsd" = true)
@@ -229,6 +246,6 @@ AC_ARG_ENABLE(jumbograms,
   ]
 )
 
-AC_CONFIG_FILES([Makefile src/Makefile doc/Makefile m4/Makefile])
+AC_CONFIG_FILES([Makefile src/Makefile doc/Makefile m4/Makefile distro/Makefile])
 
 AC_OUTPUT

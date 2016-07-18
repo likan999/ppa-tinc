@@ -4,7 +4,7 @@
 	dh $@ --parallel --with systemd
 
 override_dh_auto_configure:
-	dh_auto_configure -- --enable-uml --enable-vde
+	dh_auto_configure -- --enable-uml --enable-vde --with-systemdsystemunitdir=/lib/systemd/system
 
 override_dh_auto_install:
 	dh_auto_install -- install-html
@@ -13,7 +13,6 @@ override_dh_auto_install:
 
 override_dh_installinit:
 	dh_installinit -R
-	dh_installinit --name=tinc@ --noscripts
 
 override_dh_systemd_start:
 	dh_systemd_start --restart-after-upgrade
