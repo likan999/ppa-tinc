@@ -7,10 +7,10 @@ set -e
 case "$1" in
     configure)
 	if [ ! -e /dev/.devfsd ] ; then if [ ! -e /dev/.devfs ] ; then
-		if [ ! -e /dev/net/tun ] ; then if [ ! -e /dev/tun ] ; then
+		if [ ! -e /dev/net/tun ] ; then if [ ! -e /dev/tun ] ; then if [ -e /dev/MAKEDEV ]; then
 			echo "Creating tun device..."
 			cd /dev && ./MAKEDEV net/tun 2>/dev/null || ./MAKEDEV tun 2>/dev/null || echo "Failed to create tun device."
-		fi; fi
+		fi; fi; fi
 	fi; fi
 
 	if [ ! -e $NETSFILE ] ; then
