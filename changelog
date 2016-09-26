@@ -1,3 +1,13 @@
+tinc (1.1~pre14-16-g15b868e-1) experimental; urgency=medium
+
+  * New upstream release.
+    - Use the latest git version in order to compile with OpenSSL 1.1.0.
+  * Bump debian/compat and Standards-Version.
+  * Fix the version number in configure.ac.
+  * Make the build reproducible.
+
+ -- Guus Sliepen <guus@debian.org>  Mon, 26 Sep 2016 21:35:35 +0200
+
 tinc (1.1~pre12-1) experimental; urgency=medium
 
   * New upstream release.
