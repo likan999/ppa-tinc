@@ -42,6 +42,7 @@ static int sleeptime = 10;
 time_t last_config_check = 0;
 static timeout_t pingtimer;
 static timeout_t periodictimer;
+static struct timeval last_periodic_run_time;
 
 /* Purge edges and subnets of unreachable nodes. Use carefully. */
 
@@ -93,29 +94,31 @@ void purge(void) {
 void terminate_connection(connection_t *c, bool report) {
 	logger(DEBUG_CONNECTIONS, LOG_NOTICE, "Closing connection with %s (%s)", c->name, c->hostname);
 
-	if(c->node && c->node->connection == c)
-		c->node->connection = NULL;
+	if(c->node) {
+		if(c->node->connection == c)
+			c->node->connection = NULL;
 
-	if(c->edge) {
-		if(report && !tunnelserver)
-			send_del_edge(everyone, c->edge);
+		if(c->edge) {
+			if(report && !tunnelserver)
+				send_del_edge(everyone, c->edge);
 
-		edge_del(c->edge);
-		c->edge = NULL;
+			edge_del(c->edge);
+			c->edge = NULL;
 
-		/* Run MST and SSSP algorithms */
+			/* Run MST and SSSP algorithms */
 
-		graph();
+			graph();
 
-		/* If the node is not reachable anymore but we remember it had an edge to us, clean it up */
+			/* If the node is not reachable anymore but we remember it had an edge to us, clean it up */
 
-		if(report && !c->node->status.reachable) {
-			edge_t *e;
-			e = lookup_edge(c->node, myself);
-			if(e) {
-				if(!tunnelserver)
-					send_del_edge(everyone, e);
-				edge_del(e);
+			if(report && !c->node->status.reachable) {
+				edge_t *e;
+				e = lookup_edge(c->node, myself);
+				if(e) {
+					if(!tunnelserver)
+						send_del_edge(everyone, e);
+					edge_del(e);
+				}
 			}
 		}
 	}
@@ -144,30 +147,76 @@ void terminate_connection(connection_t *c, bool report) {
   and close the connection.
 */
 static void timeout_handler(void *data) {
+
+	bool close_all_connections = false;
+
+	/*
+		 timeout_handler will start after 30 seconds from start of tincd
+		 hold information about the elapsed time since last time the handler
+		 has been run
+	*/
+	long sleep_time = now.tv_sec - last_periodic_run_time.tv_sec;
+	/*
+		 It seems that finding sane default value is harder than expected
+		 Since we send every second a UDP packet to make holepunching work
+		 And default UDP state expire on firewalls is between 15-30 seconds
+		 we drop all connections after 60 Seconds - UDPDiscoveryTimeout=30
+		 by default
+	*/
+	if (sleep_time > 2 * udp_discovery_timeout) {
+		logger(DEBUG_ALWAYS, LOG_ERR, "Awaking from dead after %ld seconds of sleep", sleep_time);
+		/*
+			Do not send any packets to tinc after we wake up.
+			The other node probably closed our connection but we still
+			are holding context information to them. This may happen on
+			laptops or any other hardware which can be suspended for some time.
+			Sending any data to node that wasn't expecting it will produce
+			annoying and misleading errors on the other side about failed signature
+			verification and or about missing sptps context
+		*/
+		close_all_connections = true;
+	}
+	last_periodic_run_time = now;
+
 	for list_each(connection_t, c, connection_list) {
+		// control connections (eg. tinc ctl) do not have any timeout
 		if(c->status.control)
 			continue;
 
-		if(c->last_ping_time + pingtimeout <= now.tv_sec) {
-			if(c->edge) {
-				try_tx(c->node, false);
-				if(c->status.pinged) {
-					logger(DEBUG_CONNECTIONS, LOG_INFO, "%s (%s) didn't respond to PING in %ld seconds", c->name, c->hostname, (long)(now.tv_sec - c->last_ping_time));
-				} else if(c->last_ping_time + pinginterval <= now.tv_sec) {
-					send_ping(c);
-					continue;
-				} else {
-					continue;
-				}
-			} else {
-				if(c->status.connecting)
-					logger(DEBUG_CONNECTIONS, LOG_WARNING, "Timeout while connecting to %s (%s)", c->name, c->hostname);
-				else
-					logger(DEBUG_CONNECTIONS, LOG_WARNING, "Timeout from %s (%s) during authentication", c->name, c->hostname);
-			}
+		if(close_all_connections) {
+			logger(DEBUG_ALWAYS, LOG_ERR, "Forcing connection close after sleep time %s (%s)", c->name, c->hostname);
 			terminate_connection(c, c->edge);
+			continue;
 		}
 
+		// Bail out early if we haven't reached the ping timeout for this node yet
+		if(c->last_ping_time + pingtimeout > now.tv_sec)
+			continue;
+
+		// timeout during connection establishing
+		if(!c->edge) {
+			if(c->status.connecting)
+				logger(DEBUG_CONNECTIONS, LOG_WARNING, "Timeout while connecting to %s (%s)", c->name, c->hostname);
+			else
+				logger(DEBUG_CONNECTIONS, LOG_WARNING, "Timeout from %s (%s) during authentication", c->name, c->hostname);
+
+			terminate_connection(c, c->edge);
+			continue;
+		}
+
+		// helps in UDP holepunching
+		try_tx(c->node, false);
+
+		// timeout during ping
+		if(c->status.pinged) {
+			logger(DEBUG_CONNECTIONS, LOG_INFO, "%s (%s) didn't respond to PING in %ld seconds", c->name, c->hostname, (long)now.tv_sec - c->last_ping_time);
+			terminate_connection(c, c->edge);
+			continue;
+		}
+
+		// check whether we need to send a new ping
+		if(c->last_ping_time + pinginterval <= now.tv_sec)
+			send_ping(c);
 	}
 
 	timeout_set(data, &(struct timeval){1, rand() % 100000});
@@ -210,18 +259,24 @@ static void periodic_handler(void *data) {
 			   and we are not already trying to make one, create an
 			   outgoing connection to this node.
 			*/
-			int r = rand() % (node_tree->count - 1);
-			int i = 0;
+			int count = 0;
+			for splay_each(node_t, n, node_tree) {
+				if(n == myself || n->connection || !(n->status.has_address || n->status.reachable))
+					continue;
+				count++;
+			}
+
+			if(!count)
+				goto end;
+
+			int r = rand() % count;
 
 			for splay_each(node_t, n, node_tree) {
-				if(n == myself)
+				if(n == myself || n->connection || !(n->status.has_address || n->status.reachable))
 					continue;
 
-				if(i++ != r)
+				if(r--)
 					continue;
-
-				if(n->connection)
-					break;
 
 				bool found = false;
 
@@ -239,6 +294,7 @@ static void periodic_handler(void *data) {
 					list_insert_tail(outgoing_list, outgoing);
 					setup_outgoing_connection(outgoing);
 				}
+
 				break;
 			}
 		} else if(nc > 3) {
@@ -287,6 +343,7 @@ static void periodic_handler(void *data) {
 		}
 	}
 
+end:
 	timeout_set(data, &(struct timeval){5, rand() % 100000});
 }
 
@@ -344,9 +401,14 @@ int reload_configuration(void) {
 		for splay_each(subnet_t, subnet, subnet_tree)
 			if (subnet->owner)
 				subnet->expires = 1;
+	}
 
-		load_all_subnets();
+	for splay_each(node_t, n, node_tree)
+		n->status.has_address = false;
 
+	load_all_nodes();
+
+	if(strictsubnets) {
 		for splay_each(subnet_t, subnet, subnet_tree) {
 			if (!subnet->owner)
 				continue;
@@ -444,6 +506,7 @@ void retry(void) {
   this is where it all happens...
 */
 int main_loop(void) {
+	last_periodic_run_time = now;
 	timeout_add(&pingtimer, timeout_handler, &pingtimer, &(struct timeval){pingtimeout, rand() % 100000});
 	timeout_add(&periodictimer, periodic_handler, &periodictimer, &(struct timeval){0, 0});
 

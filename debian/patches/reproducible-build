@@ -1,0 +1,50 @@
+--- a/src/process.c
++++ b/src/process.c
+@@ -219,8 +219,8 @@
+ 
+ 	openlogger(identname, logmode);
+ 
+-	logger(DEBUG_ALWAYS, LOG_NOTICE, "tincd %s (%s %s) starting, debug level %d",
+-			   BUILD_VERSION, BUILD_DATE, BUILD_TIME, debug_level);
++	logger(DEBUG_ALWAYS, LOG_NOTICE, "tincd %s starting, debug level %d",
++			   BUILD_VERSION, debug_level);
+ 
+ 	return true;
+ }
+--- a/src/tincctl.c
++++ b/src/tincctl.c
+@@ -87,8 +87,8 @@
+ };
+ 
+ static void version(void) {
+-	printf("%s version %s (built %s %s, protocol %d.%d)\n", PACKAGE,
+-		   BUILD_VERSION, BUILD_DATE, BUILD_TIME, PROT_MAJOR, PROT_MINOR);
++	printf("%s version %s (protocol %d.%d)\n", PACKAGE,
++		   BUILD_VERSION, PROT_MAJOR, PROT_MINOR);
+ 	printf("Copyright (C) 1998-2016 Ivo Timmermans, Guus Sliepen and others.\n"
+ 			"See the AUTHORS file for a complete list.\n\n"
+ 			"tinc comes with ABSOLUTELY NO WARRANTY.  This is free software,\n"
+--- a/src/tincd.c
++++ b/src/tincd.c
+@@ -344,8 +344,8 @@
+ 	chdir(confbase);
+ 
+ 	if(show_version) {
+-		printf("%s version %s (built %s %s, protocol %d.%d)\n", PACKAGE,
+-			   BUILD_VERSION, BUILD_DATE, BUILD_TIME, PROT_MAJOR, PROT_MINOR);
++		printf("%s version %s (protocol %d.%d)\n", PACKAGE,
++			   BUILD_VERSION, PROT_MAJOR, PROT_MINOR);
+ 		printf("Copyright (C) 1998-2016 Ivo Timmermans, Guus Sliepen and others.\n"
+ 				"See the AUTHORS file for a complete list.\n\n"
+ 				"tinc comes with ABSOLUTELY NO WARRANTY.  This is free software,\n"
+--- a/src/version.c
++++ b/src/version.c
+@@ -22,8 +22,6 @@
+ #include "../config.h"
+ 
+ /* This file is always rebuilt (even if there are no changes) so that the following is updated */
+-const char* const BUILD_DATE = __DATE__;
+-const char* const BUILD_TIME = __TIME__;
+ #ifdef GIT_DESCRIPTION
+ const char* const BUILD_VERSION = GIT_DESCRIPTION;
+ #else

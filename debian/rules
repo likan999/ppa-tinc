@@ -15,7 +15,7 @@
 	dh $@ --parallel --with python2
 
 override_dh_auto_configure:
-	dh_auto_configure -- --enable-uml --enable-vde
+	dh_auto_configure -- --enable-uml --enable-vde --with-systemd
 	$(MAKE) clean
 
 override_dh_auto_install:

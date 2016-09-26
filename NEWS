@@ -1,3 +1,13 @@
+# Version 1.1pre13             May 1 2016
+
+* Add tinc.service back.
+
+# Version 1.1pre13             April 30 2016
+
+* Fix BSD tun device support that was broken in 1.1pre12.
+* Speed up AutoConnect when there are many host config files present without
+  an Address.
+
 # Version 1.1pre12             April 24 2016
 
 * Added a "--syslog" option to force logging to syslog even if running in the
@@ -21,7 +31,7 @@
 * Initial support for generating a tinc-up script from an invitation.
 * Many small fixes, documentation updates.
 
-Thanks to Etienne Dechamps, thorkill, Vittorio Gambaletta, Martin Weinelt,
+Thanks to Etienne Dechamps, Rafał Leśniak, Vittorio Gambaletta, Martin Weinelt,
 Sven-Haegar Koch, Florian Klink, LunnarShadow, Dato Simó, Jo-Philipp Wich,
 Jochen Voss, Nathan Stratton Treadway, Pierre Emeriaud, xentec, Samuel
 Thibault and Michael Tokarev for their contributions to this version of tinc.

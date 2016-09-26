@@ -560,6 +560,7 @@ bool sendline(int fd, char *format, ...) {
 
 	va_start(ap, format);
 	blen = vsnprintf(buffer, sizeof buffer, format, ap);
+	buffer[sizeof buffer - 1] = 0;
 	va_end(ap);
 
 	if(blen < 1 || blen >= sizeof buffer)
@@ -718,6 +719,13 @@ bool connect_tincd(bool verbose) {
 	}
 
 	fclose(f);
+	if ((pid == 0) || (kill(pid, 0) && (errno == ESRCH))) {
+		fprintf(stderr, "Could not find tincd running at pid %d\n", pid);
+		/* clean up the stale socket and pid file */
+		unlink(pidfilename);
+		unlink(unixsocketname);
+		return false;
+	}
 
 #ifndef HAVE_MINGW
 	struct sockaddr_un sa;
@@ -878,7 +886,7 @@ static int cmd_start(int argc, char *argv[]) {
 
 	if(!pid) {
 		close(pfd[0]);
-		char buf[100] = "";
+		char buf[100];
 		snprintf(buf, sizeof buf, "%d", pfd[1]);
 		setenv("TINC_UMBILICAL", buf, true);
 		exit(execvp(c, nargv));
@@ -1384,7 +1392,7 @@ static int cmd_pid(int argc, char *argv[]) {
 		return 1;
 	}
 
-	if(!connect_tincd(true) && !pid)
+	if(!connect_tincd(true) || !pid)
 		return 1;
 
 	printf("%d\n", pid);
@@ -2513,6 +2521,7 @@ static int cmd_verify(int argc, char *argv[]) {
 	char *newline = memchr(data, '\n', len);
 	if(!newline || (newline - data > MAX_STRING_SIZE - 1)) {
 		fprintf(stderr, "Invalid input\n");
+		free(data);
 		return 1;
 	}
 
@@ -2525,11 +2534,13 @@ static int cmd_verify(int argc, char *argv[]) {
 
 	if(sscanf(data, "Signature = %s %ld %s", signer, &t, sig) != 3 || strlen(sig) != 86 || !t || !check_id(signer)) {
 		fprintf(stderr, "Invalid input\n");
+		free(data);
 		return 1;
 	}
 
 	if(node && strcmp(node, signer)) {
 		fprintf(stderr, "Signature is not made by %s\n", node);
+		free(data);
 		return 1;
 	}
 
@@ -2823,8 +2834,10 @@ static int cmd_shell(int argc, char *argv[]) {
 		if(nargc == argc)
 			continue;
 
-		if(!strcasecmp(nargv[argc], "exit") || !strcasecmp(nargv[argc], "quit"))
+		if(!strcasecmp(nargv[argc], "exit") || !strcasecmp(nargv[argc], "quit")) {
+			free(nargv);
 			return result;
+		}
 
 		bool found = false;
 
