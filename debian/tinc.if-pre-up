@@ -2,7 +2,7 @@
 
 set -e
 
-if [ -z "$IF_TINC_NET" ]; then
+if [ "$METHOD" = loopback -o -z "$IF_TINC_NET" ]; then
 	exit 0
 fi
 

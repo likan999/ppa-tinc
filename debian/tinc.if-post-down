@@ -2,28 +2,38 @@
 
 set -e
 
-if [ "$IF_TINC_NET" ] ; then
-	EXTRA=""
-	if [ -n "$IF_TINC_PIDFILE" ]; then
-		EXTRA="--pidfile=$IF_TINC_PIDFILE"
-	else
-		IF_TINC_PIDFILE=/var/run/tinc.$IF_TINC_NET.pid
-	fi
-	/usr/sbin/tincd -n "$IF_TINC_NET" -k $EXTRA
-	sleep 0.1
-	i=0;
-	while [ -f $IF_TINC_PIDFILE ] && read pid rest < $IF_TINC_PIDFILE ; do
-		if [ ! -e "/proc/$pid" ] ; then
-			exit 0
-		fi
-
-		if [ $i = '30' ] ; then
-			echo 'Failed to stop tinc daemon!'
-			exit 1
-		fi
-		sleep 0.1
-		i=$(($i+1))
-	done
+if [ "$METHOD" = loopback -o -z "$IF_TINC_NET" ]; then
+	exit 0
 fi
+
+# Determine location of the PID file
+
+EXTRA=""
+if [ -n "$IF_TINC_PIDFILE" ]; then
+	EXTRA="--pidfile=$IF_TINC_PIDFILE"
+else
+	IF_TINC_PIDFILE=/var/run/tinc.$IF_TINC_NET.pid
+fi
+
+# Stop the tinc daemon
+
+/usr/sbin/tincd -n "$IF_TINC_NET" -k $EXTRA
+
+# Wait for it to shut down properly
+
+sleep 0.1
+i=0;
+while [ -f $IF_TINC_PIDFILE ] && read pid rest < $IF_TINC_PIDFILE ; do
+	if [ ! -e "/proc/$pid" ] ; then
+		exit 0
+	fi
+
+	if [ $i = '30' ] ; then
+		echo 'Failed to stop tinc daemon!'
+		exit 1
+	fi
+	sleep 0.1
+	i=$(($i+1))
+done
 
 exit 0

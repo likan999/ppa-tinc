@@ -1,7 +1,7 @@
 /*
     netutl.c -- some supporting network utility code
     Copyright (C) 1998-2005 Ivo Timmermans
-                  2000-2015 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2016 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -228,6 +228,25 @@ void sockaddrunmap(sockaddr_t *sa) {
 	if(sa->sa.sa_family == AF_INET6 && IN6_IS_ADDR_V4MAPPED(&sa->in6.sin6_addr)) {
 		sa->in.sin_addr.s_addr = ((uint32_t *) & sa->in6.sin6_addr)[3];
 		sa->in.sin_family = AF_INET;
+	}
+}
+
+void sockaddr_setport(sockaddr_t *sa, const char *port) {
+	uint16_t portnum = htons(atoi(port));
+	if(!portnum)
+		return;
+	switch(sa->sa.sa_family) {
+		case AF_INET:
+			sa->in.sin_port = portnum;
+			break;
+		case AF_INET6:
+			sa->in6.sin6_port = portnum;
+			break;
+		case AF_UNKNOWN:
+			free(sa->unknown.port);
+			sa->unknown.port = xstrdup(port);
+		default:
+			return;
 	}
 }
 

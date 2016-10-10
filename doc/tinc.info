@@ -147,7 +147,7 @@ will most likely compile and run, but it will not be able to send or
 receive data packets.
 
    For an up to date list of supported platforms, please check the list
-on our website: <http://www.tinc-vpn.org/platforms/>.
+on our website: <https://www.tinc-vpn.org/platforms/>.
 
 
 File: tinc.info,  Node: Preparations,  Next: Installation,  Prev: Introduction,  Up: Top
@@ -219,12 +219,8 @@ File: tinc.info,  Node: Configuration of OpenBSD kernels,  Next: Configuration o
 2.1.3 Configuration of OpenBSD kernels
 --------------------------------------
 
-For OpenBSD version 2.9 and higher, the tun driver is included in the
-default kernel configuration.  There is also a kernel patch from
-<http://diehard.n-r-g.com/stuff/openbsd/> which adds a tap device to
-OpenBSD which should work with tinc, but with recent versions of
-OpenBSD, a tun device can act as a tap device by setting the link0
-option with ifconfig.
+Recent versions of OpenBSD come with both tun and tap devices enabled in
+the default kernel configuration.
 
 
 File: tinc.info,  Node: Configuration of NetBSD kernels,  Next: Configuration of Solaris kernels,  Prev: Configuration of OpenBSD kernels,  Up: Configuring the kernel
@@ -247,7 +243,7 @@ For Solaris 8 (SunOS 5.8) and higher, the tun driver may or may not be
 included in the default kernel configuration.  If it isn't, the source
 can be downloaded from <http://vtun.sourceforge.net/tun/>.  For x86 and
 sparc64 architectures, precompiled versions can be found at
-<http://www.monkey.org/~dugsong/fragroute/>.  If the 'net/if_tun.h'
+<https://www.monkey.org/~dugsong/fragroute/>.  If the 'net/if_tun.h'
 header file is missing, install it from the source package.
 
 
@@ -274,7 +270,8 @@ File: tinc.info,  Node: Configuration of Windows,  Prev: Configuration of Darwin
 ------------------------------
 
 You will need to install the latest TAP-Win32 driver from OpenVPN. You
-can download it from <http://openvpn.sourceforge.net>.  Using the
+can download it from
+<https://openvpn.net/index.php/open-source/downloads.html>.  Using the
 Network Connections control panel, configure the TAP-Win32 network
 interface in the same way as you would do from the tinc-up script, as
 explained in the rest of the documentation.
@@ -285,25 +282,25 @@ File: tinc.info,  Node: Libraries,  Prev: Configuring the kernel,  Up: Preparati
 2.2 Libraries
 =============
 
-Before you can configure or build tinc, you need to have the OpenSSL,
-zlib and lzo libraries installed on your system.  If you try to
+Before you can configure or build tinc, you need to have the LibreSSL or
+OpenSSL, zlib and lzo libraries installed on your system.  If you try to
 configure tinc without having them installed, configure will give you an
 error message, and stop.
 
 * Menu:
 
-* OpenSSL::
+* LibreSSL/OpenSSL::
 * zlib::
 * lzo::
 
 
-File: tinc.info,  Node: OpenSSL,  Next: zlib,  Up: Libraries
+File: tinc.info,  Node: LibreSSL/OpenSSL,  Next: zlib,  Up: Libraries
 
-2.2.1 OpenSSL
--------------
+2.2.1 LibreSSL/OpenSSL
+----------------------
 
 For all cryptography-related functions, tinc uses the functions provided
-by the OpenSSL library.
+by the LibreSSL or the OpenSSL library.
 
    If this library is not installed, you will get an error when
 configuring tinc for build.  Support for running tinc with other
@@ -313,19 +310,22 @@ cryptographic libraries installed _may_ be added in the future.
 if available.  Make sure you install the development AND runtime
 versions of this package.
 
-   If you have to install OpenSSL manually, you can get the source code
-from <http://www.openssl.org/>.  Instructions on how to configure, build
-and install this package are included within the package.  Please make
-sure you build development and runtime libraries (which is the default).
+   If your operating system comes neither with LibreSSL or OpenSSL, you
+have to install one manually.  It is recommended that you get the latest
+version of LibreSSL from <http://www.libressl.org/>.  Instructions on
+how to configure, build and install this package are included within the
+package.  Please make sure you build development and runtime libraries
+(which is the default).
 
-   If you installed the OpenSSL libraries from source, it may be
-necessary to let configure know where they are, by passing configure one
-of the -with-openssl-* parameters.
+   If you installed the LibreSSL or OpenSSL libraries from source, it
+may be necessary to let configure know where they are, by passing
+configure one of the -with-openssl-* parameters.  Note that you even
+have to use -with-openssl-* if you are using LibreSSL.
 
-     --with-openssl=DIR      OpenSSL library and headers prefix
-     --with-openssl-include=DIR OpenSSL headers directory
+     --with-openssl=DIR      LibreSSL/OpenSSL library and headers prefix
+     --with-openssl-include=DIR LibreSSL/OpenSSL headers directory
                              (Default is OPENSSL_DIR/include)
-     --with-openssl-lib=DIR  OpenSSL library directory
+     --with-openssl-lib=DIR  LibreSSL/OpenSSL library directory
                              (Default is OPENSSL_DIR/lib)
 
 License
@@ -334,7 +334,7 @@ License
 The complete source code of tinc is covered by the GNU GPL version 2.
 Since the license under which OpenSSL is distributed is not directly
 compatible with the terms of the GNU GPL
-<http://www.openssl.org/support/faq.html#LEGAL2>, we include an
+<https://www.openssl.org/support/faq.html#LEGAL2>, we include an
 exemption to the GPL (see also the file COPYING.README) to allow
 everyone to create a statically or dynamically linked executable:
 
@@ -347,13 +347,13 @@ everyone to create a statically or dynamically linked executable:
 also present the following exemption:
 
      Hereby I grant a special exception to the tinc VPN project
-     (http://www.tinc-vpn.org/) to link the LZO library with the OpenSSL
-     library (http://www.openssl.org).
+     (https://www.tinc-vpn.org/) to link the LZO library with the
+     OpenSSL library (https://www.openssl.org).
 
      Markus F.X.J. Oberhumer
 
 
-File: tinc.info,  Node: zlib,  Next: lzo,  Prev: OpenSSL,  Up: Libraries
+File: tinc.info,  Node: zlib,  Next: lzo,  Prev: LibreSSL/OpenSSL,  Up: Libraries
 
 2.2.2 zlib
 ----------
@@ -373,10 +373,9 @@ if available.  Make sure you install the development AND runtime
 versions of this package.
 
    If you have to install zlib manually, you can get the source code
-from <http://www.gzip.org/zlib/>.  Instructions on how to configure,
-build and install this package are included within the package.  Please
-make sure you build development and runtime libraries (which is the
-default).
+from <http://www.zlib.net/>.  Instructions on how to configure, build
+and install this package are included within the package.  Please make
+sure you build development and runtime libraries (which is the default).
 
 
 File: tinc.info,  Node: lzo,  Prev: zlib,  Up: Libraries
@@ -398,7 +397,7 @@ if available.  Make sure you install the development AND runtime
 versions of this package.
 
    If you have to install lzo manually, you can get the source code from
-<http://www.oberhumer.com/opensource/lzo/>.  Instructions on how to
+<https://www.oberhumer.com/opensource/lzo/>.  Instructions on how to
 configure, build and install this package are included within the
 package.  Please make sure you build development and runtime libraries
 (which is the default).
@@ -416,9 +415,7 @@ startup scripts and sample configurations.
    If you cannot use one of the precompiled packages, or you want to
 compile tinc for yourself, you can use the source.  The source is
 distributed under the GNU General Public License (GPL). Download the
-source from the download page (http://www.tinc-vpn.org/download/), which
-has the checksums of these files listed; you may wish to check these
-with md5sum before continuing.
+source from the download page (https://www.tinc-vpn.org/download/).
 
    Tinc comes in a convenient autoconf/automake package, which you can
 just treat the same as any other package.  Which is just untar it, type
@@ -456,13 +453,13 @@ File: tinc.info,  Node: Darwin (Mac OS X) build environment,  Next: Cygwin (Wind
 3.1.1 Darwin (Mac OS X) build environment
 -----------------------------------------
 
-In order to build tinc on Darwin, you need to install the Mac OS X
-Developer Tools from <http://developer.apple.com/tools/macosxtools.html>
-and preferably a recent version of Fink from
-<http://www.finkproject.org/>.
+In order to build tinc on Darwin, you need to install Xcode from
+<https://developer.apple.com/xcode/>.  It might also help to install a
+recent version of Fink from <http://www.finkproject.org/>.
 
-   After installation use fink to download and install the following
-packages: autoconf25, automake, dlcompat, m4, openssl, zlib and lzo.
+   You need to download and install LibreSSL (or OpenSSL) and LZO,
+either directly from their websites (see *note Libraries::) or using
+Fink.
 
 
 File: tinc.info,  Node: Cygwin (Windows) build environment,  Next: MinGW (Windows) build environment,  Prev: Darwin (Mac OS X) build environment,  Up: Building and installing tinc
@@ -471,7 +468,7 @@ File: tinc.info,  Node: Cygwin (Windows) build environment,  Next: MinGW (Window
 ----------------------------------------
 
 If Cygwin hasn't already been installed, install it directly from
-<http://www.cygwin.com/>.
+<https://www.cygwin.com/>.
 
    When tinc is compiled in a Cygwin environment, it can only be run in
 this environment, but all programs, including those started outside the
@@ -485,7 +482,8 @@ File: tinc.info,  Node: MinGW (Windows) build environment,  Prev: Cygwin (Window
 ---------------------------------------
 
 You will need to install the MinGW environment from
-<http://www.mingw.org>.
+<http://www.mingw.org>.  You also need to download and install LibreSSL
+(or OpenSSL) and LZO.
 
    When tinc is compiled using MinGW it runs natively under Windows, it
 is not necessary to keep MinGW installed.
@@ -1057,9 +1055,9 @@ Address = <IP ADDRESS|HOSTNAME> [<port>] [recommended]
 
 Cipher = <CIPHER> (blowfish)
      The symmetric cipher algorithm used to encrypt UDP packets.  Any
-     cipher supported by OpenSSL is recognized.  Furthermore, specifying
-     "none" will turn off packet encryption.  It is best to use only
-     those ciphers which support CBC mode.
+     cipher supported by LibreSSL or OpenSSL is recognized.
+     Furthermore, specifying "none" will turn off packet encryption.  It
+     is best to use only those ciphers which support CBC mode.
 
 ClampMSS = <yes|no> (yes)
      This option specifies whether tinc should clamp the maximum segment
@@ -1074,8 +1072,8 @@ Compression = <LEVEL> (0)
 
 Digest = <DIGEST> (sha1)
      The digest algorithm used to authenticate UDP packets.  Any digest
-     supported by OpenSSL is recognized.  Furthermore, specifying "none"
-     will turn off packet authentication.
+     supported by LibreSSL or OpenSSL is recognized.  Furthermore,
+     specifying "none" will turn off packet authentication.
 
 IndirectData = <yes|no> (no)
      This option specifies whether other tinc daemons besides the one
@@ -1137,7 +1135,7 @@ Subnet = <ADDRESS[/PREFIXLENGTH[#WEIGHT]]>
      Prefixlength is the number of bits set to 1 in the netmask part;
      for example: netmask 255.255.255.0 would become /24, 255.255.252.0
      becomes /22.  This conforms to standard CIDR notation as described
-     in RFC1519 (http://www.ietf.org/rfc/rfc1519.txt)
+     in RFC1519 (https://www.ietf.org/rfc/rfc1519.txt)
 
      A Subnet can be given a weight to indicate its priority over
      identical Subnets owned by different nodes.  The default weight is
@@ -2098,7 +2096,7 @@ intercept.  The encryption algorithm and message authentication
 algorithm can be changed in the configuration.  The length of the
 message authentication codes is also adjustable.  The length of the key
 for the encryption algorithm is always the default length used by
-OpenSSL.
+LibreSSL/OpenSSL.
 
 * Menu:
 
@@ -2256,8 +2254,8 @@ In August 2000, we discovered the existence of a security hole in all
 versions of tinc up to and including 1.0pre2.  This had to do with the
 way we exchanged keys.  Since then, we have been working on a new
 authentication scheme to make tinc as secure as possible.  The current
-version uses the OpenSSL library and uses strong authentication with RSA
-keys.
+version uses the LibreSSL or OpenSSL library and uses strong
+authentication with RSA keys.
 
    On the 29th of December 2001, Jerome Etienne posted a security
 analysis of tinc 1.0pre4.  Due to a lack of sequence numbers and a
@@ -2393,12 +2391,12 @@ File: tinc.info,  Node: Contact information,  Next: Authors,  Up: About us
 8.1 Contact information
 =======================
 
-Tinc's website is at <http://www.tinc-vpn.org/>, this server is located
+Tinc's website is at <https://www.tinc-vpn.org/>, this server is located
 in the Netherlands.
 
    We have an IRC channel on the FreeNode and OFTC IRC networks.
-Connect to irc.freenode.net (http://www.freenode.net/) or irc.oftc.net
-(http://www.oftc.net/) and join channel #tinc.
+Connect to irc.freenode.net (https://freenode.net/) or irc.oftc.net
+(https://www.oftc.net/) and join channel #tinc.
 
 
 File: tinc.info,  Node: Authors,  Prev: Contact information,  Up: About us
@@ -2515,7 +2513,8 @@ Concept Index
                                                               (line 206)
 * KEY_CHANGED:                           The meta-protocol.   (line  63)
 * libraries:                             Libraries.           (line   6)
-* license:                               OpenSSL.             (line  35)
+* LibreSSL:                              LibreSSL/OpenSSL.    (line   6)
+* license:                               LibreSSL/OpenSSL.    (line  38)
 * LocalDiscovery:                        Main configuration variables.
                                                               (line 212)
 * lzo:                                   lzo.                 (line   6)
@@ -2542,7 +2541,7 @@ Concept Index
 * Network Administrators Guide:          Configuration introduction.
                                                               (line  15)
 * NODE:                                  Scripts.             (line  71)
-* OpenSSL:                               OpenSSL.             (line   6)
+* OpenSSL:                               LibreSSL/OpenSSL.    (line   6)
 * options:                               Runtime options.     (line   9)
 * PEM format:                            Host configuration variables.
                                                               (line  69)
@@ -2656,61 +2655,61 @@ Node: Introduction1105
 Node: Virtual Private Networks1915
 Node: tinc3639
 Node: Supported platforms5166
-Node: Preparations5866
-Node: Configuring the kernel6122
-Node: Configuration of Linux kernels6532
-Node: Configuration of FreeBSD kernels7387
-Node: Configuration of OpenBSD kernels7852
-Node: Configuration of NetBSD kernels8460
-Node: Configuration of Solaris kernels8865
-Node: Configuration of Darwin (Mac OS X) kernels9527
-Node: Configuration of Windows10346
-Node: Libraries10860
-Node: OpenSSL11248
-Node: zlib13536
-Node: lzo14564
-Node: Installation15546
-Node: Building and installing tinc16561
-Node: Darwin (Mac OS X) build environment17221
-Node: Cygwin (Windows) build environment17803
-Node: MinGW (Windows) build environment18391
-Node: System files18915
-Node: Device files19180
-Node: Other files19596
-Node: Configuration20209
-Node: Configuration introduction20520
-Node: Multiple networks21788
-Node: How connections work23214
-Node: Configuration files24436
-Node: Main configuration variables25930
-Node: Host configuration variables42187
-Node: Scripts47690
-Node: How to configure50956
-Node: Generating keypairs52214
-Node: Network interfaces52713
-Node: Example configuration54561
-Node: Running tinc59886
-Node: Runtime options60476
-Node: Signals63778
-Node: Debug levels64969
-Node: Solving problems65905
-Node: Error messages67457
-Node: Sending bug reports71466
-Node: Technical information72413
-Node: The connection72644
-Node: The UDP tunnel72956
-Node: The meta-connection76017
-Node: The meta-protocol77486
-Node: Security82503
-Node: Authentication protocol83636
-Node: Encryption of network packets88681
-Node: Security issues90057
-Node: Platform specific information91684
-Node: Interface configuration91912
-Node: Routes94383
-Node: About us96397
-Node: Contact information96572
-Node: Authors96976
-Node: Concept Index97381
+Node: Preparations5867
+Node: Configuring the kernel6123
+Node: Configuration of Linux kernels6533
+Node: Configuration of FreeBSD kernels7388
+Node: Configuration of OpenBSD kernels7853
+Node: Configuration of NetBSD kernels8210
+Node: Configuration of Solaris kernels8615
+Node: Configuration of Darwin (Mac OS X) kernels9278
+Node: Configuration of Windows10097
+Node: Libraries10637
+Node: LibreSSL/OpenSSL11046
+Node: zlib13588
+Node: lzo14620
+Node: Installation15603
+Node: Building and installing tinc16513
+Node: Darwin (Mac OS X) build environment17173
+Node: Cygwin (Windows) build environment17738
+Node: MinGW (Windows) build environment18327
+Node: System files18921
+Node: Device files19186
+Node: Other files19602
+Node: Configuration20215
+Node: Configuration introduction20526
+Node: Multiple networks21794
+Node: How connections work23220
+Node: Configuration files24442
+Node: Main configuration variables25936
+Node: Host configuration variables42193
+Node: Scripts47720
+Node: How to configure50986
+Node: Generating keypairs52244
+Node: Network interfaces52743
+Node: Example configuration54591
+Node: Running tinc59916
+Node: Runtime options60506
+Node: Signals63808
+Node: Debug levels64999
+Node: Solving problems65935
+Node: Error messages67487
+Node: Sending bug reports71496
+Node: Technical information72443
+Node: The connection72674
+Node: The UDP tunnel72986
+Node: The meta-connection76047
+Node: The meta-protocol77516
+Node: Security82533
+Node: Authentication protocol83675
+Node: Encryption of network packets88720
+Node: Security issues90096
+Node: Platform specific information91735
+Node: Interface configuration91963
+Node: Routes94434
+Node: About us96448
+Node: Contact information96623
+Node: Authors97026
+Node: Concept Index97431
 
 End Tag Table

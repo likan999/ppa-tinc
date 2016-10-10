@@ -21,6 +21,9 @@
 /* Define to 1 if you have the `asprintf' function. */
 #undef HAVE_ASPRINTF
 
+/* Define to 1 if you have the `BN_GENCB_new' function. */
+#undef HAVE_BN_GENCB_NEW
+
 /* Unknown BSD variant */
 #undef HAVE_BSD
 
@@ -61,6 +64,12 @@
 
 /* DragonFly */
 #undef HAVE_DRAGONFLY
+
+/* Define to 1 if you have the `ERR_remove_state' function. */
+#undef HAVE_ERR_REMOVE_STATE
+
+/* Define to 1 if you have the `EVP_CIPHER_CTX_new' function. */
+#undef HAVE_EVP_CIPHER_CTX_NEW
 
 /* Define to 1 if you have the `EVP_EncryptInit_ex' function. */
 #undef HAVE_EVP_ENCRYPTINIT_EX
@@ -233,11 +242,14 @@
 /* Define to 1 if you have the `random' function. */
 #undef HAVE_RANDOM
 
-/* Define to 1 if you have the `RAND_pseudo_bytes' function. */
-#undef HAVE_RAND_PSEUDO_BYTES
+/* Define to 1 if you have the `RAND_bytes' function. */
+#undef HAVE_RAND_BYTES
 
 /* Define to 1 if you have the <resolv.h> header file. */
 #undef HAVE_RESOLV_H
+
+/* Define to 1 if you have the `RSA_set0_key' function. */
+#undef HAVE_RSA_SET0_KEY
 
 /* Define to 1 if you have the `select' function. */
 #undef HAVE_SELECT

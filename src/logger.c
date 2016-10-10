@@ -1,6 +1,6 @@
 /*
     logger.c -- logging code
-    Copyright (C) 2004-2006 Guus Sliepen <guus@tinc-vpn.org>
+    Copyright (C) 2004-2016 Guus Sliepen <guus@tinc-vpn.org>
                   2004-2005 Ivo Timmermans
 
     This program is free software; you can redistribute it and/or modify
@@ -109,6 +109,7 @@ void logger(int priority, const char *format, ...) {
 				char message[4096];
 				const char *messages[] = {message};
 				vsnprintf(message, sizeof(message), format, ap);
+				message[sizeof message - 1] = 0;
 				ReportEvent(loghandle, priority, 0, 0, NULL, 1, 0, messages, NULL);
 			}
 #else

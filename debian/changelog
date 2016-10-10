@@ -1,3 +1,10 @@
+tinc (1.0.29-1) unstable; urgency=medium
+
+  * New upstream release.
+  * Bump debian/compat.
+
+ -- Guus Sliepen <guus@debian.org>  Mon, 10 Oct 2016 22:30:25 +0200
+
 tinc (1.0.28-1) unstable; urgency=medium
 
   * New upstream release.
