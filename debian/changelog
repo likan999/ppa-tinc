@@ -1,3 +1,9 @@
+tinc (1.0.29-2) unstable; urgency=medium
+
+  * Rebuild with libssl-dev from unstable.
+
+ -- Guus Sliepen <guus@debian.org>  Thu, 27 Oct 2016 13:09:46 +0200
+
 tinc (1.0.29-1) unstable; urgency=medium
 
   * New upstream release.
