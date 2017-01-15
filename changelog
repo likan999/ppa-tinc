@@ -1,3 +1,12 @@
+tinc (1.0.31-1) unstable; urgency=medium
+
+  * New upstream release.
+  * Bump Standards-Version.
+  * Bump debian/compat.
+  * Add missing Depends: lsb-base.
+
+ -- Guus Sliepen <guus@debian.org>  Sun, 15 Jan 2017 16:20:40 +0100
+
 tinc (1.0.29-2) unstable; urgency=medium
 
   * Rebuild with libssl-dev from unstable.
