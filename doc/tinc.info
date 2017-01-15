@@ -1,14 +1,14 @@
-This is tinc.info, produced by makeinfo version 6.1 from tinc.texi.
+This is tinc.info, produced by makeinfo version 6.3 from tinc.texi.
 
 INFO-DIR-SECTION Networking tools
 START-INFO-DIR-ENTRY
 * tinc: (tinc).              The tinc Manual.
 END-INFO-DIR-ENTRY
 
-This is the info manual for tinc version 1.0.27, a Virtual Private
+This is the info manual for tinc version 1.0.29, a Virtual Private
 Network daemon.
 
-   Copyright (C) 1998-2016 Ivo Timmermans, Guus Sliepen
+   Copyright (C) 1998-2017 Ivo Timmermans, Guus Sliepen
 <guus@tinc-vpn.org> and Wessel Dankers <wsl@tinc-vpn.org>.
 
    Permission is granted to make and distribute verbatim copies of this
@@ -1053,7 +1053,7 @@ Address = <IP ADDRESS|HOSTNAME> [<port>] [recommended]
      can be specified, in which case each address will be tried until a
      working connection has been established.
 
-Cipher = <CIPHER> (blowfish)
+Cipher = <CIPHER> (aes-256-cbc)
      The symmetric cipher algorithm used to encrypt UDP packets.  Any
      cipher supported by LibreSSL or OpenSSL is recognized.
      Furthermore, specifying "none" will turn off packet encryption.  It
@@ -1070,7 +1070,7 @@ Compression = <LEVEL> (0)
      Possible values are 0 (off), 1 (fast zlib) and any integer up to 9
      (best zlib), 10 (fast lzo) and 11 (best lzo).
 
-Digest = <DIGEST> (sha1)
+Digest = <DIGEST> (sha256)
      The digest algorithm used to authenticate UDP packets.  Any digest
      supported by LibreSSL or OpenSSL is recognized.  Furthermore,
      specifying "none" will turn off packet authentication.
@@ -2683,33 +2683,33 @@ Node: How connections work23220
 Node: Configuration files24442
 Node: Main configuration variables25936
 Node: Host configuration variables42193
-Node: Scripts47720
-Node: How to configure50986
-Node: Generating keypairs52244
-Node: Network interfaces52743
-Node: Example configuration54591
-Node: Running tinc59916
-Node: Runtime options60506
-Node: Signals63808
-Node: Debug levels64999
-Node: Solving problems65935
-Node: Error messages67487
-Node: Sending bug reports71496
-Node: Technical information72443
-Node: The connection72674
-Node: The UDP tunnel72986
-Node: The meta-connection76047
-Node: The meta-protocol77516
-Node: Security82533
-Node: Authentication protocol83675
-Node: Encryption of network packets88720
-Node: Security issues90096
-Node: Platform specific information91735
-Node: Interface configuration91963
-Node: Routes94434
-Node: About us96448
-Node: Contact information96623
-Node: Authors97026
-Node: Concept Index97431
+Node: Scripts47725
+Node: How to configure50991
+Node: Generating keypairs52249
+Node: Network interfaces52748
+Node: Example configuration54596
+Node: Running tinc59921
+Node: Runtime options60511
+Node: Signals63813
+Node: Debug levels65004
+Node: Solving problems65940
+Node: Error messages67492
+Node: Sending bug reports71501
+Node: Technical information72448
+Node: The connection72679
+Node: The UDP tunnel72991
+Node: The meta-connection76052
+Node: The meta-protocol77521
+Node: Security82538
+Node: Authentication protocol83680
+Node: Encryption of network packets88725
+Node: Security issues90101
+Node: Platform specific information91740
+Node: Interface configuration91968
+Node: Routes94439
+Node: About us96453
+Node: Contact information96628
+Node: Authors97031
+Node: Concept Index97436
 
 End Tag Table

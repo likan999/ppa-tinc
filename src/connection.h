@@ -1,6 +1,6 @@
 /*
     connection.h -- header for connection.c
-    Copyright (C) 2000-2012 Guus Sliepen <guus@tinc-vpn.org>,
+    Copyright (C) 2000-2016 Guus Sliepen <guus@tinc-vpn.org>,
                   2000-2005 Ivo Timmermans
 
     This program is free software; you can redistribute it and/or modify
@@ -41,7 +41,8 @@ typedef struct connection_status_t {
 	unsigned int encryptout:1;			/* 1 if we can encrypt outgoing traffic */
 	unsigned int decryptin:1;			/* 1 if we have to decrypt incoming traffic */
 	unsigned int mst:1;				/* 1 if this connection is part of a minimum spanning tree */
-	unsigned int unused:23;
+	unsigned int proxy_passed:1;			/* 1 if we are connecting via a proxy and we have finished talking with it */
+	unsigned int unused:22;
 } connection_status_t;
 
 #include "edge.h"
@@ -70,6 +71,8 @@ typedef struct connection_t {
 	const EVP_CIPHER *outcipher;	/* Cipher we will use to send data to him */
 	EVP_CIPHER_CTX *inctx;		/* Context of encrypted meta data that will come from him to us */
 	EVP_CIPHER_CTX *outctx;		/* Context of encrypted meta data that will be sent from us to him */
+	uint64_t inbudget;              /* Encrypted bytes send budget */
+	uint64_t outbudget;             /* Encrypted bytes receive budget */
 	char *inkey;				/* His symmetric meta key + iv */
 	char *outkey;				/* Our symmetric meta key + iv */
 	int inkeylength;			/* Length of his key + iv */
