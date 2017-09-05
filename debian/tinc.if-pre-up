@@ -43,14 +43,14 @@ test -n "$LIMITS" && setlimits $LIMITS
 
 # Wait for it to come up properly
 
-sleep 0.1
+/bin/sleep 0.1
 i=0;
 while [ ! -f $IF_TINC_PIDFILE ] ; do
 	if [ $i = '30' ] ; then
 		echo 'Failed to start tinc daemon!'
 		exit 1
 	fi
-	sleep 0.1
+	/bin/sleep 0.1
 	i=$(($i+1))
 done
 
@@ -63,7 +63,7 @@ while read pid rest < $IF_TINC_PIDFILE ; do
 		echo 'Failed to start tinc daemon!'
 		exit 1
 	fi
-	sleep 0.1
+	/bin/sleep 0.1
 	i=$(($i+1))
 done
 

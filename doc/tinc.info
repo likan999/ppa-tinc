@@ -1,11 +1,11 @@
-This is tinc.info, produced by makeinfo version 6.3 from tinc.texi.
+This is tinc.info, produced by makeinfo version 6.4.90 from tinc.texi.
 
 INFO-DIR-SECTION Networking tools
 START-INFO-DIR-ENTRY
 * tinc: (tinc).              The tinc Manual.
 END-INFO-DIR-ENTRY
 
-This is the info manual for tinc version 1.0.29, a Virtual Private
+This is the info manual for tinc version 1.0.31, a Virtual Private
 Network daemon.
 
    Copyright (C) 1998-2017 Ivo Timmermans, Guus Sliepen
@@ -981,7 +981,7 @@ ProcessPriority = <low|normal|high>
      adjusted.  Increasing the priority may help to reduce latency and
      packet loss on the VPN.
 
-Proxy = socks4 | socks5 | http | exec ... [experimental]
+Proxy = socks4 | socks5 | http | exec ... [experimental]
      Use a proxy when making outgoing connections.  The following proxy
      types are currently supported:
 
@@ -2650,66 +2650,66 @@ Concept Index
 
 
 Tag Table:
-Node: Top806
-Node: Introduction1105
-Node: Virtual Private Networks1915
-Node: tinc3639
-Node: Supported platforms5166
-Node: Preparations5867
-Node: Configuring the kernel6123
-Node: Configuration of Linux kernels6533
-Node: Configuration of FreeBSD kernels7388
-Node: Configuration of OpenBSD kernels7853
-Node: Configuration of NetBSD kernels8210
-Node: Configuration of Solaris kernels8615
-Node: Configuration of Darwin (Mac OS X) kernels9278
-Node: Configuration of Windows10097
-Node: Libraries10637
-Node: LibreSSL/OpenSSL11046
-Node: zlib13588
-Node: lzo14620
-Node: Installation15603
-Node: Building and installing tinc16513
-Node: Darwin (Mac OS X) build environment17173
-Node: Cygwin (Windows) build environment17738
-Node: MinGW (Windows) build environment18327
-Node: System files18921
-Node: Device files19186
-Node: Other files19602
-Node: Configuration20215
-Node: Configuration introduction20526
-Node: Multiple networks21794
-Node: How connections work23220
-Node: Configuration files24442
-Node: Main configuration variables25936
-Node: Host configuration variables42193
-Node: Scripts47725
-Node: How to configure50991
-Node: Generating keypairs52249
-Node: Network interfaces52748
-Node: Example configuration54596
-Node: Running tinc59921
-Node: Runtime options60511
-Node: Signals63813
-Node: Debug levels65004
-Node: Solving problems65940
-Node: Error messages67492
-Node: Sending bug reports71501
-Node: Technical information72448
-Node: The connection72679
-Node: The UDP tunnel72991
-Node: The meta-connection76052
-Node: The meta-protocol77521
-Node: Security82538
-Node: Authentication protocol83680
-Node: Encryption of network packets88725
-Node: Security issues90101
-Node: Platform specific information91740
-Node: Interface configuration91968
-Node: Routes94439
-Node: About us96453
-Node: Contact information96628
-Node: Authors97031
-Node: Concept Index97436
+Node: Top809
+Node: Introduction1108
+Node: Virtual Private Networks1918
+Node: tinc3642
+Node: Supported platforms5169
+Node: Preparations5870
+Node: Configuring the kernel6126
+Node: Configuration of Linux kernels6536
+Node: Configuration of FreeBSD kernels7391
+Node: Configuration of OpenBSD kernels7856
+Node: Configuration of NetBSD kernels8213
+Node: Configuration of Solaris kernels8618
+Node: Configuration of Darwin (Mac OS X) kernels9281
+Node: Configuration of Windows10100
+Node: Libraries10640
+Node: LibreSSL/OpenSSL11049
+Node: zlib13591
+Node: lzo14623
+Node: Installation15606
+Node: Building and installing tinc16516
+Node: Darwin (Mac OS X) build environment17176
+Node: Cygwin (Windows) build environment17741
+Node: MinGW (Windows) build environment18330
+Node: System files18924
+Node: Device files19189
+Node: Other files19605
+Node: Configuration20218
+Node: Configuration introduction20529
+Node: Multiple networks21797
+Node: How connections work23223
+Node: Configuration files24445
+Node: Main configuration variables25939
+Node: Host configuration variables42195
+Node: Scripts47727
+Node: How to configure50993
+Node: Generating keypairs52251
+Node: Network interfaces52750
+Node: Example configuration54598
+Node: Running tinc59923
+Node: Runtime options60513
+Node: Signals63815
+Node: Debug levels65006
+Node: Solving problems65942
+Node: Error messages67494
+Node: Sending bug reports71503
+Node: Technical information72450
+Node: The connection72681
+Node: The UDP tunnel72993
+Node: The meta-connection76054
+Node: The meta-protocol77523
+Node: Security82540
+Node: Authentication protocol83682
+Node: Encryption of network packets88727
+Node: Security issues90103
+Node: Platform specific information91742
+Node: Interface configuration91970
+Node: Routes94441
+Node: About us96455
+Node: Contact information96630
+Node: Authors97033
+Node: Concept Index97438
 
 End Tag Table
