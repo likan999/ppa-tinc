@@ -14,7 +14,8 @@ case "$1" in
 	fi; fi
 
 	if [ ! -e $NETSFILE ] ; then
-	    echo "## This file contains all names of the networks to be started on system startup." > $NETSFILE
+	    echo "## This file contains all names of the networks to be started on system startup when using sysvinit." > $NETSFILE
+	    echo "## If you are using systemd, use systemctl enable tinc@netname to enable individual networks." >> $NETSFILE
 	fi
     ;;
 

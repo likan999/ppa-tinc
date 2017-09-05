@@ -82,7 +82,7 @@ stop() {
   $DAEMON -n $1 -k || return
 
   i=0;
-  sleep 0.5
+  /bin/sleep 0.5
 
   # Wait for the pidfile to disappear
   while [ -f /var/run/tinc.$1.pid ]; do
@@ -91,14 +91,14 @@ stop() {
 
     if [ $i = '10' ] ; then
       # It's still alive, kill it again and give up
-        $DAEMON -n $1 -k && sleep 0.5
+        $DAEMON -n $1 -k && /bin/sleep 0.5
       break
     else
       echo -n "."
       i=$(($i+1))
     fi
 
-    sleep 0.5
+    /bin/sleep 0.5
   done
 }
 

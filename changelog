@@ -1,9 +1,13 @@
-tinc (1.0.31-1+deb9u1) stretch-security; urgency=high
+tinc (1.0.32-1) unstable; urgency=medium
 
-  * Prevent oracle attacks (CVE-2018-16737, CVE-2018-16738).
-  * Prevent a MITM from forcing a NULL cipher for UDP (CVE-2018-16758).
+  * New upstream release.
+  * Add a note to new nets.boot files that it is not used with systemd.
+    Closes: #841052
+  * In the post-down script, read the pid file only once. Closes: #832784
+  * Explicitly use /bin/sleep from coreutils. Closes: #772379
+  * Bump Standards-Version.
 
- -- Guus Sliepen <guus@debian.org>  Sat, 22 Sep 2018 17:35:50 +0200
+ -- Guus Sliepen <guus@debian.org>  Tue, 05 Sep 2017 20:23:36 +0200
 
 tinc (1.0.31-1) unstable; urgency=medium
 
