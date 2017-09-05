@@ -1,12 +1,14 @@
-tinc (1.1~pre14-16-g15b868e-1) experimental; urgency=medium
+tinc (1.1~pre15-1) experimental; urgency=medium
 
   * New upstream release.
-    - Use the latest git version in order to compile with OpenSSL 1.1.0.
-  * Bump debian/compat and Standards-Version.
-  * Fix the version number in configure.ac.
-  * Make the build reproducible.
+  * Bump Standards-Version.
+  * Bump debian/compat.
+  * Don't use while loops checking PID files anymore, the tinc CLI will
+    wait properly for the daemon to start or stop. Closes: #772379, #832784
+  * Clean up scripts as suggested by Dominik George. Closes: #832781
+  * Test for /etc/default/tinc before trying to source it. Closes: #777262
 
- -- Guus Sliepen <guus@debian.org>  Mon, 26 Sep 2016 21:35:35 +0200
+ -- Guus Sliepen <guus@debian.org>  Tue, 05 Sep 2017 21:03:51 +0200
 
 tinc (1.1~pre12-1) experimental; urgency=medium
 

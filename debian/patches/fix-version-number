@@ -5,7 +5,7 @@
  
  AC_PREREQ(2.61)
 -AC_INIT([tinc], m4_esyscmd_s((git describe || echo UNKNOWN) | sed 's/release-//'))
-+AC_INIT([tinc], m4_esyscmd_s((git describe || echo 1.1pre14-16-g15b868e) | sed 's/release-//'))
++AC_INIT([tinc], [1.1~pre15])
  AC_CONFIG_SRCDIR([src/tincd.c])
  AC_GNU_SOURCE
  AM_INIT_AUTOMAKE([std-options subdir-objects nostdinc silent-rules -Wall])

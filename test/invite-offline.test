@@ -11,13 +11,16 @@ set Mode switch
 set Broadcast no
 del Port
 set Address localhost
-set Port 32751
-start $r1
+set Port 32758
 EOF
 
-# Generate an invitation and let another node join the VPN
+# Generate an invitation offline and let another node join the VPN
 
-$tinc $c1 invite bar | $tinc $c2 join
+invitation=`$tinc $c1 invite bar`
+
+$tinc $c1 start $r1
+
+$tinc $c2 join $invitation
 
 # Test equivalence of host config files
 

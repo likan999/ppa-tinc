@@ -1,7 +1,7 @@
 /*
     net_packet.c -- Handles in- and outgoing VPN packets
     Copyright (C) 1998-2005 Ivo Timmermans,
-                  2000-2016 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2017 Guus Sliepen <guus@tinc-vpn.org>
                   2010      Timothy Redaelli <timothy@redaelli.eu>
                   2010      Brandon Black <blblack@gmail.com>
 
@@ -846,6 +846,7 @@ bool receive_sptps_record(void *handle, uint8_t type, const void *data, uint16_t
 
 	vpn_packet_t inpkt;
 	inpkt.offset = DEFAULT_PACKET_OFFSET;
+	inpkt.priority = 0;
 
 	if(type == PKT_PROBE) {
 		if(!from->status.udppacket) {
@@ -1573,10 +1574,19 @@ void handle_device_data(void *data, int flags) {
 	vpn_packet_t packet;
 	packet.offset = DEFAULT_PACKET_OFFSET;
 	packet.priority = 0;
+	static int errors = 0;
 
 	if(devops.read(&packet)) {
+		errors = 0;
 		myself->in_packets++;
 		myself->in_bytes += packet.len;
 		route(myself, &packet);
+	} else {
+		usleep(errors * 50000);
+		errors++;
+		if(errors > 10) {
+			logger(DEBUG_ALWAYS, LOG_ERR, "Too many errors from %s, exiting!", device);
+			event_exit();
+		}
 	}
 }
