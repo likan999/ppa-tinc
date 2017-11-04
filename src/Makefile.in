@@ -124,19 +124,18 @@ PROGRAMS = $(sbin_PROGRAMS)
 am__tincd_SOURCES_DIST = have.h system.h avl_tree.c avl_tree.h conf.c \
 	conf.h connection.c connection.h device.h dropin.c dropin.h \
 	dummy_device.c edge.c edge.h ethernet.h event.c event.h \
-	fake-gai-errnos.h fake-getaddrinfo.c fake-getaddrinfo.h \
-	fake-getnameinfo.c fake-getnameinfo.h graph.c graph.h ipv4.h \
-	ipv6.h list.c list.h logger.c logger.h meta.c meta.h \
-	multicast_device.c net.c net.h net_packet.c net_setup.c \
-	net_socket.c netutl.c netutl.h node.c node.h pidfile.c \
-	pidfile.h process.c process.h protocol.c protocol.h \
-	protocol_auth.c protocol_edge.c protocol_misc.c protocol_key.c \
-	protocol_subnet.c proxy.c proxy.h raw_socket_device.c route.c \
-	route.h subnet.c subnet.h tincd.c utils.c utils.h xalloc.h \
-	xmalloc.c getopt.c getopt.h getopt1.c linux/device.c \
-	bsd/device.c bsd/tunemu.c bsd/tunemu.h solaris/device.c \
-	mingw/device.c mingw/common.h cygwin/device.c uml_device.c \
-	vde_device.c
+	fake-getaddrinfo.c fake-getaddrinfo.h fake-getnameinfo.c \
+	fake-getnameinfo.h graph.c graph.h ipv4.h ipv6.h list.c list.h \
+	logger.c logger.h meta.c meta.h multicast_device.c net.c net.h \
+	net_packet.c net_setup.c net_socket.c netutl.c netutl.h node.c \
+	node.h pidfile.c pidfile.h process.c process.h protocol.c \
+	protocol.h protocol_auth.c protocol_edge.c protocol_misc.c \
+	protocol_key.c protocol_subnet.c proxy.c proxy.h \
+	raw_socket_device.c route.c route.h subnet.c subnet.h tincd.c \
+	utils.c utils.h xalloc.h getopt.c getopt.h getopt1.c \
+	linux/device.c bsd/device.c bsd/tunemu.c bsd/tunemu.h \
+	solaris/device.c mingw/device.c mingw/common.h cygwin/device.c \
+	uml_device.c vde_device.c
 @GETOPT_FALSE@am__objects_1 = getopt.$(OBJEXT) getopt1.$(OBJEXT)
 am__dirstamp = $(am__leading_dot)dirstamp
 @LINUX_TRUE@am__objects_2 = linux/device.$(OBJEXT)
@@ -159,10 +158,10 @@ am_tincd_OBJECTS = avl_tree.$(OBJEXT) conf.$(OBJEXT) \
 	protocol_misc.$(OBJEXT) protocol_key.$(OBJEXT) \
 	protocol_subnet.$(OBJEXT) proxy.$(OBJEXT) \
 	raw_socket_device.$(OBJEXT) route.$(OBJEXT) subnet.$(OBJEXT) \
-	tincd.$(OBJEXT) utils.$(OBJEXT) xmalloc.$(OBJEXT) \
-	$(am__objects_1) $(am__objects_2) $(am__objects_3) \
-	$(am__objects_4) $(am__objects_5) $(am__objects_6) \
-	$(am__objects_7) $(am__objects_8) $(am__objects_9)
+	tincd.$(OBJEXT) utils.$(OBJEXT) $(am__objects_1) \
+	$(am__objects_2) $(am__objects_3) $(am__objects_4) \
+	$(am__objects_5) $(am__objects_6) $(am__objects_7) \
+	$(am__objects_8) $(am__objects_9)
 tincd_OBJECTS = $(am_tincd_OBJECTS)
 tincd_LDADD = $(LDADD)
 AM_V_P = $(am__v_P_@AM_V@)
@@ -251,7 +250,6 @@ LDFLAGS = @LDFLAGS@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@ $(am__append_10)
 LTLIBOBJS = @LTLIBOBJS@
-MAINT = @MAINT@
 MAKEINFO = @MAKEINFO@
 MKDIR_P = @MKDIR_P@
 OBJEXT = @OBJEXT@
@@ -325,24 +323,24 @@ top_srcdir = @top_srcdir@
 tincd_SOURCES = have.h system.h avl_tree.c avl_tree.h conf.c conf.h \
 	connection.c connection.h device.h dropin.c dropin.h \
 	dummy_device.c edge.c edge.h ethernet.h event.c event.h \
-	fake-gai-errnos.h fake-getaddrinfo.c fake-getaddrinfo.h \
-	fake-getnameinfo.c fake-getnameinfo.h graph.c graph.h ipv4.h \
-	ipv6.h list.c list.h logger.c logger.h meta.c meta.h \
-	multicast_device.c net.c net.h net_packet.c net_setup.c \
-	net_socket.c netutl.c netutl.h node.c node.h pidfile.c \
-	pidfile.h process.c process.h protocol.c protocol.h \
-	protocol_auth.c protocol_edge.c protocol_misc.c protocol_key.c \
-	protocol_subnet.c proxy.c proxy.h raw_socket_device.c route.c \
-	route.h subnet.c subnet.h tincd.c utils.c utils.h xalloc.h \
-	xmalloc.c $(am__append_1) $(am__append_2) $(am__append_3) \
-	$(am__append_4) $(am__append_5) $(am__append_6) \
-	$(am__append_7) $(am__append_8) $(am__append_9)
-AM_CPPFLAGS = -DCONFDIR=\"$(sysconfdir)\" -DLOCALSTATEDIR=\"$(localstatedir)\"
+	fake-getaddrinfo.c fake-getaddrinfo.h fake-getnameinfo.c \
+	fake-getnameinfo.h graph.c graph.h ipv4.h ipv6.h list.c list.h \
+	logger.c logger.h meta.c meta.h multicast_device.c net.c net.h \
+	net_packet.c net_setup.c net_socket.c netutl.c netutl.h node.c \
+	node.h pidfile.c pidfile.h process.c process.h protocol.c \
+	protocol.h protocol_auth.c protocol_edge.c protocol_misc.c \
+	protocol_key.c protocol_subnet.c proxy.c proxy.h \
+	raw_socket_device.c route.c route.h subnet.c subnet.h tincd.c \
+	utils.c utils.h xalloc.h $(am__append_1) $(am__append_2) \
+	$(am__append_3) $(am__append_4) $(am__append_5) \
+	$(am__append_6) $(am__append_7) $(am__append_8) \
+	$(am__append_9)
+AM_CPPFLAGS = -DCONFDIR=\"$(sysconfdir)\" -DRUNSTATEDIR=\"$(runstatedir)\" -DLOCALSTATEDIR=\"$(localstatedir)\" -I $(abs_top_builddir)/
 all: all-am
 
 .SUFFIXES:
 .SUFFIXES: .c .o .obj
-$(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__configure_deps)
+$(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
 	    *$$dep*) \
@@ -366,9 +364,9 @@ Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 $(top_builddir)/config.status: $(top_srcdir)/configure $(CONFIG_STATUS_DEPENDENCIES)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
 
-$(top_srcdir)/configure: @MAINTAINER_MODE_TRUE@ $(am__configure_deps)
+$(top_srcdir)/configure:  $(am__configure_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
-$(ACLOCAL_M4): @MAINTAINER_MODE_TRUE@ $(am__aclocal_m4_deps)
+$(ACLOCAL_M4):  $(am__aclocal_m4_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
 $(am__aclocal_m4_deps):
 install-sbinPROGRAMS: $(sbin_PROGRAMS)
@@ -525,7 +523,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/uml_device.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/utils.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/vde_device.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xmalloc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@bsd/$(DEPDIR)/device.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@bsd/$(DEPDIR)/tunemu.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@cygwin/$(DEPDIR)/device.Po@am__quote@

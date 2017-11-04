@@ -1,11 +1,11 @@
-This is tinc.info, produced by makeinfo version 6.4.90 from tinc.texi.
+This is tinc.info, produced by makeinfo version 6.5 from tinc.texi.
 
 INFO-DIR-SECTION Networking tools
 START-INFO-DIR-ENTRY
 * tinc: (tinc).              The tinc Manual.
 END-INFO-DIR-ENTRY
 
-This is the info manual for tinc version 1.0.31, a Virtual Private
+This is the info manual for tinc version 1.0.33, a Virtual Private
 Network daemon.
 
    Copyright (C) 1998-2017 Ivo Timmermans, Guus Sliepen
@@ -791,13 +791,13 @@ DeviceType = <TYPE> (platform dependent)
 
      uml (not compiled in by default)
           Create a UNIX socket with the filename specified by DEVICE, or
-          '/var/run/NETNAME.umlsocket' if not specified.  Tinc will wait
-          for a User Mode Linux instance to connect to this socket.
+          '/run/NETNAME.umlsocket' if not specified.  Tinc will wait for
+          a User Mode Linux instance to connect to this socket.
 
      vde (not compiled in by default)
           Uses the libvdeplug library to connect to a Virtual
           Distributed Ethernet switch, using the UNIX socket specified
-          by DEVICE, or '/var/run/vde.ctl' if not specified.
+          by DEVICE, or '/run/vde.ctl' if not specified.
 
      Also, in case tinc does not seem to correctly interpret packets
      received from the virtual network device, it can be used to change
@@ -1597,7 +1597,7 @@ command line options.
      '/var/log/tinc.NETNAME.log'.
 
 '--pidfile=FILE'
-     Write PID to FILE instead of '/var/run/tinc.NETNAME.pid'.
+     Write PID to FILE instead of '/run/tinc.NETNAME.pid'.
 
 '--bypass-security'
      Disables encryption and authentication.  Only useful for debugging.
@@ -1609,12 +1609,16 @@ command line options.
      chroot is performed after all the initialization is done, after
      writing pid files and opening network sockets.
 
-     Note that this option alone does not do any good without -U/-user,
-     below.
+     This option is best used in combination with the -U/-user option
+     described below.
 
-     Note also that tinc can't run scripts anymore (such as tinc-down or
-     host-up), unless it's setup to be runnable inside chroot
-     environment.
+     You will need to ensure the chroot environment contains all the
+     files necessary for tinc to run correctly.  Most importantly, for
+     tinc to be able to resolve hostnames inside the chroot environment,
+     you must copy '/etc/resolv.conf' into the chroot directory.  If you
+     want to be able to run scripts other than 'tinc-up' in the chroot,
+     you must ensure the appropriate shell is also installed in the
+     chroot, along with all its dependencies.
 
 '-U, --user=USER'
      Switch to the given USER after initialization, at the same time as
@@ -2650,66 +2654,66 @@ Concept Index
 
 
 Tag Table:
-Node: Top809
-Node: Introduction1108
-Node: Virtual Private Networks1918
-Node: tinc3642
-Node: Supported platforms5169
-Node: Preparations5870
-Node: Configuring the kernel6126
-Node: Configuration of Linux kernels6536
-Node: Configuration of FreeBSD kernels7391
-Node: Configuration of OpenBSD kernels7856
-Node: Configuration of NetBSD kernels8213
-Node: Configuration of Solaris kernels8618
-Node: Configuration of Darwin (Mac OS X) kernels9281
-Node: Configuration of Windows10100
-Node: Libraries10640
-Node: LibreSSL/OpenSSL11049
-Node: zlib13591
-Node: lzo14623
-Node: Installation15606
-Node: Building and installing tinc16516
-Node: Darwin (Mac OS X) build environment17176
-Node: Cygwin (Windows) build environment17741
-Node: MinGW (Windows) build environment18330
-Node: System files18924
-Node: Device files19189
-Node: Other files19605
-Node: Configuration20218
-Node: Configuration introduction20529
-Node: Multiple networks21797
-Node: How connections work23223
-Node: Configuration files24445
-Node: Main configuration variables25939
-Node: Host configuration variables42195
-Node: Scripts47727
-Node: How to configure50993
-Node: Generating keypairs52251
-Node: Network interfaces52750
-Node: Example configuration54598
-Node: Running tinc59923
-Node: Runtime options60513
-Node: Signals63815
-Node: Debug levels65006
-Node: Solving problems65942
-Node: Error messages67494
-Node: Sending bug reports71503
-Node: Technical information72450
-Node: The connection72681
-Node: The UDP tunnel72993
-Node: The meta-connection76054
-Node: The meta-protocol77523
-Node: Security82540
-Node: Authentication protocol83682
-Node: Encryption of network packets88727
-Node: Security issues90103
-Node: Platform specific information91742
-Node: Interface configuration91970
-Node: Routes94441
-Node: About us96455
-Node: Contact information96630
-Node: Authors97033
-Node: Concept Index97438
+Node: Top806
+Node: Introduction1105
+Node: Virtual Private Networks1915
+Node: tinc3639
+Node: Supported platforms5166
+Node: Preparations5867
+Node: Configuring the kernel6123
+Node: Configuration of Linux kernels6533
+Node: Configuration of FreeBSD kernels7388
+Node: Configuration of OpenBSD kernels7853
+Node: Configuration of NetBSD kernels8210
+Node: Configuration of Solaris kernels8615
+Node: Configuration of Darwin (Mac OS X) kernels9278
+Node: Configuration of Windows10097
+Node: Libraries10637
+Node: LibreSSL/OpenSSL11046
+Node: zlib13588
+Node: lzo14620
+Node: Installation15603
+Node: Building and installing tinc16513
+Node: Darwin (Mac OS X) build environment17173
+Node: Cygwin (Windows) build environment17738
+Node: MinGW (Windows) build environment18327
+Node: System files18921
+Node: Device files19186
+Node: Other files19602
+Node: Configuration20215
+Node: Configuration introduction20526
+Node: Multiple networks21794
+Node: How connections work23220
+Node: Configuration files24442
+Node: Main configuration variables25936
+Node: Host configuration variables42184
+Node: Scripts47716
+Node: How to configure50982
+Node: Generating keypairs52240
+Node: Network interfaces52739
+Node: Example configuration54587
+Node: Running tinc59912
+Node: Runtime options60502
+Node: Signals64127
+Node: Debug levels65318
+Node: Solving problems66254
+Node: Error messages67806
+Node: Sending bug reports71815
+Node: Technical information72762
+Node: The connection72993
+Node: The UDP tunnel73305
+Node: The meta-connection76366
+Node: The meta-protocol77835
+Node: Security82852
+Node: Authentication protocol83994
+Node: Encryption of network packets89039
+Node: Security issues90415
+Node: Platform specific information92054
+Node: Interface configuration92282
+Node: Routes94753
+Node: About us96767
+Node: Contact information96942
+Node: Authors97345
+Node: Concept Index97750
 
 End Tag Table

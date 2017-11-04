@@ -78,6 +78,7 @@ install_sh_DATA = $(install_sh) -c -m 644
 install_sh_PROGRAM = $(install_sh) -c
 install_sh_SCRIPT = $(install_sh) -c
 INSTALL_HEADER = $(INSTALL_DATA)
+transform = $(program_transform_name)
 NORMAL_INSTALL = :
 PRE_INSTALL = :
 POST_INSTALL = :
@@ -145,7 +146,7 @@ AM_V_texidevnull = $(am__v_texidevnull_@AM_V@)
 am__v_texidevnull_ = $(am__v_texidevnull_@AM_DEFAULT_V@)
 am__v_texidevnull_0 = > /dev/null
 am__v_texidevnull_1 = 
-INFO_DEPS = $(srcdir)/tinc.info
+INFO_DEPS = tinc.info
 am__TEXINFO_TEX_DIR = $(srcdir)
 DVIS = tinc.dvi
 PDFS = tinc.pdf
@@ -198,11 +199,6 @@ MANS = $(man_MANS)
 am__tagged_files = $(HEADERS) $(SOURCES) $(TAGS_FILES) $(LISP)
 am__DIST_COMMON = $(srcdir)/Makefile.in texinfo.tex
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
-
-# Use `ginstall' in the definition of man_MANS to avoid
-# confusion with the `install' target.  The install rule transforms `ginstall'
-# to install before applying any user-specified name transformations.
-transform = s/ginstall/install/; @program_transform_name@
 ACLOCAL = @ACLOCAL@
 AMTAR = @AMTAR@
 AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
@@ -233,7 +229,6 @@ LDFLAGS = @LDFLAGS@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
 LTLIBOBJS = @LTLIBOBJS@
-MAINT = @MAINT@
 MAKEINFO = @MAKEINFO@
 MKDIR_P = @MKDIR_P@
 OBJEXT = @OBJEXT@
@@ -306,19 +301,20 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 info_TEXINFOS = tinc.texi
 man_MANS = tincd.8 tinc.conf.5
-EXTRA_DIST = tincinclude.texi.in tincd.8.in tinc.conf.5.in sample-config.tar.gz
+EXTRA_DIST = tincinclude.texi.in tincd.8.in tinc.conf.5.in sample-config
 CLEANFILES = *.html tincd.8 tinc.conf.5 tincinclude.texi
 substitute = sed \
 	-e s,'@PACKAGE\@',"$(PACKAGE)",g \
 	-e s,'@VERSION\@',"$(VERSION)",g \
 	-e s,'@sysconfdir\@',"$(sysconfdir)",g \
+	-e s,'@runstatedir\@',"$(runstatedir)",g \
 	-e s,'@localstatedir\@',"$(localstatedir)",g
 
 all: all-am
 
 .SUFFIXES:
-.SUFFIXES: .dvi .html .info .pdf .ps .texi
-$(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__configure_deps)
+.SUFFIXES: .dvi .ps
+$(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
 	    *$$dep*) \
@@ -342,59 +338,51 @@ Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 $(top_builddir)/config.status: $(top_srcdir)/configure $(CONFIG_STATUS_DEPENDENCIES)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
 
-$(top_srcdir)/configure: @MAINTAINER_MODE_TRUE@ $(am__configure_deps)
+$(top_srcdir)/configure:  $(am__configure_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
-$(ACLOCAL_M4): @MAINTAINER_MODE_TRUE@ $(am__aclocal_m4_deps)
+$(ACLOCAL_M4):  $(am__aclocal_m4_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
 $(am__aclocal_m4_deps):
 
-.texi.info:
+tinc.info: tinc.texi 
 	$(AM_V_MAKEINFO)restore=: && backupdir="$(am__leading_dot)am$$$$" && \
-	am__cwd=`pwd` && $(am__cd) $(srcdir) && \
 	rm -rf $$backupdir && mkdir $$backupdir && \
 	if ($(MAKEINFO) --version) >/dev/null 2>&1; then \
 	  for f in $@ $@-[0-9] $@-[0-9][0-9] $(@:.info=).i[0-9] $(@:.info=).i[0-9][0-9]; do \
 	    if test -f $$f; then mv $$f $$backupdir; restore=mv; else :; fi; \
 	  done; \
 	else :; fi && \
-	cd "$$am__cwd"; \
 	if $(MAKEINFO) $(AM_MAKEINFOFLAGS) $(MAKEINFOFLAGS) -I $(srcdir) \
-	 -o $@ $<; \
+	 -o $@ `test -f 'tinc.texi' || echo '$(srcdir)/'`tinc.texi; \
 	then \
 	  rc=0; \
-	  $(am__cd) $(srcdir); \
 	else \
 	  rc=$$?; \
-	  $(am__cd) $(srcdir) && \
 	  $$restore $$backupdir/* `echo "./$@" | sed 's|[^/]*$$||'`; \
 	fi; \
 	rm -rf $$backupdir; exit $$rc
 
-.texi.dvi:
+tinc.dvi: tinc.texi  
 	$(AM_V_TEXI2DVI)TEXINPUTS="$(am__TEXINFO_TEX_DIR)$(PATH_SEPARATOR)$$TEXINPUTS" \
 	MAKEINFO='$(MAKEINFO) $(AM_MAKEINFOFLAGS) $(MAKEINFOFLAGS) -I $(srcdir)' \
 	$(TEXI2DVI) $(AM_V_texinfo) --build-dir=$(@:.dvi=.t2d) -o $@ $(AM_V_texidevnull) \
-	$<
+	`test -f 'tinc.texi' || echo '$(srcdir)/'`tinc.texi
 
-.texi.pdf:
+tinc.pdf: tinc.texi  
 	$(AM_V_TEXI2PDF)TEXINPUTS="$(am__TEXINFO_TEX_DIR)$(PATH_SEPARATOR)$$TEXINPUTS" \
 	MAKEINFO='$(MAKEINFO) $(AM_MAKEINFOFLAGS) $(MAKEINFOFLAGS) -I $(srcdir)' \
 	$(TEXI2PDF) $(AM_V_texinfo) --build-dir=$(@:.pdf=.t2p) -o $@ $(AM_V_texidevnull) \
-	$<
+	`test -f 'tinc.texi' || echo '$(srcdir)/'`tinc.texi
 
-.texi.html:
+tinc.html: tinc.texi  
 	$(AM_V_MAKEINFO)rm -rf $(@:.html=.htp)
 	$(AM_V_at)if $(MAKEINFOHTML) $(AM_MAKEINFOHTMLFLAGS) $(MAKEINFOFLAGS) -I $(srcdir) \
-	 -o $(@:.html=.htp) $<; \
+	 -o $(@:.html=.htp) `test -f 'tinc.texi' || echo '$(srcdir)/'`tinc.texi; \
 	then \
 	  rm -rf $@ && mv $(@:.html=.htp) $@; \
 	else \
 	  rm -rf $(@:.html=.htp); exit 1; \
 	fi
-$(srcdir)/tinc.info: tinc.texi 
-tinc.dvi: tinc.texi 
-tinc.pdf: tinc.texi 
-tinc.html: tinc.texi 
 .dvi.ps:
 	$(AM_V_DVIPS)TEXINPUTS="$(am__TEXINFO_TEX_DIR)$(PATH_SEPARATOR)$$TEXINPUTS" \
 	$(DVIPS) $(AM_V_texinfo) -o $@ $<
@@ -833,14 +821,8 @@ uninstall-man: uninstall-man5 uninstall-man8
 .PRECIOUS: Makefile
 
 
-# For additional rules usually of interest only to the maintainer,
-# see GNUmakefile and Makefile.maint.
-
-sample-config.tar.gz: sample-config
-	$(AM_V_GEN)GZIP=$(GZIP_ENV) $(AMTAR) chozf sample-config.tar.gz --exclude .svn sample-config
-
 texi2html: tinc.texi
-	$(AM_V_GEN)texi2html -split=chapter tinc.texi
+	$(AM_V_GEN)texi2html -split=chapter $<
 
 tincd.8.html: tincd.8
 	$(AM_V_GEN)w3mman2html $< > $@
@@ -848,14 +830,14 @@ tincd.8.html: tincd.8
 tinc.conf.5.html: tinc.conf.5
 	$(AM_V_GEN)w3mman2html $< > $@
 
-tincd.8: tincd.8.in
-	$(AM_V_GEN)$(substitute) tincd.8.in > tincd.8
+tincd.8: $(srcdir)/tincd.8.in
+	$(AM_V_GEN)$(substitute) $< > $@
 
-tinc.conf.5: tinc.conf.5.in
-	$(AM_V_GEN)$(substitute) tinc.conf.5.in > tinc.conf.5
+tinc.conf.5: $(srcdir)/tinc.conf.5.in
+	$(AM_V_GEN)$(substitute) $< > $@
 
-tincinclude.texi: tincinclude.texi.in
-	$(AM_V_GEN)$(substitute) tincinclude.texi.in > tincinclude.texi
+tincinclude.texi: $(srcdir)/tincinclude.texi.in
+	$(AM_V_GEN)$(substitute) $< > $@
 
 tinc.texi: tincinclude.texi
 

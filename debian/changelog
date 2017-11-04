@@ -1,3 +1,11 @@
+tinc (1.0.33-1) unstable; urgency=medium
+
+  * New upstream release.
+  * Test for /etc/default/tinc before trying to source it. Closes: #777262
+  * Use --runstatedir=/run.
+
+ -- Guus Sliepen <guus@debian.org>  Sat, 04 Nov 2017 16:22:06 +0100
+
 tinc (1.0.32-1) unstable; urgency=medium
 
   * New upstream release.

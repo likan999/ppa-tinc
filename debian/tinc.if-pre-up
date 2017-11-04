@@ -8,7 +8,7 @@ fi
 
 # Read options from /etc/default
 
-. /etc/default/tinc
+[ -r /etc/default/tinc ] && . /etc/default/tinc
 
 # Set process limits
 
