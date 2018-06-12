@@ -2,9 +2,10 @@ Source: tinc
 Section: net
 Priority: optional
 Maintainer: Guus Sliepen <guus@debian.org>
-Standards-Version: 4.1.1
+Standards-Version: 4.1.3
 Build-Depends: libssl-dev, debhelper (>= 10), gettext, texinfo, zlib1g-dev, liblzo2-dev, libvdeplug-dev
 Homepage: http://www.tinc-vpn.org/
+Rules-Requires-Root: no
 
 Package: tinc
 Architecture: any
