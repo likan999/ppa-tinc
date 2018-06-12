@@ -4,7 +4,7 @@
 	dh $@
 
 override_dh_auto_configure:
-	dh_auto_configure -- --enable-uml --enable-vde --with-systemdsystemunitdir=/lib/systemd/system --runstatedir=/run
+	dh_auto_configure -- --enable-uml --enable-vde --with-systemd=/lib/systemd/system --runstatedir=/run
 
 override_dh_auto_install:
 	dh_auto_install -- install-html

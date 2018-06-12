@@ -1,6 +1,7 @@
 ## Process this file with automake to get Makefile.in
 
 info_TEXINFOS = tinc.texi
+tinc_TEXINFOS = tincinclude.texi
 
 man_MANS = tincd.8 tinc.conf.5
 
@@ -25,12 +26,10 @@ substitute = sed \
 	-e s,'@localstatedir\@',"$(localstatedir)",g
 
 tincd.8: $(srcdir)/tincd.8.in
-	$(AM_V_GEN)$(substitute) $< > $@
+	$(AM_V_GEN)$(substitute) $(srcdir)/tincd.8.in > $@
 
 tinc.conf.5: $(srcdir)/tinc.conf.5.in
-	$(AM_V_GEN)$(substitute) $< > $@
+	$(AM_V_GEN)$(substitute) $(srcdir)/tinc.conf.5.in > $@
 
 tincinclude.texi: $(srcdir)/tincinclude.texi.in
-	$(AM_V_GEN)$(substitute) $< > $@
-
-tinc.texi: tincinclude.texi
+	$(AM_V_GEN)$(substitute) $(srcdir)/tincinclude.texi.in > $@

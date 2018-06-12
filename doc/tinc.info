@@ -5,10 +5,10 @@ START-INFO-DIR-ENTRY
 * tinc: (tinc).              The tinc Manual.
 END-INFO-DIR-ENTRY
 
-This is the info manual for tinc version 1.0.33, a Virtual Private
+This is the info manual for tinc version 1.0.34, a Virtual Private
 Network daemon.
 
-   Copyright (C) 1998-2017 Ivo Timmermans, Guus Sliepen
+   Copyright (C) 1998-2018 Ivo Timmermans, Guus Sliepen
 <guus@tinc-vpn.org> and Wessel Dankers <wsl@tinc-vpn.org>.
 
    Permission is granted to make and distribute verbatim copies of this
@@ -791,13 +791,13 @@ DeviceType = <TYPE> (platform dependent)
 
      uml (not compiled in by default)
           Create a UNIX socket with the filename specified by DEVICE, or
-          '/run/NETNAME.umlsocket' if not specified.  Tinc will wait for
-          a User Mode Linux instance to connect to this socket.
+          '/var/run/NETNAME.umlsocket' if not specified.  Tinc will wait
+          for a User Mode Linux instance to connect to this socket.
 
      vde (not compiled in by default)
           Uses the libvdeplug library to connect to a Virtual
           Distributed Ethernet switch, using the UNIX socket specified
-          by DEVICE, or '/run/vde.ctl' if not specified.
+          by DEVICE, or '/var/run/vde.ctl' if not specified.
 
      Also, in case tinc does not seem to correctly interpret packets
      received from the virtual network device, it can be used to change
@@ -1597,7 +1597,7 @@ command line options.
      '/var/log/tinc.NETNAME.log'.
 
 '--pidfile=FILE'
-     Write PID to FILE instead of '/run/tinc.NETNAME.pid'.
+     Write PID to FILE instead of '/var/run/tinc.NETNAME.pid'.
 
 '--bypass-security'
      Disables encryption and authentication.  Only useful for debugging.
@@ -2291,6 +2291,7 @@ File: tinc.info,  Node: Platform specific information,  Next: About us,  Prev: T
 
 * Interface configuration::
 * Routes::
+* Automatically starting tinc::
 
 
 File: tinc.info,  Node: Interface configuration,  Next: Routes,  Up: Platform specific information
@@ -2343,7 +2344,7 @@ root privileges at all.
 Linux               'ip tuntap add dev' INTERFACE 'mode' TUN|TAP 'user' USERNAME
 
 
-File: tinc.info,  Node: Routes,  Prev: Interface configuration,  Up: Platform specific information
+File: tinc.info,  Node: Routes,  Next: Automatically starting tinc,  Prev: Interface configuration,  Up: Platform specific information
 
 7.2 Routes
 ==========
@@ -2377,6 +2378,72 @@ NetBSD              'route add -inet6' NETWORK_ADDRESS LOCAL_ADDRESS '-prefixlen
 Solaris             'route add -inet6' NETWORK_ADDRESS'/'PREFIXLENGTH LOCAL_ADDRESS '-interface'
 Darwin (Mac OS X)   'route add -inet6' NETWORK_ADDRESS'/'PREFIXLENGTH '-interface' INTERFACE
 Windows             'netsh interface ipv6 add route' NETWORK ADDRESS/PREFIXLENGTH INTERFACE
+
+
+File: tinc.info,  Node: Automatically starting tinc,  Prev: Routes,  Up: Platform specific information
+
+7.3 Automatically starting tinc
+===============================
+
+* Menu:
+
+* Linux::
+* Windows::
+* Other platforms::
+
+
+File: tinc.info,  Node: Linux,  Next: Windows,  Up: Automatically starting tinc
+
+7.3.1 Linux
+-----------
+
+There are many Linux distributions, and historically, many of them had
+their own way of starting programs at boot time.  Today, a number of
+major Linux distributions have chosen to use systemd as their init
+system.  Tinc ships with systemd service files that allow you to start
+and stop tinc using systemd.  There are two service files:
+'tinc.service' is used to globally enable or disable all tinc daemons
+managed by systemd, and 'tinc@NETNAME.service' is used to enable or
+disable specific tinc daemons.  So if one has created a tinc network
+with netname 'foo', then you have to run the following two commands to
+ensure it is started at boot time:
+
+     systemctl enable tinc
+     systemctl enable tinc@foo
+
+   To start the tinc daemon immediately if it wasn't already running,
+use the following command:
+
+     systemctl start tinc@foo
+
+   You can also use 'systemctl start tinc', this will start all tinc
+daemons that are enabled.  You can stop and disable tinc networks in the
+same way.
+
+   If your system is not using systemd, then you have to look up your
+distribution's way of starting tinc at boot time.
+
+
+File: tinc.info,  Node: Windows,  Next: Other platforms,  Prev: Linux,  Up: Automatically starting tinc
+
+7.3.2 Windows
+-------------
+
+On Windows, if tinc is started without the '-D' or '--no-detach' option,
+it will automatically register itself as a service that is started at
+boot time.  When tinc is stopped using the '-k' or '--kill', it will
+also automatically unregister itself.  Once tinc is registered as a
+service, it is also possible to stop and start tinc using the Windows
+Services Manager.
+
+
+File: tinc.info,  Node: Other platforms,  Prev: Windows,  Up: Automatically starting tinc
+
+7.3.3 Other platforms
+---------------------
+
+On platforms other than the ones mentioned in the earlier sections, you
+have to look up your platform's way of starting programs at boot time.
 
 
 File: tinc.info,  Node: About us,  Next: Concept Index,  Prev: Platform specific information,  Up: Top
@@ -2610,6 +2677,7 @@ Concept Index
 * SVPN:                                  Security.            (line  11)
 * switch:                                Main configuration variables.
                                                               (line 243)
+* systemd:                               Linux.               (line   6)
 * TCP:                                   The meta-connection. (line  10)
 * TCPonly:                               Host configuration variables.
                                                               (line 105)
@@ -2686,34 +2754,38 @@ Node: Multiple networks21794
 Node: How connections work23220
 Node: Configuration files24442
 Node: Main configuration variables25936
-Node: Host configuration variables42184
-Node: Scripts47716
-Node: How to configure50982
-Node: Generating keypairs52240
-Node: Network interfaces52739
-Node: Example configuration54587
-Node: Running tinc59912
-Node: Runtime options60502
-Node: Signals64127
-Node: Debug levels65318
-Node: Solving problems66254
-Node: Error messages67806
-Node: Sending bug reports71815
-Node: Technical information72762
-Node: The connection72993
-Node: The UDP tunnel73305
-Node: The meta-connection76366
-Node: The meta-protocol77835
-Node: Security82852
-Node: Authentication protocol83994
-Node: Encryption of network packets89039
-Node: Security issues90415
-Node: Platform specific information92054
-Node: Interface configuration92282
-Node: Routes94753
-Node: About us96767
-Node: Contact information96942
-Node: Authors97345
-Node: Concept Index97750
+Node: Host configuration variables42192
+Node: Scripts47724
+Node: How to configure50990
+Node: Generating keypairs52248
+Node: Network interfaces52747
+Node: Example configuration54595
+Node: Running tinc59920
+Node: Runtime options60510
+Node: Signals64139
+Node: Debug levels65330
+Node: Solving problems66266
+Node: Error messages67818
+Node: Sending bug reports71827
+Node: Technical information72774
+Node: The connection73005
+Node: The UDP tunnel73317
+Node: The meta-connection76378
+Node: The meta-protocol77847
+Node: Security82864
+Node: Authentication protocol84006
+Node: Encryption of network packets89051
+Node: Security issues90427
+Node: Platform specific information92066
+Node: Interface configuration92326
+Node: Routes94797
+Node: Automatically starting tinc96847
+Node: Linux97070
+Node: Windows98291
+Node: Other platforms98796
+Node: About us99078
+Node: Contact information99253
+Node: Authors99656
+Node: Concept Index100061
 
 End Tag Table

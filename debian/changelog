@@ -1,3 +1,18 @@
+tinc (1.0.34-1) unstable; urgency=medium
+
+  [ Guus Sliepen ]
+  * New upstream release.
+    - Fixes a potential segmentation fault when connecting to an IPv6
+      peer via a proxy. Closes: #887401
+  * Add support for the $EXTRA variable in /etc/default/tinc when using
+    systemd. Closes: #887116
+
+  [ Benda Xu ]
+  * Prevent possible incorrect IPv6 checksums due to function inlining.
+    Closes: #891400
+
+ -- Guus Sliepen <guus@debian.org>  Tue, 12 Jun 2018 23:00:49 +0200
+
 tinc (1.0.33-1) unstable; urgency=medium
 
   * New upstream release.

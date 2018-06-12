@@ -88,7 +88,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-subdir = distro
+subdir = systemd
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/attribute.m4 \
 	$(top_srcdir)/m4/ax_append_flag.m4 \
@@ -151,8 +151,8 @@ am__uninstall_files_from_dir = { \
     || { echo " ( cd '$$dir' && rm -f" $$files ")"; \
          $(am__cd) "$$dir" && rm -f $$files; }; \
   }
-am__installdirs = "$(DESTDIR)$(systemdsystemunitdir)"
-DATA = $(systemdsystemunit_DATA)
+am__installdirs = "$(DESTDIR)$(systemddir)"
+DATA = $(nodist_systemd_DATA)
 am__tagged_files = $(HEADERS) $(SOURCES) $(TAGS_FILES) $(LISP)
 am__DIST_COMMON = $(srcdir)/Makefile.in
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -197,9 +197,6 @@ PACKAGE_TARNAME = @PACKAGE_TARNAME@
 PACKAGE_URL = @PACKAGE_URL@
 PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
-PKG_CONFIG = @PKG_CONFIG@
-PKG_CONFIG_LIBDIR = @PKG_CONFIG_LIBDIR@
-PKG_CONFIG_PATH = @PKG_CONFIG_PATH@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 STRIP = @STRIP@
@@ -251,18 +248,18 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 srcdir = @srcdir@
 sysconfdir = @sysconfdir@
-systemdsystemunitdir = @systemdsystemunitdir@
+systemd_path = @systemd_path@
 target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-EXTRA_DIST = \
-	tinc.service \
-	tinc@.service
-
-@HAVE_SYSTEMD_TRUE@systemdsystemunit_DATA = \
-@HAVE_SYSTEMD_TRUE@	tinc.service \
-@HAVE_SYSTEMD_TRUE@	tinc@.service
+EXTRA_DIST = tinc.service.in tinc@.service.in
+CLEANFILES = tinc.service tinc@.service
+@WITH_SYSTEMD_TRUE@systemddir = @systemd_path@
+@WITH_SYSTEMD_TRUE@nodist_systemd_DATA = tinc.service tinc@.service
+substitute = sed \
+        -e s,'@sbindir\@',"$(sbindir)",g \
+        -e s,'@sysconfdir\@',"$(sysconfdir)",g
 
 all: all-am
 
@@ -276,9 +273,9 @@ $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu distro/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu systemd/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --gnu distro/Makefile
+	  $(AUTOMAKE) --gnu systemd/Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
 	  *config.status*) \
@@ -296,27 +293,27 @@ $(top_srcdir)/configure:  $(am__configure_deps)
 $(ACLOCAL_M4):  $(am__aclocal_m4_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
 $(am__aclocal_m4_deps):
-install-systemdsystemunitDATA: $(systemdsystemunit_DATA)
+install-nodist_systemdDATA: $(nodist_systemd_DATA)
 	@$(NORMAL_INSTALL)
-	@list='$(systemdsystemunit_DATA)'; test -n "$(systemdsystemunitdir)" || list=; \
+	@list='$(nodist_systemd_DATA)'; test -n "$(systemddir)" || list=; \
 	if test -n "$$list"; then \
-	  echo " $(MKDIR_P) '$(DESTDIR)$(systemdsystemunitdir)'"; \
-	  $(MKDIR_P) "$(DESTDIR)$(systemdsystemunitdir)" || exit 1; \
+	  echo " $(MKDIR_P) '$(DESTDIR)$(systemddir)'"; \
+	  $(MKDIR_P) "$(DESTDIR)$(systemddir)" || exit 1; \
 	fi; \
 	for p in $$list; do \
 	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
 	  echo "$$d$$p"; \
 	done | $(am__base_list) | \
 	while read files; do \
-	  echo " $(INSTALL_DATA) $$files '$(DESTDIR)$(systemdsystemunitdir)'"; \
-	  $(INSTALL_DATA) $$files "$(DESTDIR)$(systemdsystemunitdir)" || exit $$?; \
+	  echo " $(INSTALL_DATA) $$files '$(DESTDIR)$(systemddir)'"; \
+	  $(INSTALL_DATA) $$files "$(DESTDIR)$(systemddir)" || exit $$?; \
 	done
 
-uninstall-systemdsystemunitDATA:
+uninstall-nodist_systemdDATA:
 	@$(NORMAL_UNINSTALL)
-	@list='$(systemdsystemunit_DATA)'; test -n "$(systemdsystemunitdir)" || list=; \
+	@list='$(nodist_systemd_DATA)'; test -n "$(systemddir)" || list=; \
 	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
-	dir='$(DESTDIR)$(systemdsystemunitdir)'; $(am__uninstall_files_from_dir)
+	dir='$(DESTDIR)$(systemddir)'; $(am__uninstall_files_from_dir)
 tags TAGS:
 
 ctags CTAGS:
@@ -358,7 +355,7 @@ check-am: all-am
 check: check-am
 all-am: Makefile $(DATA)
 installdirs:
-	for dir in "$(DESTDIR)$(systemdsystemunitdir)"; do \
+	for dir in "$(DESTDIR)$(systemddir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
 install: install-am
@@ -383,6 +380,7 @@ install-strip:
 mostlyclean-generic:
 
 clean-generic:
+	-test -z "$(CLEANFILES)" || rm -f $(CLEANFILES)
 
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
@@ -411,7 +409,7 @@ info: info-am
 
 info-am:
 
-install-data-am: install-systemdsystemunitDATA
+install-data-am: install-nodist_systemdDATA
 
 install-dvi: install-dvi-am
 
@@ -455,7 +453,7 @@ ps: ps-am
 
 ps-am:
 
-uninstall-am: uninstall-systemdsystemunitDATA
+uninstall-am: uninstall-nodist_systemdDATA
 
 .MAKE: install-am install-strip
 
@@ -464,15 +462,21 @@ uninstall-am: uninstall-systemdsystemunitDATA
 	html-am info info-am install install-am install-data \
 	install-data-am install-dvi install-dvi-am install-exec \
 	install-exec-am install-html install-html-am install-info \
-	install-info-am install-man install-pdf install-pdf-am \
-	install-ps install-ps-am install-strip \
-	install-systemdsystemunitDATA installcheck installcheck-am \
-	installdirs maintainer-clean maintainer-clean-generic \
-	mostlyclean mostlyclean-generic pdf pdf-am ps ps-am tags-am \
-	uninstall uninstall-am uninstall-systemdsystemunitDATA
+	install-info-am install-man install-nodist_systemdDATA \
+	install-pdf install-pdf-am install-ps install-ps-am \
+	install-strip installcheck installcheck-am installdirs \
+	maintainer-clean maintainer-clean-generic mostlyclean \
+	mostlyclean-generic pdf pdf-am ps ps-am tags-am uninstall \
+	uninstall-am uninstall-nodist_systemdDATA
 
 .PRECIOUS: Makefile
 
+
+tinc.service: $(srcdir)/tinc.service.in
+	$(AM_V_GEN)$(substitute) $(srcdir)/tinc.service.in > $@
+
+tinc@.service: $(srcdir)/tinc@.service.in
+	$(AM_V_GEN)$(substitute) $(srcdir)/tinc@.service.in > $@
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
