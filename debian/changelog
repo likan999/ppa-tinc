@@ -1,3 +1,10 @@
+tinc (1.0.31-1+deb9u1) stretch-security; urgency=high
+
+  * Prevent oracle attacks (CVE-2018-16737, CVE-2018-16738).
+  * Prevent a MITM from forcing a NULL cipher for UDP (CVE-2018-16758).
+
+ -- Guus Sliepen <guus@debian.org>  Sat, 22 Sep 2018 17:35:50 +0200
+
 tinc (1.0.31-1) unstable; urgency=medium
 
   * New upstream release.
