@@ -1,3 +1,10 @@
+tinc (1.0.24-2.1+deb8u1) jessie-security; urgency=medium
+
+  * Prevent oracle attacks (CVE-2018-16737, CVE-2018-16738).
+  * Prevent a MITM from forcing a NULL cipher for UDP (CVE-2018-16758).
+
+ -- Guus Sliepen <guus@debian.org>  Mon, 08 Oct 2018 20:14:24 +0200
+
 tinc (1.0.24-2.1) unstable; urgency=medium
 
   * NMU after getting go ahead from guus on #tinc
