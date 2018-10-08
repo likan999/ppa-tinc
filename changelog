@@ -1,3 +1,10 @@
+tinc (1.0.35-1) unstable; urgency=medium
+
+  * New upstream release.
+    - Includes fixes for CVE-2018-16737, CVE-2018-16738, CVE-2018-16758.
+
+ -- Guus Sliepen <guus@debian.org>  Mon, 08 Oct 2018 16:09:06 +0200
+
 tinc (1.0.34-1) unstable; urgency=medium
 
   [ Guus Sliepen ]
