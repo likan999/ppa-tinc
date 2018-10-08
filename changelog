@@ -1,3 +1,14 @@
+tinc (1.1~pre17-1) experimental; urgency=medium
+
+  * New upstream release.
+    - Includes fixes for CVE-2018-16737, CVE-2018-16738.
+    - The GUI is no longer part of upstream, so has been removed.
+  * Link with the miniupnpc library.
+  * Bump Standards-Version.
+  * Bump debian/compat.
+
+ -- Guus Sliepen <guus@debian.org>  Mon, 08 Oct 2018 16:32:57 +0200
+
 tinc (1.1~pre15-1) experimental; urgency=medium
 
   * New upstream release.
