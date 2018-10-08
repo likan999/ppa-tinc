@@ -1,8 +1,0 @@
-usr/sbin/tincd
-usr/sbin/tinc
-usr/share/doc/tinc/tinc.html
-usr/share/man/man5
-usr/share/man/man8/tincd.*
-usr/share/man/man8/tinc.*
-usr/share/info
-lib/systemd/system

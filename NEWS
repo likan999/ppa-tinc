@@ -1,3 +1,35 @@
+# Version 1.1pre17             October 8 2018
+
+* Prevent oracle attacks in the legacy protocol (CVE-2018-16737,
+  CVE-2018-16738).
+* Prevent a MITM from forcing a NULL cipher for UDP in the legacy protocol
+  (CVE-2018-16758).
+* AutoConnect is now enabled by default.
+* Per-node network traffic statistics are now shown in the output of "info" and
+  "dump nodes" commands.
+
+Thanks to volth and Rafael Sadowski for their contributions to this version of
+tinc.
+
+# Version 1.1pre16             June 12 2018
+
+* Fixed building with support for UML sockets.
+* Documentation updates and spelling fixes.
+* Support for MSS clamping of IP-in-IP packets.
+* Fixed parsing of the -b flag.
+* Added the ability to set a firemall mark on sockets on Linux.
+* Minor improvements to the build system.
+* Added a cache of recently seen addresses of peers.
+* Add support for --runstatedir to the configure script.
+* Fixed linking with libncurses on some distributions.
+* Automatically disable PMTUDiscovery when TCPOnly is enabled.
+* Fixed removing the tinc service on Windows in some situations.
+* Fixed the TAP-Win32 device locking up after waking up from suspend.
+
+Thanks to Todd C. Miller, Etienne Dechamps, Daniel Lublin,
+Gjergji Ramku, Mike Sullivan and Oliver Freyermuth for their
+contributions to this version of tinc.
+
 # Version 1.1pre15             September 2 2017
 
 * Detect when the machine is resuming from suspension or hibernation.
@@ -12,7 +44,7 @@
 * Support PriorityInheritance for IPv6 packets.
 * Fixes for Solaris tun/tap support.
 * Add a configurable expiration time for invitations.
-* Store invitation data after a succesful join.
+* Store invitation data after a successful join.
 * Exit gracefully when the tun/tap device is in a bad state.
 * Add the LogLevel option.
 * AutoConnect now actively tries to heal split networks.
@@ -43,7 +75,7 @@ contributions to this version of tinc.
 * Allow tinc to be compiled without LibreSSL or OpenSSL (this drops
   compatibility with nodes running 1.0.x).
 * Added a "fsck" command to check the configuration files for problems.
-* Tinc "start" now checks whether the daemon really started succesfully, and
+* Tinc "start" now checks whether the daemon really started successfully, and
   displays error messages otherwise.
 * Added systemd service files.
 * Use the recvmmsg() function if available.
@@ -378,7 +410,7 @@ their contributions to this version of tinc.
 * Improved default settings of tun and tap devices on BSD platforms.
 * Make IPv6 sockets bind only to IPv6 on Linux.
 * Enable path MTU discovery by default.
-* Fixed a memory leak that occured when connections were closed.
+* Fixed a memory leak that occurred when connections were closed.
 
 Thanks to Max Rijevski for his contributions to this version of tinc.
 
@@ -552,7 +584,7 @@ Thanks to Scott Lamb for his contributions to this version of tinc.
 * Tinc will retry to connect upon startup, does not quit if it doesn't
   work the first time.
 * Hosts that are disconnected implicitly if we lose a connection get
-  deleted from the internal list, to prevent hogging eachother with
+  deleted from the internal list, to prevent hogging each other with
   add and delete requests when the connection is restored.
 
 # Version 1.0pre1              May 12 2000
