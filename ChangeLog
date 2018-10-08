@@ -1,3 +1,26 @@
+Version 1.0.35                                           October 05 2018
+------------------------------------------------------------------------
+
+Guus Sliepen (12):
+      Prevent oracle attacks (CVE-2018-16737, CVE-2018-16738)
+      Prevent a MITM from forcing a NULL cipher for UDP (CVE-2018-16758)
+      Check the return value from snprintf().
+      Check the return values from BN_hex2bn() and RAND_load_file().
+      Fix all warnings when compiling with -Wall -W -pedantic.
+      Fix two small memory leaks.
+      Don't check for NULL-pointers before calling free().
+      Update THANKS.
+      Fix checks for Cygwin-related macros.
+      Fix spelling errors.
+      Update README and links to required libraries.
+      Releasing 1.0.35.
+
+AMRI Amine (1):
+      Fixing typo
+
+Rafael Sadowski (1):
+      OpenBSD has a proper tap device.
+
 Version 1.0.34                                              June 12 2018
 ------------------------------------------------------------------------
 

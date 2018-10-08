@@ -239,7 +239,7 @@ static bool read_rsa_private_key(void) {
 		return false;
 	}
 
-#if !defined(HAVE_MINGW) && !defined(HAVE___CYGWIN32__)
+#if !defined(HAVE_MINGW) && !defined(HAVE_CYGWIN)
 	struct stat s;
 
 	if(!fstat(fileno(fp), &s)) {
@@ -388,8 +388,8 @@ static bool setup_myself(void) {
 	char *address = NULL;
 	char *proxy = NULL;
 	char *space;
-	char *envp[5] = {};
-	struct addrinfo *ai, *aip, hint = {};
+	char *envp[5] = {0};
+	struct addrinfo *ai, *aip, hint = {0};
 	bool choice;
 	int i, err;
 	int replaywin_int;
@@ -852,15 +852,15 @@ static bool setup_myself(void) {
 	}
 
 	/* Run tinc-up script to further initialize the tap interface */
-	xasprintf(&envp[0], "NETNAME=%s", netname ? : "");
-	xasprintf(&envp[1], "DEVICE=%s", device ? : "");
-	xasprintf(&envp[2], "INTERFACE=%s", iface ? : "");
+	xasprintf(&envp[0], "NETNAME=%s", netname ? netname : "");
+	xasprintf(&envp[1], "DEVICE=%s", device ? device : "");
+	xasprintf(&envp[2], "INTERFACE=%s", iface ? iface : "");
 	xasprintf(&envp[3], "NAME=%s", myself->name);
 
 #ifdef HAVE_MINGW
 	Sleep(1000);
 #endif
-#ifdef HAVE___CYGWIN32__
+#ifdef HAVE_CYGWIN
 	sleep(1);
 #endif
 	execute_script("tinc-up", envp);
@@ -1068,7 +1068,7 @@ bool setup_network(void) {
 void close_network_connections(void) {
 	avl_node_t *node, *next;
 	connection_t *c;
-	char *envp[5] = {};
+	char *envp[5] = {0};
 	int i;
 
 	for(node = connection_tree->head; node; node = next) {
@@ -1099,9 +1099,9 @@ void close_network_connections(void) {
 		close(listen_socket[i].udp);
 	}
 
-	xasprintf(&envp[0], "NETNAME=%s", netname ? : "");
-	xasprintf(&envp[1], "DEVICE=%s", device ? : "");
-	xasprintf(&envp[2], "INTERFACE=%s", iface ? : "");
+	xasprintf(&envp[0], "NETNAME=%s", netname ? netname : "");
+	xasprintf(&envp[1], "DEVICE=%s", device ? device : "");
+	xasprintf(&envp[2], "INTERFACE=%s", iface ? iface : "");
 	xasprintf(&envp[3], "NAME=%s", myself->name);
 
 	exit_requests();
