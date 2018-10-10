@@ -4,7 +4,8 @@
 	dh $@
 
 override_dh_auto_configure:
-	dh_auto_configure -- --enable-uml --enable-vde --enable-miniupnp --with-systemd
+	dh_auto_configure -- --enable-uml --enable-vde --enable-miniupnpc \
+		--with-systemd=/lib/systemd/system/
 	$(MAKE) clean
 
 override_dh_auto_install:
