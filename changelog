@@ -1,3 +1,11 @@
+tinc (1.1~pre17-1.1) experimental; urgency=medium
+
+  * Non-maintainer upload.
+  * Fix systemd service install path. Closes: #910618
+  * Fix typo in --enable-miniupnpc option.
+
+ -- Shengjing Zhu <zhsj@debian.org>  Wed, 10 Oct 2018 10:58:42 +0800
+
 tinc (1.1~pre17-1) experimental; urgency=medium
 
   * New upstream release.
