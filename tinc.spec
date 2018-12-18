@@ -32,7 +32,7 @@ information to others.
 %autosetup
 
 %build
-%configure
+%configure --with-systemd=%{_unitdir}
 %make_build
 
 %install
