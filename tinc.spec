@@ -13,9 +13,7 @@ BuildRequires:  lzo-devel
 BuildRequires:  systemd
 BuildRequires:  systemd-units
 
-Requires(post):   info
 Requires(post):   systemd
-Requires(preun):  info
 Requires(preun):  systemd
 Requires(postun): systemd
 
@@ -40,13 +38,9 @@ information to others.
 rm -f %{buildroot}%{_infodir}/dir
 
 %post
-/sbin/install-info %{_infodir}/%{name}.info %{_infodir}/dir || :
 %systemd_post %{name}@.service
 
 %preun
-if [ $1 = 0 ] ; then
-/sbin/install-info --delete %{_infodir}/%{name}.info %{_infodir}/dir || :
-fi
 %systemd_preun %{name}@.service
 
 %postun
