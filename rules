@@ -3,6 +3,10 @@
 %:
 	dh $@
 
+override_dh_clean:
+	dh_clean
+	rm -f doc/tinc.info
+
 override_dh_auto_configure:
 	dh_auto_configure -- --enable-uml --enable-vde --with-systemd=/lib/systemd/system --runstatedir=/run
 
@@ -10,9 +14,3 @@ override_dh_auto_install:
 	dh_auto_install -- install-html
 	# Remove info dir file
 	rm -f debian/tinc/usr/share/info/dir
-
-override_dh_installinit:
-	dh_installinit -R
-
-override_dh_systemd_start:
-	dh_systemd_start --restart-after-upgrade
