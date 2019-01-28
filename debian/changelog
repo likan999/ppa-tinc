@@ -1,3 +1,12 @@
+tinc (1.0.35-2) unstable; urgency=medium
+
+  * Bump Standards-Version and Build-Depend on debhelper-compat (= 12).
+  * Remove calls to dh_installinit and dh_systemd_start from debian/rules,
+    compat level 12 does the right thing by default.
+  * Ensure we clean up doc/tinc.info.
+
+ -- Guus Sliepen <guus@debian.org>  Mon, 28 Jan 2019 21:54:45 +0100
+
 tinc (1.0.35-1) unstable; urgency=medium
 
   * New upstream release.
