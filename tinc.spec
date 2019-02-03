@@ -1,6 +1,6 @@
 Name:           tinc
 Version:        1.0.35
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        A virtual private network daemon
 
 License:        GPLv2+
@@ -55,6 +55,9 @@ rm -f %{buildroot}%{_infodir}/dir
 %{_unitdir}/%{name}*.service
 
 %changelog
+* Sun Feb 03 2019 Fedora Release Engineering <releng@fedoraproject.org> - 1.0.35-2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_30_Mass_Rebuild
+
 * Tue Dec 18 2018 Fabian Affolter <mail@fabian-affolter.ch> - 1.0.35-1
 - Fix for CVE-2018-16737, CVE-2018-16738 and CVE-2018-16758 
 - Update to new upstream version 1.0.35
