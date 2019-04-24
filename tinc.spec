@@ -1,6 +1,6 @@
 Name:           tinc
 Version:        1.0.35
-Release:        2%{?dist}
+Release:        3%{?dist}
 Summary:        A virtual private network daemon
 
 License:        GPLv2+
@@ -50,11 +50,14 @@ rm -f %{buildroot}%{_infodir}/dir
 %doc AUTHORS COPYING.README NEWS README THANKS doc/sample* doc/*.tex
 %license COPYING
 %{_mandir}/man*/%{name}*.*
-%{_infodir}/%{name}.info.gz
+%{_infodir}/%{name}.info.*
 %{_sbindir}/%{name}d
 %{_unitdir}/%{name}*.service
 
 %changelog
+* Wed Apr 24 2019 Björn Esser <besser82@fedoraproject.org> - 1.0.35-3
+- Remove hardcoded gzip suffix from GNU info pages
+
 * Sun Feb 03 2019 Fedora Release Engineering <releng@fedoraproject.org> - 1.0.35-2
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_30_Mass_Rebuild
 
