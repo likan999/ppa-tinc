@@ -1,89 +1,50 @@
 ## Produce this file with automake to get Makefile.in
 
-sbin_PROGRAMS = tincd
+sbin_PROGRAMS = tincd tincctl
+
+EXTRA_DIST = linux bsd solaris cygwin mingw raw_socket uml_socket openssl gcrypt
 
 tincd_SOURCES = \
-	have.h \
-	system.h \
-	avl_tree.c avl_tree.h \
-	conf.c conf.h \
-	connection.c connection.h \
-	device.h \
-	dropin.c dropin.h \
-	dummy_device.c \
-	edge.c edge.h \
-	ethernet.h \
-	event.c event.h \
-	fake-getaddrinfo.c fake-getaddrinfo.h \
-	fake-getnameinfo.c fake-getnameinfo.h \
-	graph.c graph.h \
-	ipv4.h \
-	ipv6.h \
-	list.c list.h \
-	logger.c logger.h \
-	meta.c meta.h \
-	multicast_device.c \
-	net.c net.h \
-	net_packet.c \
-	net_setup.c \
-	net_socket.c \
-	netutl.c netutl.h \
-	node.c node.h \
-	pidfile.c pidfile.h \
-	process.c process.h \
-	protocol.c protocol.h \
-	protocol_auth.c \
-	protocol_edge.c \
-	protocol_misc.c \
-	protocol_key.c \
-	protocol_subnet.c \
-	proxy.c proxy.h \
-	raw_socket_device.c \
-	route.c route.h \
-	subnet.c subnet.h \
-	tincd.c \
-	utils.c utils.h \
-	xalloc.h
+	utils.c getopt.c getopt1.c list.c splay_tree.c dropin.c fake-getaddrinfo.c fake-getnameinfo.c \
+	buffer.c conf.c connection.c control.c edge.c graph.c logger.c meta.c net.c net_packet.c net_setup.c \
+	net_socket.c netutl.c node.c process.c protocol.c protocol_auth.c protocol_edge.c protocol_misc.c \
+	protocol_key.c protocol_subnet.c route.c subnet.c tincd.c
 
-if !GETOPT
-tincd_SOURCES += \
-	getopt.c getopt.h \
-	getopt1.c
-endif
+nodist_tincd_SOURCES = \
+	device.c cipher.c crypto.c ecdh.c ecdsa.c digest.c prf.c rsa.c
 
-if LINUX
-tincd_SOURCES += linux/device.c
-endif
+tincctl_SOURCES = \
+	utils.c getopt.c getopt1.c dropin.c \
+	list.c tincctl.c top.c
 
-if BSD
-tincd_SOURCES += bsd/device.c
+nodist_tincctl_SOURCES = \
+	ecdsagen.c rsagen.c
+
 if TUNEMU
-tincd_SOURCES += bsd/tunemu.c bsd/tunemu.h
-endif
-endif
-
-if SOLARIS
-tincd_SOURCES += solaris/device.c
+tincd_SOURCES += bsd/tunemu.c
 endif
 
-if MINGW
-tincd_SOURCES += mingw/device.c mingw/common.h
-endif
+tincctl_LDADD = $(CURSES_LIBS)
 
-if CYGWIN
-tincd_SOURCES += cygwin/device.c
-endif
+DEFAULT_INCLUDES =
 
-if UML
-tincd_SOURCES += uml_device.c
-endif
+INCLUDES = @INCLUDES@ -I$(top_builddir)
 
-if VDE
-tincd_SOURCES += vde_device.c
-endif
+noinst_HEADERS = \
+	xalloc.h utils.h getopt.h list.h splay_tree.h dropin.h fake-getaddrinfo.h fake-getnameinfo.h fake-gai-errnos.h ipv6.h ipv4.h ethernet.h \
+	buffer.h conf.h connection.h control.h control_common.h device.h edge.h graph.h logger.h meta.h net.h netutl.h node.h process.h \
+	protocol.h route.h subnet.h tincctl.h top.h bsd/tunemu.h
+
+nodist_noinst_HEADERS = \
+	cipher.h crypto.h ecdh.h ecdsa.h digest.h prf.h rsa.h ecdsagen.h rsagen.h
+
+LIBS = @LIBS@ @LIBGCRYPT_LIBS@
 
 if TUNEMU
 LIBS += -lpcap
 endif
 
-AM_CPPFLAGS = -DCONFDIR=\"$(sysconfdir)\" -DRUNSTATEDIR=\"$(runstatedir)\" -DLOCALSTATEDIR=\"$(localstatedir)\" -I $(abs_top_builddir)/
+AM_CFLAGS = -DCONFDIR=\"$(sysconfdir)\" -DLOCALSTATEDIR=\"$(localstatedir)\" -DSBINDIR=\"$(sbindir)\"
+
+dist-hook:
+	rm -f `find . -type l`

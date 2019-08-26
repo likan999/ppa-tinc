@@ -1,6 +1,3 @@
-#ifndef TINC_DROPIN_H
-#define TINC_DROPIN_H
-
 /*
     dropin.h -- header file for dropin.c
     Copyright (C) 2000-2005 Ivo Timmermans,
@@ -21,11 +18,14 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
+#ifndef __DROPIN_H__
+#define __DROPIN_H__
+
 #include "fake-getaddrinfo.h"
 #include "fake-getnameinfo.h"
 
 #ifndef HAVE_DAEMON
-extern int daemon(int nochdir, int noclose);
+extern int daemon(int, int);
 #endif
 
 #ifndef HAVE_GET_CURRENT_DIR_NAME
@@ -33,16 +33,16 @@ extern char *get_current_dir_name(void);
 #endif
 
 #ifndef HAVE_ASPRINTF
-extern int asprintf(char **buf, const char *fmt, ...);
-extern int vasprintf(char **buf, const char *fmt, va_list ap);
+extern int asprintf(char **, const char *, ...);
+extern int vasprintf(char **, const char *, va_list ap);
 #endif
 
 #ifndef HAVE_GETTIMEOFDAY
-extern int gettimeofday(struct timeval *tv, void *tz);
+extern int gettimeofday(struct timeval *, void *);
 #endif
 
 #ifndef HAVE_USLEEP
 extern int usleep(long long usec);
 #endif
 
-#endif
+#endif							/* __DROPIN_H__ */

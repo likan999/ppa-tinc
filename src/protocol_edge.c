@@ -1,7 +1,7 @@
 /*
     protocol_edge.c -- handle the meta-protocol, edges
     Copyright (C) 1999-2005 Ivo Timmermans,
-                  2000-2016 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2009 Guus Sliepen <guus@tinc-vpn.org>
                   2009      Michael Tokarev <mjt@corpit.ru>
 
     This program is free software; you can redistribute it and/or modify
@@ -21,7 +21,7 @@
 
 #include "system.h"
 
-#include "avl_tree.h"
+#include "splay_tree.h"
 #include "conf.h"
 #include "connection.h"
 #include "edge.h"
@@ -42,15 +42,15 @@ bool send_add_edge(connection_t *c, const edge_t *e) {
 	sockaddr2str(&e->address, &address, &port);
 
 	x = send_request(c, "%d %x %s %s %s %s %x %d", ADD_EDGE, rand(),
-	                 e->from->name, e->to->name, address, port,
-	                 e->options, e->weight);
+					 e->from->name, e->to->name, address, port,
+					 e->options, e->weight);
 	free(address);
 	free(port);
 
 	return x;
 }
 
-bool add_edge_h(connection_t *c) {
+bool add_edge_h(connection_t *c, char *request) {
 	edge_t *e;
 	node_t *from, *to;
 	char from_name[MAX_STRING_SIZE];
@@ -61,24 +61,23 @@ bool add_edge_h(connection_t *c) {
 	uint32_t options;
 	int weight;
 
-	if(sscanf(c->buffer, "%*d %*x "MAX_STRING" "MAX_STRING" "MAX_STRING" "MAX_STRING" %x %d",
-	                from_name, to_name, to_address, to_port, &options, &weight) != 6) {
+	if(sscanf(request, "%*d %*x "MAX_STRING" "MAX_STRING" "MAX_STRING" "MAX_STRING" %x %d",
+			  from_name, to_name, to_address, to_port, &options, &weight) != 6) {
 		logger(LOG_ERR, "Got bad %s from %s (%s)", "ADD_EDGE", c->name,
-		       c->hostname);
+			   c->hostname);
 		return false;
 	}
 
 	/* Check if names are valid */
 
-	if(!check_id(from_name) || !check_id(to_name) || !strcmp(from_name, to_name)) {
+	if(!check_id(from_name) || !check_id(to_name)) {
 		logger(LOG_ERR, "Got bad %s from %s (%s): %s", "ADD_EDGE", c->name,
-		       c->hostname, "invalid name");
+			   c->hostname, "invalid name");
 		return false;
 	}
 
-	if(seen_request(c->buffer)) {
+	if(seen_request(request))
 		return true;
-	}
 
 	/* Lookup nodes */
 
@@ -86,12 +85,12 @@ bool add_edge_h(connection_t *c) {
 	to = lookup_node(to_name);
 
 	if(tunnelserver &&
-	                from != myself && from != c->node &&
-	                to != myself && to != c->node) {
+	   from != myself && from != c->node &&
+	   to != myself && to != c->node) {
 		/* ignore indirect edge registrations for tunnelserver */
 		ifdebug(PROTOCOL) logger(LOG_WARNING,
-		                         "Ignoring indirect %s from %s (%s)",
-		                         "ADD_EDGE", c->name, c->hostname);
+		   "Ignoring indirect %s from %s (%s)",
+		   "ADD_EDGE", c->name, c->hostname);
 		return true;
 	}
 
@@ -120,33 +119,20 @@ bool add_edge_h(connection_t *c) {
 		if(e->weight != weight || e->options != options || sockaddrcmp(&e->address, &address)) {
 			if(from == myself) {
 				ifdebug(PROTOCOL) logger(LOG_WARNING, "Got %s from %s (%s) for ourself which does not match existing entry",
-				                         "ADD_EDGE", c->name, c->hostname);
+						   "ADD_EDGE", c->name, c->hostname);
 				send_add_edge(c, e);
 				return true;
 			} else {
 				ifdebug(PROTOCOL) logger(LOG_WARNING, "Got %s from %s (%s) which does not match existing entry",
-				                         "ADD_EDGE", c->name, c->hostname);
-				e->options = options;
-
-				if(sockaddrcmp(&e->address, &address)) {
-					sockaddrfree(&e->address);
-					e->address = address;
-				}
-
-				if(e->weight != weight) {
-					avl_node_t *node = avl_unlink(edge_weight_tree, e);
-					e->weight = weight;
-					avl_insert_node(edge_weight_tree, node);
-				}
-
-				goto done;
+						   "ADD_EDGE", c->name, c->hostname);
+				edge_del(e);
+				graph();
 			}
-		} else {
+		} else
 			return true;
-		}
 	} else if(from == myself) {
 		ifdebug(PROTOCOL) logger(LOG_WARNING, "Got %s from %s (%s) for ourself which does not exist",
-		                         "ADD_EDGE", c->name, c->hostname);
+				   "ADD_EDGE", c->name, c->hostname);
 		contradicting_add_edge++;
 		e = new_edge();
 		e->from = from;
@@ -164,12 +150,10 @@ bool add_edge_h(connection_t *c) {
 	e->weight = weight;
 	edge_add(e);
 
-done:
 	/* Tell the rest about the new edge */
 
-	if(!tunnelserver) {
-		forward_request(c);
-	}
+	if(!tunnelserver)
+		forward_request(c, request);
 
 	/* Run MST before or after we tell the rest? */
 
@@ -180,32 +164,31 @@ done:
 
 bool send_del_edge(connection_t *c, const edge_t *e) {
 	return send_request(c, "%d %x %s %s", DEL_EDGE, rand(),
-	                    e->from->name, e->to->name);
+						e->from->name, e->to->name);
 }
 
-bool del_edge_h(connection_t *c) {
+bool del_edge_h(connection_t *c, char *request) {
 	edge_t *e;
 	char from_name[MAX_STRING_SIZE];
 	char to_name[MAX_STRING_SIZE];
 	node_t *from, *to;
 
-	if(sscanf(c->buffer, "%*d %*x "MAX_STRING" "MAX_STRING, from_name, to_name) != 2) {
+	if(sscanf(request, "%*d %*x "MAX_STRING" "MAX_STRING, from_name, to_name) != 2) {
 		logger(LOG_ERR, "Got bad %s from %s (%s)", "DEL_EDGE", c->name,
-		       c->hostname);
+			   c->hostname);
 		return false;
 	}
 
 	/* Check if names are valid */
 
-	if(!check_id(from_name) || !check_id(to_name) || !strcmp(from_name, to_name)) {
+	if(!check_id(from_name) || !check_id(to_name)) {
 		logger(LOG_ERR, "Got bad %s from %s (%s): %s", "DEL_EDGE", c->name,
-		       c->hostname, "invalid name");
+			   c->hostname, "invalid name");
 		return false;
 	}
 
-	if(seen_request(c->buffer)) {
+	if(seen_request(request))
 		return true;
-	}
 
 	/* Lookup nodes */
 
@@ -213,24 +196,24 @@ bool del_edge_h(connection_t *c) {
 	to = lookup_node(to_name);
 
 	if(tunnelserver &&
-	                from != myself && from != c->node &&
-	                to != myself && to != c->node) {
+	   from != myself && from != c->node &&
+	   to != myself && to != c->node) {
 		/* ignore indirect edge registrations for tunnelserver */
 		ifdebug(PROTOCOL) logger(LOG_WARNING,
-		                         "Ignoring indirect %s from %s (%s)",
-		                         "DEL_EDGE", c->name, c->hostname);
+		   "Ignoring indirect %s from %s (%s)",
+		   "DEL_EDGE", c->name, c->hostname);
 		return true;
 	}
 
 	if(!from) {
 		ifdebug(PROTOCOL) logger(LOG_ERR, "Got %s from %s (%s) which does not appear in the edge tree",
-		                         "DEL_EDGE", c->name, c->hostname);
+				   "DEL_EDGE", c->name, c->hostname);
 		return true;
 	}
 
 	if(!to) {
 		ifdebug(PROTOCOL) logger(LOG_ERR, "Got %s from %s (%s) which does not appear in the edge tree",
-		                         "DEL_EDGE", c->name, c->hostname);
+				   "DEL_EDGE", c->name, c->hostname);
 		return true;
 	}
 
@@ -240,23 +223,22 @@ bool del_edge_h(connection_t *c) {
 
 	if(!e) {
 		ifdebug(PROTOCOL) logger(LOG_WARNING, "Got %s from %s (%s) which does not appear in the edge tree",
-		                         "DEL_EDGE", c->name, c->hostname);
+				   "DEL_EDGE", c->name, c->hostname);
 		return true;
 	}
 
 	if(e->from == myself) {
 		ifdebug(PROTOCOL) logger(LOG_WARNING, "Got %s from %s (%s) for ourself",
-		                         "DEL_EDGE", c->name, c->hostname);
+				   "DEL_EDGE", c->name, c->hostname);
 		contradicting_del_edge++;
-		send_add_edge(c, e);    /* Send back a correction */
+		send_add_edge(c, e);	/* Send back a correction */
 		return true;
 	}
 
 	/* Tell the rest about the deleted edge */
 
-	if(!tunnelserver) {
-		forward_request(c);
-	}
+	if(!tunnelserver)
+		forward_request(c, request);
 
 	/* Delete the edge */
 
@@ -270,12 +252,9 @@ bool del_edge_h(connection_t *c) {
 
 	if(!to->status.reachable) {
 		e = lookup_edge(to, myself);
-
 		if(e) {
-			if(!tunnelserver) {
-				send_del_edge(everyone, e);
-			}
-
+			if(!tunnelserver)
+				send_del_edge(broadcast, e);
 			edge_del(e);
 		}
 	}
