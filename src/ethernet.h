@@ -25,15 +25,6 @@
 #define ETH_ALEN 6
 #endif
 
-#ifndef ETH_HLEN
-#define ETH_HLEN 14
-#endif
-
-#ifndef ETHER_TYPE_LEN
-#define ETHER_TYPE_LEN 2
-#endif
-
-
 #ifndef ARPHRD_ETHER
 #define ARPHRD_ETHER 1
 #endif
@@ -54,16 +45,12 @@
 #define ETH_P_8021Q 0x8100
 #endif
 
-#ifndef ETH_P_MAX
-#define ETH_P_MAX 0xFFFF
-#endif
-
 #ifndef HAVE_STRUCT_ETHER_HEADER
 struct ether_header {
 	uint8_t ether_dhost[ETH_ALEN];
 	uint8_t ether_shost[ETH_ALEN];
 	uint16_t ether_type;
-} __attribute__((__gcc_struct__, __packed__));
+} __attribute__((__packed__));
 #endif
 
 #ifndef HAVE_STRUCT_ARPHDR
@@ -73,7 +60,7 @@ struct arphdr {
 	uint8_t ar_hln;
 	uint8_t ar_pln;
 	uint16_t ar_op;
-} __attribute__((__gcc_struct__, __packed__));
+} __attribute__((__packed__));
 
 #define ARPOP_REQUEST 1
 #define ARPOP_REPLY 2
@@ -91,7 +78,7 @@ struct  ether_arp {
 	uint8_t arp_spa[4];
 	uint8_t arp_tha[ETH_ALEN];
 	uint8_t arp_tpa[4];
-} __attribute__((__gcc_struct__, __packed__));
+} __attribute__((__packed__));
 #define arp_hrd ea_hdr.ar_hrd
 #define arp_pro ea_hdr.ar_pro
 #define arp_hln ea_hdr.ar_hln

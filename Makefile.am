@@ -2,39 +2,14 @@
 
 AUTOMAKE_OPTIONS = gnu
 
-SUBDIRS =  src doc test systemd
+SUBDIRS = src doc systemd
 
-ACLOCAL_AMFLAGS = -I m4
+ACLOCAL_AMFLAGS = -I m4 
 
 EXTRA_DIST = COPYING.README README.android
 
-@CODE_COVERAGE_RULES@
-
-# If git describe works, force autoconf to run in order to make sure we have the
-# current version number from git in the resulting configure script.
-configure-version:
-	-cd $(srcdir) && git describe && autoconf --force
-
-# Triggering the README target means we are building a distribution (make dist).
-README: configure-version
-
 ChangeLog:
-	(cd $(srcdir) && git log) > ChangeLog
-
-deb:
-	dpkg-buildpackage -rfakeroot
-
-rpm: dist
-	cp $(distdir).tar.gz /usr/src/redhat/SOURCES/
-	cp redhat/tinc.spec /usr/src/redhat/SOURCES/
-	cd /usr/src/redhat/SOURCES/ && rpm -bb tinc.spec
-
-release:
-	rm -f ChangeLog
-	$(MAKE) ChangeLog
-	echo "Please edit the NEWS file now..."
-	/usr/bin/editor $(srcdir)/NEWS
-	$(MAKE) dist
+	git log > ChangeLog
 
 astyle:
 	astyle --options=.astylerc -nQ src/*.[ch] src/*/*.[ch]

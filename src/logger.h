@@ -3,8 +3,7 @@
 
 /*
     logger.h -- header file for logger.c
-    Copyright (C) 1998-2005 Ivo Timmermans
-                  2000-2017 Guus Sliepen <guus@tinc-vpn.org>
+    Copyright (C) 2003-2016 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -22,16 +21,16 @@
 */
 
 typedef enum debug_t {
-	DEBUG_NOTHING = 0,              /* Quiet mode, only show starting/stopping of the daemon */
+	DEBUG_NOTHING = 0,        /* Quiet mode, only show starting/stopping of the daemon */
 	DEBUG_ALWAYS = 0,
-	DEBUG_CONNECTIONS = 1,          /* Show (dis)connects of other tinc daemons via TCP */
-	DEBUG_ERROR = 2,                /* Show error messages received from other hosts */
-	DEBUG_STATUS = 2,               /* Show status messages received from other hosts */
-	DEBUG_PROTOCOL = 3,             /* Show the requests that are sent/received */
-	DEBUG_META = 4,                 /* Show contents of every request that is sent/received */
-	DEBUG_TRAFFIC = 5,              /* Show network traffic information */
-	DEBUG_PACKET = 6,               /* Show contents of each packet that is being sent/received */
-	DEBUG_SCARY_THINGS = 10         /* You have been warned */
+	DEBUG_CONNECTIONS = 1,    /* Show (dis)connects of other tinc daemons via TCP */
+	DEBUG_ERROR = 2,          /* Show error messages received from other hosts */
+	DEBUG_STATUS = 2,         /* Show status messages received from other hosts */
+	DEBUG_PROTOCOL = 3,       /* Show the requests that are sent/received */
+	DEBUG_META = 4,           /* Show contents of every request that is sent/received */
+	DEBUG_TRAFFIC = 5,        /* Show network traffic information */
+	DEBUG_PACKET = 6,         /* Show contents of each packet that is being sent/received */
+	DEBUG_SCARY_THINGS = 10,  /* You have been warned */
 } debug_t;
 
 typedef enum logmode_t {
@@ -65,14 +64,12 @@ enum {
 #endif
 #endif
 
-#include <stdbool.h>
-
-extern int debug_level;
-extern bool logcontrol;
-extern int umbilical;
+extern debug_t debug_level;
 extern void openlogger(const char *ident, logmode_t mode);
 extern void reopenlogger(void);
-extern void logger(int level, int priority, const char *format, ...) __attribute__((__format__(printf, 3, 4)));
+extern void logger(int priority, const char *format, ...) __attribute__((__format__(printf, 2, 3)));
 extern void closelogger(void);
+
+#define ifdebug(l) if(debug_level >= DEBUG_##l)
 
 #endif

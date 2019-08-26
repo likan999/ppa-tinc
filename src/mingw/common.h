@@ -1,6 +1,3 @@
-#ifndef TINC_MINGW_COMMON_H
-#define TINC_MINGW_COMMON_H
-
 /*
  *  TAP-Win32 -- A kernel driver to provide virtual tap device functionality
  *               on Windows.  Originally derived from the CIPE-Win32
@@ -76,5 +73,3 @@
 //=========================================================
 
 #define TAP_COMPONENT_ID "tap0801"
-
-#endif

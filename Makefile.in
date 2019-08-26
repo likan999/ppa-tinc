@@ -94,12 +94,9 @@ am__aclocal_m4_deps = $(top_srcdir)/m4/attribute.m4 \
 	$(top_srcdir)/m4/ax_cflags_warn_all.m4 \
 	$(top_srcdir)/m4/ax_check_compile_flag.m4 \
 	$(top_srcdir)/m4/ax_check_link_flag.m4 \
-	$(top_srcdir)/m4/ax_code_coverage.m4 \
-	$(top_srcdir)/m4/ax_require_defined.m4 \
-	$(top_srcdir)/m4/curses.m4 $(top_srcdir)/m4/libgcrypt.m4 \
-	$(top_srcdir)/m4/lzo.m4 $(top_srcdir)/m4/miniupnpc.m4 \
-	$(top_srcdir)/m4/openssl.m4 $(top_srcdir)/m4/readline.m4 \
-	$(top_srcdir)/m4/zlib.m4 $(top_srcdir)/configure.ac
+	$(top_srcdir)/m4/ax_require_defined.m4 $(top_srcdir)/m4/lzo.m4 \
+	$(top_srcdir)/m4/openssl.m4 $(top_srcdir)/m4/zlib.m4 \
+	$(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 DIST_COMMON = $(srcdir)/Makefile.am $(top_srcdir)/configure \
@@ -222,15 +219,8 @@ AWK = @AWK@
 CC = @CC@
 CCDEPMODE = @CCDEPMODE@
 CFLAGS = @CFLAGS@
-CODE_COVERAGE_CFLAGS = @CODE_COVERAGE_CFLAGS@
-CODE_COVERAGE_CPPFLAGS = @CODE_COVERAGE_CPPFLAGS@
-CODE_COVERAGE_CXXFLAGS = @CODE_COVERAGE_CXXFLAGS@
-CODE_COVERAGE_ENABLED = @CODE_COVERAGE_ENABLED@
-CODE_COVERAGE_LDFLAGS = @CODE_COVERAGE_LDFLAGS@
-CODE_COVERAGE_LIBS = @CODE_COVERAGE_LIBS@
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
-CURSES_LIBS = @CURSES_LIBS@
 CYGPATH_W = @CYGPATH_W@
 DEFS = @DEFS@
 DEPDIR = @DEPDIR@
@@ -239,21 +229,17 @@ ECHO_N = @ECHO_N@
 ECHO_T = @ECHO_T@
 EGREP = @EGREP@
 EXEEXT = @EXEEXT@
-GCOV = @GCOV@
-GENHTML = @GENHTML@
 GREP = @GREP@
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
-LCOV = @LCOV@
 LDFLAGS = @LDFLAGS@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
 LTLIBOBJS = @LTLIBOBJS@
 MAKEINFO = @MAKEINFO@
-MINIUPNPC_LIBS = @MINIUPNPC_LIBS@
 MKDIR_P = @MKDIR_P@
 OBJEXT = @OBJEXT@
 PACKAGE = @PACKAGE@
@@ -264,8 +250,6 @@ PACKAGE_TARNAME = @PACKAGE_TARNAME@
 PACKAGE_URL = @PACKAGE_URL@
 PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
-READLINE_LIBS = @READLINE_LIBS@
-SED = @SED@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 STRIP = @STRIP@
@@ -323,8 +307,8 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = gnu
-SUBDIRS = src doc test systemd
-ACLOCAL_AMFLAGS = -I m4
+SUBDIRS = src doc systemd
+ACLOCAL_AMFLAGS = -I m4 
 EXTRA_DIST = COPYING.README README.android
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
@@ -489,6 +473,12 @@ distdir: $(BUILT_SOURCES)
 	$(MAKE) $(AM_MAKEFLAGS) distdir-am
 
 distdir-am: $(DISTFILES)
+	@case `sed 15q $(srcdir)/NEWS` in \
+	*"$(VERSION)"*) : ;; \
+	*) \
+	  echo "NEWS not updated; not releasing" 1>&2; \
+	  exit 1;; \
+	esac
 	$(am__remove_distdir)
 	test -d "$(distdir)" || mkdir "$(distdir)"
 	@srcdirstrip=`echo "$(srcdir)" | sed 's/[].[^$$\\*]/\\\\&/g'`; \
@@ -801,33 +791,8 @@ uninstall-am:
 .PRECIOUS: Makefile
 
 
-@CODE_COVERAGE_RULES@
-
-# If git describe works, force autoconf to run in order to make sure we have the
-# current version number from git in the resulting configure script.
-configure-version:
-	-cd $(srcdir) && git describe && autoconf --force
-
-# Triggering the README target means we are building a distribution (make dist).
-README: configure-version
-
 ChangeLog:
-	(cd $(srcdir) && git log) > ChangeLog
-
-deb:
-	dpkg-buildpackage -rfakeroot
-
-rpm: dist
-	cp $(distdir).tar.gz /usr/src/redhat/SOURCES/
-	cp redhat/tinc.spec /usr/src/redhat/SOURCES/
-	cd /usr/src/redhat/SOURCES/ && rpm -bb tinc.spec
-
-release:
-	rm -f ChangeLog
-	$(MAKE) ChangeLog
-	echo "Please edit the NEWS file now..."
-	/usr/bin/editor $(srcdir)/NEWS
-	$(MAKE) dist
+	git log > ChangeLog
 
 astyle:
 	astyle --options=.astylerc -nQ src/*.[ch] src/*/*.[ch]

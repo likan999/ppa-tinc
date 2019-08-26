@@ -1,10 +1,9 @@
-#ifndef TINC_DROPIN_H
-#define TINC_DROPIN_H
+#ifndef TINC_PROXY_H
+#define TINC_PROXY_H
 
 /*
-    dropin.h -- header file for dropin.c
-    Copyright (C) 2000-2005 Ivo Timmermans,
-                  2000-2011 Guus Sliepen <guus@tinc-vpn.org>
+    proxy.h -- header for proxy.c
+    Copyright (C) 2015 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -21,28 +20,24 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#include "fake-getaddrinfo.h"
-#include "fake-getnameinfo.h"
+#include "connection.h"
 
-#ifndef HAVE_DAEMON
-extern int daemon(int nochdir, int noclose);
-#endif
+typedef enum proxytype_t {
+	PROXY_NONE = 0,
+	PROXY_SOCKS4,
+	PROXY_SOCKS4A,
+	PROXY_SOCKS5,
+	PROXY_HTTP,
+	PROXY_EXEC,
+} proxytype_t;
 
-#ifndef HAVE_GET_CURRENT_DIR_NAME
-extern char *get_current_dir_name(void);
-#endif
+extern proxytype_t proxytype;
+extern char *proxyhost;
+extern char *proxyport;
+extern char *proxyuser;
+extern char *proxypass;
 
-#ifndef HAVE_ASPRINTF
-extern int asprintf(char **buf, const char *fmt, ...);
-extern int vasprintf(char **buf, const char *fmt, va_list ap);
-#endif
-
-#ifndef HAVE_GETTIMEOFDAY
-extern int gettimeofday(struct timeval *tv, void *tz);
-#endif
-
-#ifndef HAVE_USLEEP
-extern int usleep(long long usec);
-#endif
+extern bool send_proxyrequest(struct connection_t *c);
+extern int receive_proxy_meta(struct connection_t *c);
 
 #endif

@@ -1,7 +1,7 @@
 /*
     device.c -- Interaction BSD tun/tap device
     Copyright (C) 2001-2005 Ivo Timmermans,
-                  2001-2017 Guus Sliepen <guus@tinc-vpn.org>
+                  2001-2016 Guus Sliepen <guus@tinc-vpn.org>
                   2009      Grzegorz Dymarek <gregd72002@googlemail.com>
 
     This program is free software; you can redistribute it and/or modify
@@ -24,14 +24,13 @@
 #include "../conf.h"
 #include "../device.h"
 #include "../logger.h"
-#include "../names.h"
 #include "../net.h"
 #include "../route.h"
 #include "../utils.h"
 #include "../xalloc.h"
 
 #ifdef ENABLE_TUNEMU
-#include "bsd/tunemu.h"
+#include "tunemu.h"
 #endif
 
 #ifdef HAVE_NET_IF_UTUN_H
@@ -57,6 +56,8 @@ int device_fd = -1;
 char *device = NULL;
 char *iface = NULL;
 static const char *device_info = "OS X utun device";
+static uint64_t device_total_in = 0;
+static uint64_t device_total_out = 0;
 #if defined(ENABLE_TUNEMU)
 static device_type_t device_type = DEVICE_TYPE_TUNEMU;
 #elif defined(HAVE_OPENBSD) || defined(HAVE_FREEBSD) || defined(HAVE_DRAGONFLY)
@@ -70,7 +71,7 @@ static bool setup_utun(void) {
 	device_fd = socket(PF_SYSTEM, SOCK_DGRAM, SYSPROTO_CONTROL);
 
 	if(device_fd == -1) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Could not open PF_SYSTEM socket: %s\n", strerror(errno));
+		logger(LOG_ERR, "Could not open PF_SYSTEM socket: %s\n", strerror(errno));
 		return false;
 	}
 
@@ -79,7 +80,7 @@ static bool setup_utun(void) {
 	strlcpy(info.ctl_name, UTUN_CONTROL_NAME, sizeof(info.ctl_name));
 
 	if(ioctl(device_fd, CTLIOCGINFO, &info) == -1) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "ioctl(CTLIOCGINFO) failed: %s", strerror(errno));
+		logger(LOG_ERR, "ioctl(CTLIOCGINFO) failed: %s", strerror(errno));
 		return false;
 	}
 
@@ -103,7 +104,7 @@ static bool setup_utun(void) {
 	};
 
 	if(connect(device_fd, (struct sockaddr *)&sc, sizeof(sc)) == -1) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Could not connect utun socket: %s\n", strerror(errno));
+		logger(LOG_ERR, "Could not connect utun socket: %s\n", strerror(errno));
 		return false;
 	}
 
@@ -116,14 +117,22 @@ static bool setup_utun(void) {
 		iface = xstrdup(name);
 	}
 
-	logger(DEBUG_ALWAYS, LOG_INFO, "%s is a %s", device, device_info);
+	logger(LOG_INFO, "%s is a %s", device, device_info);
 
 	return true;
 }
 #endif
 
 static bool setup_device(void) {
-	get_config_string(lookup_config(config_tree, "Device"), &device);
+	// Find out which device file to open
+
+	if(!get_config_string(lookup_config(config_tree, "Device"), &device)) {
+		if(routing_mode == RMODE_ROUTER) {
+			device = xstrdup(DEFAULT_TUN_DEVICE);
+		} else {
+			device = xstrdup(DEFAULT_TAP_DEVICE);
+		}
+	}
 
 	// Find out if it's supposed to be a tun or a tap device
 
@@ -152,34 +161,24 @@ static bool setup_device(void) {
 		} else if(!strcasecmp(type, "tap")) {
 			device_type = DEVICE_TYPE_TAP;
 		} else {
-			logger(DEBUG_ALWAYS, LOG_ERR, "Unknown device type %s!", type);
+			logger(LOG_ERR, "Unknown device type %s!", type);
 			return false;
 		}
 	} else {
 #ifdef HAVE_NET_IF_UTUN_H
 
-		if(device && (strncmp(device, "utun", 4) == 0 || strncmp(device, "/dev/utun", 9) == 0)) {
+		if(strncmp(device, "utun", 4) == 0 || strncmp(device, "/dev/utun", 9) == 0) {
 			device_type = DEVICE_TYPE_UTUN;
 		} else
 #endif
-			if((device && strstr(device, "tap")) || routing_mode != RMODE_ROUTER) {
+			if(strstr(device, "tap") || routing_mode != RMODE_ROUTER) {
 				device_type = DEVICE_TYPE_TAP;
 			}
 	}
 
 	if(routing_mode == RMODE_SWITCH && device_type != DEVICE_TYPE_TAP) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Only tap devices support switch mode!");
+		logger(LOG_ERR, "Only tap devices support switch mode!");
 		return false;
-	}
-
-	// Find out which device file to open
-
-	if(!device) {
-		if(device_type == DEVICE_TYPE_TAP) {
-			device = xstrdup(DEFAULT_TAP_DEVICE);
-		} else {
-			device = xstrdup(DEFAULT_TUN_DEVICE);
-		}
 	}
 
 	// Open the device
@@ -204,7 +203,7 @@ static bool setup_device(void) {
 	}
 
 	if(device_fd < 0) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Could not open %s: %s", device, strerror(errno));
+		logger(LOG_ERR, "Could not open %s: %s", device, strerror(errno));
 		return false;
 	}
 
@@ -234,7 +233,7 @@ static bool setup_device(void) {
 	if(!get_config_string(lookup_config(config_tree, "Interface"), &iface)) {
 		iface = xstrdup(strrchr(realname, '/') ? strrchr(realname, '/') + 1 : realname);
 	} else if(strcmp(iface, strrchr(realname, '/') ? strrchr(realname, '/') + 1 : realname)) {
-		logger(DEBUG_ALWAYS, LOG_WARNING, "Warning: Interface does not match Device. $INTERFACE might be set incorrectly.");
+		logger(LOG_WARNING, "Warning: Interface does not match Device. $INTERFACE might be set incorrectly.");
 	}
 
 	// Configure the device as best as we can
@@ -249,7 +248,7 @@ static bool setup_device(void) {
 			const int zero = 0;
 
 			if(ioctl(device_fd, TUNSIFHEAD, &zero, sizeof(zero)) == -1) {
-				logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s", "ioctl", strerror(errno));
+				logger(LOG_ERR, "System call `%s' failed: %s", "ioctl", strerror(errno));
 				return false;
 			}
 		}
@@ -271,7 +270,7 @@ static bool setup_device(void) {
 			const int one = 1;
 
 			if(ioctl(device_fd, TUNSIFHEAD, &one, sizeof(one)) == -1) {
-				logger(DEBUG_ALWAYS, LOG_ERR, "System call `%s' failed: %s", "ioctl", strerror(errno));
+				logger(LOG_ERR, "System call `%s' failed: %s", "ioctl", strerror(errno));
 				return false;
 			}
 		}
@@ -298,7 +297,10 @@ static bool setup_device(void) {
 			struct ifreq ifr;
 
 			if(ioctl(device_fd, TAPGIFNAME, (void *)&ifr) == 0) {
-				free(iface);
+				if(iface) {
+					free(iface);
+				}
+
 				iface = xstrdup(ifr.ifr_name);
 			}
 		}
@@ -321,7 +323,7 @@ static bool setup_device(void) {
 
 #endif
 
-	logger(DEBUG_ALWAYS, LOG_INFO, "%s is a %s", device, device_info);
+	logger(LOG_INFO, "%s is a %s", device, device_info);
 
 	return true;
 }
@@ -339,115 +341,112 @@ static void close_device(void) {
 		close(device_fd);
 	}
 
-	device_fd = -1;
-
 	free(device);
-	device = NULL;
 	free(iface);
-	iface = NULL;
-	device_info = NULL;
 }
 
 static bool read_packet(vpn_packet_t *packet) {
-	int inlen;
+	int lenin;
 
 	switch(device_type) {
 	case DEVICE_TYPE_TUN:
 #ifdef ENABLE_TUNEMU
 	case DEVICE_TYPE_TUNEMU:
 		if(device_type == DEVICE_TYPE_TUNEMU) {
-			inlen = tunemu_read(device_fd, DATA(packet) + 14, MTU - 14);
+			lenin = tunemu_read(device_fd, packet->data + 14, MTU - 14);
 		} else
 #endif
-			inlen = read(device_fd, DATA(packet) + 14, MTU - 14);
+			lenin = read(device_fd, packet->data + 14, MTU - 14);
 
-		if(inlen <= 0) {
-			logger(DEBUG_ALWAYS, LOG_ERR, "Error while reading from %s %s: %s", device_info,
+		if(lenin <= 0) {
+			logger(LOG_ERR, "Error while reading from %s %s: %s", device_info,
 			       device, strerror(errno));
 			return false;
 		}
 
-		switch(DATA(packet)[14] >> 4) {
+		switch(packet->data[14] >> 4) {
 		case 4:
-			DATA(packet)[12] = 0x08;
-			DATA(packet)[13] = 0x00;
+			packet->data[12] = 0x08;
+			packet->data[13] = 0x00;
 			break;
 
 		case 6:
-			DATA(packet)[12] = 0x86;
-			DATA(packet)[13] = 0xDD;
+			packet->data[12] = 0x86;
+			packet->data[13] = 0xDD;
 			break;
 
 		default:
-			logger(DEBUG_TRAFFIC, LOG_ERR,
-			       "Unknown IP version %d while reading packet from %s %s",
-			       DATA(packet)[14] >> 4, device_info, device);
+			ifdebug(TRAFFIC) logger(LOG_ERR,
+			                        "Unknown IP version %d while reading packet from %s %s",
+			                        packet->data[14] >> 4, device_info, device);
 			return false;
 		}
 
-		memset(DATA(packet), 0, 12);
-		packet->len = inlen + 14;
+		memset(packet->data, 0, 12);
+		packet->len = lenin + 14;
 		break;
 
 	case DEVICE_TYPE_UTUN:
 	case DEVICE_TYPE_TUNIFHEAD: {
-		if((inlen = read(device_fd, DATA(packet) + 10, MTU - 10)) <= 0) {
-			logger(DEBUG_ALWAYS, LOG_ERR, "Error while reading from %s %s: %s", device_info,
+		if((lenin = read(device_fd, packet->data + 10, MTU - 10)) <= 0) {
+			logger(LOG_ERR, "Error while reading from %s %s: %s", device_info,
 			       device, strerror(errno));
 			return false;
 		}
 
-		switch(DATA(packet)[14] >> 4) {
+		switch(packet->data[14] >> 4) {
 		case 4:
-			DATA(packet)[12] = 0x08;
-			DATA(packet)[13] = 0x00;
+			packet->data[12] = 0x08;
+			packet->data[13] = 0x00;
 			break;
 
 		case 6:
-			DATA(packet)[12] = 0x86;
-			DATA(packet)[13] = 0xDD;
+			packet->data[12] = 0x86;
+			packet->data[13] = 0xDD;
 			break;
 
 		default:
-			logger(DEBUG_TRAFFIC, LOG_ERR,
-			       "Unknown IP version %d while reading packet from %s %s",
-			       DATA(packet)[14] >> 4, device_info, device);
+			ifdebug(TRAFFIC) logger(LOG_ERR,
+			                        "Unknown IP version %d while reading packet from %s %s",
+			                        packet->data[14] >> 4, device_info, device);
 			return false;
 		}
 
-		memset(DATA(packet), 0, 12);
-		packet->len = inlen + 10;
+		memset(packet->data, 0, 12);
+		packet->len = lenin + 10;
 		break;
 	}
 
 	case DEVICE_TYPE_TAP:
-		if((inlen = read(device_fd, DATA(packet), MTU)) <= 0) {
-			logger(DEBUG_ALWAYS, LOG_ERR, "Error while reading from %s %s: %s", device_info,
+		if((lenin = read(device_fd, packet->data, MTU)) <= 0) {
+			logger(LOG_ERR, "Error while reading from %s %s: %s", device_info,
 			       device, strerror(errno));
 			return false;
 		}
 
-		packet->len = inlen;
+		packet->len = lenin;
 		break;
 
 	default:
 		return false;
 	}
 
-	logger(DEBUG_TRAFFIC, LOG_DEBUG, "Read packet of %d bytes from %s",
-	       packet->len, device_info);
+	device_total_in += packet->len;
+
+	ifdebug(TRAFFIC) logger(LOG_DEBUG, "Read packet of %d bytes from %s",
+	                        packet->len, device_info);
 
 	return true;
 }
 
 static bool write_packet(vpn_packet_t *packet) {
-	logger(DEBUG_TRAFFIC, LOG_DEBUG, "Writing packet of %d bytes to %s",
-	       packet->len, device_info);
+	ifdebug(TRAFFIC) logger(LOG_DEBUG, "Writing packet of %d bytes to %s",
+	                        packet->len, device_info);
 
 	switch(device_type) {
 	case DEVICE_TYPE_TUN:
-		if(write(device_fd, DATA(packet) + 14, packet->len - 14) < 0) {
-			logger(DEBUG_ALWAYS, LOG_ERR, "Error while writing to %s %s: %s", device_info,
+		if(write(device_fd, packet->data + 14, packet->len - 14) < 0) {
+			logger(LOG_ERR, "Error while writing to %s %s: %s", device_info,
 			       device, strerror(errno));
 			return false;
 		}
@@ -456,7 +455,7 @@ static bool write_packet(vpn_packet_t *packet) {
 
 	case DEVICE_TYPE_UTUN:
 	case DEVICE_TYPE_TUNIFHEAD: {
-		int af = (DATA(packet)[12] << 8) + DATA(packet)[13];
+		int af = (packet->data[12] << 8) + packet->data[13];
 		uint32_t type;
 
 		switch(af) {
@@ -469,16 +468,16 @@ static bool write_packet(vpn_packet_t *packet) {
 			break;
 
 		default:
-			logger(DEBUG_TRAFFIC, LOG_ERR,
-			       "Unknown address family %x while writing packet to %s %s",
-			       af, device_info, device);
+			ifdebug(TRAFFIC) logger(LOG_ERR,
+			                        "Unknown address family %x while writing packet to %s %s",
+			                        af, device_info, device);
 			return false;
 		}
 
-		memcpy(DATA(packet) + 10, &type, sizeof(type));
+		memcpy(packet->data + 10, &type, sizeof(type));
 
-		if(write(device_fd, DATA(packet) + 10, packet->len - 10) < 0) {
-			logger(DEBUG_ALWAYS, LOG_ERR, "Can't write to %s %s: %s", device_info, device,
+		if(write(device_fd, packet->data + 10, packet->len - 10) < 0) {
+			logger(LOG_ERR, "Can't write to %s %s: %s", device_info, device,
 			       strerror(errno));
 			return false;
 		}
@@ -487,8 +486,8 @@ static bool write_packet(vpn_packet_t *packet) {
 	}
 
 	case DEVICE_TYPE_TAP:
-		if(write(device_fd, DATA(packet), packet->len) < 0) {
-			logger(DEBUG_ALWAYS, LOG_ERR, "Error while writing to %s %s: %s", device_info,
+		if(write(device_fd, packet->data, packet->len) < 0) {
+			logger(LOG_ERR, "Error while writing to %s %s: %s", device_info,
 			       device, strerror(errno));
 			return false;
 		}
@@ -498,8 +497,8 @@ static bool write_packet(vpn_packet_t *packet) {
 #ifdef ENABLE_TUNEMU
 
 	case DEVICE_TYPE_TUNEMU:
-		if(tunemu_write(device_fd, DATA(packet) + 14, packet->len - 14) < 0) {
-			logger(DEBUG_ALWAYS, LOG_ERR, "Error while writing to %s %s: %s", device_info,
+		if(tunemu_write(device_fd, packet->data + 14, packet->len - 14) < 0) {
+			logger(LOG_ERR, "Error while writing to %s %s: %s", device_info,
 			       device, strerror(errno));
 			return false;
 		}
@@ -511,7 +510,15 @@ static bool write_packet(vpn_packet_t *packet) {
 		return false;
 	}
 
+	device_total_out += packet->len;
+
 	return true;
+}
+
+static void dump_device_stats(void) {
+	logger(LOG_DEBUG, "Statistics for %s %s:", device_info, device);
+	logger(LOG_DEBUG, " total bytes in:  %10"PRIu64, device_total_in);
+	logger(LOG_DEBUG, " total bytes out: %10"PRIu64, device_total_out);
 }
 
 const devops_t os_devops = {
@@ -519,4 +526,5 @@ const devops_t os_devops = {
 	.close = close_device,
 	.read = read_packet,
 	.write = write_packet,
+	.dump_stats = dump_device_stats,
 };
