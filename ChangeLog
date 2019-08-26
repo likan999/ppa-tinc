@@ -1,3 +1,18 @@
+Version 1.0.22                                            August 13 2013
+------------------------------------------------------------------------
+
+Guus Sliepen (7):
+      Better optional argument handling.
+      Fix a typo.
+      Set $NAME when calling host-up/down and subnet-up/down scripts.
+      Don't use vasprintf() anymore on Windows.
+      Don't echo broadcast packets back when Broadcast = direct.
+      Update copyright notices.
+      Releasing 1.0.22.
+
+Etienne Dechamps (1):
+      Fix combination of Mode = router and DeviceType = tap on Linux.
+
 Version 1.0.21                                             April 22 2013
 ------------------------------------------------------------------------
 
