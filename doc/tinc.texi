@@ -15,7 +15,7 @@
 
 This is the info manual for @value{PACKAGE} version @value{VERSION}, a Virtual Private Network daemon.
 
-Copyright @copyright{} 1998-2014 Ivo Timmermans,
+Copyright @copyright{} 1998-2016 Ivo Timmermans,
 Guus Sliepen <guus@@tinc-vpn.org> and
 Wessel Dankers <wsl@@tinc-vpn.org>.
 
@@ -39,7 +39,7 @@ permission notice identical to this one.
 @vskip 0pt plus 1filll
 This is the info manual for @value{PACKAGE} version @value{VERSION}, a Virtual Private Network daemon.
 
-Copyright @copyright{} 1998-2014 Ivo Timmermans,
+Copyright @copyright{} 1998-2016 Ivo Timmermans,
 Guus Sliepen <guus@@tinc-vpn.org> and
 Wessel Dankers <wsl@@tinc-vpn.org>.
 
@@ -302,8 +302,14 @@ If the @file{net/if_tun.h} header file is missing, install it from the source pa
 @subsection Configuration of Darwin (Mac OS X) kernels
 
 Tinc on Darwin relies on a tunnel driver for its data acquisition from the kernel.
-Tinc supports either the driver from @uref{http://tuntaposx.sourceforge.net/},
+OS X version 10.6.8 and later have a built-in tun driver called "utun".
+Tinc also supports the driver from @uref{http://tuntaposx.sourceforge.net/},
 which supports both tun and tap style devices.
+
+By default, tinc expects the tuntaposx driver to be installed.
+To use the utun driver, set add @code{Device = utunX} to @file{tinc.conf},
+where X is the desired number for the utun interface.
+You can also omit the number, in which case the first free number will be chosen.
 
 
 @c ==================================================================
@@ -892,6 +898,12 @@ to start with a four byte header containing the address family,
 followed by an IP header.
 This mode should support both IPv4 and IPv6 packets.
 
+@cindex utun
+@item utun (OS X)
+Set type to utun.
+This is only supported on OS X version 10.6.8 and higher, but doesn't require the tuntaposx module.
+This mode should support both IPv4 and IPv6 packets.
+
 @item tap (BSD and Linux)
 Set type to tap.
 Tinc will expect packets read from the virtual network device
@@ -1014,12 +1026,12 @@ while no routing table is managed.
 @cindex Name
 @item Name = <@var{name}> [required]
 This is a symbolic name for this connection.
-The name should consist only of alphanumeric and underscore characters (a-z, A-Z, 0-9 and _).
+The name must consist only of alphanumeric and underscore characters (a-z, A-Z, 0-9 and _).
 
 If Name starts with a $, then the contents of the environment variable that follows will be used.
 In that case, invalid characters will be converted to underscores.
 If Name is $HOST, but no such environment variable exist,
-the hostname will be read using the gethostnname() system call.
+the hostname will be read using the gethostname() system call.
 
 @cindex PingInterval
 @item PingInterval = <@var{seconds}> (60)
@@ -1256,7 +1268,15 @@ UDP is possible or not.
 @cindex scripts
 Apart from reading the server and host configuration files,
 tinc can also run scripts at certain moments.
-Under Windows (not Cygwin), the scripts should have the extension .bat.
+Below is a list of filenames of scripts and a description of when they are run.
+A script is only run if it exists and if it is executable.
+
+Scripts are run synchronously;
+this means that tinc will temporarily stop processing packets until the called script finishes executing.
+This guarantees that scripts will execute in the exact same order as the events that trigger them.
+If you need to run commands asynchronously, you have to ensure yourself that they are being run in the background.
+
+Under Windows (not Cygwin), the scripts must have the extension .bat.
 
 @table @file
 @cindex tinc-up
@@ -1266,6 +1286,7 @@ If it is present it will be executed right after the tinc daemon has been
 started and has connected to the virtual network device.
 It should be used to set up the corresponding network interface,
 but can also be used to start other things.
+
 Under Windows you can use the Network Connections control panel instead of creating this script.
 
 @cindex tinc-down

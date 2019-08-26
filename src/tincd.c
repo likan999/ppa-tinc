@@ -1,7 +1,7 @@
 /*
     tincd.c -- the main file for tincd
     Copyright (C) 1998-2005 Ivo Timmermans
-                  2000-2015 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2016 Guus Sliepen <guus@tinc-vpn.org>
                   2008      Max Rijevski <maksuf@gmail.com>
                   2009      Michael Tokarev <mjt@tls.msk.ru>
                   2010      Julien Muchembled <jm@jmuchemb.eu>
@@ -49,7 +49,12 @@
 #include <time.h>
 #endif
 
+#ifdef HAVE_GETOPT_LONG
 #include <getopt.h>
+#else
+#include "getopt.h"
+#endif
+
 #include "pidfile.h"
 
 #include "conf.h"
@@ -239,7 +244,8 @@ static bool parse_options(int argc, char **argv) {
 					usage(true);
 					return false;
 				}
-				netname = strcmp(optarg, ".") != 0 ? xstrdup(optarg) : NULL;
+				if(optarg && strcmp(optarg, "."))
+					netname = xstrdup(optarg);
 				break;
 
 			case 'o':				/* option */
@@ -547,9 +553,8 @@ int main(int argc, char **argv) {
 	make_names();
 
 	if(show_version) {
-		printf("%s version %s (built %s %s, protocol %d)\n", PACKAGE,
-			   VERSION, __DATE__, __TIME__, PROT_CURRENT);
-		printf("Copyright (C) 1998-2015 Ivo Timmermans, Guus Sliepen and others.\n"
+		printf("%s version %s\n", PACKAGE, VERSION);
+		printf("Copyright (C) 1998-2016 Ivo Timmermans, Guus Sliepen and others.\n"
 				"See the AUTHORS file for a complete list.\n\n"
 				"tinc comes with ABSOLUTELY NO WARRANTY.  This is free software,\n"
 				"and you are welcome to redistribute it under certain conditions;\n"

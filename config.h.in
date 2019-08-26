@@ -53,6 +53,9 @@
    don't. */
 #undef HAVE_DECL_RES_INIT
 
+/* Define to 1 if you have the `devname' function. */
+#undef HAVE_DEVNAME
+
 /* Define to 1 if you have the <dirent.h> header file. */
 #undef HAVE_DIRENT_H
 
@@ -65,6 +68,9 @@
 /* Define to 1 if you have the `fchmod' function. */
 #undef HAVE_FCHMOD
 
+/* Define to 1 if you have the `fdevname' function. */
+#undef HAVE_FDEVNAME
+
 /* Define to 1 if you have the `flock' function. */
 #undef HAVE_FLOCK
 
@@ -76,6 +82,12 @@
 
 /* Define to 1 if you have the `ftime' function. */
 #undef HAVE_FTIME
+
+/* Define to 1 if you have the <getopt.h> header file. */
+#undef HAVE_GETOPT_H
+
+/* getopt_long() */
+#undef HAVE_GETOPT_LONG
 
 /* Define to 1 if you have the `gettimeofday' function. */
 #undef HAVE_GETTIMEOFDAY
@@ -178,6 +190,9 @@
 
 /* Define to 1 if you have the <net/if_types.h> header file. */
 #undef HAVE_NET_IF_TYPES_H
+
+/* Define to 1 if you have the <net/if_utun.h> header file. */
+#undef HAVE_NET_IF_UTUN_H
 
 /* Define to 1 if you have the <net/tap/if_tap.h> header file. */
 #undef HAVE_NET_TAP_IF_TAP_H

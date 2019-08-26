@@ -1,4 +1,4 @@
-.Dd 2014-05-11
+.Dd 2016-04-10
 .Dt TINC.CONF 5
 .\" Manual page created by:
 .\" Ivo Timmermans
@@ -54,7 +54,7 @@ But it is highly recommended that you use this feature of
 because it will be so much clearer whom your daemon talks to.
 Hence, we will assume that you use it.
 .Sh NAMES
-Each tinc daemon should have a name that is unique in the network which it will be part of.
+Each tinc daemon must have a name that is unique in the network which it will be part of.
 The name will be used by other tinc daemons for identification.
 The name has to be declared in the
 .Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /tinc.conf
@@ -250,6 +250,10 @@ Tinc will expect packets read from the virtual network device
 to start with a four byte header containing the address family,
 followed by an IP header.
 This mode should support both IPv4 and IPv6 packets.
+.It utun Pq OS X
+Set type to utun.
+This is only supported on OS X version 10.6.8 and higher, but doesn't require the tuntaposx module.
+This mode should support both IPv4 and IPv6 packets.
 .It tap Pq BSD and Linux
 Set type to tap.
 Tinc will expect packets read from the virtual network device
@@ -362,7 +366,7 @@ If
 .Va Name
 is
 .Li $HOST ,
-but no such environment variable exist, the hostname will be read using the gethostnname() system call.
+but no such environment variable exist, the hostname will be read using the gethostname() system call.
 .It Va PingInterval Li = Ar seconds Pq 60
 The number of seconds of inactivity that
 .Nm tinc
@@ -556,7 +560,15 @@ UDP is possible or not.
 .Sh SCRIPTS
 Apart from reading the server and host configuration files,
 tinc can also run scripts at certain moments.
-Under Windows (not Cygwin), the scripts should have the extension
+Below is a list of filenames of scripts and a description of when they are run.
+A script is only run if it exists and if it is executable.
+.Pp
+Scripts are run synchronously;
+this means that tinc will temporarily stop processing packets until the called script finishes executing.
+This guarantees that scripts will execute in the exact same order as the events that trigger them.
+If you need to run commands asynchronously, you have to ensure yourself that they are being run in the background.
+.Pp
+Under Windows (not Cygwin), the scripts must have the extension
 .Pa .bat .
 .Bl -tag -width indent
 .It Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /tinc-up
@@ -564,6 +576,7 @@ This is the most important script.
 If it is present it will be executed right after the tinc daemon has been started and has connected to the virtual network device.
 It should be used to set up the corresponding network interface,
 but can also be used to start other things.
+.Pp
 Under Windows you can use the Network Connections control panel instead of creating this script.
 .It Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /tinc-down
 This script is started right before the tinc daemon quits.

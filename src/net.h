@@ -1,7 +1,7 @@
 /*
     net.h -- header for net.c
     Copyright (C) 1998-2005 Ivo Timmermans
-                  2000-2012 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2015 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -122,20 +122,6 @@ extern char *myport;
 extern time_t now;
 extern int contradicting_add_edge;
 extern int contradicting_del_edge;
-
-extern char *proxyhost;
-extern char *proxyport;
-extern char *proxyuser;
-extern char *proxypass;
-typedef enum proxytype_t {
-	PROXY_NONE = 0,
-	PROXY_SOCKS4,
-	PROXY_SOCKS4A,
-	PROXY_SOCKS5,
-	PROXY_HTTP,
-	PROXY_EXEC,
-} proxytype_t;
-extern proxytype_t proxytype;
 
 extern volatile bool running;
 
