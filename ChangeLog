@@ -1,3 +1,19 @@
+Version 1.1pre14                                             May 01 2016
+------------------------------------------------------------------------
+
+Guus Sliepen (2):
+      Revert "Remove tinc.service, it is not necessary."
+      Releasing 1.1pre14.
+
+Version 1.1pre13                                           April 30 2016
+------------------------------------------------------------------------
+
+Guus Sliepen (4):
+      Fix BSD tun device support.
+      Remove tinc.service, it is not necessary.
+      AutoConnect now only chooses from nodes for which we know an address.
+      Releasing 1.1pre13.
+
 Version 1.1pre12                                           April 24 2016
 ------------------------------------------------------------------------
 
