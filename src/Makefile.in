@@ -166,7 +166,7 @@ infodir = @infodir@
 install_sh = @install_sh@
 libdir = @libdir@
 libexecdir = @libexecdir@
-localedir = $(datadir)/locale
+localedir = @localedir@
 localstatedir = @localstatedir@
 mandir = @mandir@
 mkdir_p = @mkdir_p@
@@ -197,7 +197,7 @@ noinst_HEADERS = conf.h connection.h device.h edge.h event.h graph.h logger.h me
 tincd_LDADD = \
 	$(top_builddir)/lib/libvpn.a
 
-AM_CFLAGS = @CFLAGS@ -DCONFDIR=\"$(sysconfdir)\" -DLOCALEDIR=\"$(localedir)\" -DLOCALSTATEDIR=\"$(localstatedir)\"
+AM_CFLAGS = @CFLAGS@ -DCONFDIR=\"$(sysconfdir)\" -DLOCALSTATEDIR=\"$(localstatedir)\"
 all: all-am
 
 .SUFFIXES:
