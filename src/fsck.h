@@ -1,6 +1,6 @@
 /*
-    ecdh.c -- Diffie-Hellman key exchange handling
-    Copyright (C) 2011-2013 Guus Sliepen <guus@tinc-vpn.org>
+    fsck.h -- header for fsck.c.
+    Copyright (C) 2012 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,21 +17,10 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#include "../system.h"
+#ifndef __TINC_FSCK_H__
+#define __TINC_FSCK_H__
 
-#include "../ecdh.h"
-#include "../logger.h"
-#include "../utils.h"
-#include "../xalloc.h"
+extern int fsck(const char *argv0);
 
-ecdh_t *ecdh_generate_public(void *pubkey) {
-	logger(DEBUG_ALWAYS, LOG_ERR, "EC support using libgcrypt not implemented");
-	return NULL;
-}
+#endif
 
-bool ecdh_compute_shared(ecdh_t *ecdh, const void *pubkey, void *shared) {
-	return false
-}
-
-void ecdh_free(ecdh_t *ecdh) {
-}
