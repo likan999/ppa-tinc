@@ -1,7 +1,7 @@
 /*
     net.c -- most of the network code
     Copyright (C) 1998-2005 Ivo Timmermans,
-                  2000-2009 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2010 Guus Sliepen <guus@tinc-vpn.org>
                   2006      Scott Lamb <slamb@slamb.org>
 
     This program is free software; you can redistribute it and/or modify
@@ -374,11 +374,10 @@ int main_loop(void) {
 				dump_connections();
 				return 1;
 			}
-
-			continue;
 		}
 
-		check_network_activity(&readset, &writeset);
+		if(r > 0)
+			check_network_activity(&readset, &writeset);
 
 		if(do_purge) {
 			purge();
@@ -418,8 +417,13 @@ int main_loop(void) {
 		}
 
 		if(sigalrm) {
+			avl_node_t *node;
 			logger(LOG_INFO, "Flushing event queue");
 			expire_events();
+			for(node = connection_tree->head; node; node = node->next) {
+				connection_t *c = node->data;
+				send_ping(c);
+			}
 			sigalrm = false;
 		}
 

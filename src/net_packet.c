@@ -1,7 +1,7 @@
 /*
     net_packet.c -- Handles in- and outgoing VPN packets
     Copyright (C) 1998-2005 Ivo Timmermans,
-                  2000-2009 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2010 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -353,10 +353,10 @@ static void send_udppacket(node_t *n, vpn_packet_t *origpkt) {
 				   "No valid key known yet for %s (%s), forwarding via TCP",
 				   n->name, n->hostname);
 
-		if(!n->status.waitingforkey)
+		if(n->last_req_key + 10 < now) {
 			send_req_key(n);
-
-		n->status.waitingforkey = true;
+			n->last_req_key = now;
+		}
 
 		send_tcppacket(n->nexthop->connection, origpkt);
 
