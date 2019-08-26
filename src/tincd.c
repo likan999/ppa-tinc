@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: tincd.c 1466 2006-11-11 20:10:46Z guus $
+    $Id: tincd.c 1474 2006-11-29 17:18:39Z guus $
 */
 
 #include "system.h"
@@ -37,12 +37,7 @@
 #include <openssl/evp.h>
 #include <openssl/engine.h>
 
-#ifdef HAVE_LZO_LZO1X_H
-#include <lzo/lzo1x.h>
-#endif
-#ifdef HAVE_LZO1X_H
-#include <lzo1x.h>
-#endif
+#include LZO1X_H
 
 #include <getopt.h>
 #include "pidfile.h"

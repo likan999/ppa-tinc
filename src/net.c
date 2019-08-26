@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.c 1469 2006-11-11 22:44:15Z guus $
+    $Id: net.c 1473 2006-11-29 16:57:46Z guus $
 */
 
 #include "system.h"
@@ -463,7 +463,8 @@ int main_loop(void)
 				
 				if(c->outgoing) {
 					free(c->outgoing->name);
-					freeaddrinfo(c->outgoing->ai);
+					if(c->outgoing->ai)
+						freeaddrinfo(c->outgoing->ai);
 					free(c->outgoing);
 					c->outgoing = NULL;
 				}

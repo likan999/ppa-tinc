@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_packet.c 1469 2006-11-11 22:44:15Z guus $
+    $Id: net_packet.c 1474 2006-11-29 17:18:39Z guus $
 */
 
 #include "system.h"
@@ -29,12 +29,7 @@
 #include <openssl/hmac.h>
 
 #include <zlib.h>
-#ifdef HAVE_LZO_LZO1X_H
-#include <lzo/lzo1x.h>
-#endif
-#ifdef HAVE_LZO1X_H
-#include <lzo1x.h>
-#endif
+#include LZO1X_H
 
 #include "avl_tree.h"
 #include "conf.h"

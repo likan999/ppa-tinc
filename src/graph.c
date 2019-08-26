@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: graph.c 1464 2006-11-11 14:37:03Z guus $
+    $Id: graph.c 1476 2006-12-12 14:54:39Z guus $
 */
 
 /* We need to generate two trees from the graph:
@@ -101,7 +101,13 @@ void mst_kruskal(void)
 
 	/* Starting point */
 
-	((edge_t *) edge_weight_tree->head->data)->from->status.visited = true;
+	for(node = edge_weight_tree->head; node; node = node->next) {
+		e = node->data;
+		if(e->from->status.reachable) {
+			e->from->status.visited = true;
+			break;
+		}
+	}
 
 	/* Add safe edges */
 
@@ -307,8 +313,8 @@ void sssp_bfs(void)
 
 void graph(void)
 {
-	mst_kruskal();
 	sssp_bfs();
+	mst_kruskal();
 	graph_changed = true;
 }
 
