@@ -1,7 +1,7 @@
 dnl Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.61)
-AC_INIT([tinc], [1.0.28])
+AC_INIT([tinc], [1.0.29])
 AC_CONFIG_SRCDIR([src/tincd.c])
 AM_INIT_AUTOMAKE([1.11 check-news std-options subdir-objects nostdinc silent-rules -Wall])
 AC_CONFIG_HEADERS([config.h])
@@ -151,6 +151,8 @@ fi
 
 dnl Compiler hardening flags
 dnl No -fstack-protector-all because it doesn't work on all platforms or architectures.
+
+AX_CFLAGS_WARN_ALL(CFLAGS)
 
 AC_ARG_ENABLE([hardening], AS_HELP_STRING([--disable-hardening], [disable compiler and linker hardening flags]))
 AS_IF([test "x$enable_hardening" != "xno"],
