@@ -1,3 +1,11 @@
+tinc (1.0.36-1) unstable; urgency=medium
+
+  * New upstream version 1.0.36
+  * Add Vcs tags to debian/control.
+  * Bump Standards-Version.
+
+ -- Guus Sliepen <guus@debian.org>  Mon, 26 Aug 2019 14:17:21 +0200
+
 tinc (1.0.35-2) unstable; urgency=medium
 
   * Bump Standards-Version and Build-Depend on debhelper-compat (= 12).
