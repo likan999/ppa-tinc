@@ -202,6 +202,68 @@ bool read_rsa_private_key(void) {
 }
 
 /*
+  Read Subnets from all host config files
+*/
+void load_all_subnets(void) {
+	DIR *dir;
+	struct dirent *ent;
+	char *dname;
+	char *fname;
+	avl_tree_t *config_tree;
+	config_t *cfg;
+	subnet_t *s, *s2;
+	node_t *n;
+	bool result;
+
+	xasprintf(&dname, "%s/hosts", confbase);
+	dir = opendir(dname);
+	if(!dir) {
+		logger(LOG_ERR, "Could not open %s: %s", dname, strerror(errno));
+		free(dname);
+		return;
+	}
+
+	while((ent = readdir(dir))) {
+		if(!check_id(ent->d_name))
+			continue;
+
+		n = lookup_node(ent->d_name);
+		#ifdef _DIRENT_HAVE_D_TYPE
+		//if(ent->d_type != DT_REG)
+		//	continue;
+		#endif
+
+		xasprintf(&fname, "%s/hosts/%s", confbase, ent->d_name);
+		init_configuration(&config_tree);
+		result = read_config_file(config_tree, fname);
+		free(fname);
+		if(!result)
+			continue;
+
+		if(!n) {
+			n = new_node();
+			n->name = xstrdup(ent->d_name);
+			node_add(n);
+		}
+
+		for(cfg = lookup_config(config_tree, "Subnet"); cfg; cfg = lookup_config_next(config_tree, cfg)) {
+			if(!get_config_subnet(cfg, &s))
+				continue;
+
+			if((s2 = lookup_subnet(n, s))) {
+				s2->expires = -1;
+			} else {
+				subnet_add(n, s);
+			}
+		}
+
+		exit_configuration(&config_tree);
+	}
+
+	closedir(dir);
+}
+
+/*
   Configure node_t myself and set up the local sockets (listen only)
 */
 bool setup_myself(void) {
@@ -250,6 +312,16 @@ bool setup_myself(void) {
 			&& !get_config_string(lookup_config(myself->connection->config_tree, "Port"), &myport))
 		myport = xstrdup("655");
 
+	if(!atoi(myport)) {
+		struct addrinfo *ai = str2addrinfo("localhost", myport, SOCK_DGRAM);
+		sockaddr_t sa;
+		if(!ai || !ai->ai_addr)
+			return false;
+		free(myport);
+		memcpy(&sa, ai->ai_addr, ai->ai_addrlen);
+		sockaddr2str(&sa, NULL, &myport);
+	}
+
 	/* Read in all the subnets specified in the host configuration file */
 
 	cfg = lookup_config(myself->connection->config_tree, "Subnet");
@@ -280,7 +352,10 @@ bool setup_myself(void) {
 	if(myself->options & OPTION_TCPONLY)
 		myself->options |= OPTION_INDIRECT;
 
+	get_config_bool(lookup_config(config_tree, "DirectOnly"), &directonly);
+	get_config_bool(lookup_config(config_tree, "StrictSubnets"), &strictsubnets);
 	get_config_bool(lookup_config(config_tree, "TunnelServer"), &tunnelserver);
+	strictsubnets |= tunnelserver;
 
 	if(get_config_string(lookup_config(config_tree, "Mode"), &mode)) {
 		if(!strcasecmp(mode, "router"))
@@ -294,8 +369,21 @@ bool setup_myself(void) {
 			return false;
 		}
 		free(mode);
-	} else
-		routing_mode = RMODE_ROUTER;
+	}
+
+	if(get_config_string(lookup_config(config_tree, "Forwarding"), &mode)) {
+		if(!strcasecmp(mode, "off"))
+			forwarding_mode = FMODE_OFF;
+		else if(!strcasecmp(mode, "internal"))
+			forwarding_mode = FMODE_INTERNAL;
+		else if(!strcasecmp(mode, "kernel"))
+			forwarding_mode = FMODE_KERNEL;
+		else {
+			logger(LOG_ERR, "Invalid forwarding mode!");
+			return false;
+		}
+		free(mode);
+	}
 
 	choice = true;
 	get_config_bool(lookup_config(myself->connection->config_tree, "PMTUDiscovery"), &choice);
@@ -425,6 +513,9 @@ bool setup_myself(void) {
 	node_add(myself);
 
 	graph();
+
+	if(strictsubnets)
+		load_all_subnets();
 
 	/* Open device */
 

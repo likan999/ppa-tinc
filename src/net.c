@@ -68,9 +68,9 @@ static void purge(void) {
 			for(snode = n->subnet_tree->head; snode; snode = snext) {
 				snext = snode->next;
 				s = snode->data;
-				if(!tunnelserver)
-					send_del_subnet(broadcast, s);
-				subnet_del(n, s);
+				send_del_subnet(broadcast, s);
+				if(!strictsubnets)
+					subnet_del(n, s);
 			}
 
 			for(enode = n->edge_tree->head; enode; enode = enext) {
@@ -98,7 +98,8 @@ static void purge(void) {
 					break;
 			}
 
-			if(!enode)
+			if(!enode && (!strictsubnets || !n->subnet_tree->head))
+				/* in strictsubnets mode do not delete nodes with subnets */
 				node_del(n);
 		}
 	}
@@ -487,6 +488,36 @@ int main_loop(void) {
 			}
 
 			last_config_check = now;
+
+			/* If StrictSubnet is set, expire deleted Subnets and read new ones in */
+
+			if(strictsubnets) {
+				subnet_t *subnet;
+
+				for(node = subnet_tree->head; node; node = node->next) {
+					subnet = node->data;
+					subnet->expires = 1;
+				}
+
+				load_all_subnets();
+
+				for(node = subnet_tree->head; node; node = next) {
+					next = node->next;
+					subnet = node->data;
+					if(subnet->expires == 1) {
+						send_del_subnet(broadcast, subnet);
+						if(subnet->owner->status.reachable)
+							subnet_update(subnet->owner, subnet, false);
+						subnet_del(subnet->owner, subnet);
+					} else if(subnet->expires == -1) {
+						subnet->expires = 0;
+					} else {
+						send_add_subnet(broadcast, subnet);
+						if(subnet->owner->status.reachable)
+							subnet_update(subnet->owner, subnet, true);
+					}
+				}
+			}
 
 			/* Try to make outgoing connections */
 			
