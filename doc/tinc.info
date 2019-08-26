@@ -1,0 +1,79 @@
+This is tinc.info, produced by makeinfo version 4.1 from tinc.texi.
+
+INFO-DIR-SECTION Networking tools
+START-INFO-DIR-ENTRY
+* tinc: (tinc).              The tinc Manual.
+END-INFO-DIR-ENTRY
+
+   This is the info manual for tinc, a Virtual Private Network daemon.
+
+   Copyright (C) 1998-2002 Ivo Timmermans <itimmermans@bigfoot.com>,
+Guus Sliepen <guus@sliepen.warande.net> and Wessel Dankers
+<wsl@nl.linux.org>.
+
+   $Id: tinc.texi,v 1.8.4.28 2002/04/09 11:43:29 guus Exp $
+
+   Permission is granted to make and distribute verbatim copies of this
+manual provided the copyright notice and this permission notice are
+preserved on all copies.
+
+   Permission is granted to copy and distribute modified versions of
+this manual under the conditions for verbatim copying, provided that the
+entire resulting derived work is distributed under the terms of a
+permission notice identical to this one.
+
+
+Indirect:
+tinc.info-1: 888
+tinc.info-2: 49234
+
+Tag Table:
+(Indirect)
+Node: Top888
+Node: Introduction1186
+Node: VPNs2034
+Node: tinc3755
+Node: Supported platforms5258
+Node: Preparations7214
+Node: Configuring the kernel7469
+Node: Configuration of Linux kernels 2.1.60 up to 2.4.08812
+Node: Configuration of Linux kernels 2.4.0 and higher10055
+Node: Configuration of FreeBSD kernels11128
+Node: Configuration of OpenBSD kernels11742
+Node: Configuration of Solaris kernels12225
+Node: Libraries12683
+Node: OpenSSL13040
+Node: zlib14878
+Node: Installation15686
+Node: Building and installing tinc16704
+Node: System files17253
+Node: Device files17513
+Node: Other files18817
+Node: Configuration19431
+Node: Configuration introduction19738
+Node: Multiple networks20972
+Node: How connections work22387
+Node: Configuration files23571
+Node: Main configuration variables24605
+Node: Host configuration variables29459
+Node: How to configure33723
+Node: Generating keypairs35062
+Node: Network interfaces35558
+Node: Example configuration37837
+Node: Running tinc43704
+Node: Runtime options44221
+Node: Error messages45810
+Node: Technical information48691
+Node: The connection48897
+Node: The UDP tunnel49234
+Node: The meta-connection51531
+Node: The meta-protocol52992
+Node: Security57443
+Node: Authentication protocol58648
+Node: Encryption of network packets63939
+Node: About us65262
+Node: Contact Information65425
+Node: Authors65820
+Node: Concept Index66438
+
+End Tag Table

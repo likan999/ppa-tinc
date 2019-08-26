@@ -1,0 +1,4614 @@
+2002-04-09 13:51  Guus Sliepen <guus@sliepen.warande.net>
+
+	* configure.in: This is the release of 1.0pre7.  
+
+2002-04-09 13:44  Guus Sliepen <guus@sliepen.warande.net>
+
+	* NEWS, README: Remarks about 1.0pre7 release.  
+
+2002-04-09 13:43  Guus Sliepen <guus@sliepen.warande.net>
+
+	* po/nl.po: Updated dutch translation.  
+
+2002-04-09 13:43  Guus Sliepen <guus@sliepen.warande.net>
+
+	* doc/: PROTOCOL, tinc.conf.5, tinc.texi: masklength is better
+	known as prefixlength 
+
+2002-04-09 13:42  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: conf.c, subnet.c, subnet.h: masklength is better known as
+	prefixlength.  
+
+2002-04-08 15:27  Guus Sliepen <guus@sliepen.warande.net>
+
+	* Makefile.am: Automake forgets about depcomp, remind it.  
+
+2002-04-05 11:11  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/netutl.c: Fix maskcheck() and maskcmp().  
+
+2002-04-01 23:28  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/net_setup.c: check_rsa() is broken, I don't know why, just
+	remove it for now.  
+
+2002-04-01 23:28  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/net.c: Don't check_network_activity() if select() is
+	interrupted by a signal.  
+
+2002-03-27 20:43  Guus Sliepen <guus@sliepen.warande.net>
+
+	* m4/zlib.m4: Make configure --help output look nicer.  
+
+2002-03-27 17:26  Guus Sliepen <guus@sliepen.warande.net>
+
+	* NEWS, README: Update with information about the pre6 release.  
+
+2002-03-27 17:00  Guus Sliepen <guus@sliepen.warande.net>
+
+	* po/nl.po: Update dutch translation.  
+
+2002-03-27 17:00  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/openbsd/device.c: Fix format strings.  
+
+2002-03-27 16:47  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/Makefile.am: Remove symlink to device.c when doing a make
+	dist.  
+
+2002-03-27 16:35  Guus Sliepen <guus@sliepen.warande.net>
+
+	* doc/Makefile.maint: Recent automake uses $(AMTAR) instead of
+	$(TAR) 
+
+2002-03-27 16:26  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: edge.c, protocol.c, protocol_auth.c, protocol_edge.c: 
+	Remove cruft.  
+
+2002-03-27 16:26  Guus Sliepen <guus@sliepen.warande.net>
+
+	* doc/: tinc.conf.5, tinc.texi: Small updates.  
+
+2002-03-27 16:01  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: net.h, net_packet.c: Limit the amount of packets in a queue
+	to 8.  
+
+2002-03-27 16:01  Guus Sliepen <guus@sliepen.warande.net>
+
+	* lib/: list.c, list.h: Extend list_t with the number of elements
+	in the list.  
+
+2002-03-27 15:02  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: net.c, net_socket.c: Merge do_prune() with build_fdset().
+	Probably fixes the invalid filedescriptor error.  
+
+2002-03-26 14:19  Guus Sliepen <guus@sliepen.warande.net>
+
+	* doc/tinc.texi: Small correction.  
+
+2002-03-26 13:00  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/process.c: Fix execute_script().  
+
+2002-03-25 16:51  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/net_packet.c: Send REQ_KEY only once until ANS_KEY has
+	arrived.  
+
+2002-03-25 16:12  Guus Sliepen <guus@sliepen.warande.net>
+
+	* doc/tinc.texi: Tell a little bit more about security.  
+
+2002-03-25 16:01  Guus Sliepen <guus@sliepen.warande.net>
+
+	* doc/: tinc.conf.5, tinc.texi, tincd.8: Updated documentation.  
+
+2002-03-25 14:54  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/net_setup.c: Set myself->status.reachable.  
+
+2002-03-24 18:14  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/conf.c: Configuration variables were still handled case
+	sensitively.  
+
+2002-03-24 18:08  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/openbsd/device.c: OpenBSD tun device uses address family
+	number instead of Ethernet type.  
+
+2002-03-24 17:50  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/openbsd/device.c: Respect type field.  
+
+2002-03-24 17:40  Guus Sliepen <guus@sliepen.warande.net>
+
+	* po/nl.po: Updated dutch translation.  
+
+2002-03-24 17:36  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/linux/device.c: Set $INTERFACE correctly when using ethertap
+	while compiled with tun/tap support.  
+
+2002-03-24 17:28  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: graph.c, net.c: Execute hosts/name-up when a node becomes
+	reachable, and hosts/name-down when it becomes unreachable.  
+
+2002-03-24 17:22  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/process.c: Don't try to execute scripts unless they exist.  
+
+2002-03-23 21:21  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: protocol_auth.c, protocol_misc.c: Reset retry timeout when
+	receiving the first PONG, not right after receiving the ACK.  
+
+2002-03-23 21:13  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/net.c: Don't run graph algorithms if no edge is deleted in
+	terminate_connection().  
+
+2002-03-23 21:12  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/protocol.c: free() request strings when deleting past
+	requests from the tree.  
+
+2002-03-23 21:01  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/protocol_auth.c: send_ack() was broken.  
+
+2002-03-22 14:31  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: connection.c, edge.c, node.c, protocol.c, protocol_auth.c,
+	protocol_edge.c, protocol_key.c, protocol_subnet.c: Fix compiler
+	warnings, strictly use long int and %lx for options.  
+
+2002-03-22 13:41  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/protocol_edge.c: Fix add_edge_h().  
+
+2002-03-22 12:43  Guus Sliepen <guus@sliepen.warande.net>
+
+	* acconfig.h, configure.in, src/edge.c, src/edge.h, src/net.c,
+	src/net.h, src/net_setup.c, src/protocol.c, src/protocol.h,
+	src/protocol_auth.c, src/protocol_edge.c: 
+	- Added support for jumbograms.  
+	- Remove tcpaddress from edges, it is not used at all.  
+	- Last bits of code to prevent looping requests.  
+
+2002-03-22 00:11  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: protocol.c, protocol.h, protocol_edge.c, protocol_key.c,
+	protocol_subnet.c: Put a break on requests that run around in
+	circles.  
+
+2002-03-19 23:48  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: graph.c, node.h: Updated SSSP algorithm to automatically
+	detect indirect links (if a node uses different addresses for
+	connections to other nodes).  
+
+2002-03-19 01:08  Guus Sliepen <guus@sliepen.warande.net>
+
+	* po/nl.po: Updated dutch translation.  
+
+2002-03-19 01:08  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: netutl.c, route.c: Don't use s6_addr[16|32] anymore.  
+
+2002-03-19 01:07  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/process.c: Cleanup.  
+
+2002-03-18 23:47  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: net.c, net.h, net_packet.c, net_setup.c, net_socket.c: 
+	Remember sockaddrs of listening sockets, use appropriate one when
+	sending UDP packets.  
+
+2002-03-18 15:39  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/netutl.c: Fix #define s6_addr32.  
+
+2002-03-18 15:19  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/netutl.c: #define s6_addr32, needed for FreeBSD.  
+
+2002-03-17 17:08  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/netutl.c: Only unmap IPv6 addresses.  
+
+2002-03-17 16:59  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: net_packet.c, net_socket.c, netutl.c, netutl.h: Unmap
+	v4mapped sockaddrs.  
+
+2002-03-15 16:50  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/route.c: Typo.  
+
+2002-03-15 16:40  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/route.c: Different way of detecting neighbor solicitation
+	requests.  
+
+2002-03-15 16:08  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/route.c: Oops, don't forget to actually put the checksum in
+	the response packet.  
+
+2002-03-15 15:41  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/route.c: Neighbor solicitation requests now work (I think).  
+
+2002-03-12 17:30  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/graph.c: Revert changes to Kruskal's algo.  
+
+2002-03-12 15:25  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/route.c: Put #ifdef NEIGHBORSOL around corresponding code.  
+
+2002-03-12 15:20  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/subnet.c: Remove silly cache thingy.  
+
+2002-03-12 15:19  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/net_packet.c: Packet sequence number/authentication warnings
+	only if debug_lvl >= 5.  
+
+2002-03-12 14:42  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/graph.c: Simplified implementation of Kruskal's minimum
+	spanning tree algorithm.  
+
+2002-03-11 14:56  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/route.c: New strategy: forward icmp6 neighbor solicitations
+	to intended target.  
+
+2002-03-11 14:14  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/route.c: Try to reply to neighbor solicitation requests.  
+
+2002-03-11 12:45  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/net.c: prune_connections() before build_fdset().  
+
+2002-03-11 12:23  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: net.c, process.c, subnet.c, tincd.c: Cleanups, spelling
+	fixes, allow symbol names for signals (-k option), don't remove
+	pidfile if other tincd is still running.  
+
+2002-03-10 17:09  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/net_setup.c: Don't retry to make outgoing connections when
+	exitting.  
+
+2002-03-10 16:40  Guus Sliepen <guus@sliepen.warande.net>
+
+	* Makefile.am, autogen.sh: Small fixes to improve portability.  
+
+2002-03-10 15:07  Guus Sliepen <guus@sliepen.warande.net>
+
+	* autogen.sh: Autodetect $MAKE/gmake/make.  
+
+2002-03-10 15:05  Guus Sliepen <guus@sliepen.warande.net>
+
+	* configure.in: po/POTFILES and po/Makefile should not be generated
+	by configure.  
+
+2002-03-10 15:04  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/route.c: Fix forwarding of IPv6 packets.  
+
+2002-03-01 16:14  Guus Sliepen <guus@sliepen.warande.net>
+
+	* po/nl.po, src/net_packet.c, src/net_setup.c, src/net_socket.c: 
+	Check if BindToDevice and PriorityInheritance are supported.  
+
+2002-03-01 15:33  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/route.c: Woops.  
+
+2002-03-01 15:25  Guus Sliepen <guus@sliepen.warande.net>
+
+	* doc/tinc.conf.5, doc/tinc.texi, po/nl.po, src/net.c, src/route.c: 
+	Document and clean up MAC address expiry.  
+
+2002-03-01 15:09  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: event.c, meta.c, net.c, net.h, net_packet.c, net_setup.c,
+	net_socket.c, protocol_misc.c, route.c, route.h, subnet.h: 
+	- Global time_t now, so that we don't have to call time() too often.  
+	- MAC addresses expire after a time configurable by MACExpire
+	  (default 600 seconds) 
+
+2002-03-01 14:38  Guus Sliepen <guus@sliepen.warande.net>
+
+	* po/nl.po: Updated dutch translation.  
+
+2002-03-01 14:38  Guus Sliepen <guus@sliepen.warande.net>
+
+	* doc/: tinc.conf.5, tinc.texi: Updated documentation.  
+
+2002-03-01 14:18  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: net.c, net.h, net_setup.c, net_socket.c: Create/bind TCP
+	and UDP listening sockets in pairs.  
+
+2002-03-01 13:26  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: net.h, net_packet.c, route.c, route.h: If
+	"PriorityInheritance = yes" is specified in tinc.conf, the value of
+	the TOS field of the tunneled packets will be passed on to the UDP
+	packets tinc sends out.  
+
+2002-03-01 13:25  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/net_setup.c: Fix listening sockets.  
+
+2002-03-01 12:18  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/net_socket.c: Make BindToInterface work.  
+
+2002-02-27 23:37  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: protocol.c, protocol_key.c: Fix send_request() bug.  
+
+2002-02-27 00:26  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: net.c, net.h, net_packet.c, net_setup.c, net_socket.c,
+	protocol.h: Allow multiple listening sockets.  
+
+2002-02-26 23:47  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: net.h, netutl.c: Tweaking IPv6 support.  
+
+2002-02-20 23:37  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: net.h, net_packet.c, net_socket.c, netutl.c: 
+	- Change SA_LEN to SALEN, former one is already defined on some
+	platforms.  
+	- Use SALEN everywhere appropriate.  
+
+2002-02-20 23:15  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: net.h, net_packet.c, net_setup.c, netutl.c: 
+	- Use gai_strerror() where appropriate 
+	- Clear hints before using them with getaddrinfo() 
+	- Use sa_len on platforms that support them 
+
+2002-02-20 20:31  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/net_packet.c: Preserve inpkt->len, needed for broadcasts.  
+
+2002-02-20 20:25  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: connection.h, net_setup.c, net_socket.c, protocol_auth.c,
+	protocol_key.c: Protocol now also exchanges
+	cipher/digest/maclength/compression for the meta connection.  
+
+2002-02-20 18:16  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/subnet.c: Cache results of lookup_subnet_...().  
+
+2002-02-20 18:15  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/netutl.c: Fix maskcmp() and maskcpy().  
+
+2002-02-20 17:04  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/route.c: Forward packets in router mode.  
+
+2002-02-20 17:04  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/net_setup.c: Use AF_UNSPEC for listening sockets if
+	AddressFamily = any.  
+
+2002-02-20 17:04  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/net.c: Fix segfault when receiving HUP signal.  
+
+2002-02-18 17:25  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/net_packet.c: file net_packet.c was initially added on branch
+	CABAL.  
+
+2002-02-18 17:25  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/net_setup.c: file net_setup.c was initially added on branch
+	CABAL.  
+
+2002-02-18 17:25  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/net_socket.c: file net_socket.c was initially added on branch
+	CABAL.  
+
+2002-02-18 17:25  Guus Sliepen <guus@sliepen.warande.net>
+
+	* doc/tinc.conf.5, doc/tinc.texi, po/POTFILES.in, po/nl.po,
+	src/Makefile.am, src/conf.c, src/conf.h, src/connection.c,
+	src/connection.h, src/edge.c, src/edge.h, src/graph.c, src/meta.c,
+	src/net.c, src/net.h, src/net_packet.c, src/net_setup.c,
+	src/net_socket.c, src/netutl.c, src/netutl.h, src/node.c,
+	src/node.h, src/process.c, src/protocol_auth.c,
+	src/protocol_edge.c, src/route.c, src/subnet.c, src/subnet.h,
+	src/freebsd/device.c, src/linux/device.c, src/netbsd/device.c,
+	src/openbsd/device.c, src/solaris/device.c: 
+	- Non-blocking connect()s.  
+	- Socket handling revamped to use sockaddr_t.  
+	- tinc can now tunnel over IPv6.  
+	- Handle all addresses and subnets in network byte order.  
+	  Only convert them when they need to be printed.  
+	- IPv6 subnets bigger than /128 now work.  
+	- Use %s and strerror(errno) instead of %m.  
+
+2002-02-12 15:42  Guus Sliepen <guus@sliepen.warande.net>
+
+	* acconfig.h, configure.in: Add check for NetBSD.  
+
+2002-02-12 15:40  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/netbsd/device.c: Added device.c for NetBSD, actually a copy
+	of the OpenBSD one.  
+
+2002-02-12 15:40  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/netbsd/device.c: file device.c was initially added on branch
+	CABAL.  
+
+2002-02-12 15:36  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: meta.c, net.c: Get rid of sys/signal.h.  
+
+2002-02-12 15:29  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/process.c: Don't use sa_sigaction (which NetBSD doesn't like)
+	at all if we don't use siginfo.  
+
+2002-02-11 16:59  Guus Sliepen <guus@sliepen.warande.net>
+
+	* THANKS, configure.in, doc/tinc.conf.5, doc/tinc.texi, m4/zlib.m4,
+	po/nl.po, src/net.c, src/node.c, src/node.h, src/protocol.h,
+	src/protocol_key.c: Added support for packet compression, thanks to
+	Mark Glines.  Add "Compression = <level>" to the host config files,
+	where level can be 0 (off), or any integer between 1 (fast) and 9
+	(best).  
+
+2002-02-11 16:59  Guus Sliepen <guus@sliepen.warande.net>
+
+	* m4/zlib.m4: file zlib.m4 was initially added on branch CABAL.  
+
+2002-02-11 15:20  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/solaris/device.c: Small fix.  
+
+2002-02-11 15:20  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/net.c: 
+	- If no PrivateKeyFile is specified, /etc/tinc/netname/rsa_key.priv
+	is assumed.  
+	- Check RSA key before using it.  
+
+2002-02-11 13:33  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: freebsd/device.c, linux/device.c, openbsd/device.c,
+	solaris/device.c: Sensible defaults for $INTERFACE.  
+
+2002-02-11 11:16  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: netutl.c, netutl.h: Last bits of the merger.  
+
+2002-02-11 11:05  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: event.c, event.h, protocol_auth.c, protocol_edge.c,
+	protocol_key.c, protocol_misc.c, protocol_subnet.c: Forgot to merge
+	new files from pre5.  
+
+2002-02-10 22:57  Guus Sliepen <guus@sliepen.warande.net>
+
+	* AUTHORS, Makefile.am, NEWS, README, THANKS, TODO, acconfig.h,
+	configure.in, doc/CONNECTIVITY, doc/NETWORKING, doc/PROTOCOL,
+	doc/SECURITY2, doc/tinc.conf.5, doc/tinc.texi, doc/tincd.8,
+	doc/sample-config/tinc-down, doc/sample-config/tinc-up,
+	doc/sample-config/tinc.conf, lib/avl_tree.c, lib/dropin.c,
+	lib/dropin.h, m4/openssl.m4, po/POTFILES.in, po/nl.po,
+	redhat/Makefile.am, src/Makefile.am, src/conf.c, src/conf.h,
+	src/connection.c, src/connection.h, src/device.h, src/edge.c,
+	src/edge.h, src/graph.c, src/graph.h, src/meta.c, src/meta.h,
+	src/net.c, src/net.h, src/node.c, src/node.h, src/process.c,
+	src/process.h, src/protocol.c, src/protocol.h, src/route.c,
+	src/route.h, src/subnet.c, src/subnet.h, src/tincd.c,
+	src/freebsd/device.c, src/linux/device.c, src/openbsd/device.c,
+	src/solaris/device.c: Merging of the entire pre5 branch.  
+
+2002-02-10 16:44  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* doc/tinc.texi: Added @dircategory 
+
+2002-02-10 01:39  Guus Sliepen <guus@sliepen.warande.net>
+
+	* doc/tinc.texi: Better placement of @cindex directives.  
+
+2002-02-09 23:54  Guus Sliepen <guus@sliepen.warande.net>
+
+	* configure.in: Remove src/device.c before making a symbolic link.  
+
+2002-02-09 22:44  Guus Sliepen <guus@sliepen.warande.net>
+
+	* THANKS: Credits go to Jerome Etienne for his security analysis.  
+
+2002-02-09 22:42  Guus Sliepen <guus@sliepen.warande.net>
+
+	* configure.in: 1.0pre5, without a dash.  
+
+2002-02-09 22:35  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/Makefile.am: Add os/device.c to the release.  
+
+2002-02-09 22:11  Guus Sliepen <guus@sliepen.warande.net>
+
+	* doc/: tinc.conf.5, tincd.8: Spelling checker.  
+
+2002-02-09 22:00  Guus Sliepen <guus@sliepen.warande.net>
+
+	* configure.in: Make po/POTFILES and po/Makefile since not all
+	versions of autoconf do this automatically.  
+
+2002-02-09 21:33  Guus Sliepen <guus@sliepen.warande.net>
+
+	* po/nl.po: Update translation.  
+
+2002-02-09 21:30  Guus Sliepen <guus@sliepen.warande.net>
+
+	* Makefile.am: There are no makefiles in redhat/.  
+
+2002-02-09 21:27  Guus Sliepen <guus@sliepen.warande.net>
+
+	* README: We're up to version 1.0pre5 now.  
+
+2002-02-09 21:18  Guus Sliepen <guus@sliepen.warande.net>
+
+	* configure.in, redhat/Makefile.am: Don't make makefiles in debian/
+	and redhat/.  
+
+2002-02-09 21:07  Guus Sliepen <guus@sliepen.warande.net>
+
+	* NEWS, README, TODO: Update to pre5.  
+
+2002-02-09 21:00  Guus Sliepen <guus@sliepen.warande.net>
+
+	* doc/: CONNECTIVITY, NETWORKING, PROTOCOL, SECURITY2, tincd.8: 
+	2002.  
+
+2002-02-09 20:59  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: conf.c, conf.h, connection.c, connection.h, device.h,
+	edge.c, edge.h, graph.c, graph.h, meta.c, meta.h, net.c, net.h,
+	netutl.c, netutl.h, node.c, node.h, process.c, process.h,
+	protocol_auth.c, protocol_edge.c, protocol_key.c, protocol_misc.c,
+	protocol_subnet.c, route.c, route.h, subnet.c, tincd.c,
+	freebsd/device.c, linux/device.c, openbsd/device.c,
+	solaris/device.c: We're living in 2002 now.  
+
+2002-02-09 19:34  Guus Sliepen <guus@sliepen.warande.net>
+
+	* doc/tinc.texi: Update info manual.  
+
+2002-02-09 17:26  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/net.c: Fix flushing of event queue.  
+
+2002-02-09 17:24  Guus Sliepen <guus@sliepen.warande.net>
+
+	* doc/tinc.conf.5, po/nl.po, src/conf.c, src/conf.h, src/event.h,
+	src/net.c, src/process.c, src/subnet.c: Cleanups.  
+
+2002-02-09 17:07  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: Makefile.am, connection.h, net.c, net.h, protocol_auth.c,
+	route.c: Added struct outgoing_t, which is a ticket containing the
+	name of a node to connect to and the time we should wait before
+	retrying. The outgoing_t is kept either in the event queue or by the
+	corresponding connection_t.  
+
+2002-02-09 15:32  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/net.c: Don't quit because of tap read errors.  
+
+2002-02-09 12:06  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: net.c, protocol_key.c: Allow packet encryption to be turned
+	of with Cipher = none.  
+
+2002-02-08 13:02  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/event.h: file event.h was initially added on branch pre5.  
+
+2002-02-08 13:02  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/event.c: file event.c was initially added on branch pre5.  
+
+2002-02-08 13:02  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: event.c, event.h: Added functions to manage an event queue.  
+
+2002-02-08 12:22  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/protocol_node.c: ADD/DEL_NODE messages are not used anymore.  
+
+2002-02-08 12:12  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: net.c, process.c: 
+	- Purge unreachable nodes if there are no outgoing connections or
+	  SIGWINCH is received.  
+	- Actually use sigsegv_square().  
+
+2002-02-08 10:32  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/protocol_subnet.c: Really fix del_subnet_h().  
+
+2002-02-07 22:37  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/protocol_subnet.c: Fix handling of DEL_SUBNET messages.  
+
+2002-02-07 22:36  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: graph.c, net.c: Fix IndirectData and TCPOnly options.  
+
+2002-02-07 16:42  Guus Sliepen <guus@sliepen.warande.net>
+
+	* doc/sample-config/: tinc-down, tinc-up, tinc.conf: Updated sample
+	configuration files.  
+
+2002-02-07 15:55  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/route.c: Get rid of last %hhx.  
+
+2002-02-07 15:53  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: netutl.c, subnet.c: FreeBSD compile fixes.  
+
+2002-02-07 15:43  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: protocol_subnet.c, route.c, subnet.c: Make tinc's IPv6
+	support working.  
+
+2002-02-07 14:21  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: netutl.c, subnet.c: OpenBSD (and probably other non-GNU
+	operating systems) doesn't support %hhu.  
+
+2002-02-07 13:42  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: graph.c, netutl.c, route.c, openbsd/device.c: OpenBSD
+	compile fixes.  
+
+2002-02-07 13:09  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/conf.c: get_config_address() returns a pointer to a newly
+	created ipv4_t.  
+
+2002-02-07 13:07  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: conf.c, conf.h, edge.c, net.c, netutl.c, netutl.h,
+	protocol.h, protocol_auth.c, protocol_edge.c, subnet.c, subnet.h: 
+	Send addresses and subnets as human readable strings.  
+
+2002-02-07 13:05  Guus Sliepen <guus@sliepen.warande.net>
+
+	* doc/: PROTOCOL, SECURITY2, tinc.conf.5, tinc.texi, tincd.8: 
+	Updated documentation.  
+
+2002-02-07 10:48  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/protocol_key.c: Really stop proxying keys.  
+
+2002-02-07 00:51  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/solaris/device.c: Fix for Solaris.  
+
+2002-02-06 21:55  Guus Sliepen <guus@sliepen.warande.net>
+
+	* po/nl.po: Update dutch translation.  
+
+2002-02-06 21:55  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: protocol_auth.c, protocol_edge.c, protocol_subnet.c: 
+	Display new debug messages only when debug level is set accordingly.  
+
+2002-02-06 21:18  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: graph.c, net.c, node.h, protocol_key.c: 
+	- Fix sequence number handling when many nodes are involved 
+	- Use minimum spanning tree when broadcasting KEY_CHANGED 
+	- Disable key proxying for now.  
+
+2002-02-06 20:17  Guus Sliepen <guus@sliepen.warande.net>
+
+	* acconfig.h, m4/openssl.m4, src/tincd.c: Check for
+	OpenSSL/SSLeay_add_all_algorithms().  
+
+2002-02-06 18:07  Guus Sliepen <guus@sliepen.warande.net>
+
+	* po/: POTFILES.in, nl.po: More translations.  
+
+2002-02-06 17:51  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/node.c: Cleanup.  
+
+2002-02-06 17:50  Guus Sliepen <guus@sliepen.warande.net>
+
+	* lib/avl_tree.c: Clear pointers and count/depth after unlinking a
+	node.  
+
+2002-02-06 16:58  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/net.h: Maximum size of an ethernet frame is 1514 bytes, not
+	1500.  
+
+2002-02-06 16:46  Guus Sliepen <guus@sliepen.warande.net>
+
+	* po/: POTFILES.in, nl.po: Add more translations.  
+
+2002-02-06 16:44  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/net.c: Use full keylength when calculating MAC, and allow
+	large UDP packets to be received.  
+
+2002-02-06 15:38  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/protocol_key.c: Fix ans_key_h().  
+
+2002-02-06 15:27  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/protocol_key.c: Copy key to node_t before forwarding it.  
+
+2002-02-06 15:09  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: graph.c, node.c: Quick hack to fix node_udp_compare().  
+
+2002-02-06 14:57  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/net.c: Don't send packets to nodes that are not reachable.  
+
+2002-02-06 14:43  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: graph.c, node.c: Don't forget to manage the node_udp_tree.  
+
+2002-02-06 14:14  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/graph.c: FreeBSD compile fix.  
+
+2002-02-06 14:07  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/net.c: Don't complain about missing Port variable, use
+	default (655) instead.  
+
+2002-02-06 14:05  Guus Sliepen <guus@sliepen.warande.net>
+
+	* doc/tinc.conf.5: Update configuration manual.  
+
+2002-02-06 14:04  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/freebsd/device.c: Declare correct variable name.  
+
+2002-02-06 13:35  Guus Sliepen <guus@sliepen.warande.net>
+
+	* po/nl.po, src/graph.c, src/subnet.c: Added one message to be
+	translated.  
+
+2002-02-06 13:25  Guus Sliepen <guus@sliepen.warande.net>
+
+	* po/nl.po, src/graph.c, src/node.h, src/protocol_key.c: Cleanups.  
+
+2002-02-05 16:17  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: Makefile.am, connection.c, connection.h, edge.c, edge.h,
+	graph.c, graph.h, net.c, node.c, node.h, protocol.c, protocol.h,
+	protocol_auth.c, protocol_edge.c, protocol_key.c,
+	protocol_subnet.c: 
+	- Move information about cipher and digest from ACK to SEND_KEY 
+	- Move information about addresses and portnumbers from ADD_NODE to
+	ADD_EDGE 
+	- Stop exchanging information about nodes at all, it can be derived
+	  from the ADD_EDGE and ADD_SUBNET messages.  
+	- Don't purge anything. Only authorative nodes are allowed to delete
+	  edges and subnets. This means we remember information about nodes
+	  that may not be reachable anymore, but reduces amount of
+	ADD/DEL_SUBNET/EDGE messages.  
+	- Lots of bugfixes.  
+
+2002-02-03 23:18  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/tincd.c: Woops! 
+
+2002-02-03 23:14  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: net.h, node.h, process.c, protocol.c, protocol.h,
+	protocol_key.c, tincd.c: Cleanups.  
+
+2002-02-03 22:29  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/protocol_subnet.c: file protocol_subnet.c was initially added
+	on branch pre5.  
+
+2002-02-03 22:29  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: Makefile.am, protocol.c, protocol.h, protocol_auth.c,
+	protocol_edge.c, protocol_key.c, protocol_misc.c, protocol_node.c,
+	protocol_subnet.c: Split up protocol.c.  
+
+2002-02-03 22:29  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/protocol_misc.c: file protocol_misc.c was initially added on
+	branch pre5.  
+
+2002-02-03 22:29  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/protocol_node.c: file protocol_node.c was initially added on
+	branch pre5.  
+
+2002-02-03 22:29  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/protocol_edge.c: file protocol_edge.c was initially added on
+	branch pre5.  
+
+2002-02-03 22:29  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/protocol_key.c: file protocol_key.c was initially added on
+	branch pre5.  
+
+2002-02-03 22:29  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/protocol_auth.c: file protocol_auth.c was initially added on
+	branch pre5.  
+
+2002-02-01 17:00  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: net.c, protocol.c: Fixes for some buglets.  
+
+2002-01-29 12:50  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: net.c, protocol.c: Some fixes to make cipher/digest
+	selection actually work.  
+
+2002-01-29 00:26  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: net.c, net.h, node.c, node.h, protocol.c, tincd.c: 
+	- Removed salt in favour of sequence numbers.  
+	- Packet encryption is now fully configurable: 
+	  - option "Cipher" takes name of a cipher as argument (default
+	  "blowfish") 
+	- option "Digest" takes name of a digest as argument (default
+	  "sha1") 
+	- option "MACLength" takes length of message authentication code as 
+	    argument (default 4), set to 0 to turn it off completely.  
+
+2002-01-24 18:03  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/net.c: Don't retry if all outgoing connections work.  
+
+2002-01-22 22:52  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/net.c: More #ifdefs around use of sequence numbers.  
+
+2002-01-22 22:46  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/linux/device.c: Don't use iovecs with Linux ethertap device.  
+
+2002-01-14 01:29  Guus Sliepen <guus@sliepen.warande.net>
+
+	* TODO: Updated TODO list.  
+
+2002-01-14 00:57  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: net.c, net.h, node.h, protocol.c: Experimental changes to
+	fix the security weaknesses found by Jerome Etienne.  Compile with
+	MORESECURE defined to add replay protection and packet 
+	authentication.  
+
+2001-12-23 15:06  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/protocol.c: Exchange options during authentication (enables
+	IndirectData and TCPOnly) 
+
+2001-12-23 15:06  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/conf.c: Fix boolean "no".  
+
+2001-12-20 14:53  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/protocol.c: Resynchronise completely after receiving bad
+	DEL_EDGE.  
+
+2001-12-18 22:12  Guus Sliepen <guus@sliepen.warande.net>
+
+	* doc/: tinc.conf.5, tincd.8: 
+	- Revamped man pages to make them more maintainable.  
+	- Reflect new and changed options.  
+
+2001-12-18 22:10  Guus Sliepen <guus@sliepen.warande.net>
+
+	* po/nl.po: Updated dutch translation.  
+
+2001-12-18 15:33  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/linux/device.c: Make mymac extern.  
+
+2001-12-18 15:32  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/freebsd/device.c: FreeBSD compile fixes.  
+
+2001-12-18 00:11  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: graph.c, net.c, node.h, protocol.c: Updated semantics for
+	the meta protocol and fixed a few small bugs.  
+
+2001-12-16 14:51  Guus Sliepen <guus@sliepen.warande.net>
+
+	* configure.in, src/conf.c, src/conf.h, src/net.c: Added
+	configurable statistics logging for the Cube project.  
+
+2001-11-16 23:41  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/net.c: Conversion to struct addrinfo is almost complete for
+	this file.  
+
+2001-11-16 23:40  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/tincd.c: Don't include netutl.h.  
+
+2001-11-16 23:31  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/conf.c: Fixed silly typo: "np" instead of "no" 
+
+2001-11-16 23:31  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/conf.c: get_config_subnet needs to be fixed.  
+
+2001-11-16 18:40  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/route.c: route_ipv4 and route_ipv6 replaced by route_ip.  
+
+2001-11-16 18:39  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/protocol.c: Don't include netutl.h.  
+
+2001-11-16 18:39  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/node.c: lookup_node_udp changed.  
+
+2001-11-16 18:38  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/net.c: First part of rewriting things to use struct addrinfo.  
+
+2001-11-16 18:36  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* lib/: dropin.c, dropin.h: Added dropin replacements for get*info
+	and helper functions.  
+
+2001-11-16 17:16  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* acconfig.h: Added HAVE_STRUCT_ADDRINFO 
+
+2001-11-16 16:56  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/node.h: 
+	(re)added port to struct node_t 
+
+2001-11-16 13:21  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/: netutl.c, netutl.h: Obsoleted.  
+
+2001-11-16 13:20  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/: connection.c, edge.c, net.c: Don't include netutl.h.  
+
+2001-11-16 13:17  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/conf.c: Don't include netutl.h.  
+
+2001-11-16 13:16  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/Makefile.am: Don't compile/link netutl.c.  
+
+2001-11-16 13:14  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/conf.h: get_config_{ip,port} removed.  
+
+2001-11-16 13:12  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/: node.h, edge.h: Changed to use struct addrinfo where
+	needed.  
+
+2001-11-16 13:10  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/subnet.h: Obsoleted all IP<x> types in favor of struct
+	addrinfo 
+
+2001-11-16 13:08  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/net.h: Removed definitions of ipv4_t, ipv6_t, port_t 
+
+2001-11-16 13:02  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/connection.c: Changed lookup_connection to use struct
+	addrinfo 
+
+2001-11-16 13:01  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/connection.h: Changed prototype for lookup_connection to use
+	struct addrinfo 
+
+2001-11-16 01:23  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/connection.h: Use struct addrinfo in connection_t to hold all
+	host data such as IP address and port 
+
+2001-11-16 01:13  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/conf.c: Deprecated get_config_ip and get_config_port 
+
+2001-11-16 00:49  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* configure.in: Check for struct addrinfo 
+
+2001-11-16 00:28  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* AUTHORS: Credit OpenSSH 
+
+2001-11-16 00:26  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* configure.in: Check for getnameinfo, gai_strerror, freeaddrinfo 
+
+2001-11-16 00:05  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* configure.in: Check for getaddrinfo 
+
+2001-11-05 20:09  Guus Sliepen <guus@sliepen.warande.net>
+
+	* lib/dropin.c, lib/utils.c, src/net.c: More fixes for Solaris.  
+
+2001-11-05 20:06  Guus Sliepen <guus@sliepen.warande.net>
+
+	* lib/dropin.c, lib/dropin.h, lib/utils.c, src/solaris/device.c: 
+	Various fixes needed for Solaris.  
+
+2001-11-05 00:48  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/protocol.c: Correctly check if subnet owner exists.  
+
+2001-11-05 00:29  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/protocol.c: Be liberal in what you accept: allow unknown
+	edges to be deleted.  
+
+2001-11-03 23:53  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: net.c, process.c: [no log message] 
+
+2001-11-03 22:22  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/protocol.c: Several bugfixes.  
+
+2001-11-03 22:21  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/net.c: Use PEM functions as suggested by OpenSSL docs.  
+
+2001-10-31 21:37  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: netutl.c, process.c, protocol.c: Some very small fixes 
+
+2001-10-31 21:22  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/net.c: Avoid connecting to another node twice, and check name
+	of outgoing connections.  
+
+2001-10-31 21:07  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/conf.c: Show cfg->variable instead of cfg->value when
+	complaining about wrong type.  
+
+2001-10-31 21:02  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/protocol.c: Don't forget to read public RSA key when making
+	an outgoing connection.  
+
+2001-10-31 13:50  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: device.h, graph.c, graph.h, net.c, node.c, process.c,
+	protocol.c, linux/device.c: 
+	- Small fixes to graph algorithms 
+	- More control over tap device, ability to set interface name to
+	  something other than the netname.  
+	- Export NETNAME, DEVICE and INTERFACE environment variables to
+	scripts.  
+
+2001-10-30 17:34  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: connection.c, connection.h, net.c, protocol.c: More updates
+	to protocol handlers and reimplemented terminate_connection().  
+
+2001-10-30 13:59  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: Makefile.am, edge.c, graph.c, net.c, node.c, protocol.c,
+	subnet.c: Various fixes, tinc is now somewhat capable of actually
+	working again.  
+
+2001-10-29 14:14  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/graph.h: file graph.h was initially added on branch CABAL.  
+
+2001-10-29 14:14  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: graph.c, graph.h: Working version of Kruskal's algorithm.
+	The running time is very bad though.  
+
+2001-10-28 23:42  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: connection.c, connection.h, edge.c, edge.h, graph.c,
+	node.c, node.h, protocol.c, subnet.c, subnet.h: 
+	- More changes needed for Kruskal's algorithm 
+	- Implemented a breadth-first search algorithm as a cheap
+	  substitution for a single-source shortest path algorithm.  
+
+2001-10-28 11:16  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/graph.c: file graph.c was initially added on branch CABAL.  
+
+2001-10-28 11:16  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: Makefile.am, connection.h, edge.c, edge.h, graph.c, net.c,
+	node.h, process.c, protocol.c: 
+	- More s/vertex/edge/g 
+	- Implementation of Kruskal's minimum spanning tree algorithm.  
+
+2001-10-28 09:41  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/edge.c: file edge.c was initially added on branch CABAL.  
+
+2001-10-28 09:41  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: Makefile.am, conf.h, connection.c, connection.h, edge.c,
+	edge.h, net.c, protocol.c, protocol.h, tincd.c, vertex.c, vertex.h: 
+	What was I thinking? s/vertex/edge/g.  
+
+2001-10-28 09:41  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/edge.h: file edge.h was initially added on branch CABAL.  
+
+2001-10-27 17:19  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: conf.c, connection.c, net.c, process.c, tincd.c: Various
+	small fixes to make tinc runnable again.  
+
+2001-10-27 15:13  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: device.h, net.c, net.h, node.c, process.c, route.c,
+	subnet.c, subnet.h, vertex.c, linux/device.c: Make sure everything
+	links.  
+
+2001-10-27 14:13  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: conf.c, conf.h, connection.c, connection.h, device.h,
+	meta.c, net.c, net.h, netutl.c, netutl.h, node.c, node.h,
+	process.c, protocol.c, protocol.h, route.c, route.h, subnet.c,
+	subnet.h, tincd.c, vertex.c, vertex.h, linux/device.c: Big bad
+	commit: 
+	- Transition to new node/vertex/connection structures 
+	- Use new configuration handling everywhere 
+	- Linux tun/tap device handling cleanup 
+	- Start of IPv6 support in route.c 
+	
+	It compiles, but it won't link.  
+
+2001-10-13 15:53  Guus Sliepen <guus@sliepen.warande.net>
+
+	* acconfig.h, configure.in, src/Makefile.am: Support new files
+	(node/vertex/device.[ch]) and OpenBSD.  
+
+2001-10-12 17:52  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/openbsd/device.c: Forgot the tun specific stuff.  
+
+2001-10-12 17:49  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/openbsd/device.c: file device.c was initially added on branch
+	CABAL.  
+
+2001-10-12 17:49  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/openbsd/device.c: Added OpenBSD tun device handling. Untested
+	though.  
+
+2001-10-12 17:38  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/solaris/device.c: Forgot to remove some old #ifdef stuff.  
+
+2001-10-12 17:33  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/solaris/device.c: file device.c was initially added on branch
+	CABAL.  
+
+2001-10-12 17:33  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/solaris/device.c: Solaris tun device handling cleaned up a
+	bit and added.  
+
+2001-10-12 17:22  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/freebsd/device.c: Added FreeBSD tap device handling.  
+
+2001-10-12 17:22  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/freebsd/device.c: file device.c was initially added on branch
+	CABAL.  
+
+2001-10-12 17:16  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/linux/device.c: file device.c was initially added on branch
+	CABAL.  
+
+2001-10-12 17:16  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: device.h, linux/device.c: 
+	- Split tap device stuff out of net.[ch] 
+	- Each OS gets it's own device.c to get rid of evil #ifdefs.  
+	- Cleaned up Linux ethertap and tun/tap handling.  
+
+2001-10-12 17:16  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/device.h: file device.h was initially added on branch CABAL.  
+
+2001-10-10 22:35  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: connection.c, connection.h, node.h, vertex.h: More updates
+	to new node/vertex/connection combo.  
+
+2001-10-10 22:34  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: conf.c, conf.h: Revamp configuration handling: 
+	- Store everything in AVL trees (fast lookup) 
+	- No need for hazahaza anymore 
+	- Parse values when needed 
+	- This simplifies a lot of config variable lookups.  
+
+2001-10-10 11:42  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: connection.c, connection.h: Removed everything from
+	connection.c that has already been moved to node.c and vertex.c.  
+
+2001-10-10 10:49  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/node.c: file node.c was initially added on branch CABAL.  
+
+2001-10-10 10:49  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/vertex.c: file vertex.c was initially added on branch CABAL.  
+
+2001-10-10 10:49  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: connection.h, node.c, node.h, vertex.c, vertex.h: Further
+	implementation of doc/CONNECTIVITY. connection.[ch] is now split
+	into a node, vertex and connection part.  
+
+2001-10-09 21:41  Wessel Dankers <wsl@nl.linux.org>
+
+	* autogen.sh: make is not always GNU make.  
+
+2001-10-09 21:37  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: node.h, vertex.h: Small corrections.  
+
+2001-10-09 21:30  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: node.h, vertex.h: Started implementing doc/CONNECTIVITY.  
+
+2001-10-09 21:30  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/node.h: file node.h was initially added on branch CABAL.  
+
+2001-10-09 21:30  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/vertex.h: file vertex.h was initially added on branch CABAL.  
+
+2001-10-08 17:47  Guus Sliepen <guus@sliepen.warande.net>
+
+	* po/nl.po: Updated dutch translation.  
+
+2001-10-08 17:37  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/protocol.c: Fix bug when dropping an old connection in favour
+	of a new one from the same host.  
+
+2001-10-08 15:37  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/net.c: 
+	- Use ping timeout mechanism to close connections that don't
+	  authenticate in time.  
+	- Fix potential segmentation fault in check_dead_connections().  
+
+2001-10-08 13:59  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/net.c: Fix bug where tinc would crash because of a portscan
+	or a connection from a tinc daemon with a different version.  
+
+2001-10-08 13:47  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: connection.c, connection.h, net.c, protocol.c: 
+	- Renamed lastbutonehop to prevhop.  
+	- Added connection_t *via to connection_t, this keeps record of
+	  where to send UDP packets to.  
+
+2001-09-25 15:39  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/net.c: Fill in next- and lastbutonehop for myself.  
+
+2001-09-25 15:35  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/net.c: Try next connectto instead of the same over and over.  
+
+2001-09-24 16:16  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/connection.c: Show next- and lastbutonehop when dumping
+	connectionlist to syslog.  
+
+2001-09-24 16:11  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: connection.h, net.c, protocol.c, protocol.h: Not only keep
+	track of nexthop, but also of lastbutonehop. If destination cl wants
+	indirectdata, send it to the lastbutonehop instead, unless it too
+	has requested so, and so on.  
+
+2001-09-24 15:31  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/net.c: 
+	- Try old TUN/TAP ioctl() request if the one from if_tun.h fails.  
+	- Be more verbose about the kind of tap device used.  
+
+2001-09-05 20:38  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/process.c: Killing tincd with SIGINT causes it to toggle
+	between the current debug level and level 5.  Useful to debug a
+	running tincd.  
+
+2001-09-01 14:46  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: conf.c, conf.h: config_t* is a const parameter in
+	get_config_val().  
+
+2001-09-01 14:36  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: process.c, process.h, tincd.c: Optional signal number for
+	-k option.  
+
+2001-09-01 14:36  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/net.c: Revised reconnection mechanism, always try out all
+	ConnectTo lines.  
+
+2001-09-01 14:02  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/protocol.c: Remove IndirectData support for now, new
+	implementation will be added later.  
+
+2001-08-28 22:52  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/subnet.c: Fix signed comparison bug in lookup_subnet_ipv4().  
+
+2001-08-17 20:14  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: net.c, protocol.c: Don't send DEL_HOSTs when !status.meta 
+
+2001-07-24 22:14  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/net.c: Explicitly log which type of tunnel device is used.  
+
+2001-07-24 22:13  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/conf.h: The val variable in a config_t is never used as a
+	long.  
+
+2001-07-24 22:04  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/tincd.c: Write public key to rsa_key.pub instead of
+	rsa_key.priv (if not host configuration file is found).  
+
+2001-07-24 22:03  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: conf.c, process.c: Don't use %m in fprintf().  
+
+2001-07-24 10:51  Guus Sliepen <guus@sliepen.warande.net>
+
+	* doc/CONNECTIVITY: More on edges.  
+
+2001-07-24 00:06  Guus Sliepen <guus@sliepen.warande.net>
+
+	* doc/CONNECTIVITY: Discuss how sending ADD_EDGEs would be better
+	than sending ADD_HOSTs.  
+
+2001-07-22 19:41  Guus Sliepen <guus@sliepen.warande.net>
+
+	* doc/CONNECTIVITY: Written down a possible solution.  
+
+2001-07-22 17:25  Guus Sliepen <guus@sliepen.warande.net>
+
+	* doc/CONNECTIVITY: Correctie.  
+
+2001-07-22 16:58  Guus Sliepen <guus@sliepen.warande.net>
+
+	* doc/CONNECTIVITY: Small update.  
+
+2001-07-22 16:46  Guus Sliepen <guus@sliepen.warande.net>
+
+	* doc/CONNECTIVITY: Described problem in more detail.  
+
+2001-07-22 16:04  Guus Sliepen <guus@sliepen.warande.net>
+
+	* doc/CONNECTIVITY: file CONNECTIVITY was initially added on branch
+	CABAL.  
+
+2001-07-22 16:04  Guus Sliepen <guus@sliepen.warande.net>
+
+	* doc/CONNECTIVITY: Started writing a document about how daemons
+	connect to each other.  
+
+2001-07-21 22:21  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: net.c, route.c: Woohoo! tinc now compiles, runs and
+	actually *works* on Solaris! Tested on a SparcStation 20MP running
+	Solaris 7. (Thanks, jiggel!) 
+
+2001-07-21 17:46  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/net.c: Always close all sockets in terminate_connection().  
+
+2001-07-21 17:34  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: connection.c, net.c, net.h, protocol.c: Updated
+	terminate_connection() so you can choose if DEL_HOSTs should be sent
+	or not.  
+
+2001-07-20 22:25  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: connection.c, connection.h, net.c, protocol.c, route.c: 
+	Added purge_tree for connection_t's which are no longer in the
+	connection, active or id trees, but which may still be referenced.
+	This tree is flushed when it is safe, this replaces
+	purge_connection_tree().  
+	
+	Also lots of bugfixes related to the new trees.  
+
+2001-07-20 15:54  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: meta.c, net.c, protocol.c, route.c, tincd.c: Remove all
+	unnecessary status.meta and status.active checks.  
+
+2001-07-19 14:29  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: net.c, protocol.c: Correctly use the active_tree.  
+
+2001-07-15 20:07  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: connection.c, connection.h, net.c, protocol.c: Split
+	 connection list into two lists: 
+	- one list to handle all incoming/outgoing TCP connections 
+	 - another list to handle all UDP connections 
+	
+	This will prevent race conditions.  
+
+2001-07-15 16:21  Guus Sliepen <guus@sliepen.warande.net>
+
+	* m4/tuntap.m4, src/net.c: Correct inclusion of standard if_tun.h
+	header file.  
+
+2001-07-04 10:43  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/tincd.c: Don't load table of verbose OpenSSL errormessages.  
+
+2001-07-04 10:41  Guus Sliepen <guus@sliepen.warande.net>
+
+	* m4/openssl.m4, src/meta.c, src/net.c, src/protocol.c,
+	src/tincd.c: 
+	- Always use <openssl/include.h> instead of just <include.h> 
+	- Check if RAND_pseudo_bytes() exists, otherwise just use
+	RAND_bytes() 
+
+2001-07-01 23:42  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/protocol.c: Check for all potential duplicate entries in the
+	id tree.  
+
+2001-07-01 11:21  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/route.c: Fix compiler warning.  
+
+2001-07-01 11:21  Guus Sliepen <guus@sliepen.warande.net>
+
+	* po/nl.po, src/protocol.c: Fix printf format bug.  
+
+2001-07-01 11:06  Guus Sliepen <guus@sliepen.warande.net>
+
+	* TODO: More items marked as done.  
+
+2001-06-29 17:38  Guus Sliepen <guus@sliepen.warande.net>
+
+	* po/nl.po: Dutch translation updated.  
+
+2001-06-29 17:33  Guus Sliepen <guus@sliepen.warande.net>
+
+	* Makefile.am, redhat/tinc, redhat/tinc.spec: Update of RedHat
+	build scripts.  
+
+2001-06-29 17:32  Guus Sliepen <guus@sliepen.warande.net>
+
+	* po/: es.po, nl.po, old/es.po: It appears that autogen.sh doesn't
+	like es.po if it isn't mentioned in the makefile/configure scripts.  
+
+2001-06-29 17:32  Guus Sliepen <guus@sliepen.warande.net>
+
+	* po/old/es.po: file es.po was initially added on branch CABAL.  
+
+2001-06-29 16:15  Guus Sliepen <guus@sliepen.warande.net>
+
+	* m4/openssl.m4: Check for dlopen in standard libraries first
+	(needed for DEC OSF).  
+
+2001-06-29 15:09  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: connection.c, subnet.c: Fix gcc 3.0 warnings.  
+
+2001-06-29 15:09  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/protocol.c: Log error if two hosts connect with same IP/port
+	tuple.  
+
+2001-06-29 13:09  Guus Sliepen <guus@sliepen.warande.net>
+
+	* Makefile.am: Also remove po/Makefile.in.in, which is generated by
+	autogen.sh.  
+
+2001-06-29 13:03  Guus Sliepen <guus@sliepen.warande.net>
+
+	* po/es.po: es.po revived.  
+
+2001-06-29 12:30  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/net.c: Execute tinc-down BEFORE tap device is closed. This is
+	a. more symmetric (tinc-up is started after tap device is opened)
+	and b. is needed for tun/tap device, where the interface does not
+	exist anymore after the device file is closed.  
+
+2001-06-29 12:27  Guus Sliepen <guus@sliepen.warande.net>
+
+	* configure.in: Don't build Spanish translation.  
+
+2001-06-29 12:27  Guus Sliepen <guus@sliepen.warande.net>
+
+	* ABOUT-NLS, Makefile.am: ABOUT-NLS is created by autogen.sh.  
+
+2001-06-29 12:23  Guus Sliepen <guus@sliepen.warande.net>
+
+	* po/es.po: Spanish translation removed. Nobody maintains it, and
+	it is severely outdated.  
+
+2001-06-27 00:00  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* m4/tuntap.m4: Small fix to make it compile again 
+
+2001-06-21 20:28  Guus Sliepen <guus@sliepen.warande.net>
+
+	* m4/tuntap.m4: Reinstated search for if_tun.h in kernel source
+	tree, because apparently /usr/include/linux does not always have the
+	same contents as the include files from the currently running
+	kernel.  
+
+2001-06-21 18:37  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/net.c: Remove #warnings I used for debugging stuff.  
+
+2001-06-21 18:37  Guus Sliepen <guus@sliepen.warande.net>
+
+	* m4/openssl.m4: Check for and add -ldl.  
+
+2001-06-21 18:16  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: net.c, route.c: 
+	- Solaris compile fixes 
+	- Set mymac to broadcast MAC so that ifconfig hw ether <...> is
+	  really not needed anymore.  
+	- Forwarding of indirect packets when in switch mode (because the
+	  kernel will not do it for us then).  
+
+2001-06-20 23:32  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* Makefile.am: Don't include the debian/ dir in a release 
+
+2001-06-09 12:00  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/protocol.c: Woops - big bug in send_key_changed fixed.  
+
+2001-06-08 20:02  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: net.c, net.h, protocol.c: Only reset seconds_till_retry
+	when we activate the outgoing connection.  
+
+2001-06-07 09:51  Guus Sliepen <guus@sliepen.warande.net>
+
+	* m4/openssl.m4: Changed drastically because it didn't work
+	correctly: 
+	- Don't cache the --with-openssl-* option arguments 
+	- Only search for openssl/*.h, the openssl include files include
+	  other files only from an openssl/ directory too 
+	- Set CPPFLAGS before AC_CHECK_HEADERS 
+
+2001-06-07 09:48  Guus Sliepen <guus@sliepen.warande.net>
+
+	* configure.in: Save configure cache more often.  
+
+2001-06-06 21:12  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/route.c: Fixes to make switching work between hosts that have
+	no meta-connection.  
+
+2001-06-06 21:11  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/subnet.c: Log and warn about duplicate subnet_add()'s for the
+	same subnet.  
+
+2001-06-05 21:45  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/net.c: Add missing? counting of total_socket_in.  
+
+2001-06-05 21:39  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: conf.c, conf.h, net.c: You can now put an option "Mode" in
+	tinc.conf, and choose from: 
+	
+	- Mode = router (default, work like tinc has always worked) 
+	- Mode = switch (work like a switch) 
+	- Mode = hub    (work like a hub, broadcasting everything) 
+
+2001-06-05 20:07  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/subnet.c: Fix bug where lookup_subnet_ipv4() could go into an
+	infinite loop.  
+
+2001-06-05 18:31  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/route.c: 
+	- This oneliner removes the need for ifconfig tap? hw ether
+	fe:fd:0:0:0:0 
+
+2001-06-05 18:15  Guus Sliepen <guus@sliepen.warande.net>
+
+	* po/nl.po: Updated dutch translation.  
+
+2001-06-05 18:13  Guus Sliepen <guus@sliepen.warande.net>
+
+	* Makefile.am, configure.in: Changed some stuff to allow correct
+	generation of po/Makefile after a make cvs-clean.  
+
+2001-06-05 18:09  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: connection.c, net.c, net.h, protocol.c, route.c, subnet.c,
+	tincd.c: 
+	- tinc can now act as a switch or a hub too (as opposed to a router
+	only) 
+	- cleaner initialisation of "UNKNOWN" and "MYSELF" names 
+
+2001-06-04 13:14  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/route.c: Added proxy-arp support. No more ifconfig -arp
+	needed. Works like a charm under FreeBSD now :).  
+
+2001-06-01 10:02  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/subnet.c: Fix subnet_lookup() for overlapping subnets. Needs
+	rethinking.  
+
+2001-05-28 10:56  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: net.c, tincd.c: Make sure Solaris is happy too.  
+
+2001-05-28 10:21  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: net.c, route.c: Small fixes to allow correct compilation
+	under FreeBSD (tested with 4.3) 
+
+2001-05-26 11:35  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* Makefile.am: Don't distribute autogen.sh in a release 
+
+2001-05-26 11:35  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* configure.in: Changed version number to 1.0-cvs 
+
+2001-05-26 11:34  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* Makefile.am: New make target: `make release' 
+
+2001-05-25 20:57  Guus Sliepen <guus@sliepen.warande.net>
+
+	* doc/: SECURITY, sample-config/tinc-down, sample-config/tinc-up,
+	sample-config/hosts/alpha, sample-config/hosts/alpha.key,
+	sample-config/hosts/beta, sample-config/hosts/beta.key: Fix sample
+	configuration to show keys in PEM format and correct tapdevice.  
+
+2001-05-25 15:24  Guus Sliepen <guus@sliepen.warande.net>
+
+	* TODO: Documents are merged. Now we only need to check the ports
+	and the TCPonly and IndirectData options.  
+
+2001-05-25 14:45  Guus Sliepen <guus@sliepen.warande.net>
+
+	* doc/tinc.texi: Merged PROTOCOL, NETWORK and SECURITY2 with the
+	texinfo manual.  
+
+2001-05-25 13:54  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: connection.h, meta.c, net.c, net.h, protocol.c, route.c: 
+	TCPonly now works (in a relatively clean way too).  
+
+2001-05-25 12:08  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/net.c: With recent kernels the tun device file is located in
+	/dev/net.  
+
+2001-05-25 12:06  Guus Sliepen <guus@sliepen.warande.net>
+
+	* doc/: tinc.conf.5, tinc.texi, tincd.8: Small corrections to the
+	manuals.  
+
+2001-05-25 10:36  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: meta.c, net.c, protocol.c: Small fixes: 
+	
+	- Fix compiler warnings (one was a real (but harmless) bug) 
+	- Don't send PING packets if there is UDP traffic 
+	- Correctly terminate strings containing salt for PING/PONG packets 
+
+2001-05-24 23:52  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/protocol.c: Only send key_changed if it was previously
+	requested.  
+
+2001-05-24 23:32  Guus Sliepen <guus@sliepen.warande.net>
+
+	* TODO: All features for 1.0 are implemented now, we just have to
+	check the FreeBSD and Solaris ports and merge some docs.  
+
+2001-05-24 23:30  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/protocol.h: Since this is incompatible with some earlier
+	versions, PROT_CURRENT is increased.  
+
+2001-05-24 23:29  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/protocol.c: Add randomness to PING/PONG packets to prevent
+	crypto attacks on quiet tunnels.  
+
+2001-05-24 22:40  Guus Sliepen <guus@sliepen.warande.net>
+
+	* doc/tinc.conf.5: Changed URL from kernelnotes.org to
+	linuxdoc.org.  
+
+2001-05-24 22:24  Guus Sliepen <guus@sliepen.warande.net>
+
+	* doc/tinc.texi: More revisions to the documentation: 
+	
+	- Removed cruft 
+	- Reordered some sections to make it more logical for the beginner 
+	- Added small examples and hints about configuration files 
+
+2001-05-19 17:50  Guus Sliepen <guus@sliepen.warande.net>
+
+	* doc/tinc.texi: 
+	- Make sure correct information is supplied for both old kernels
+	  (with ethertap) and for new kernels (with TUN/TAP driver).  
+	- Revised example configuration and made it conform to latest (CVS)
+	  version of tinc.  
+
+2001-05-07 21:08  Guus Sliepen <guus@sliepen.warande.net>
+
+	* ABOUT-NLS, src/net.c, src/net.h, src/netutl.c, src/protocol.c: 
+	- s/ip_t/ipv4_t/g 
+	- Add "salt" to the beginning of UDP packets. Replaces length field
+	  which is not useful anyway.  
+
+2001-05-04 20:45  Guus Sliepen <guus@sliepen.warande.net>
+
+	* TODO, src/net.c: Correctly cycle through ConnectTo variables.  
+
+2001-03-13 22:33  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/protocol.c: Check indirectdata option before forwarding
+	certain requests.  
+
+2001-03-13 22:32  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/net.c: Ignore alarm signals if we do not need to respond to
+	them.  
+
+2001-03-13 10:55  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/process.c: Fixed bug in setup_signals() that would make tinc
+	die when unexpected signals were caught.  
+
+2001-03-13 00:58  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/meta.c: Fixed a race condition triggered by receive_meta()
+	and the new authentication scheme.  
+
+2001-03-04 15:00  Guus Sliepen <guus@sliepen.warande.net>
+
+	* doc/NETWORKING: file NETWORKING was initially added on branch
+	CABAL.  
+
+2001-03-04 15:00  Guus Sliepen <guus@sliepen.warande.net>
+
+	* doc/NETWORKING: Added a description of what is going on in net.c
+	and route.c, and how packets flow through tinc.  
+
+2001-03-04 14:59  Guus Sliepen <guus@sliepen.warande.net>
+
+	* po/: POTFILES.in, es.po, nl.po: Updated translation.  
+
+2001-03-04 14:59  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: Makefile.am, connection.c, connection.h, net.c, net.h,
+	protocol.c, route.c, route.h: 
+	- route.c is now used to determine destination 
+	- flags are removed, since they were not used at all. Use options
+	instead.  
+	- indirectdata works now, tcponly almost...  
+	- made functions that don't return useful information void 
+
+2001-03-02 12:25  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/protocol.c: Added explaination of our key exchange using RSA
+	encryption.  
+
+2001-03-01 22:32  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: net.c, process.c, process.h, tincd.c: Various small fixes.  
+
+2001-02-27 17:50  Guus Sliepen <guus@sliepen.warande.net>
+
+	* lib/avl_tree.c: Removed compiler warning.  
+
+2001-02-27 17:37  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: conf.h, net.c, net.h, protocol.c, tincd.c: Removed lots of
+	compiler warnings.  
+
+2001-02-27 17:17  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/net.c: 
+	- Fixed Interface option (untested) 
+	- Removed error handling for non-critical socket options 
+	- Added TCP_NODELAY and IPTOS_LOWDELAY options for meta sockets.  
+
+2001-02-27 17:15  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* TODO: Authentication done 
+
+2001-02-27 16:33  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/net.c: Don't forget to reconnect if outgoing connection fails
+	during authentication.  
+
+2001-02-26 12:37  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/protocol.c: 
+	- Make sure METAKEY is smaller than the modulus of the RSA key 
+	- Get symmetric key from the least significant bytes of the RSA
+	message 
+
+2001-02-25 21:17  Guus Sliepen <guus@sliepen.warande.net>
+
+	* po/: POTFILES.in, es.po, nl.po: Added process.c to the translated
+	files.  
+
+2001-02-25 20:09  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: net.c, protocol.c, protocol.h: Implemented new
+	authentication scheme from doc/SECURITY2.  
+
+2001-02-25 17:34  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: net.c, protocol.c: Encrypt network packets in CBC mode
+	instead of CFB mode.  (This breaks compatibility with all previous
+	versions!) 
+
+2001-02-25 17:04  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/net.c: Copy packets before putting them in the queue.  
+
+2001-02-25 16:34  Guus Sliepen <guus@sliepen.warande.net>
+
+	* lib/list.c: Free node->data and node, not node->data twice.  
+
+2001-02-25 15:51  Guus Sliepen <guus@sliepen.warande.net>
+
+	* po/es.po, po/nl.po, src/tincd.c: Add missing \n.  
+
+2001-02-25 12:09  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: meta.c, protocol.c: Corrected check for errors after read()
+	calls.  
+
+2001-02-20 22:53  Wessel Dankers <wsl@nl.linux.org>
+
+	* lib/avl_tree.c: Important bugfix in avl_insert_before() and
+	avl_insert_after() 
+
+2001-02-18 03:13  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* m4/tuntap.m4: tinc_TUNTAP now substitutes the values outside the
+	AC_CACHE_CHECK block.  configure should now correctly set
+	HAVE_TUNTAP.  
+
+2001-02-13 10:54  Guus Sliepen <guus@sliepen.warande.net>
+
+	* doc/SECURITY2: Added description of the proposed new
+	authentication scheme.  
+
+2001-02-13 10:54  Guus Sliepen <guus@sliepen.warande.net>
+
+	* doc/SECURITY2: file SECURITY2 was initially added on branch
+	CABAL.  
+
+2001-02-11 12:55  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* doc/es/.cvsignore, lib/.cvsignore, redhat/.cvsignore: file
+	.cvsignore was initially added on branch CABAL.  
+
+2001-02-11 12:55  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* .cvsignore, doc/.cvsignore, doc/es/.cvsignore, lib/.cvsignore,
+	redhat/.cvsignore, src/.cvsignore: More files to ignore in CVS 
+
+2001-02-11 12:50  Guus Sliepen <guus@sliepen.warande.net>
+
+	* Makefile.am, autogen.sh, lib/Makefile.am, src/Makefile.am: 
+	- Updated CVS_CREATED to remove intl/ directory and some other 
+	  autogenerated files.  
+	- Checked if all INCLUDES/LIBS/etc directives inherit the global
+	variables.  
+
+2001-02-11 12:46  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/.cvsignore: Ignore file for src/ 
+
+2001-02-11 12:44  Guus Sliepen <guus@sliepen.warande.net>
+
+	* .cvsignore, doc/.cvsignore, m4/.cvsignore, po/.cvsignore: Added
+	.cvsignore files to get rid of warnings and prevent autogenerated 
+	files from being added accidentaly.  
+
+2001-02-11 12:44  Guus Sliepen <guus@sliepen.warande.net>
+
+	* .cvsignore, doc/.cvsignore, m4/.cvsignore, po/.cvsignore,
+	src/.cvsignore: file .cvsignore was initially added on branch
+	CABAL.  
+
+2001-02-06 11:42  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/protocol.c: Removed another local definition of the variable
+	"errno" 
+
+2001-02-06 11:13  Guus Sliepen <guus@sliepen.warande.net>
+
+	* po/: es.po, nl.po: Updated dutch translation.  
+
+2001-02-06 11:13  Guus Sliepen <guus@sliepen.warande.net>
+
+	* lib/: avl_tree.c, avl_tree.h: Fix memory leak in avl_insert() if
+	item was already inserted.  
+
+2001-02-06 11:12  Guus Sliepen <guus@sliepen.warande.net>
+
+	* lib/dropin.c, src/protocol.c: FreeBSD compile fixes (thanks to
+	XeF4) 
+
+2001-01-18 14:01  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* doc/: Makefile.am, Makefile.maint: Distribute the sample config
+	as a .tar.gz 
+
+2001-01-18 14:00  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* doc/tinc.texi: Fixed some errors 
+
+2001-01-17 02:48  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* po/: es.po, nl.po: Get the PO files up to date with the current
+	source 
+
+2001-01-17 02:40  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* doc/tinc.texi: Merged documentation with various updates I had
+	lying around 
+
+2001-01-17 02:34  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* NEWS: Second draft of the release notes 
+
+2001-01-17 02:31  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* configure.in: Change version to 1.0pre4 
+
+2001-01-17 02:30  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/conf.c: Fix error reporting of read_config 
+
+2001-01-13 17:36  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: conf.c, conf.h, net.c, tincd.c: 
+	- Allow ASN1 style keys to be in the config files.  
+	  Note: tinc ignores private key in the main config file, tinc.conf, 
+	  because it should really be in a separate file.  
+	- When generating new keys, check if name is known and by default
+	  append the public key to the host configuration file (otherwise
+	rsa_key.pub).  
+
+2001-01-13 15:38  Guus Sliepen <guus@sliepen.warande.net>
+
+	* doc/sample-config/hosts/alpha: file alpha was initially added on
+	branch CABAL.  
+
+2001-01-13 15:38  Guus Sliepen <guus@sliepen.warande.net>
+
+	* doc/sample-config/hosts/alpha.key: file alpha.key was initially
+	added on branch CABAL.  
+
+2001-01-13 15:38  Guus Sliepen <guus@sliepen.warande.net>
+
+	* doc/sample-config/hosts/beta: file beta was initially added on
+	branch CABAL.  
+
+2001-01-13 15:38  Guus Sliepen <guus@sliepen.warande.net>
+
+	* doc/sample-config/hosts/beta.key: file beta.key was initially
+	added on branch CABAL.  
+
+2001-01-13 15:38  Guus Sliepen <guus@sliepen.warande.net>
+
+	* doc/sample-config/tinc-down: file tinc-down was initially added
+	on branch CABAL.  
+
+2001-01-13 15:38  Guus Sliepen <guus@sliepen.warande.net>
+
+	* doc/sample-config/tinc.conf: file tinc.conf was initially added
+	on branch CABAL.  
+
+2001-01-13 15:38  Guus Sliepen <guus@sliepen.warande.net>
+
+	* doc/sample-config/rsa_key.priv: file rsa_key.priv was initially
+	added on branch CABAL.  
+
+2001-01-13 15:38  Guus Sliepen <guus@sliepen.warande.net>
+
+	* doc/sample-config/tinc-up: file tinc-up was initially added on
+	branch CABAL.  
+
+2001-01-13 15:38  Guus Sliepen <guus@sliepen.warande.net>
+
+	* doc/: tinc.conf.sample, sample-config/rsa_key.priv,
+	sample-config/tinc-down, sample-config/tinc-up,
+	sample-config/tinc.conf, sample-config/hosts/alpha,
+	sample-config/hosts/alpha.key, sample-config/hosts/beta,
+	sample-config/hosts/beta.key: Added sample configuration directory.  
+
+2001-01-11 12:19  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/net.c: 
+	- Only send out DEL_HOSTs for hosts with a meta connection 
+
+2001-01-08 22:32  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/subnet.h: 
+	- Cleaned up subnet_t 
+
+2001-01-08 22:32  Guus Sliepen <guus@sliepen.warande.net>
+
+	* lib/avl_tree.c: 
+	- Sign was wrong in search_closest_smaller/greater 
+
+2001-01-08 21:35  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/protocol.c: 
+	- Squashed another nasty bug.  
+
+2001-01-07 21:19  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: connection.h, net.c, net.h, protocol.c, protocol.h: 
+	- Added indirectdata and tcponly functionality.  
+
+2001-01-07 21:19  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/subnet.c: 
+	- Fixed IPv6 subnet lookup routine.  
+
+2001-01-07 18:08  Guus Sliepen <guus@sliepen.warande.net>
+
+	* README, THANKS, TODO, doc/tinc.texi, lib/avl_tree.c,
+	lib/avl_tree.h, lib/dropin.c, lib/dropin.h, lib/list.c, lib/list.h,
+	lib/utils.c, lib/utils.h, po/es.po, po/nl.po, src/conf.c,
+	src/conf.h, src/connection.c, src/connection.h, src/meta.c,
+	src/meta.h, src/net.c, src/net.h, src/netutl.c, src/netutl.h,
+	src/process.c, src/process.h, src/protocol.c, src/protocol.h,
+	src/route.c, src/route.h, src/subnet.c, src/subnet.h, src/tincd.c: 
+	- It's 2001, all copyright notices are updated.  
+
+2001-01-07 18:08  Guus Sliepen <guus@sliepen.warande.net>
+
+	* doc/: PROTOCOL, SECURITY: 
+	- Description of protocol and authentication updated.  
+
+2001-01-07 16:27  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/route.h: file route.h was initially added on branch CABAL.  
+
+2001-01-07 16:27  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/route.h: 
+	- Added header file for route.c. The routing routines in it are not
+	  used yet, but have a look at the source for the ideas behind it.  
+
+2001-01-07 16:25  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: connection.c, connection.h, net.c, net.h, netutl.c,
+	process.c, process.h, protocol.c, route.c: 
+	- Reinstated a queue for outgoing packets.  
+
+2001-01-07 16:24  Guus Sliepen <guus@sliepen.warande.net>
+
+	* lib/: list.c, list.h: 
+	- Changed list routines to give it the same look'n'feel as the rbl
+	  and avl tree library.  
+
+2001-01-06 21:43  Guus Sliepen <guus@sliepen.warande.net>
+
+	* doc/tinc.conf.5: 
+	- Typo.  
+
+2001-01-06 21:02  Guus Sliepen <guus@sliepen.warande.net>
+
+	* doc/tinc.texi: 
+	- Updated texinfo manual.  
+
+2001-01-06 19:44  Guus Sliepen <guus@sliepen.warande.net>
+
+	* doc/: tinc.conf.5, tincd.8: 
+	- Updated manual pages.  
+
+2001-01-06 19:21  Guus Sliepen <guus@sliepen.warande.net>
+
+	* lib/: avl_tree.c, avl_tree.h: 
+	- Changed license of AVL tree library to GPL.  
+
+2001-01-06 19:03  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: conf.c, protocol.c, tincd.c: 
+	- Check and follow symlinks in is_safe_path 
+	- By default write keys to tinc config directory 
+	- Small fix in protocol.c 
+
+2001-01-06 17:51  Guus Sliepen <guus@sliepen.warande.net>
+
+	* po/: es.po, nl.po: 
+	- Updated dutch translation.  
+
+2001-01-06 00:53  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: conf.c, conf.h, connection.c, connection.h, meta.c, net.c,
+	process.c, protocol.c, route.c, subnet.c, subnet.h, tincd.c: 
+	- Let user choose whether keys are in the config files or separate 
+	- Use AVL trees instead of RBL trees 
+	- Fixed a lot of annoying subtle bugs! Thanks to gdb...  
+
+2001-01-06 00:51  Guus Sliepen <guus@sliepen.warande.net>
+
+	* lib/: utils.c, utils.h: 
+	- Doubled size of trace buffer for easier debugging.  
+
+2001-01-06 00:50  Guus Sliepen <guus@sliepen.warande.net>
+
+	* lib/avl_tree.h: file avl_tree.h was initially added on branch
+	CABAL.  
+
+2001-01-06 00:50  Guus Sliepen <guus@sliepen.warande.net>
+
+	* lib/avl_tree.c: file avl_tree.c was initially added on branch
+	CABAL.  
+
+2001-01-06 00:50  Guus Sliepen <guus@sliepen.warande.net>
+
+	* lib/: Makefile.am, avl_tree.c, avl_tree.h: 
+	- AVL tree routines: faster than RBL, and also more stable.  
+
+2000-12-22 22:34  Guus Sliepen <guus@sliepen.warande.net>
+
+	* acconfig.h, configure.in, m4/gnuscanf.m4, src/conf.c, src/conf.h,
+	src/net.c, src/net.h, src/protocol.c: 
+	- Don't even think about using sscanf with %as anymore 
+	- Allow keys to be inside the config files or in a seperate file 
+	- Small fixes 
+
+2000-12-22 18:15  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/Makefile.am: Added lint target, requires lclint.  
+
+2000-12-22 18:10  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* po/POTFILES.in: Forget router.c 
+
+2000-12-22 17:59  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* Makefile.am: Include autogen.sh (needed for the Debian package).  
+
+2000-12-06 14:33  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/: conf.c, conf.h: Re-introduced MyVirtualIP and VpnMask, as
+	dummy options.  
+
+2000-12-05 09:59  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/: net.c, protocol.c: Tiny bits of code beautifying 
+
+2000-12-05 09:56  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/conf.c: Oops.  I did some VERY wrong things with readline(). 
+	Fixed now.  
+
+2000-12-05 09:54  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* doc/tinc.texi: Massive long awaited documentation update.  It's
+	not finished yet, most notably the example configuration is still
+	old.  
+
+2000-12-03 13:23  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/tincd.c: Option -d accepts an argument to set the debug level
+	immediately.  
+
+2000-12-03 13:22  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/conf.c: Sort configuration directives 
+
+2000-12-03 13:21  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* TODO: Added documentation merger 
+
+2000-12-01 14:46  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* Makefile.am: Include COPYING.README in the distribution.  
+
+2000-12-01 14:45  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* COPYING.README: Stated that distributing executables linked with
+	OpenSSL is permitted provided that all other requirements of the GPL
+	are complied with.  
+
+2000-12-01 14:45  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* COPYING.README: file COPYING.README was initially added on branch
+	CABAL.  
+
+2000-12-01 13:38  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/conf.c: Use buffer instead of line in read_config_file(),
+	line may be assigned NULL, so buffer always holds the pointer to the
+	allocated space.  
+
+2000-12-01 13:36  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/conf.c: readline() accepts two extra parameters, buf and
+	buflen, to avoid mallocing and freeing for every line that is read.  
+
+2000-12-01 00:44  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* TODO: Tagged `Storing private key in separate file' as done.  
+
+2000-12-01 00:39  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* doc/tinc.texi: All full stops have two spaces after them.  (Silly
+	commit, I know.) 
+
+2000-12-01 00:18  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/: net.c, net.h, protocol.c: New function
+	read_rsa_public_key(); In net.c/setup_myself deleted old code to
+	read the public key (which is now implicitly read in together with
+	the private key).  
+
+2000-11-30 23:48  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/net.c: Avoid printing duplicate messages from read_rsa_keys 
+
+2000-11-30 23:33  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/net.c: Better error checking when reading the RSA private
+	key.  
+
+2000-11-30 23:32  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/conf.c: In readline(): initialise the line to zero length; In
+	read_config_file(): Test for EOF, and print the variable name that 
+	caused an error.  
+
+2000-11-30 22:11  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/conf.c: The file is safe if it doesn't exist.  
+
+2000-11-30 21:08  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/net.c: Read the PEM file pointed to by the configuration
+	directive PrivateKey.  This means thatt he meaning of this variable
+	has changed, it no longer should contain the private key directly.  
+	
+	WARNING: This code is untested.  
+
+2000-11-30 01:24  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/conf.c: Implemented is_safe_path, and extended
+	ask_and_safe_open.  
+	
+	is_safe_path needs more work before it is useable.  
+
+2000-11-29 16:22  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* po/nl.po: Updated Dutch translation 
+
+2000-11-29 15:30  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/conf.c: Also free the pointer returned by readline().  
+
+2000-11-29 15:27  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/conf.c: Use readline() in read_config_file() instead of
+	fgets.  
+
+2000-11-29 15:24  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/: conf.c, conf.h, tincd.c: Implemented a readline() function
+	that will read an entire line into a dynamically allocated buffer; 
+	
+	Ask for a file name in ask_and_safe_open().  
+
+2000-11-29 15:23  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* lib/: xalloc.h, xmalloc.c: xstrdup now takes a const pointer as
+	an argument.  
+
+2000-11-29 02:37  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* m4/gnuscanf.m4: file gnuscanf.m4 was initially added on branch
+	CABAL.  
+
+2000-11-29 02:37  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* acconfig.h, configure.in, system.h, m4/gnuscanf.m4: Added a check
+	for a scanf that knows about %as.  
+
+2000-11-29 01:33  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* configure.in, lib/dropin.c, lib/dropin.h: Check for
+	get_current_dir_name.  There is a replacement function in dropin.c.  
+
+2000-11-29 00:23  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* lib/dropin.c: file dropin.c was initially added on branch CABAL.  
+
+2000-11-29 00:23  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* lib/: Makefile.am, daemon.c, daemon.h, dropin.c, dropin.h: 
+	dropin.c/h contain a set of drop-in replacements for non-standard C 
+	library functions (read: GNU extensions).  
+
+2000-11-29 00:23  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* lib/dropin.h: file dropin.h was initially added on branch CABAL.  
+
+2000-11-29 00:12  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* m4/openssl.m4, src/conf.c, src/tincd.c: Save RSA public and
+	private keys to a separate file, instead of wanting to copy them
+	into a configuration file.  
+
+2000-11-28 09:59  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/process.c: Use sigaction to set signal handlers, the previous
+	commit (1.1.2.16) already contained a large portion of what should
+	have gone in this one.  
+
+2000-11-27 21:52  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* TODO: Sort items to either 1.0 or future release goals.  
+
+2000-11-26 23:46  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* configure.in, system.h: Check for the function strsignal, and
+	define it to "" if it is not available.  
+
+2000-11-26 23:42  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/process.c: Give an error message if daemon() failed.  
+
+2000-11-26 23:32  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* po/es.po: Updated Spanish translation, provided by Enrique
+	Zanardi.  
+
+2000-11-25 14:33  Guus Sliepen <guus@sliepen.warande.net>
+
+	* acconfig.h, autogen.sh, configure.in, src/net.c, src/process.c,
+	src/protocol.c: 
+	- Use only one socket for all UDP traffic (for compatibility) 
+	- Write pidfile again after detaching 
+	- Check OS (for handling FreeBSD/Solaris tun/tap stuff) 
+
+2000-11-25 00:30  Guus Sliepen <guus@sliepen.warande.net>
+
+	* lib/: daemon.c, daemon.h: 
+	- Added daemon() replacement.  
+
+2000-11-25 00:30  Guus Sliepen <guus@sliepen.warande.net>
+
+	* lib/daemon.c: file daemon.c was initially added on branch CABAL.  
+
+2000-11-25 00:30  Guus Sliepen <guus@sliepen.warande.net>
+
+	* lib/daemon.h: file daemon.h was initially added on branch CABAL.  
+
+2000-11-25 00:14  Guus Sliepen <guus@sliepen.warande.net>
+
+	* THANKS: 
+	- Added Armijn to the list 
+
+2000-11-25 00:12  Guus Sliepen <guus@sliepen.warande.net>
+
+	* configure.in, lib/Makefile.am, lib/rbl.c, lib/rbl.h,
+	src/connection.c, src/net.c, src/process.c, src/process.h,
+	src/subnet.c, src/tincd.c: Another big & bad commit: 
+	- Added some extra search functions to rbl routines 
+	- Fix subnet_lookup() 
+	- Reorder some syslog messages to make more sense 
+	- daemon() is back 
+	- Don't let scripts execute in parallel (gives race conditions, and 
+	  anyway something MIGHT just be configured which is necessary for
+	  further execution of tinc itself) 
+	- Accidently merged check_child() with execute_script().  
+	- Small fixes 
+
+2000-11-24 15:13  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* doc/tinc.texi: Explain how to tell configure where OpenSSL lives.  
+
+2000-11-24 15:13  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* lib/pidfile.c: Set errno to 0 before trying to kill the other
+	process.  
+
+2000-11-24 15:12  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* m4/openssl.m4: Alter CFLAGS, somehow INCLUDES doesn't propagate
+	properly.  Still doesn't work exactly like it should, but getting
+	there.  
+
+2000-11-24 15:00  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* cvsusers: file cvsusers was initially added on branch CABAL.  
+
+2000-11-24 15:00  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* Makefile.am, cvsusers: Use cvs2cl instead of rcs2log to generate
+	the ChangeLog.  
+
+2000-11-24 14:33  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* Makefile.am: Do not attempt to retreive ChangeLog information
+	only from the CABAL tag, it doesn't work anyway.  
+
+2000-11-24 14:32  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* configure.in: Do not check for the daemon() system call 
+
+2000-11-24 13:44  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/process.c: Do not use the C library's daemon() call.  
+
+2000-11-23 10:30  Guus Sliepen <guus@sliepen.warande.net>
+
+	* autogen.sh, configure.in: 
+	- Don't link with -ldl anymore 
+	- Let's not use bash' built-in pwd function anymore... it does not
+	  follow symlinks.  
+
+2000-11-23 00:09  Guus Sliepen <guus@sliepen.warande.net>
+
+	* lib/list.c: 
+	- #include <stdlib.h> instead of <malloc.h> 
+
+2000-11-22 23:18  Guus Sliepen <guus@sliepen.warande.net>
+
+	* lib/list.c, src/connection.c, src/connection.h, src/process.c,
+	src/process.h: 
+	- Fixed all (except 2) compiler warnings gcc -Wall gave.  
+
+2000-11-22 23:05  Guus Sliepen <guus@sliepen.warande.net>
+
+	* configure.in, lib/list.c, src/process.c, src/protocol.c: 
+	- More porting to FreeBSD and Solaris.  
+
+2000-11-22 21:25  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/protocol.c: 
+	- Work with the correct key buffer in ans_key_h 
+
+2000-11-22 20:55  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: protocol.c, protocol.h: 
+	- No more %as.  
+
+2000-11-22 20:14  Guus Sliepen <guus@sliepen.warande.net>
+
+	* lib/rbl.c, src/process.c, src/tincd.c: 
+	- Write pidfile AFTER detaching...  
+	- Minor cleanups 
+
+2000-11-22 19:54  Guus Sliepen <guus@sliepen.warande.net>
+
+	* lib/rbl.c, src/connection.c, src/netutl.c, src/protocol.c: 
+	- Cleaned up and checked for some more NULL pointers in rbl.c 
+	- Two connection lists: one for incoming connections, sorted on
+	  ip/port, one for connections whose identity we know, sorted on id
+	ofcourse...  
+
+2000-11-22 18:49  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/process.c: Declare fd.  
+
+2000-11-22 18:48  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/process.c: Add more checks to ensure that filedescriptors are
+	right in _execute_script().  
+
+2000-11-22 17:19  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/: Makefile.am, tincd.c: Honor the --localstatedir option to
+	configure, instead of hardcoded /var.  
+
+2000-11-21 10:13  Guus Sliepen <guus@sliepen.warande.net>
+
+	* lib/: rbl.c, xalloc.h, xmalloc.c: 
+	- Check for NULL tree->delete callback 
+	- Add xstrdup() function 
+
+2000-11-21 00:29  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: net.c, process.c: 
+	- More fixes.  
+
+2000-11-20 23:13  Guus Sliepen <guus@sliepen.warande.net>
+
+	* lib/list.c, src/connection.c, src/connection.h, src/net.c,
+	src/process.c, src/process.h, src/subnet.c, src/tincd.c: 
+	- Various small fixes.  
+
+2000-11-20 20:56  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* configure.in: Get rid of all libtool references at once.  libtool
+	was only used by libblowfish, which was superseded by openssl.  
+
+2000-11-20 20:41  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: connection.c, net.c, subnet.c, subnet.h: 
+	- Proper initialization of rbltree structures.  
+
+2000-11-20 20:12  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/connection.h: file connection.h was initially added on branch
+	CABAL.  
+
+2000-11-20 20:12  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/connection.c: file connection.c was initially added on branch
+	CABAL.  
+
+2000-11-20 20:12  Guus Sliepen <guus@sliepen.warande.net>
+
+	* lib/Makefile.am, lib/rbl.c, lib/rbl.h, po/POTFILES.in,
+	src/Makefile.am, src/conf.c, src/connection.c, src/connection.h,
+	src/connlist.c, src/connlist.h, src/meta.c, src/meta.h, src/net.c,
+	src/net.h, src/process.c, src/protocol.c, src/protocol.h,
+	src/route.c, src/subnet.c, src/subnet.h: 
+	- Integrate rbl trees into tinc.  
+
+2000-11-20 19:06  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/tincd.c: Also include process.h 
+
+2000-11-20 19:05  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* configure.in: More function and header checks 
+
+2000-11-20 19:02  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* NEWS: Added this release 
+
+2000-11-19 23:12  Guus Sliepen <guus@sliepen.warande.net>
+
+	* lib/: rbl.c, rbl.h: 
+	- Small fixes 
+
+2000-11-19 12:05  Guus Sliepen <guus@sliepen.warande.net>
+
+	* lib/: rbl.c, rbl.h: 
+	- Deletion also works now.  
+
+2000-11-19 03:04  Guus Sliepen <guus@sliepen.warande.net>
+
+	* lib/: rbl.c, rbl.h: 
+	- Fixed a lot of small things. Tested everything except deletions.  
+
+2000-11-19 00:22  Guus Sliepen <guus@sliepen.warande.net>
+
+	* lib/rbl.c: 
+	- Fix tree head/tail upon insertion 
+
+2000-11-19 00:21  Guus Sliepen <guus@sliepen.warande.net>
+
+	* lib/: rbl.c, rbl.h: 
+	- Implemented deletions 
+	- Added rbl_foreach() function 
+
+2000-11-18 19:14  Guus Sliepen <guus@sliepen.warande.net>
+
+	* lib/: rbl.c, rbl.h: 
+	- Fixed searching 
+	- Insertion implemented 
+
+2000-11-17 11:03  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: Makefile.am, process.c: 
+	- Removed stray @INCLUDE@ (how did that get there?) 
+	- Use 0 instead of FALSE 
+
+2000-11-17 01:56  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/process.c: 
+	- Simplified do_detach 
+
+2000-11-16 23:13  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* lib/: list.c, list.h, xalloc.h: Use proper prototypes.  
+
+2000-11-16 23:12  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/: process.c, process.h, tincd.c: Move more functions from
+	tincd.c into process.c.  
+
+2000-11-16 23:11  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/net.c: Delete struct ifr 
+
+2000-11-16 19:06  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* lib/xmalloc.c: New function: xmalloc_and_zero, which initialises
+	the allocated memory to all zeroes.  
+
+2000-11-16 18:54  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/process.c: file process.c was initially added on branch
+	CABAL.  
+
+2000-11-16 18:54  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/process.h: file process.h was initially added on branch
+	CABAL.  
+
+2000-11-16 18:54  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/: Makefile.am, net.c, process.c, process.h, tincd.c: Move all
+	process-related functions into process.c.  
+
+2000-11-16 10:18  Guus Sliepen <guus@sliepen.warande.net>
+
+	* lib/rbl.c: file rbl.c was initially added on branch CABAL.  
+
+2000-11-16 10:18  Guus Sliepen <guus@sliepen.warande.net>
+
+	* lib/rbl.h: file rbl.h was initially added on branch CABAL.  
+
+2000-11-16 10:18  Guus Sliepen <guus@sliepen.warande.net>
+
+	* lib/: rbl.c, rbl.h: 
+	- Added balanced tree management stuff as well. (It is not finished
+	yet.) 
+
+2000-11-15 23:07  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/net.c: Keep a list of running children, and in each loop in
+	main_loop(), check if one has exited.  
+
+2000-11-15 23:04  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* lib/: Makefile.am, list.c, list.h: List management and
+	manipulation routines.  
+
+2000-11-15 14:33  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: Makefile.am, meta.c, net.c, protocol.c: Porting to FreeBSD: 
+	- Reorganized and added some #includes 
+
+2000-11-15 02:28  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/net.c: Let the output from an executed script in
+	execute_script() go to syslog, with proper error detection.  
+
+2000-11-15 02:06  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/: connlist.h, meta.c, net.c, protocol.c, tincd.c: Use the
+	HAVE_OPENSSL_xxx_H defined from m4/openssl.m4 during configure.  
+
+2000-11-15 02:02  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* m4/openssl.m4: Also check for sha.h.  
+
+2000-11-15 01:57  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* m4/openssl.m4: Also check for rand.h and err.h.  If any of these
+	files does not exist, try the next alternative path.  
+
+2000-11-15 00:18  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* m4/tuntap.m4: Get rid of the annoying empty line 
+
+2000-11-15 00:02  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* m4/openssl.m4: Oops, small error.  
+
+2000-11-14 23:57  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* m4/openssl.m4: Better checks for OpenSSL.  I think it can now
+	detect almost all conceivable installations.  
+
+2000-11-13 23:29  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* configure.in: Identify version as 1.0pre4-cvs 
+
+2000-11-13 23:01  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* m4/openssl.m4: file openssl.m4 was initially added on branch
+	CABAL.  
+
+2000-11-13 23:01  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* configure.in, m4/openssl.m4: Add a check for openssl that accepts
+	explicit file locations.  
+
+2000-11-09 22:33  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/netutl.h: Add prototype for destroy_queue 
+
+2000-11-09 22:29  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* doc/tinc.texi: Updates, updates 
+
+2000-11-09 21:42  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* README: Wrapped text to 70 (72?) columns for easy reading 
+
+2000-11-09 21:41  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* NEWS: Final release notes added, also edited release notes for
+	1.0pre2 to what the announcement on the mailing list looked like.  
+
+2000-11-08 21:52  Guus Sliepen <guus@sliepen.warande.net>
+
+	* acconfig.h, configure.in, lib/utils.c, lib/utils.h, src/tincd.c: 
+	- Make checkpoint tracing a compile time option (off by default) 
+
+2000-11-08 19:05  Guus Sliepen <guus@sliepen.warande.net>
+
+	* THANKS: 
+	- Add Jamie :) 
+
+2000-11-08 18:56  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/net.c: 
+	- Applied Jamie Brigg's patch (close sockets after error) 
+
+2000-11-08 01:20  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/tincd.c: 
+	- Fixed --config 
+	- Show warning when both netname and config directory are given.  
+
+2000-11-08 01:10  Guus Sliepen <guus@sliepen.warande.net>
+
+	* configure.in, lib/utils.c, src/net.c, src/tincd.c: Porting to
+	SunOS 5.8: 
+	- More #includes Linux doesn't seem to need 
+	- Don't do unsetenv() on SunOS 
+	- Use a replacement asprintf() in case the OS doesn't support it It
+	now compiles properly under SunOS.  
+
+2000-11-07 23:33  Guus Sliepen <guus@sliepen.warande.net>
+
+	* configure.in, lib/pidfile.c: Porting to SunOS 5.8: 
+	- Include all header files necessary 
+	- Check for flock() function 
+
+2000-11-07 23:02  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/protocol.c: 
+	- Open UDP connection for all known hosts. Comments please.  
+
+2000-11-07 22:43  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/net.c: Changed execution of tinc-up: 
+	- Do not free() strings that have been putenv()d, see man page of
+	  the latter.  
+	- Do not set IFNAME anymore, it appears that the ioctl to get the
+	  name of the interface does not work at all. Since it is set to
+	  NETNAME in case of tun/tap and it is known beforehand in case of
+	  ethertap, there is no need for it anyway... (though it would've
+	simplified things).  
+
+2000-11-04 23:57  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: conf.c, conf.h, connlist.c, net.c, net.h, netutl.c,
+	protocol.c, route.c, subnet.c: 
+	- Prepended config_ to all configuration option names, because it
+	  confused everything (including myself).  
+	- Use connection oriented UDP sockets for both incoming and outgoing 
+	  packets.  
+
+2000-11-04 21:44  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: connlist.h, meta.c, net.c, protocol.c: 
+	- Simplified ping mechanism.  
+
+2000-11-04 18:09  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/net.c: 
+	- Check for packets that are looping back.  
+
+2000-11-04 18:04  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* po/nl.po: Updated Dutch translation 
+
+2000-11-04 18:01  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* po/POTFILES.in: Add route.c to the list of source files.  
+
+2000-11-04 17:54  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/protocol.c: 
+	- Forward keys in hex notation, not as binary data.  
+
+2000-11-04 17:39  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/protocol.c: 
+	- Don't forget to set packet cipher for added hosts.  
+
+2000-11-04 16:34  Guus Sliepen <guus@sliepen.warande.net>
+
+	* po/POTFILES.in, po/es.po, po/nl.po, src/connlist.c: 
+	- connlist.c added to translation 
+
+2000-11-04 16:32  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/net.c: In execute_script: 
+	- add an environment variable NETNAME.  
+	- chdir to the configuration directory before execing the script.  
+
+2000-11-04 16:17  Guus Sliepen <guus@sliepen.warande.net>
+
+	* doc/: Makefile.am, genauth.8: 
+	- Removed manpage for no longer existing genauth.  
+
+2000-11-04 15:52  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/net.c: 
+	- Resolve scriptname after fork() 
+
+2000-11-04 15:16  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/net.c: Use putenv() instead of clumsy do-it-yourself in
+	execute_script.  
+
+2000-11-04 14:25  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/net.c: Small change to the way the environment is copied.  
+
+2000-11-04 12:49  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: connlist.c, connlist.h, net.c, netutl.h, subnet.c: 
+	- Removed even more warnings.  
+
+2000-11-04 11:37  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/net.c: 
+	- Removed unused MAC strip/add functions.  
+
+2000-11-03 23:35  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/: conf.c, connlist.c, connlist.h, protocol.c, protocol.h,
+	subnet.c: Warnings removal pass: always include config.h first; add
+	a few prototypes in the header files.  
+	
+	This also fixes a few lint errors/warnings.  
+
+2000-11-03 23:33  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/net.c: Run the scripts tinc-up and tinc-down from a separate
+	function, which sets the environment as it should be and checks for
+	errors.  
+
+2000-11-03 23:31  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/tincd.c: Save the environment on startup.  
+
+2000-11-02 23:05  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/net.c, po/nl.po: Changed a few messages wrt. system calls;
+	updated and changed the Dutch translation a bit.  
+
+2000-11-02 22:43  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* AUTHORS: Mention fileutils, add a pointer to THANKS for more
+	details 
+
+2000-11-02 22:41  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* Makefile.am: Change wsl to Wessel's name and email address in the
+	ChangeLog creation 
+
+2000-11-02 22:40  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* NEWS: More exhaustive list of changes - perhaps it can be worded
+	differently? 
+
+2000-11-02 22:39  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* THANKS: Changed `I' to `We' - small change, lots of difference :) 
+
+2000-11-02 22:38  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* configure.in: Only check for linux/if_tun.h once 
+
+2000-11-02 22:34  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* doc/tinc.texi: Added a perl example to turn an IP address into a
+	MAC address.  
+
+2000-11-02 22:26  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/Makefile.am: Do not include $(top_srcdir)/cipher, it does no
+	longer exist.  
+
+2000-10-31 17:10  Guus Sliepen <guus@sliepen.warande.net>
+
+	* NEWS, README, TODO: 
+	- Update.  
+
+2000-10-30 11:19  Guus Sliepen <guus@sliepen.warande.net>
+
+	* doc/tinc.conf.5, doc/tincd.8, src/tincd.c: 
+	- Fixed some spelling mistakes and terminology here and there.  
+
+2000-10-30 01:22  Guus Sliepen <guus@sliepen.warande.net>
+
+	* doc/tinc.conf.5, doc/tincd.8, po/es.po, po/nl.po, src/net.c,
+	src/tincd.c: 
+	- Small cleanups 
+	- Updated dutch translation 
+	- Updated man pages 
+
+2000-10-29 23:55  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: connlist.h, meta.c, protocol.c, protocol.h, tincd.c: 
+	- Finishing touch: encrypt the meta connections 
+
+2000-10-29 23:10  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: connlist.h, net.c, protocol.c, tincd.c: 
+	- Use CFB mode for encrypting packets: it works and we don't need
+	padding.  
+
+2000-10-29 11:39  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: net.c, protocol.c: 
+	- Small fixes 
+	- Do proper key exchange 
+	- Encrypt packets - it works, but there is something wrong with the
+	  MAC header after decryption...  
+
+2000-10-29 10:19  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: encr.c, encr.h, net.c, net.h, netutl.c, protocol.c,
+	tincd.c: 
+	- Removed old encr stuff 
+
+2000-10-29 03:07  Guus Sliepen <guus@sliepen.warande.net>
+
+	* po/es.po, po/nl.po, src/connlist.c, src/net.c, src/tincd.c: 
+	- Updated dutch translation.  
+	- Shutdown properly.  
+
+2000-10-29 02:27  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: connlist.h, net.h: 
+	- Moved connlist stuff to the proper header file.  
+
+2000-10-29 02:08  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/protocol.c: 
+	- Enforce correct order of authentication requests 
+
+2000-10-29 02:46  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/net.c: 
+	- Hit people who can't figure out subnet address/mask pairs with a 
+	  (clue)bat.  
+
+2000-10-29 02:24  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: conf.c, conf.h, protocol.c: 
+	- Fixed ans_key_h 
+	- Removed tapsubnet configuration option.  
+
+2000-10-29 02:02  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: conf.c, connlist.c, connlist.h, meta.c, net.c, protocol.c,
+	subnet.c, tincd.c: 
+	- Very big cleanup.  
+
+2000-10-28 23:52  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/net.c: 
+	- Override destination ethernet address on incoming packets with 
+	  FE:FD:00:00:00:00 
+
+2000-10-28 23:25  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: net.c, net.h: 
+	- Fixed offsets when reading/writing from/to tap device 
+
+2000-10-28 23:05  Guus Sliepen <guus@sliepen.warande.net>
+
+	* lib/utils.c, lib/utils.h, src/net.c, src/protocol.c,
+	src/protocol.h, src/subnet.c, src/subnet.h, src/tincd.c: 
+	- Lots of small fixes 
+	- Exchange subnets on acknowledgement of connection 
+	- Do proper lookup when incoming packets from tap 
+	- off-by-a small number-error when reading/sending tap packets 
+
+2000-10-28 21:34  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* m4/tuntap.m4: Skip the check for Linux kernel sources 
+
+2000-10-28 18:41  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: connlist.c, connlist.h, net.c, subnet.c, subnet.h: 
+	- Updated subnet list handling. Subnets are added to two lists now,
+	  the owner's list and a global list. It is all fucked up but it
+	  probably works anyway, good enough for pre3 :).  
+
+2000-10-24 17:46  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: conf.c, conf.h, connlist.c, meta.c, net.c, netutl.c,
+	protocol.c, subnet.c: 
+	- Lots of little stuff modified 
+	- Succesfully reads in subnets from host config file now and adds
+	  them to the list.  
+
+2000-10-23 23:56  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* configure.in: Oops, echelon change committed to cabal... :) 
+
+2000-10-23 15:52  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/route.c: file route.c was initially added on branch CABAL.  
+
+2000-10-23 15:52  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/route.c: 
+	- route.c will contain the routing logic.  
+
+2000-10-22 15:47  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/conf.c: read_server_config: Check for result of
+	read_config_file.  
+
+2000-10-22 15:37  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/net.c: Include linux/sockios.h and net/if.h anyway,
+	regardless of the value of HAVE_TUNTAP.  
+
+2000-10-21 13:52  Guus Sliepen <guus@sliepen.warande.net>
+
+	* lib/utils.h, src/meta.c, src/net.c, src/protocol.c, src/tincd.c: 
+	- Fixed all debug levels.  
+	- Seed PRNG before generating a challenge 
+	- Strange thing in challenge decryption: it fails if first bit is
+	set!? 
+
+2000-10-20 21:46  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: Makefile.am, net.c, tincd.c: 
+	- Removed last reference to genauth from Makefile.am 
+	- Tinc spawns tinc-up and tinc-down scripts which can be used to
+	  configure the network device. The environment variable IFNAME is set
+	  to the name of the interface.  
+
+2000-10-20 18:49  Guus Sliepen <guus@sliepen.warande.net>
+
+	* doc/es/Makefile.am: file Makefile.am was initially added on
+	branch CABAL.  
+
+2000-10-20 18:49  Guus Sliepen <guus@sliepen.warande.net>
+
+	* doc/es/Makefile.am, po/POTFILES.in, po/es.po, po/nl.po,
+	src/Makefile.am, src/genauth.c, src/tincd.c: 
+	- Made Makefile.am stub for doc/es/ 
+	- Merged genauth into tincd 
+	- Updated dutch translation 
+
+2000-10-20 18:44  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* lib/: hash.c, hash.h, list.c, list.h: Generalized list and hash
+	handling functions 
+
+2000-10-20 18:43  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* lib/: xmalloc.c, xalloc.h: New function: xalloc_and_zero() 
+
+2000-10-20 18:42  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* lib/Makefile.am: Add all the new files to the sources list for
+	the utility library 
+
+2000-10-20 17:34  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: connlist.c, connlist.h, genauth.c, net.c, protocol.c,
+	protocol.h: 
+	- tinc now really does public/private key encryption! It even works,
+	whee! 
+
+2000-10-19 22:56  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* lib/: error.c, error.h: Generalized error handling functions 
+
+2000-10-19 22:39  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* configure.in: Add check for the syslog function 
+
+2000-10-19 16:42  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/genauth.c: 
+	- Seed the PRNG using /dev/random before generating the keys.  
+
+2000-10-18 22:12  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* AUTHORS, Makefile.am, README, THANKS, TODO, acconfig.h,
+	configure.in, doc/Makefile.am, doc/tinc.conf.5, doc/tinc.texi,
+	lib/Makefile.am, lib/utils.c, lib/utils.h, lib/xalloc.h,
+	lib/xmalloc.c, po/POTFILES.in, po/nl.po, redhat/tinc.spec,
+	src/Makefile.am, src/conf.c, src/conf.h, src/encr.c, src/encr.h,
+	src/genauth.c, src/net.c, src/net.h, src/netutl.c, src/netutl.h,
+	src/protocol.c, src/protocol.h, src/tincd.c: Bring head revision up
+	to date with cabal (try #3) 
+
+2000-10-18 21:44  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* THANKS, configure.in: Get the head revision up to date with cabal 
+
+2000-10-17 12:15  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* lib/xmalloc.c: Don't declare cp_file and cp_line in xmalloc() 
+
+2000-10-17 12:14  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* doc/Makefile.am: Process subdir es/ 
+
+2000-10-16 21:04  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: connlist.c, net.c, protocol.c: 
+	- More fixing. Tinc daemons can now even create activated
+	connections.  
+
+2000-10-16 18:33  Guus Sliepen <guus@sliepen.warande.net>
+
+	* lib/utils.c, src/conf.c, src/connlist.c, src/net.c,
+	src/protocol.c: 
+	- Fixing little things 
+	- Two tinc daemons can connect to eachother now (but they disconnect
+	  right after the ACKs).  
+
+2000-10-16 13:35  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* configure.in: Output doc/es/Makefile 
+
+2000-10-15 22:30  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/net.c: Corrected #ifdefs for tun/tap support.  
+
+2000-10-15 22:21  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* m4/tuntap.m4: Really #include the if_tun.h files now 
+
+2000-10-15 22:13  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* m4/tuntap.m4: Linearized checks for if_tun.h 
+
+2000-10-15 21:53  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/net.c: Wrap the tun/tap code in #ifdef HAVE_TUNTAP 
+
+2000-10-15 19:26  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* m4/tuntap.m4: file tuntap.m4 was initially added on branch CABAL.  
+
+2000-10-15 19:26  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* acconfig.h, configure.in, m4/tuntap.m4: Add checks for the
+	presence of the universal tun/tap device driver.  
+
+2000-10-15 02:59  Guus Sliepen <guus@sliepen.warande.net>
+
+	* lib/utils.c, lib/utils.h, po/POTFILES.in, po/es.po, po/nl.po,
+	src/conf.c, src/conf.h, src/connlist.c, src/genauth.c, src/meta.c,
+	src/net.c, src/net.h, src/protocol.c, src/protocol.h, src/subnet.c,
+	src/tincd.c: 
+	- The daemon actually runs now (somewhat) 
+	- Added support for tun/tap driver (autodetect!) 
+	- More sophisticated checkpoint functionality 
+	- Updated dutch translation 
+
+2000-10-15 00:22  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* doc/tinc.texi: Add CVS id lines 
+
+2000-10-15 00:17  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* doc/tinc.texi: Fix `Requirements'-section for GMP and OpenSSL
+	libraries.  
+
+2000-10-14 19:04  Guus Sliepen <guus@sliepen.warande.net>
+
+	* lib/utils.c, lib/utils.h, src/conf.c, src/conf.h, src/connlist.c,
+	src/connlist.h, src/net.c, src/net.h, src/protocol.c, src/tincd.c: 
+	- Second fixing-things pass: it even links now.  
+	- Lots of FIXME comments added to the source code.  
+
+2000-10-14 01:34  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* configure.in: Don't look for GMP header files 
+
+2000-10-14 01:30  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* README: Updated new requirements, pointers to the manual 
+
+2000-10-14 01:29  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* configure.in: Link with OpenSSL, forget libGMP 
+
+2000-10-12 00:00  Guus Sliepen <guus@sliepen.warande.net>
+
+	* lib/xalloc.h, src/conf.c, src/conf.h, src/connlist.c,
+	src/connlist.h, src/meta.c, src/net.c, src/net.h, src/netutl.c,
+	src/netutl.h, src/protocol.c, src/protocol.h, src/subnet.c,
+	src/subnet.h, src/tincd.c: 
+	- Fixing-things pass: every source file compiles into an object file
+	  now, but linking tincd does not work yet (must link with openssl
+	  libs and define some missing functions).  
+
+2000-10-11 15:42  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: conf.c, conf.h, protocol.c: 
+	- Generalized config file parsing to support multiple configuration
+	trees.  
+
+2000-10-11 14:07  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/genauth.c: 
+	- Changed genauth to produce rsa keypairs instead of random
+	passphrases.  
+
+2000-10-11 12:35  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/connlist.h: file connlist.h was initially added on branch
+	CABAL.  
+
+2000-10-11 12:35  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/connlist.c: file connlist.c was initially added on branch
+	CABAL.  
+
+2000-10-11 12:35  Guus Sliepen <guus@sliepen.warande.net>
+
+	* AUTHORS, Makefile.am, configure.in, src/Makefile.am,
+	src/connlist.c, src/connlist.h, src/encr.h, src/meta.c, src/meta.h,
+	src/net.c, src/net.h, src/netutl.c, src/netutl.h, src/protocol.h,
+	src/subnet.c, src/subnet.h: Big and bad commit of my current
+	tree...  
+	- Added seperate file for connection list handling 
+	- Updating everything to use connlist, meta and subnet files 
+	- Removed dependency on libgmp 
+	- Lots of other stuff...  
+
+2000-10-01 05:21  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/subnet.c: file subnet.c was initially added on branch CABAL.  
+
+2000-10-01 05:21  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: meta.h, net.h, subnet.c, subnet.h: 
+	- Added subnet handling code 
+	- Other small changes to header files 
+
+2000-10-01 05:21  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/subnet.h: file subnet.h was initially added on branch CABAL.  
+
+2000-09-27 22:32  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* doc/tinc.texi: Many updates, parts rewritten, added, shuffled
+	around.  
+
+2000-09-26 16:06  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/meta.h: file meta.h was initially added on branch CABAL.  
+
+2000-09-26 16:06  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/meta.c: file meta.c was initially added on branch CABAL.  
+
+2000-09-26 16:06  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: meta.c, meta.h, net.c, protocol.c, protocol.h: 
+	- Added meta.c which contains functions to send, receive and
+	  broadcast metadata. It will also handle encryption and decryption,
+	  and possibly compression and checksumming.  
+	- Moved request dispatcher to protocol.c.  
+
+2000-09-25 22:08  Guus Sliepen <guus@sliepen.warande.net>
+
+	* doc/SECURITY: 
+	- Very detailed example of the authentication phase.  
+
+2000-09-22 18:20  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: net.c, protocol.c: 
+	- Removed options "string" stuff. It was a bad idea...  
+	- free() everything that is allocated.  
+
+2000-09-22 17:06  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/protocol.c: 
+	- Severe code reduction and simplification of challenge requests 
+	- "Finished" [add|del]_subnet_h 
+	- Added lots of sanity checks to [add|del]_host_h 
+
+2000-09-17 23:42  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/protocol.c: 
+	- Updated authentication scheme.  
+	- Removed all trailing spaces from all lines.  
+	- Added things to add_ and del_subnet_h.  
+
+2000-09-17 22:11  Guus Sliepen <guus@sliepen.warande.net>
+
+	* doc/SECURITY: 
+	- Included authentication scheme from protocol.c 
+	- Added a few comments about the symmetric cipher.  
+
+2000-09-17 21:57  Guus Sliepen <guus@sliepen.warande.net>
+
+	* doc/SECURITY: Added document about the used cryptographic
+	algorithms and the reasons behind them. Feel very free to comment on
+	this! 
+
+2000-09-17 21:57  Guus Sliepen <guus@sliepen.warande.net>
+
+	* doc/SECURITY: file SECURITY was initially added on branch CABAL.  
+
+2000-09-17 12:28  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* doc/es/: tinc-es.html, tinc_toc-es.html: Added Spanish
+	translation of the docs by Matias Carrasco 
+
+2000-09-17 12:28  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* doc/es/tinc_toc-es.html: file tinc_toc-es.html was initially
+	added on branch CABAL.  
+
+2000-09-17 12:28  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* doc/es/tinc-es.html: file tinc-es.html was initially added on
+	branch CABAL.  
+
+2000-09-15 14:58  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/: encr.c, net.c, net.h, netutl.c, protocol.c: Second round of
+	fixes 
+
+2000-09-14 23:51  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/: net.c, net.h, netutl.c, protocol.c: First round of needed
+	fixes after the overhaul 
+
+2000-09-14 16:34  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/: conf.c, conf.h: New directive: Name.  
+
+2000-09-14 16:32  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* lib/utils.h, src/net.h: Added some structures and types that are
+	needed for the overhaul.  
+
+2000-09-14 13:54  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: net.c, protocol.c: 
+	- Lots of small changes.  
+
+2000-09-11 13:40  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* configure.in: Better checks for SunOS libraries 
+
+2000-09-11 12:05  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: protocol.c, protocol.h: 
+	- Fixed modulo in keylength check 
+	- Updated header file to reflect new protocol code 
+
+2000-09-11 01:11  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/protocol.c: 
+	- Some key exchange stuff. (Last commit before going to bed.) 
+
+2000-09-11 00:49  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/protocol.c: 
+	- Lots of functions added for the new protocol.  
+
+2000-09-10 23:57  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/protocol.h: Add Guus' name and shift out old protocol
+	requests 
+
+2000-09-10 20:37  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* doc/tinc.texi: Correct filenames for passphrases given in the
+	example 
+
+2000-09-10 18:15  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/protocol.c: 
+	- Added more function skeletons for the new protocol.  
+
+2000-09-10 17:18  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/protocol.c: 
+	- New protocol. Will break everything else for now.  
+
+2000-09-10 17:16  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* configure.in: Support for -lsocket and -lnsl on SunOS 
+
+2000-09-10 17:07  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* doc/PROTOCOL: Updated text, removed protocol flowchart 
+
+2000-09-10 17:05  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* configure.in: Link with OpenSSL crypto libraries instead of own
+	blowfish library 
+
+2000-09-06 13:49  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: conf.c, net.c, netutl.c, tincd.c: 
+	- Use strerror() instead of sys_errlist[] for increased portability 
+	  (Needed for SunOS) 
+
+2000-08-27 13:05  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* Makefile.am: Changed CVSROOT path in `make ChangeLog' 
+
+2000-08-21 22:35  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* Makefile.am: Added a rule to create an rpm 
+
+2000-08-21 14:50  Guus Sliepen <guus@sliepen.warande.net>
+
+	* doc/tinc.conf.5: Updated tinc.conf manual.  
+
+2000-08-18 16:45  Guus Sliepen <guus@sliepen.warande.net>
+
+	* doc/tinc.texi: Updated the manual: 
+	- incorporated comments from Stefan Hartsuiker 
+	- updated configuration variables section 
+	- added some text about key types 
+
+2000-08-18 13:17  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/encr.c: Commented on some size calculations.  
+
+2000-08-17 19:22  Guus Sliepen <guus@sliepen.warande.net>
+
+	* po/: es.po, nl.po: Ran update-po and updated dutch translation.  
+
+2000-08-17 18:51  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: encr.c, netutl.c, tincd.c: Fixed all sprintf() spl01ts.  
+
+2000-08-09 16:02  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: conf.c, conf.h, net.c: 
+	- Added two extra configuration options, Interface and InterfaceIP,
+	  to bind the listen socket to a network device or a specific IP.  
+
+2000-08-09 11:34  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/net.c: 
+	- Reinstated O_NONBLOCK for meta socket 
+	- Set SO_KEEPALIVE on meta socket 
+
+2000-08-08 19:07  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: net.c, net.h, protocol.c: 
+	- Moved TCP packet reception to meta handler: less kludgy and less
+	buggy! 
+
+2000-08-08 16:54  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/tincd.c: 
+	- Added date/time of build and protocol number to --version output.  
+
+2000-08-08 15:47  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: net.c, protocol.c: Removed calling add_queue for tcponly
+	packets.  
+
+2000-08-08 10:48  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/protocol.c: Fixed PACKET read loop.  
+
+2000-08-07 18:27  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: conf.h, net.c, net.h, protocol.c, protocol.h: 
+	- Lots o' buglets fixed (-Wall helps) 
+	- Made TCPonly work :) 
+
+2000-08-07 16:52  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: conf.c, conf.h, net.c, net.h, protocol.c, protocol.h: 
+	- Added experimental hackish tunneling-over-TCP support.  
+	  Just use TCPonly = true in the configuration file.  
+
+2000-07-02 15:40  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/net.c: 
+	- Fixed typo.  
+
+2000-07-02 15:36  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: conf.c, net.c: 
+	- Delayed address resolving for ConnectTo lines in configuration
+	  file to allow DynDNS to work without restarting tincd.  
+
+2000-07-02 14:48  Guus Sliepen <guus@sliepen.warande.net>
+
+	* THANKS: 
+	- Updated THANKS file 
+
+2000-07-02 14:41  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* configure.in: Include the Spanish translation in the
+	distribution/build process.  
+
+2000-07-02 14:35  Guus Sliepen <guus@sliepen.warande.net>
+
+	* po/es.po: file es.po was initially added on branch CABAL.  
+
+2000-07-02 14:35  Guus Sliepen <guus@sliepen.warande.net>
+
+	* po/es.po: 
+	- Added Spanish translation from Enrique Zanardi.  
+
+2000-07-01 16:40  Guus Sliepen <guus@sliepen.warande.net>
+
+	* doc/tincd.8: 
+	- Forgot to mention ourselves in the tincd manual page! :) 
+
+2000-07-01 16:32  Guus Sliepen <guus@sliepen.warande.net>
+
+	* doc/: Makefile.am, PROTOCOL, tincd.8, tincd.x: 
+	- Updated PROTOCOL (a bit) 
+	- Included a real tincd.8 describing the options, signals, debug
+	  levels and files used by tincd.  
+
+2000-07-01 16:32  Guus Sliepen <guus@sliepen.warande.net>
+
+	* doc/tincd.8: file tincd.8 was initially added on branch CABAL.  
+
+2000-07-01 12:39  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* po/Makefile.in.in: Autogenerated by gettextize.  
+
+2000-07-01 09:49  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/net.h: 
+	- Removed a single unused bit from status_bits_t.  
+
+2000-07-01 09:29  Wessel Dankers <wsl@nl.linux.org>
+
+	* doc/HOWTO: Added architecture section, made a start with the
+	kernel section.  ToDo: install tinc myself to see if everything is
+	as I say =) 
+
+2000-07-01 00:38  Guus Sliepen <guus@sliepen.warande.net>
+
+	* doc/PROTOCOL: file PROTOCOL was initially added on branch CABAL.  
+
+2000-07-01 00:38  Guus Sliepen <guus@sliepen.warande.net>
+
+	* doc/PROTOCOL: 
+	- Added documentation for the protocols (most important the meta
+	  protocol) used by tinc.  
+
+2000-06-30 23:16  Wessel Dankers <wsl@nl.linux.org>
+
+	* doc/HOWTO: Grrr, recommit 
+
+2000-06-30 23:11  Wessel Dankers <wsl@nl.linux.org>
+
+	* doc/HOWTO: This file is now only in the CABAL revision.  
+
+2000-06-30 23:09  Wessel Dankers <wsl@nl.linux.org>
+
+	* doc/HOWTO: More about keys 
+
+2000-06-30 23:03  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: encr.c, net.c, protocol.c: 
+	- Made tinc even more silent if no -d flag is given at all.  
+
+2000-06-30 22:57  Wessel Dankers <wsl@nl.linux.org>
+
+	* doc/HOWTO: Added extra bit about keys.  
+
+2000-06-30 22:50  Wessel Dankers <wsl@nl.linux.org>
+
+	* doc/HOWTO: File added to CABAL (hopefully) 
+
+2000-06-30 22:42  Wessel Dankers <wsl@nl.linux.org>
+
+	* doc/HOWTO: added bit on config file, split up sections, added Id:
+	tag 
+
+2000-06-30 22:16  Wessel Dankers <wsl@nl.linux.org>
+
+	* doc/HOWTO: Initial revision. Lots of loose ends, not usable yet.  
+
+2000-06-30 14:41  Guus Sliepen <guus@sliepen.warande.net>
+
+	* po/nl.po, src/net.c, src/protocol.c: 
+	- Instead of logging an error when remote end closes the connection, 
+	  we print a nice message if appropiate debug level is set.  
+	- If we get ADD_HOSTs or DEL_HOSTs for ourself, then connection
+	  lists are really messed up. We restart, and hope our problems go
+	away.  
+
+2000-06-30 13:45  Guus Sliepen <guus@sliepen.warande.net>
+
+	* po/nl.po, src/conf.c, src/conf.h, src/net.c, src/tincd.c: 
+	- Removed segfault bug in conf.c (must have been there for ages!) 
+	- Made main_loop() signal proof 
+	- #defined MAXTIMEOUT (15 minutes) 
+	- If something really really bad happens, close all connections,
+	  wait for MAXTIMEOUT seconds, and then restart tinc 
+
+2000-06-29 21:47  Guus Sliepen <guus@sliepen.warande.net>
+
+	* po/nl.po, src/conf.c, src/conf.h, src/net.c, src/protocol.c,
+	src/tincd.c: 
+	- Fixed memory leak.  
+	- Implemented SIGHUP configuration file reloading.  
+	- Other small changes.  
+
+2000-06-29 19:09  Guus Sliepen <guus@sliepen.warande.net>
+
+	* po/nl.po, src/net.c, src/netutl.c, src/protocol.c,
+	src/protocol.h, src/tincd.c: 
+	- New semantics for BASIC_INFO, ADD_HOST and DEL_HOST requests. This
+	  will improve connection list consistency, ensures the tree property,
+	  and allows for recovery from situations where track of connections
+	is lost.  
+
+2000-06-29 15:04  Guus Sliepen <guus@sliepen.warande.net>
+
+	* po/nl.po, src/net.c, src/net.h, src/netutl.c, src/protocol.c: 
+	- Removed all IP_ADDR_S macros, because gettext doesn't like them.
+	  Each connection now has two hostnames: real_hostname (replacing the
+	  old), and vpn_hostname. In those places where hostnames really
+	  aren't usefull IP_ADDR_S has been replaced by %d.%d.%d.%d.  
+
+2000-06-29 09:11  Guus Sliepen <guus@sliepen.warande.net>
+
+	* po/nl.po: 
+	- Updated Dutch translation.  
+
+2000-06-28 23:06  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* po/nl.po: Oops, and mention Guus too.  
+
+2000-06-28 23:01  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* po/nl.po: Removed Free Software Foundation copyright, because
+	Guus Sliepen contributed significantly.  
+
+2000-06-28 16:34  Guus Sliepen <guus@sliepen.warande.net>
+
+	* po/nl.po, src/tincd.c: 
+	- Added log message when SIGCHLD is received ("thanks" to Ivo van
+	Dong) 
+
+2000-06-28 15:41  Guus Sliepen <guus@sliepen.warande.net>
+
+	* po/nl.po, src/protocol.c: 
+	- Fixed a message in nl.po 
+	- Woops, we forgot to send our connection list to our uplink when we 
+	  connect to it... Fixed.  
+
+2000-06-28 13:39  Guus Sliepen <guus@sliepen.warande.net>
+
+	* po/nl.po: 
+	- Fixed missing " in nl.po 
+
+2000-06-28 13:38  Guus Sliepen <guus@sliepen.warande.net>
+
+	* po/nl.po, src/protocol.c, src/tincd.c: 
+	- Fixed some spelling errors.  
+	- Paar zpelvautjes gerepareerd, en de Nederlandse vertaling weer bij
+	  de tijd gebracht.  
+
+2000-06-28 12:11  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/net.c: 
+	- Extra check op EINTR bij inlezen requests 
+
+2000-06-27 23:05  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/net.c: 
+	- Fixes a silly little insignificant buglet.  
+
+2000-06-27 22:55  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/protocol.c: 
+	- Purge old connections that are ADD_HOSTed.  
+
+2000-06-27 22:10  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: conf.c, conf.h, net.c, protocol.c: 
+	- Improved handling of errors on connection attempts.  
+
+2000-06-27 17:08  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: conf.c, conf.h, net.c: 
+	- Fixed indirectdata=no problem 
+	- Added support for multiple ConnectTo lines in tinc.conf.  
+
+2000-06-27 14:58  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/protocol.c: 
+	- Fixed KEY_CHANGED notification. A lot of notify_others() calls
+	  were wrong (first two arguments swapped). Should probably be
+	doublechecked.  
+	- Don't retry to connect to hosts with different protocol versions.  
+
+2000-06-26 22:30  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: net.c, protocol.c: 
+	- Moved all connection messages to debug level 1, without -d's only
+	  the startup message will be logged.  
+	- Fixed DEL_HOST rebound.  
+
+2000-06-26 21:39  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: net.c, netutl.c, protocol.c: 
+	- Indirectdata finally REALLY REALLY works now! 
+	- More precise debug messages 
+
+2000-06-26 19:20  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: net.c, protocol.c: Fixes some hostlookups. Fixes
+	indirectdata for real now (hopefully).  
+
+2000-06-25 22:52  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* configure.in: Version 1.0pre3.  
+
+2000-06-25 18:39  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: netutl.c, protocol.c: 
+	- More verbose connection list 
+	- Added "myself" as hostname when logging indirect ADD_HOSTs 
+
+2000-06-25 18:20  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: net.c, protocol.c: Hostlookup() is actually being called
+	now.  
+
+2000-06-25 18:01  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: net.c, net.h, netutl.c, protocol.c: Hostnames are back! 
+
+2000-06-25 17:45  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/protocol.c: 
+	- Log possible spoofing attacks.  
+	- Don't broadcast DEL_HOSTs for hosts that haven't been activated
+	yet.  
+	- If a host sends a TERMREQ, deactivate them.  
+
+2000-06-25 17:42  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* configure.in, redhat/tinc.spec: Changed version number to
+	1.0pre3.  
+
+2000-06-25 17:22  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: encr.h, net.h, netutl.h, protocol.h: Added CVS Id tags to
+	header files.  
+
+2000-06-25 17:16  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: encr.c, net.c, net.h, netutl.c, protocol.c, tincd.c: Large
+	cleanup: 
+	- Removed hostname lookup (it blocks, and you can always do it
+	yourself) 
+	- Reorganized debug levels (after hints from Axel Müller): 
+	  0	Startup message and errors 
+	  1	Connection logging 
+	  2	Meta protocol information 
+	  3	Verbose meta protocol (includes copy of transmitted requests) 
+	  4	Packet information (logs transmission/errors of UDP packets) 
+	  5	Verbose packet information (every single byte, not implemented
+		yet to protect ourselves from filling up /var/log directories) 
+	- Made log messages more consistent 
+
+2000-06-24 14:35  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/net.c: If we have "indirectdata" flag set, we only send data
+	to our uplink.  
+
+2000-06-23 21:27  Guus Sliepen <guus@sliepen.warande.net>
+
+	* TODO, src/net.c, src/net.h, src/protocol.c, src/protocol.h: First
+	step for implementation of the "indirectdata" directive. This should 
+	allow _leaf_ tincds to be behind firewalls.  The protocol has
+	changed and is INCOMPATIBLE with previous versions. The PROT_CURRENT
+	value has been incremented.  
+
+2000-06-17 22:55  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/: conf.c, conf.h: Configuration directive `IndirectData'.  
+
+2000-06-17 22:30  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* redhat/tinc: Merge changes from 1.6-1.8.  
+
+2000-06-17 10:30  Guus Sliepen <guus@sliepen.warande.net>
+
+	* redhat/tinc: Added another semicolon for bash2 compliance (thanks
+	to Jamie Briggs) 
+
+2000-06-16 07:44  Guus Sliepen <guus@sliepen.warande.net>
+
+	* redhat/tinc: Applied patch from Jamie Briggs for bash2
+	conformance.  
+
+2000-06-06 12:24  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* lib/Makefile.am, src/Makefile.am: Include ../intl in the include
+	path, and add @INTLLIBS@ to the list of libraries.  
+
+2000-06-04 14:14  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* po/Makefile.in.in: These files are created by gettextize (run by
+	autogen.sh) (should have known that).  
+
+2000-06-04 13:50  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* configure.in: Check for __gmpz_powm for libgmp3.  
+
+2000-06-03 10:27  Guus Sliepen <guus@sliepen.warande.net>
+
+	* TODO: Removed items in TODO list that are already implemented.
+	Only two items left.  
+
+2000-06-02 19:30  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* THANKS: Alphabetized the list, added Lubomír Bulej, removed
+	Sander Smeenk and Tijs van Bakel, put merits after all names.  
+
+2000-05-31 20:23  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/: net.c, encr.c, netutl.c, tincd.c: Miscellaneous copyright
+	updates.  
+
+2000-05-31 20:21  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/genauth.c: Handle locale settings.  
+
+2000-05-31 20:18  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* po/nl.po: Updated Dutch translation.  
+
+2000-05-31 20:17  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* NEWS: Include news for 1.0pre2.  
+
+2000-05-30 23:36  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/protocol.c: Only accept an ADD_HOST request for a host that
+	already exists in our conn_list if the nexthop field matches the
+	sender.  This is a workaround for older clients.  
+
+2000-05-30 14:38  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/net.c: In terminate_connection, only send a notification to
+	hosts that are directly connected to us.  (DEL_HOST gets forwarded
+	automatically.) 
+
+2000-05-30 14:31  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/net.c: When a connection is terminated, all hosts that are
+	still connected get notified of the lost connections.  
+
+2000-05-30 13:18  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/: conf.c, conf.h, netutl.c: Added new configuration directive
+	`Hostnames', which controls the resolving of IP addresses to
+	hostnames.  
+
+2000-05-30 01:40  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: net.c, protocol.c: Only activate a connection upon
+	receiving it's public key if it's an incoming connection. When it's
+	outgoing, we need to receive an ack first.  
+
+2000-05-30 00:27  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* NEWS: Updated changes list for version 1.0pre2.  
+
+2000-05-30 00:20  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/net.c: Bounds check for request id (between 0 and 255).  
+
+2000-05-30 00:15  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* po/nl.po: Dutch translation of tinc.  
+
+2000-05-29 23:40  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/Makefile.am: Define LOCALEDIR in CFLAGS.  
+
+2000-05-29 23:40  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* configure.in: Include GNU gettext checks.  
+
+2000-05-29 23:38  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* acconfig.h: Update acconfig.h to include values for gettext
+	inclusion.  
+
+2000-05-29 23:36  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* ABOUT-NLS, Makefile.am, system.h: Include system.h and ABOUT-NLS.  
+
+2000-05-29 23:04  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* Makefile.am: Include intl/ directory in the list of subdirs.  
+
+2000-05-29 23:01  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* po/Makefile.in.in, po/POTFILES.in, Makefile.am, configure.in,
+	src/conf.c, src/encr.c, src/genauth.c, src/net.c, src/netutl.c,
+	src/protocol.c, src/tincd.c: Internationalization of tinc.  
+
+2000-05-27 22:23  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: net.c, protocol.c: Terminate a connection on any error.
+	Furthermore, disallow del_host, add_host and other important
+	requests until remote host has properly authenticated itself.  
+
+2000-05-27 21:44  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/net.c: Made tinc persistent. If no outgoing connection can be
+	established right after the start of the daemon, it won't quit
+	anymore but will retry in 5 minutes. Also, 5 minutes is now the
+	maximum time to wait for a retry.  
+
+2000-05-27 21:23  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: net.c, netutl.c, protocol.c: Fixed typos. When terminating
+	a connection, it's status is not only set to remove=1 but also
+	active=0.  
+
+2000-05-27 21:04  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: net.c, netutl.c, protocol.c: Fix for a DoS attack: 
+	 A remote user could telnet to the tinc daemon and type only this
+	 line: 61 6 00000000/00000000:28f 
+	 This would deny any packets to be sent to other tinc networks
+	 (except for to the hosts that run tincd's themselves). Solution is
+	 to skip hosts in lookup_conn() that have not been activated yet.  
+	Fixed potential conn_list table corruption: 
+	 If a new connection is accepted but a connection with the same
+	 subnet would already exist in the connection list, the OLD
+	 connection is terminated.  
+
+2000-05-27 15:21  Guus Sliepen <guus@sliepen.warande.net>
+
+	* doc/: tinc.conf.5, tinc.texi: Documentation updates. Removed all
+	references to configuration variable "AllowConnect", since it is NOT
+	used in tinc. Added information about "VpnMask". Elaborated a bit
+	about "private" and "virtual" networks.  
+
+2000-05-26 13:25  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* redhat/tinc: Updated by Lubomir Bulej and Mads Kiilerich: it uses
+	/etc/tinc/nets.boot and the VpnMask directive in the config files.  
+
+2000-05-22 00:38  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* doc/tinc.conf.sample: Add an example of using VpnMask.  
+
+2000-05-19 02:33  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* README: Updated copyright notice.  
+
+2000-05-16 18:07  Guus Sliepen <guus@sliepen.warande.net>
+
+	* TODO: TODO file reinstated: 
+	- Append your name to items if you're working on them.  
+	- Remove them if you fixed the problem/implemented that feature.  
+	- Add any (suspected) bugs.  
+
+2000-05-16 15:09  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: conf.c, conf.h: Stub for VpnMask config directive.  
+
+2000-05-15 20:28  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/conf.c, THANKS, doc/tinc.conf.sample: Unlimited length in the
+	config file, thanks to Cris van Pelt.  
+
+2000-05-15 17:54  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* redhat/tinc.spec: Updated to newer version.  
+
+2000-05-14 23:07  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/net.c: Give IP address instead of hex number when connecting
+	tcp socket failed.  
+
+2000-05-14 23:04  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* configure.in: Changed version to 1.0pre2.  
+
+2000-05-14 22:56  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* configure.in: Add check for mpz_powm in libgmp3.  
+
+2000-05-14 15:50  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/protocol.c: Only print an error with send_termreq if
+	debug_lvl is 2 or more.  
+
+2000-05-14 15:06  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/net.c: Fixed typos.  
+
+2000-05-14 15:02  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: net.c, net.h: Changed ping behaviour (backwards
+	compatible). If we don't have any data to send, we don't need to
+	check if the connection is still alive.  Furthermore, if we receive
+	any kind of data from the other end, we know it's alive, so we don't
+	need to check it either. So, PING requests are only sent if we send
+	packets but there is no response.  
+
+2000-05-14 14:22  Guus Sliepen <guus@sliepen.warande.net>
+
+	* AUTHORS, README, THANKS, doc/tinc.conf.5, doc/tinc.texi,
+	src/conf.c, src/conf.h, src/encr.c, src/encr.h, src/genauth.c,
+	src/net.c, src/net.h, src/netutl.c, src/netutl.h, src/protocol.c,
+	src/protocol.h, src/tincd.c: Cleanups.  
+
+2000-05-14 13:39  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: conf.c, conf.h, net.c: Proxymode removed.  
+
+2000-05-12 15:31  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* doc/tinc.texi: Deleted the protocol description.  
+
+2000-05-08 20:44  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: conf.c, conf.h, net.c: Added new config variable
+	"ProxyMode". If enabled, all outgoing packets are sent to the uplink
+	(ConnectTo), which will have to forward them for us (kernel should
+	do that). This is for people behind firewalls.  
+
+2000-05-05 12:48  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* redhat/tinc: Added semicolons required by bash2 (Mads Kiilerich).  
+
+2000-05-05 01:17  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/: encr.c, protocol.c: Include sys/types.h.  
+
+2000-05-05 01:16  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/Makefile.am: Don't link in libdl.  
+
+2000-05-04 02:01  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* configure.in: Check for the existance of libdl.  
+
+2000-05-04 02:00  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* acconfig.h: More for getopt support.  
+
+2000-05-04 02:00  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* lib/xmalloc.c: Include stdio.h for fprintf.  
+
+2000-05-04 01:47  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* lib/: Makefile.am, getopt.c, getopt1.c, getopt.h: getopt_long()
+	support for platforms that don't have it.  
+
+2000-05-04 01:00  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* lib/xmalloc.c: Don't use error.h or error(), put #error in front
+	of cpp errors.  
+
+2000-05-03 20:02  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/net.c: Squashed gcc warning.  
+
+2000-05-03 19:59  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: net.c, protocol.c: Fixes typo and UDP network byte order.  
+
+2000-05-03 17:37  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/net.c: Outgoing packets now use network byte order in header.  
+
+2000-05-03 17:01  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* redhat/: tinc, tinc.spec: Fix a typo, better handling of the info
+	document. (from Mads Kiilerich) 
+
+2000-05-02 12:16  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: net.h, protocol.c: Replaced sprintf() by safer snprintf(),
+	removed possible buffer overflow by one byte.  
+
+2000-05-02 11:55  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: net.c, net.h, protocol.c: Previous fix fixed. Meta protocol
+	should be really flawless from now on! 
+
+2000-05-02 11:10  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/net.c: Fixed small mistake that would prevent forwarding
+	requests.  
+
+2000-05-02 00:00  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* NEWS: Mentioned new metaprotocol.  
+
+2000-05-01 23:47  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* doc/tinc.conf.5, doc/tinc.conf.sample, doc/Makefile.am,
+	doc/tincd.conf.5, doc/tincd.conf.sample, redhat/tinc.spec: More
+	tincd->tinc updates.  
+
+2000-05-01 23:31  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/: encr.c, net.h, protocol.c: Fixed meta protocol.  
+
+2000-05-01 23:31  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* redhat/tinc.spec: Committed by Mads Kiilerich.  
+
+2000-05-01 21:17  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* redhat/tinc.spec: Updates by Mads Kiilerich.  
+
+2000-05-01 20:07  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: encr.c, net.c, net.h, netutl.c, protocol.c, protocol.h: 
+	Meta protocol overhaul. Tinc is now incompatible with previous
+	versions, furthermore this version does NOT work yet because of a
+	problem with sending keys (these should be converted to base36 or
+	something like that).  It is possible to telnet to the tinc daemon
+	now and type some commands by hand though :).  
+
+2000-05-01 18:28  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* redhat/tinc: Committed by Lubomír Bulej.  
+
+2000-04-30 22:48  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/protocol.c: Key forwarding, write one byte extra.  
+
+2000-04-30 21:49  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/protocol.c: Protocol fix (ANS_KEY).  This breaks 0.3.3
+	protocol compatibility.  
+
+2000-04-30 21:03  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/protocol.c: Send one less byte from an ANS_KEY request.  
+
+2000-04-30 20:57  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/protocol.c: Read one less byte from an ANS_KEY request.  
+
+2000-04-30 18:34  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/protocol.c: Removed debug messages.  
+
+2000-04-30 18:31  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/protocol.c: Read public keys the right way (tm).  
+
+2000-04-30 18:11  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/: net.c, net.h, netutl.c, protocol.c, protocol.h: New way of
+	handling the meta protocol.  
+
+2000-04-30 15:23  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/net.c: Replaced check for status.active by status.dataopen in
+	check_network_activity.  
+
+2000-04-30 03:16  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/netutl.c: Initially, the vpn_mask of a connection is
+	255.255.255.255 to avoid confusion with lookup_conn.  
+
+2000-04-30 03:15  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/: net.c, protocol.c: Got rid of the nasty hacks... and
+	replaced it by another one.  
+
+2000-04-29 22:39  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/: protocol.c, protocol.h: Filled up the protocol structs with
+	unused bytes.  
+
+2000-04-29 22:38  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* Makefile.am: Added `deb' target.  
+
+2000-04-29 15:56  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* redhat/tinc, doc/tinc.texi, redhat/tinc.spec: More updates wrt.
+	the change from tincd->tinc.  
+
+2000-04-28 13:33  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/net.c: Oops! Reference to write_n() removed and changed into
+	neat write() call.  
+
+2000-04-27 22:57  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/net.c: Removed write_n() function.  
+
+2000-04-27 15:47  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/tincd.c: Default config file name is tinc.conf, and pidfile
+	is tinc.pid.  
+
+2000-04-27 02:07  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* README: Updated version number to 1.0.  
+
+2000-04-27 01:56  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* Makefile.am, configure.in: Version to 1.0pre1; Create Makefile
+	and build in debian/.  
+
+2000-04-27 00:42  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* doc/tinc.texi: Add an entry to dir.  
+
+2000-04-26 19:42  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: conf.c, encr.c, net.c, netutl.c, protocol.c: Cleanups: 
+	- Changed recv/send calls into read/write calls for streams 
+	- Made all sizeof() functions use a variable name instead of type 
+
+2000-04-26 16:54  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* redhat/tinc.spec: From Mads Kiilerich.  
+
+2000-04-26 00:15  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/encr.c: Converted every &variable[0] to variable.  
+
+2000-04-26 00:00  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/net.c: Debug level tweaking.  
+
+2000-04-25 22:50  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/net.c: When trying to talk to a host that is in the netmask
+	of a tinc server but not the tinc server itself, and no keys have
+	been exchanged yet, the key request would be directed to the host
+	instead of the server. Fixed.  
+
+2000-04-25 22:17  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/net.c: Fixed typo and removed some unnecessary variables.  
+
+2000-04-25 22:10  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: net.c, net.h: Packet queues fixed. They caused the trouble
+	when resending keys.  
+
+2000-04-25 21:23  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* autogen.sh: Create a ChangeLog file, automake requires it.  
+
+2000-04-25 21:21  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* doc/Makefile.summ: [no log message] 
+
+2000-04-25 20:57  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/: encr.c, net.c, netutl.c, protocol.c: Added checkpoints to
+	beginning and ending of every function.  
+
+2000-04-25 19:38  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* Makefile.am: Remove ChangeLog with a `make cvs-clean'.  
+
+2000-04-25 19:35  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* Makefile.am: Don't include TODO in the dist.  
+
+2000-04-25 17:08  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/Makefile.am: Propagate CFLAGS from configure to gcc.  
+
+2000-04-25 17:07  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* Makefile.am: Delete all the files that are created by autogen.sh
+	on a `make cvs-clean'.  
+
+2000-04-25 12:40  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* doc/tinc.texi: Spelling fixes.  
+
+2000-04-25 12:27  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* redhat/tinc.spec: Contributed by Mads Kiilerich.  
+
+2000-04-25 12:21  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* autogen.sh, m4/Makefile.am: Generate this Makefile.am from
+	Makefile.am.in.  
+
+2000-04-25 11:43  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* AUTHORS: [no log message] 
+
+2000-04-25 11:42  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* THANKS: Added Mads Kiilerich, removed Guus Sliepen.  
+
+2000-04-25 03:45  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* doc/tinc.texi: Changes largely from Mads Kiilerich.Removed
+	section about encryption.  
+
+2000-04-25 03:26  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* m4/aclocal-include.m4: Remove test for GNOME.  
+
+2000-04-25 03:25  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* ChangeLog: Use `make ChangeLog' to create this file from the CVS
+	logs.  
+
+2000-04-25 03:23  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* acconfig.h: Don't define HAVE_NAMESPACES and HAVE_STL.  
+
+2000-04-25 03:22  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* configure.in: Remove check for bigendianness.  
+
+2000-04-25 03:15  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* TODO: This file is obsolete, most of the ideas are already in
+	echelon.  
+
+2000-04-25 03:10  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* autogen.sh: s/Gnome/tinc/g 
+
+2000-04-25 02:50  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* config.guess, config.h.in, config.sub, install-sh, ltconfig,
+	aclocal.m4, autogen.sh, configure.in, ltmain.sh, missing,
+	mkinstalldirs, stamp-h.in, m4/aclocal-include.m4: The shell script
+	autogen.sh can create all these removed files, but be sure to have
+	autoconf, automake, libtool and more installed.  
+
+2000-04-25 02:11  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* configure.in: Don't try to create cipher/idea/Makefile.  
+
+2000-04-24 11:39  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/protocol.c: Bug found! Wrong pointer was used for handling
+	multiple ADD_HOST requests at once. (See line 606.) 
+
+2000-04-24 10:32  Guus Sliepen <guus@sliepen.warande.net>
+
+	* src/protocol.c: Added extra checks for desynchronized connection
+	lists. Hopefully this will fix those strange segmentation faults.  
+
+2000-04-21 00:50  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* Makefile.am: Added cvs-clean.  
+
+2000-04-20 21:14  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* NEWS: Keep make dist(dir) happy.  
+
+2000-04-18 22:44  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* redhat/README: A short notice from Mads Kiilerich.  
+
+2000-04-18 22:43  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* redhat/tinc.spec: Submitted changes by Mads Kiilerich.  
+
+2000-04-18 22:30  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* doc/Makefile.am: Include genauth.8 in the distribution.  
+
+2000-04-18 22:26  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* Makefile.am, configure.in, redhat/Makefile.am: Include the
+	directory redhat in the build process.  
+
+2000-04-18 18:04  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/tincd.c: Address for bugreports changed to tinc@nl.linux.org.  
+
+2000-04-18 17:59  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* doc/: tincd.conf.5, tincd.x: Updated manpages.  
+
+2000-04-18 17:59  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* doc/genauth.8: New manpage for genauth.  
+
+2000-04-18 17:09  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* redhat/: tinc, tinc.spec: Submitted by Mads Kiilerich.  
+
+2000-04-17 19:04  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/genauth.c: Default passphrase length of 1024, added -h/--help
+	options.  
+
+2000-04-17 18:59  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/genauth.c: Check if stdout is a terminal, if so, print a
+	verbose message.  
+
+2000-04-17 18:52  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/encr.c: Check for an illegal length of passphrase in
+	read_passphrase().  
+
+2000-04-17 18:23  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* lib/xmalloc.c, src/tincd.c: Pass the requested size from
+	xmalloc() and xrealloc() on to xalloc_fail_func() 
+
+2000-04-17 17:38  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/genauth.c: Only one round of reading bits out of urandom; 
+	Reading `bytes' bytes out of it; Print a newline after completion.  
+
+2000-04-12 18:22  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* configure.in: Moved to version number 1.0.  
+
+2000-04-06 20:28  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/tincd.c: New option -D, don't detach.  
+
+2000-03-28 21:16  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/tincd.c: Ignore SIGCHLD.  
+
+2000-03-28 21:09  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/tincd.c: Kill the parent after any error conditions in
+	detach().  
+
+2000-03-28 00:59  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/encr.c: Upon regeneration, free the old encryption key
+	`securely\' by overwriting it.  
+
+2000-03-28 00:30  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* src/net.c: Get rid of the message `zxnrbl\'.  
+
+2000-03-26 01:33  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* AUTHORS, README, stamp-h.in, COPYING, ChangeLog, INSTALL,
+	Makefile.am, NEWS, THANKS, TODO, acconfig.h, aclocal.m4,
+	config.guess, config.h.in, config.sub, configure.in, install-sh,
+	ltconfig, ltmain.sh, missing, mkinstalldirs, m4/Makefile.am,
+	m4/Makefile.am.in, m4/README, lib/Makefile.am, lib/README,
+	m4/malloc.m4, m4/perl.m4, m4/realloc.m4, lib/alloca.c,
+	lib/malloc.c, lib/memcmp.c, lib/pidfile.c, lib/realloc.c,
+	lib/xmalloc.c, lib/pidfile.h, lib/utils.c, lib/utils.h,
+	lib/xalloc.h, src/Makefile.am, src/conf.c, src/encr.c, src/net.c,
+	src/netutl.c, src/protocol.c, src/conf.h, src/genauth.c,
+	src/tincd.c, src/encr.h, src/net.h, src/netutl.h, doc/Makefile.am,
+	src/protocol.h, doc/texinfo.tex, doc/tinc.texi, doc/tincd.conf.5,
+	doc/GNUmakefile, doc/Makefile.maint, doc/Makefile.summ,
+	doc/help2man, doc/tincd.conf.sample, doc/tincd.x: Initial revision 
+
+2000-03-26 01:33  Ivo Timmermans <itimmermans@bigfoot.com>
+
+	* AUTHORS, README, stamp-h.in, COPYING, ChangeLog, INSTALL,
+	Makefile.am, NEWS, THANKS, TODO, acconfig.h, aclocal.m4,
+	config.guess, config.h.in, config.sub, configure.in, install-sh,
+	ltconfig, ltmain.sh, missing, mkinstalldirs, m4/Makefile.am,
+	m4/Makefile.am.in, m4/README, lib/Makefile.am, lib/README,
+	m4/malloc.m4, m4/perl.m4, m4/realloc.m4, lib/alloca.c,
+	lib/malloc.c, lib/memcmp.c, lib/pidfile.c, lib/realloc.c,
+	lib/xmalloc.c, lib/pidfile.h, lib/utils.c, lib/utils.h,
+	lib/xalloc.h, src/Makefile.am, src/conf.c, src/encr.c, src/net.c,
+	src/netutl.c, src/protocol.c, src/conf.h, src/genauth.c,
+	src/tincd.c, src/encr.h, src/net.h, src/netutl.h, doc/Makefile.am,
+	src/protocol.h, doc/texinfo.tex, doc/tinc.texi, doc/tincd.conf.5,
+	doc/GNUmakefile, doc/Makefile.maint, doc/Makefile.summ,
+	doc/help2man, doc/tincd.conf.sample, doc/tincd.x: Initial CVS
+	version for tinc 0.3.  
+
