@@ -1,7 +1,7 @@
 /*
     device.c -- Interaction BSD tun/tap device
     Copyright (C) 2001-2005 Ivo Timmermans,
-                  2001-2006 Guus Sliepen <guus@tinc-vpn.org>
+                  2001-2007 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -245,7 +245,7 @@ bool write_packet(vpn_packet_t *packet)
 
 		case DEVICE_TYPE_TUNIFHEAD: {
 			u_int32_t type;
-			struct iovec vector[2] = {{&type, sizeof(type)}, {packet->data + 14, MTU - 14}};
+			struct iovec vector[2] = {{&type, sizeof(type)}, {packet->data + 14, packet->len - 14}};
 			int af;
 			
 			af = (packet->data[12] << 8) + packet->data[13];

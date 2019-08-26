@@ -1,4 +1,34 @@
 ------------------------------------------------------------------------
+r1494 | guus | 2007-01-05 06:44:01 +0100 (vr, 05 jan 2007) | 2 lines
+
+rename() cannot replace existing files on Windows.
+
+------------------------------------------------------------------------
+r1493 | guus | 2007-01-05 05:49:02 +0100 (vr, 05 jan 2007) | 4 lines
+
+Fix generic BSD tun device to write only the actual packet length.
+Due to a copy&paste bug, it tried to write a packet with the maximum size.
+This was not a problem until the maximum size was increased to support VLANs.
+
+------------------------------------------------------------------------
+r1492 | guus | 2007-01-04 16:28:36 +0100 (do, 04 jan 2007) | 2 lines
+
+Tapreader socket should be bound to localhost only.
+
+------------------------------------------------------------------------
+r1491 | guus | 2007-01-03 19:18:54 +0100 (wo, 03 jan 2007) | 5 lines
+
+Use a ringbuffer in shared memory to transfer packets from the tapreader thread to the main thread.
+It's a wonder it ever worked before. The socket that is created is not of a
+datagram type, therefore packet boundaries were not preserved, which becomes
+a problem as soon as the TAP-Win32 device receives packets in fast succession.
+
+------------------------------------------------------------------------
+r1490 | guus | 2006-12-18 18:38:05 +0100 (ma, 18 dec 2006) | 2 lines
+
+Releasing 1.0.6.
+
+------------------------------------------------------------------------
 r1489 | guus | 2006-12-18 12:41:53 +0100 (ma, 18 dec 2006) | 2 lines
 
 Prevent compiler warnings about redefinition of EAI_FAMILY on FreeBSD 6.1.
