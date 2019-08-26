@@ -1,6 +1,6 @@
 /*
     meta.c -- handle the meta communication
-    Copyright (C) 2000-2016 Guus Sliepen <guus@tinc-vpn.org>,
+    Copyright (C) 2000-2017 Guus Sliepen <guus@tinc-vpn.org>,
                   2000-2005 Ivo Timmermans
                   2006      Scott Lamb <slamb@slamb.org>
 
@@ -104,7 +104,7 @@ bool flush_meta(connection_t *c) {
 			} else if(errno == EINTR) {
 				continue;
 			} else if(sockwouldblock(sockerrno)) {
-				ifdebug(CONNECTIONS) logger(LOG_DEBUG, "Flushing %d bytes to %s (%s) would block",
+				ifdebug(META) logger(LOG_DEBUG, "Flushing %d bytes to %s (%s) would block",
 						c->outbuflen, c->name, c->hostname);
 				return true;
 			} else {

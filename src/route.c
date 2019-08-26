@@ -1,8 +1,8 @@
 /*
     route.c -- routing
     Copyright (C) 2000-2005 Ivo Timmermans,
-                  2000-2014 Guus Sliepen <guus@tinc-vpn.org>
-		  2015      Vittorio Gambaletta
+                  2000-2017 Guus Sliepen <guus@tinc-vpn.org>
+		  2015-2016 Vittorio Gambaletta
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -675,6 +675,9 @@ static void route_ipv6_unicast(node_t *source, vpn_packet_t *packet) {
 		if(!do_decrement_ttl(source, packet))
 			return;
 
+	if(priorityinheritance)
+		packet->priority = ((packet->data[14] & 0x0f) << 4) | (packet->data[15] >> 4);
+
 	via = (subnet->owner->via == myself) ? subnet->owner->nexthop : subnet->owner->via;
 	
 	if(via == source) {
@@ -963,8 +966,12 @@ static void route_mac(node_t *source, vpn_packet_t *packet) {
 
 	uint16_t type = packet->data[12] << 8 | packet->data[13];
 
-	if(priorityinheritance && type == ETH_P_IP && packet->len >= ether_size + ip_size)
-		packet->priority = packet->data[15];
+	if(priorityinheritance) {
+		if(type == ETH_P_IP && packet->len >= ether_size + ip_size)
+			packet->priority = packet->data[15];
+		else if(type == ETH_P_IPV6 && packet->len >= ether_size + ip6_size)
+			packet->priority = ((packet->data[14] & 0x0f) << 4) | (packet->data[15] >> 4);
+	}
 
 	// Handle packets larger than PMTU
 

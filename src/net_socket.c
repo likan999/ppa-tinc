@@ -1,7 +1,7 @@
 /*
     net_socket.c -- Handle various kinds of sockets.
     Copyright (C) 1998-2005 Ivo Timmermans,
-                  2000-2015 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2017 Guus Sliepen <guus@tinc-vpn.org>
                   2006      Scott Lamb <slamb@slamb.org>
                   2009      Florian Forster <octo@verplant.org>
 
@@ -442,6 +442,7 @@ connect:
 	if(!proxytype) {
 		c->socket = socket(c->address.sa.sa_family, SOCK_STREAM, IPPROTO_TCP);
 	} else if(proxytype == PROXY_EXEC) {
+		c->status.proxy_passed = true;
 		do_outgoing_pipe(c, proxyhost);
 	} else {
 		proxyai = str2addrinfo(proxyhost, proxyport, SOCK_STREAM);
@@ -471,6 +472,33 @@ connect:
 #endif
 
 		bind_to_interface(c->socket);
+
+		int b = -1;
+
+		for(int i = 0; i < listen_sockets; i++) {
+			if(listen_socket[i].sa.sa.sa_family == c->address.sa.sa_family) {
+				if(b == -1) {
+					b = i;
+				} else  {
+					b = -1;
+					break;
+				}
+			}
+		}
+
+		if(b != -1) {
+			sockaddr_t sa = listen_socket[b].sa;
+			if(sa.sa.sa_family == AF_INET)
+				sa.in.sin_port = 0;
+			else if(sa.sa.sa_family == AF_INET6)
+				sa.in6.sin6_port = 0;
+
+			if(bind(c->socket, &sa.sa, SALEN(sa.sa))) {
+				char *addrstr = sockaddr2hostname(&sa);
+				logger(LOG_ERR, "Can't bind to %s/tcp: %s", addrstr, sockstrerror(sockerrno));
+				free(addrstr);
+			}
+		}
 	}
 
 	/* Connect */
@@ -529,13 +557,20 @@ void setup_outgoing_connection(outgoing_t *outgoing) {
 	c->outcompression = myself->connection->outcompression;
 
 	init_configuration(&c->config_tree);
-	read_connection_config(c);
+	if(!read_connection_config(c)) {
+		free_connection(c);
+		outgoing->timeout = maxtimeout;
+		retry_outgoing(outgoing);
+		return;
+	}
 
 	outgoing->cfg = lookup_config(c->config_tree, "Address");
 
 	if(!outgoing->cfg) {
 		logger(LOG_ERR, "No address specified for %s", c->name);
 		free_connection(c);
+		outgoing->timeout = maxtimeout;
+		retry_outgoing(outgoing);
 		return;
 	}
 

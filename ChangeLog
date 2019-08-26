@@ -1,3 +1,24 @@
+Version 1.0.32                                         September 02 2017
+------------------------------------------------------------------------
+
+Guus Sliepen (13):
+      Don't dereference myself->incipher if it's NULL.
+      Merge remote-tracking branch 'VittGam/master'
+      Use /dev/udp instead of /dev/ip on Solaris.
+      Use getmsg()/putmsg() instead of read()/write() on Solaris.
+      Fix Solaris DeviceType = tap in router Mode.
+      Bind outgoing TCP sockets.
+      Move logging of "would block" messages to debug level 4.
+      Set KillMode=mixed in the systemd service file.
+      Don't forget about outgoing connections on host file read errors.
+      Fix Proxy = exec.
+      Set status.proxy_passed early for Proxy = exec.
+      Don't try to bind Proxy = exec sockets to an address.
+      Releasing 1.0.32.
+
+Vittorio Gambaletta (VittGam) (1):
+      route: Support ToS/DiffServ priority inheritance when routing IPv6 packets.
+
 Version 1.0.31                                           January 15 2017
 ------------------------------------------------------------------------
 
@@ -162,20 +183,7 @@ VittGam (1):
 Version 1.0.24                                               May 11 2014
 ------------------------------------------------------------------------
 
-Guus Sliepen (26):
-      Mention in the manual that multiple Address staments are allowed.
-      If no Port is specified, set myport to actual port of first listening socket.
-      Enable compiler hardening flags by default.
-      Update support for Solaris.
-      Include <limits.h> for PATH_MAX.
-      Stricter check for raw socket support.
-      Use hardcoded value for TUNNEWPPA if net/if_tun.h is missing on Solaris.
-      Fix incorrectly merged bits from 80cd2ff73071941a5356555b85a00ee90dfd0e16.
-      Don't enable -fstack-protector-all.
-      Remove or lower the priority of some debug messages.
-      Clarify StrictSubnets.
-      Attribution for various contributors.
-      Handle errors from TAP-Win32/64 adapter in a better way.
+Guus Sliepen (13):
       Remove useless variable 'hard' from try_harder().
       Merge pull request #14 from luckyhacky/master
       Add an autoconf check for res_init().
@@ -195,21 +203,39 @@ Steffan Karger (3):
       Use cryptographically strong random when generating keys.
       Check RAND_bytes() return value, fail when getting random fails.
 
-Florent Clairambault (2):
-      Adding "conf.d" configuration dir support.
-      Adding some documentation around the /etc/tinc/$NET/conf.d directory.
-
 Armin Fisslthaler (1):
       reload /etc/resolv.conf in SIGALRM handler
 
 Loic Dachary (1):
       fix documentation typo
 
-Vilbrekin (1):
-      Update android build instructions. Disable PIE as this is not supported on some devices.
-
 luckyhacky (1):
       update to openssl version 1.0.1g due to lack of heartbleed bug in prior version of openssl
+
+refs/tags/1.0.23-android-1                                 March 11 2014
+------------------------------------------------------------------------
+
+Guus Sliepen (13):
+      Mention in the manual that multiple Address staments are allowed.
+      If no Port is specified, set myport to actual port of first listening socket.
+      Enable compiler hardening flags by default.
+      Update support for Solaris.
+      Include <limits.h> for PATH_MAX.
+      Stricter check for raw socket support.
+      Use hardcoded value for TUNNEWPPA if net/if_tun.h is missing on Solaris.
+      Fix incorrectly merged bits from 80cd2ff73071941a5356555b85a00ee90dfd0e16.
+      Don't enable -fstack-protector-all.
+      Remove or lower the priority of some debug messages.
+      Clarify StrictSubnets.
+      Attribution for various contributors.
+      Handle errors from TAP-Win32/64 adapter in a better way.
+
+Florent Clairambault (2):
+      Adding "conf.d" configuration dir support.
+      Adding some documentation around the /etc/tinc/$NET/conf.d directory.
+
+Vilbrekin (1):
+      Update android build instructions. Disable PIE as this is not supported on some devices.
 
 Version 1.0.23                                           October 19 2013
 ------------------------------------------------------------------------

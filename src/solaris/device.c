@@ -2,7 +2,7 @@
     device.c -- Interaction with Solaris tun device
     Copyright (C) 2001-2005 Ivo Timmermans,
                   2002-2010 OpenVPN Technologies, Inc. <sales@openvpn.net>
-                  2001-2014 Guus Sliepen <guus@tinc-vpn.org>
+                  2001-2017 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -24,6 +24,7 @@
 
 #include <sys/stropts.h>
 #include <sys/sockio.h>
+#include <stropts.h>
 
 #include "../conf.h"
 #include "../device.h"
@@ -40,6 +41,7 @@
 
 #define DEFAULT_TUN_DEVICE "/dev/tun"
 #define DEFAULT_TAP_DEVICE "/dev/tap"
+#define IP_DEVICE "/dev/udp"
 
 static enum {
 	DEVICE_TYPE_TUN,
@@ -85,10 +87,13 @@ static bool setup_device(void) {
 	else
 		device_info = "Solaris tap device";
 
+	if(device_type == DEVICE_TYPE_TAP && routing_mode == RMODE_ROUTER)
+		overwrite_mac = true;
+
 	/* The following is black magic copied from OpenVPN. */
 
-	if((ip_fd = open("/dev/ip", O_RDWR, 0)) < 0) {
-		logger(LOG_ERR, "Could not open %s: %s\n", "/dev/ip", strerror(errno));
+	if((ip_fd = open(IP_DEVICE, O_RDWR, 0)) < 0) {
+		logger(LOG_ERR, "Could not open %s: %s\n", IP_DEVICE, strerror(errno));
 		return false;
 	}
 
@@ -205,7 +210,7 @@ static bool setup_device(void) {
 
 		/* Push arp module to ip_fd */
 		if(ioctl(ip_fd, I_PUSH, "arp") < 0) {
-			logger(LOG_ERR, "Could not push ARP module onto %s!", "/dev/ip");
+			logger(LOG_ERR, "Could not push ARP module onto %s!", IP_DEVICE);
 			return false;
 		}
 
@@ -297,11 +302,16 @@ static void close_device(void) {
 }
 
 static bool read_packet(vpn_packet_t *packet) {
-	int inlen;
+	int result;
+	struct strbuf sbuf;
+	int f = 0;
 
 	switch(device_type) {
 		case DEVICE_TYPE_TUN:
-			if((inlen = read(device_fd, packet->data + 14, MTU - 14)) <= 0) {
+			sbuf.maxlen = MTU - 14;
+			sbuf.buf = (char *)packet->data + 14;
+
+			if((result = getmsg(device_fd, NULL, &sbuf, &f)) < 0) {
 				logger(LOG_ERR, "Error while reading from %s %s: %s", device_info, device, strerror(errno));
 				return false;
 			}
@@ -321,16 +331,19 @@ static bool read_packet(vpn_packet_t *packet) {
 			}
 
 			memset(packet->data, 0, 12);
-			packet->len = inlen + 14;
+			packet->len = sbuf.len + 14;
 			break;
 
 		case DEVICE_TYPE_TAP:
-			if((inlen = read(device_fd, packet->data, MTU)) <= 0) {
+			sbuf.maxlen = MTU;
+			sbuf.buf = (char *)packet->data;
+
+			if((result = getmsg(device_fd, NULL, &sbuf, &f)) < 0) {
 				logger(LOG_ERR, "Error while reading from %s %s: %s", device_info, device, strerror(errno));
 				return false;
 			}
 
-			packet->len = inlen + 14;
+			packet->len = sbuf.len;
 			break;
 
 		default:
@@ -347,16 +360,24 @@ static bool read_packet(vpn_packet_t *packet) {
 static bool write_packet(vpn_packet_t *packet) {
 	ifdebug(TRAFFIC) logger(LOG_DEBUG, "Writing packet of %d bytes to %s", packet->len, device_info);
 
+	struct strbuf sbuf;
+
 	switch(device_type) {
 		case DEVICE_TYPE_TUN:
-			if(write(device_fd, packet->data + 14, packet->len - 14) < 0) {
+			sbuf.len = packet->len - 14;
+			sbuf.buf = (char *)packet->data + 14;
+
+			if(putmsg(device_fd, NULL, &sbuf, 0) < 0) {
 				logger(LOG_ERR, "Can't write to %s %s: %s", device_info, device, strerror(errno));
 				return false;
 			}
 			break;
 
 		case DEVICE_TYPE_TAP:
-			if(write(device_fd, packet->data, packet->len) < 0) {
+			sbuf.len = packet->len;
+			sbuf.buf = (char *)packet->data;
+
+			if(putmsg(device_fd, NULL, &sbuf, 0) < 0) {
 				logger(LOG_ERR, "Can't write to %s %s: %s", device_info, device, strerror(errno));
 				return false;
 			}
