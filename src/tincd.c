@@ -1,7 +1,7 @@
 /*
     tincd.c -- the main file for tincd
     Copyright (C) 1998-2005 Ivo Timmermans
-                  2000-2012 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2013 Guus Sliepen <guus@tinc-vpn.org>
                   2008      Max Rijevski <maksuf@gmail.com>
                   2009      Michael Tokarev <mjt@tls.msk.ru>
                   2010      Julien Muchembled <jm@jmuchemb.eu>
@@ -338,7 +338,7 @@ static bool keygen(int bits) {
 	RSA *rsa_key;
 	FILE *f;
 	char *name = get_name();
-	char *filename;
+	char *pubname, *privname;
 
 	fprintf(stderr, "Generating %d bits keys:\n", bits);
 	rsa_key = RSA_generate_key(bits, 0x10001, indicator, NULL);
@@ -349,8 +349,9 @@ static bool keygen(int bits) {
 	} else
 		fprintf(stderr, "Done.\n");
 
-	xasprintf(&filename, "%s/rsa_key.priv", confbase);
-	f = ask_and_open(filename, "private RSA key");
+	xasprintf(&privname, "%s/rsa_key.priv", confbase);
+	f = ask_and_open(privname, "private RSA key");
+	free(privname);
 
 	if(!f)
 		return false;
@@ -363,14 +364,14 @@ static bool keygen(int bits) {
 	fputc('\n', f);
 	PEM_write_RSAPrivateKey(f, rsa_key, NULL, NULL, 0, NULL, NULL);
 	fclose(f);
-	free(filename);
 
 	if(name)
-		xasprintf(&filename, "%s/hosts/%s", confbase, name);
+		xasprintf(&pubname, "%s/hosts/%s", confbase, name);
 	else
-		xasprintf(&filename, "%s/rsa_key.pub", confbase);
+		xasprintf(&pubname, "%s/rsa_key.pub", confbase);
 
-	f = ask_and_open(filename, "public RSA key");
+	f = ask_and_open(pubname, "public RSA key");
+	free(pubname);
 
 	if(!f)
 		return false;
@@ -378,7 +379,6 @@ static bool keygen(int bits) {
 	fputc('\n', f);
 	PEM_write_RSAPublicKey(f, rsa_key);
 	fclose(f);
-	free(filename);
 	free(name);
 
 	return true;
@@ -391,7 +391,7 @@ static void make_names(void) {
 #ifdef HAVE_MINGW
 	HKEY key;
 	char installdir[1024] = "";
-	long len = sizeof(installdir);
+	DWORD len = sizeof(installdir);
 #endif
 
 	if(netname)
@@ -401,7 +401,7 @@ static void make_names(void) {
 
 #ifdef HAVE_MINGW
 	if(!RegOpenKeyEx(HKEY_LOCAL_MACHINE, "SOFTWARE\\tinc", 0, KEY_READ, &key)) {
-		if(!RegQueryValueEx(key, NULL, 0, 0, installdir, &len)) {
+		if(!RegQueryValueEx(key, NULL, 0, 0, (LPBYTE)installdir, &len)) {
 			if(!logfilename)
 				xasprintf(&logfilename, "%s/log/%s.log", identname);
 			if(!confbase) {
@@ -467,8 +467,11 @@ static bool drop_privs() {
 			       "initgroups", strerror(errno));
 			return false;
 		}
+#ifndef __ANDROID__
+// Not supported in android NDK
 		endgrent();
 		endpwent();
+#endif
 	}
 	if (do_chroot) {
 		tzset();	/* for proper timestamps in logs */
@@ -510,7 +513,7 @@ int main(int argc, char **argv) {
 	if(show_version) {
 		printf("%s version %s (built %s %s, protocol %d)\n", PACKAGE,
 			   VERSION, __DATE__, __TIME__, PROT_CURRENT);
-		printf("Copyright (C) 1998-2012 Ivo Timmermans, Guus Sliepen and others.\n"
+		printf("Copyright (C) 1998-2013 Ivo Timmermans, Guus Sliepen and others.\n"
 				"See the AUTHORS file for a complete list.\n\n"
 				"tinc comes with ABSOLUTELY NO WARRANTY.  This is free software,\n"
 				"and you are welcome to redistribute it under certain conditions;\n"

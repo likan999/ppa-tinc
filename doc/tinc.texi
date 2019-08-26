@@ -15,7 +15,7 @@
 
 This is the info manual for @value{PACKAGE} version @value{VERSION}, a Virtual Private Network daemon.
 
-Copyright @copyright{} 1998-2012 Ivo Timmermans,
+Copyright @copyright{} 1998-2013 Ivo Timmermans,
 Guus Sliepen <guus@@tinc-vpn.org> and
 Wessel Dankers <wsl@@tinc-vpn.org>.
 
@@ -39,7 +39,7 @@ permission notice identical to this one.
 @vskip 0pt plus 1filll
 This is the info manual for @value{PACKAGE} version @value{VERSION}, a Virtual Private Network daemon.
 
-Copyright @copyright{} 1998-2012 Ivo Timmermans,
+Copyright @copyright{} 1998-2013 Ivo Timmermans,
 Guus Sliepen <guus@@tinc-vpn.org> and
 Wessel Dankers <wsl@@tinc-vpn.org>.
 
@@ -186,7 +186,7 @@ packets.
 @cindex release
 For an up to date list of supported platforms, please check the list on
 our website:
-@uref{http://www.tinc-vpn.org/platforms}.
+@uref{http://www.tinc-vpn.org/platforms/}.
 
 @c
 @c
@@ -261,7 +261,7 @@ alias char-major-10-200 tun
 @subsection Configuration of FreeBSD kernels
 
 For FreeBSD version 4.1 and higher, tun and tap drivers are included in the default kernel configuration.
-Using tap devices is recommended.
+The tap driver can be loaded with @code{kldload if_tap}, or by adding @code{if_tap_load="YES"} to @file{/boot/loader.conf}. 
 
 
 @c ==================================================================
@@ -274,6 +274,7 @@ There is also a kernel patch from @uref{http://diehard.n-r-g.com/stuff/openbsd/}
 which adds a tap device to OpenBSD which should work with tinc,
 but with recent versions of OpenBSD,
 a tun device can act as a tap device by setting the link0 option with ifconfig.
+
 
 @c ==================================================================
 @node       Configuration of NetBSD kernels
@@ -349,7 +350,7 @@ For all cryptography-related functions, tinc uses the functions provided
 by the OpenSSL library.
 
 If this library is not installed, you wil get an error when configuring
-tinc for build.  Support for running tinc without having OpenSSL
+tinc for build.  Support for running tinc with other cryptographic libraries
 installed @emph{may} be added in the future.
 
 You can use your operating system's package manager to install this if
@@ -412,9 +413,11 @@ Markus F.X.J. Oberhumer
 For the optional compression of UDP packets, tinc uses the functions provided
 by the zlib library.
 
-If this library is not installed, you wil get an error when configuring
-tinc for build.  Support for running tinc without having zlib
-installed @emph{may} be added in the future.
+If this library is not installed, you wil get an error when running the
+configure script.  You can either install the zlib library, or disable support
+for zlib compression by using the "--disable-zlib" option when running the
+configure script. Note that if you disable support for zlib, the resulting
+binary will not work correctly on VPNs where zlib compression is used.
 
 You can use your operating system's package manager to install this if
 available.  Make sure you install the development AND runtime versions
@@ -432,11 +435,13 @@ default).
 @subsection lzo
 
 @cindex lzo
-Another form of compression is offered using the lzo library.
+Another form of compression is offered using the LZO library.
 
-If this library is not installed, you wil get an error when configuring
-tinc for build.  Support for running tinc without having lzo
-installed @emph{may} be added in the future.
+If this library is not installed, you wil get an error when running the
+configure script.  You can either install the LZO library, or disable support
+for LZO compression by using the "--disable-lzo" option when running the
+configure script. Note that if you disable support for LZO, the resulting
+binary will not work correctly on VPNs where LZO compression is used.
 
 You can use your operating system's package manager to install this if
 available.  Make sure you install the development AND runtime versions
@@ -469,7 +474,7 @@ system startup scripts and sample configurations.
 If you cannot use one of the precompiled packages, or you want to compile tinc
 for yourself, you can use the source.  The source is distributed under
 the GNU General Public License (GPL).  Download the source from the
-@uref{http://www.tinc-vpn.org/download, download page}, which has
+@uref{http://www.tinc-vpn.org/download/, download page}, which has
 the checksums of these files listed; you may wish to check these with
 md5sum before continuing.
 
@@ -510,7 +515,7 @@ The documentation that comes along with your distribution will tell you how to d
 
 In order to build tinc on Darwin, you need to install the MacOS/X Developer Tools
 from @uref{http://developer.apple.com/tools/macosxtools.html} and
-a recent version of Fink from @uref{http://fink.sourceforge.net/}.
+a recent version of Fink from @uref{http://www.finkproject.org/}.
 
 After installation use fink to download and install the following packages:
 autoconf25, automake, dlcompat, m4, openssl, zlib and lzo.
@@ -638,7 +643,7 @@ you will not find the answers in this documentation.
 Make sure you have an adequate understanding of networks in general.
 @cindex Network Administrators Guide
 A good resource on networking is the
-@uref{http://www.linuxdoc.org/LDP/nag2/, Linux Network Administrators Guide}.
+@uref{http://www.tldp.org/LDP/nag2/, Linux Network Administrators Guide}.
 
 If you have everything clearly pictured in your mind,
 proceed in the following order:
@@ -943,7 +948,7 @@ tinc's efficiency, even stopping the daemon for a few seconds everytime
 it does a lookup if your DNS server is not responding.
 
 This does not affect resolving hostnames to IP addresses from the
-configuration file.
+configuration file, but whether hostnames should be resolved while logging.
 
 @cindex Interface
 @item Interface = <@var{interface}>
@@ -1040,10 +1045,6 @@ accidental eavesdropping if you are editting the configuration file.
 This is the full path name of the RSA private key file that was
 generated by @samp{tincd --generate-keys}.  It must be a full path, not a
 relative directory.
-
-Note that there must be exactly one of PrivateKey
-or PrivateKeyFile
-specified in the configuration file.
 
 @cindex ProcessPriority
 @item ProcessPriority = <low|normal|high>
@@ -1220,7 +1221,7 @@ MAC addresses are notated like 0:1a:2b:3c:4d:5e.
 Prefixlength is the number of bits set to 1 in the netmask part; for
 example: netmask 255.255.255.0 would become /24, 255.255.252.0 becomes
 /22. This conforms to standard CIDR notation as described in
-@uref{ftp://ftp.isi.edu/in-notes/rfc1519.txt, RFC1519}
+@uref{http://www.ietf.org/rfc/rfc1519.txt, RFC1519}
 
 @cindex Subnet weight
 A Subnet can be given a weight to indicate its priority over identical Subnets

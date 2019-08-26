@@ -1,7 +1,7 @@
 /*
     net_setup.c -- Setup.
     Copyright (C) 1998-2005 Ivo Timmermans,
-                  2000-2012 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2013 Guus Sliepen <guus@tinc-vpn.org>
                   2006      Scott Lamb <slamb@slamb.org>
                   2010      Brandon Black <blblack@gmail.com>
 
@@ -55,7 +55,8 @@ proxytype_t proxytype;
 
 bool read_rsa_public_key(connection_t *c) {
 	FILE *fp;
-	char *fname;
+	char *pubname;
+	char *hcfname;
 	char *key;
 
 	if(!c->rsa_key) {
@@ -66,7 +67,10 @@ bool read_rsa_public_key(connection_t *c) {
 	/* First, check for simple PublicKey statement */
 
 	if(get_config_string(lookup_config(c->config_tree, "PublicKey"), &key)) {
-		BN_hex2bn(&c->rsa_key->n, key);
+		if(BN_hex2bn(&c->rsa_key->n, key) != strlen(key)) {
+			logger(LOG_ERR, "Invalid PublicKey for %s!", c->name);
+			return false;
+		}
 		BN_hex2bn(&c->rsa_key->e, "FFFF");
 		free(key);
 		return true;
@@ -74,80 +78,79 @@ bool read_rsa_public_key(connection_t *c) {
 
 	/* Else, check for PublicKeyFile statement and read it */
 
-	if(get_config_string(lookup_config(c->config_tree, "PublicKeyFile"), &fname)) {
-		fp = fopen(fname, "r");
+	if(get_config_string(lookup_config(c->config_tree, "PublicKeyFile"), &pubname)) {
+		fp = fopen(pubname, "r");
 
 		if(!fp) {
-			logger(LOG_ERR, "Error reading RSA public key file `%s': %s",
-				   fname, strerror(errno));
-			free(fname);
+			logger(LOG_ERR, "Error reading RSA public key file `%s': %s", pubname, strerror(errno));
+			free(pubname);
 			return false;
 		}
 
-		free(fname);
 		c->rsa_key = PEM_read_RSAPublicKey(fp, &c->rsa_key, NULL, NULL);
 		fclose(fp);
 
-		if(c->rsa_key)
+		if(c->rsa_key) {
+			free(pubname);
 			return true;		/* Woohoo. */
+		}
 
 		/* If it fails, try PEM_read_RSA_PUBKEY. */
-		fp = fopen(fname, "r");
+		fp = fopen(pubname, "r");
 
 		if(!fp) {
-			logger(LOG_ERR, "Error reading RSA public key file `%s': %s",
-				   fname, strerror(errno));
-			free(fname);
+			logger(LOG_ERR, "Error reading RSA public key file `%s': %s", pubname, strerror(errno));
+			free(pubname);
 			return false;
 		}
 
-		free(fname);
 		c->rsa_key = PEM_read_RSA_PUBKEY(fp, &c->rsa_key, NULL, NULL);
 		fclose(fp);
 
 		if(c->rsa_key) {
 //				RSA_blinding_on(c->rsa_key, NULL);
+			free(pubname);
 			return true;
 		}
 
-		logger(LOG_ERR, "Reading RSA public key file `%s' failed: %s",
-			   fname, strerror(errno));
+		logger(LOG_ERR, "Reading RSA public key file `%s' failed: %s", pubname, strerror(errno));
+		free(pubname);
 		return false;
 	}
 
 	/* Else, check if a harnessed public key is in the config file */
 
-	xasprintf(&fname, "%s/hosts/%s", confbase, c->name);
-	fp = fopen(fname, "r");
+	xasprintf(&hcfname, "%s/hosts/%s", confbase, c->name);
+	fp = fopen(hcfname, "r");
 
 	if(!fp) {
-		logger(LOG_ERR, "Error reading RSA public key file `%s': %s", fname, strerror(errno));
-		free(fname);
+		logger(LOG_ERR, "Error reading RSA public key file `%s': %s", hcfname, strerror(errno));
+		free(hcfname);
 		return false;
 	}
 
 	c->rsa_key = PEM_read_RSAPublicKey(fp, &c->rsa_key, NULL, NULL);
 	fclose(fp);
-	free(fname);
 
-	if(c->rsa_key)
+	if(c->rsa_key) {
+		free(hcfname);
 		return true;
+	}
 
 	/* Try again with PEM_read_RSA_PUBKEY. */
 
-	xasprintf(&fname, "%s/hosts/%s", confbase, c->name);
-	fp = fopen(fname, "r");
+	fp = fopen(hcfname, "r");
 
 	if(!fp) {
-		logger(LOG_ERR, "Error reading RSA public key file `%s': %s", fname, strerror(errno));
-		free(fname);
+		logger(LOG_ERR, "Error reading RSA public key file `%s': %s", hcfname, strerror(errno));
+		free(hcfname);
 		return false;
 	}
 
+	free(hcfname);
 	c->rsa_key = PEM_read_RSA_PUBKEY(fp, &c->rsa_key, NULL, NULL);
 //	RSA_blinding_on(c->rsa_key, NULL);
 	fclose(fp);
-	free(fname);
 
 	if(c->rsa_key)
 		return true;
@@ -160,7 +163,6 @@ bool read_rsa_public_key(connection_t *c) {
 static bool read_rsa_private_key(void) {
 	FILE *fp;
 	char *fname, *key, *pubkey;
-	struct stat s;
 
 	if(get_config_string(lookup_config(config_tree, "PrivateKey"), &key)) {
 		if(!get_config_string(lookup_config(config_tree, "PublicKey"), &pubkey)) {
@@ -169,8 +171,14 @@ static bool read_rsa_private_key(void) {
 		}
 		myself->connection->rsa_key = RSA_new();
 //		RSA_blinding_on(myself->connection->rsa_key, NULL);
-		BN_hex2bn(&myself->connection->rsa_key->d, key);
-		BN_hex2bn(&myself->connection->rsa_key->n, pubkey);
+		if(BN_hex2bn(&myself->connection->rsa_key->d, key) != strlen(key)) {
+			logger(LOG_ERR, "Invalid PrivateKey for myself!");
+			return false;
+		}
+		if(BN_hex2bn(&myself->connection->rsa_key->n, pubkey) != strlen(pubkey)) {
+			logger(LOG_ERR, "Invalid PublicKey for myself!");
+			return false;
+		}
 		BN_hex2bn(&myself->connection->rsa_key->e, "FFFF");
 		free(key);
 		free(pubkey);
@@ -190,6 +198,8 @@ static bool read_rsa_private_key(void) {
 	}
 
 #if !defined(HAVE_MINGW) && !defined(HAVE_CYGWIN)
+	struct stat s;
+
 	if(fstat(fileno(fp), &s)) {
 		logger(LOG_ERR, "Could not stat RSA private key file `%s': %s'",
 				fname, strerror(errno));
@@ -290,7 +300,7 @@ char *get_name(void) {
 				fprintf(stderr, "Invalid Name: environment variable %s does not exist\n", name + 1);
 				return false;
 			}
-			envname = alloca(32);
+			char envname[32];
 			if(gethostname(envname, 32)) {
 				fprintf(stderr, "Could not get hostname: %s\n", strerror(errno));
 				return false;

@@ -1,7 +1,7 @@
 /*
     net_socket.c -- Handle various kinds of sockets.
     Copyright (C) 1998-2005 Ivo Timmermans,
-                  2000-2012 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2013 Guus Sliepen <guus@tinc-vpn.org>
                   2006      Scott Lamb <slamb@slamb.org>
                   2009      Florian Forster <octo@verplant.org>
 
@@ -64,7 +64,7 @@ static void configure_tcp(connection_t *c) {
 	unsigned long arg = 1;
 
 	if(ioctlsocket(c->socket, FIONBIO, &arg) != 0) {
-		logger(LOG_ERR, "ioctlsocket for %s: %d", c->hostname, sockstrerror(sockerrno));
+		logger(LOG_ERR, "ioctlsocket for %s: %s", c->hostname, sockstrerror(sockerrno));
 	}
 #endif
 
@@ -294,9 +294,6 @@ void retry_outgoing(outgoing_t *outgoing) {
 void finish_connecting(connection_t *c) {
 	ifdebug(CONNECTIONS) logger(LOG_INFO, "Connected to %s (%s)", c->name, c->hostname);
 
-	if(proxytype != PROXY_EXEC)
-		configure_tcp(c);
-
 	c->last_ping_time = now;
 
 	send_id(c);
@@ -419,6 +416,7 @@ begin:
 			goto begin;
 		ifdebug(CONNECTIONS) logger(LOG_INFO, "Using proxy at %s port %s", proxyhost, proxyport);
 		c->socket = socket(proxyai->ai_family, SOCK_STREAM, IPPROTO_TCP);
+		configure_tcp(c);
 	}
 
 	if(c->socket == -1) {

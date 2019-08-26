@@ -1,7 +1,7 @@
 /*
     process.c -- process management functions
     Copyright (C) 1999-2005 Ivo Timmermans,
-                  2000-2011 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2013 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -46,8 +46,6 @@ extern bool use_logfile;
 #ifndef HAVE_MINGW
 static sigset_t emptysigset;
 #endif
-
-static int saved_debug_level = -1;
 
 static void memory_full(int size) {
 	logger(LOG_ERR, "Memory exhausted (couldn't allocate %d bytes), exitting.", size);
@@ -167,7 +165,7 @@ DWORD WINAPI controlhandler(DWORD request, DWORD type, LPVOID boe, LPVOID bah) {
 			logger(LOG_NOTICE, "Got %s request", "SERVICE_CONTROL_SHUTDOWN");
 			break;
 		default:
-			logger(LOG_WARNING, "Got unexpected request %d", request);
+			logger(LOG_WARNING, "Got unexpected request %d", (int)request);
 			return ERROR_CALL_NOT_IMPLEMENTED;
 	}
 
@@ -187,9 +185,7 @@ DWORD WINAPI controlhandler(DWORD request, DWORD type, LPVOID boe, LPVOID bah) {
 }
 
 VOID WINAPI run_service(DWORD argc, LPTSTR* argv) {
-	int err = 1;
 	extern int main2(int argc, char **argv);
-
 
 	status.dwServiceType = SERVICE_WIN32; 
 	status.dwControlsAccepted = SERVICE_ACCEPT_STOP | SERVICE_ACCEPT_SHUTDOWN;
@@ -201,7 +197,6 @@ VOID WINAPI run_service(DWORD argc, LPTSTR* argv) {
 
 	if (!statushandle) {
 		logger(LOG_ERR, "System call `%s' failed: %s", "RegisterServiceCtrlHandlerEx", winerror(GetLastError()));
-		err = 1;
 	} else {
 		status.dwWaitHint = 30000; 
 		status.dwCurrentState = SERVICE_START_PENDING; 
@@ -211,11 +206,10 @@ VOID WINAPI run_service(DWORD argc, LPTSTR* argv) {
 		status.dwCurrentState = SERVICE_RUNNING;
 		SetServiceStatus(statushandle, &status);
 
-		err = main2(argc, argv);
+		main2(argc, argv);
 
 		status.dwWaitHint = 0;
 		status.dwCurrentState = SERVICE_STOPPED; 
-		//status.dwWin32ExitCode = err; 
 		SetServiceStatus(statushandle, &status);
 	}
 
@@ -358,6 +352,7 @@ bool execute_script(const char *name, char **envp) {
 	int status, len;
 	char *scriptname;
 	int i;
+	char *interpreter = NULL;
 
 #ifndef HAVE_MINGW
 	len = xasprintf(&scriptname, "\"%s/%s\"", confbase, name);
@@ -369,14 +364,22 @@ bool execute_script(const char *name, char **envp) {
 
 	scriptname[len - 1] = '\0';
 
-#ifndef HAVE_TUNEMU
 	/* First check if there is a script */
 
 	if(access(scriptname + 1, F_OK)) {
 		free(scriptname);
 		return true;
 	}
-#endif
+
+	// Custom scripts interpreter
+	if(get_config_string(lookup_config(config_tree, "ScriptsInterpreter"), &interpreter)) {
+		// Force custom scripts interpreter allowing execution of scripts on android without execution flag (such as on /sdcard)
+		free(scriptname);
+		len = xasprintf(&scriptname, "%s \"%s/%s\"", interpreter, confbase, name);
+		free(interpreter);
+		if(len < 0)
+			return false;
+	}
 
 	ifdebug(STATUS) logger(LOG_INFO, "Executing script %s", name);
 
@@ -404,8 +407,8 @@ bool execute_script(const char *name, char **envp) {
 		}
 	}
 
-#ifdef WEXITSTATUS
 	if(status != -1) {
+#ifdef WEXITSTATUS
 		if(WIFEXITED(status)) {	/* Child exited by itself */
 			if(WEXITSTATUS(status)) {
 				logger(LOG_ERR, "Script %s exited with non-zero status %d",
@@ -420,11 +423,11 @@ bool execute_script(const char *name, char **envp) {
 			logger(LOG_ERR, "Script %s terminated abnormally", name);
 			return false;
 		}
+#endif
 	} else {
 		logger(LOG_ERR, "System call `%s' failed: %s", "system", strerror(errno));
 		return false;
 	}
-#endif
 #endif
 	return true;
 }
@@ -485,6 +488,8 @@ static RETSIGTYPE sighup_handler(int a) {
 }
 
 static RETSIGTYPE sigint_handler(int a) {
+	static int saved_debug_level = -1;
+
 	logger(LOG_NOTICE, "Got %s signal", "INT");
 
 	if(saved_debug_level != -1) {

@@ -1,7 +1,7 @@
 /*
     protocol_auth.c -- handle the meta-protocol, authentication
     Copyright (C) 1999-2005 Ivo Timmermans,
-                  2000-2012 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2013 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -126,7 +126,7 @@ static bool send_proxyrequest(connection_t *c) {
 }
 
 bool send_id(connection_t *c) {
-	if(proxytype)
+	if(proxytype && c->outgoing)
 		if(!send_proxyrequest(c))
 			return false;
 
@@ -244,8 +244,8 @@ bool send_metakey(connection_t *c) {
 	 */
 
 	if(RSA_public_encrypt(len, (unsigned char *)c->outkey, (unsigned char *)buffer, c->rsa_key, RSA_NO_PADDING) != len) {
-		logger(LOG_ERR, "Error during encryption of meta key for %s (%s)",
-			   c->name, c->hostname);
+		logger(LOG_ERR, "Error during encryption of meta key for %s (%s): %s",
+			   c->name, c->hostname, ERR_error_string(ERR_get_error(), NULL));
 		return false;
 	}
 
@@ -308,13 +308,16 @@ bool metakey_h(connection_t *c) {
 
 	/* Convert the challenge from hexadecimal back to binary */
 
-	hex2bin(buffer, buffer, len);
+	if(!hex2bin(buffer, buffer, len)) {
+		logger(LOG_ERR, "Got bad %s from %s(%s): %s", "METAKEY", c->name, c->hostname, "invalid key");
+		return false;
+	}
 
 	/* Decrypt the meta key */
 
 	if(RSA_private_decrypt(len, (unsigned char *)buffer, (unsigned char *)c->inkey, myself->connection->rsa_key, RSA_NO_PADDING) != len) {	/* See challenge() */
-		logger(LOG_ERR, "Error during decryption of meta key for %s (%s)",
-			   c->name, c->hostname);
+		logger(LOG_ERR, "Error during decryption of meta key for %s (%s): %s",
+			   c->name, c->hostname, ERR_error_string(ERR_get_error(), NULL));
 		return false;
 	}
 
@@ -426,7 +429,10 @@ bool challenge_h(connection_t *c) {
 
 	/* Convert the challenge from hexadecimal back to binary */
 
-	hex2bin(buffer, c->mychallenge, len);
+	if(!hex2bin(buffer, c->mychallenge, len)) {
+		logger(LOG_ERR, "Got bad %s from %s(%s): %s", "CHALLENGE", c->name, c->hostname, "invalid challenge");
+		return false;
+	}
 
 	c->allow_request = CHAL_REPLY;
 
@@ -480,7 +486,10 @@ bool chal_reply_h(connection_t *c) {
 
 	/* Convert the hash to binary format */
 
-	hex2bin(hishash, hishash, c->outdigest->md_size);
+	if(!hex2bin(hishash, hishash, c->outdigest->md_size)) {
+		logger(LOG_ERR, "Got bad %s from %s(%s): %s", "CHAL_REPLY", c->name, c->hostname, "invalid hash");
+		return false;
+	}
 
 	/* Calculate the hash from the challenge we sent */
 

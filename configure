@@ -1376,9 +1376,9 @@ Optional Features:
 			  (and sometimes confusing) to the casual installer
   --disable-dependency-tracking  speeds up one-time build
   --enable-dependency-tracking   do not reject slow dependency extractors
-  --disable-uml           enable support for User Mode Linux
-  --disable-vde           enable support for Virtual Distributed Ethernet
-  --disable-tunemu        enable support for the tunemu driver
+  --enable-uml            enable support for User Mode Linux
+  --enable-vde            enable support for Virtual Distributed Ethernet
+  --enable-tunemu         enable support for the tunemu driver
   --disable-zlib          disable zlib compression support
   --disable-lzo           disable lzo compression support
   --disable-jumbograms    enable support for jumbograms (packets up to 9000
@@ -2758,7 +2758,7 @@ fi
 
 # Define the identity of the package.
  PACKAGE=tinc
- VERSION=1.0.19
+ VERSION=1.0.21
 
 
 cat >>confdefs.h <<_ACEOF
