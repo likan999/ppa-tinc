@@ -1,6 +1,6 @@
 /*
     splay_tree.h -- header file for splay_tree.c
-    Copyright (C) 2004-2006 Guus Sliepen <guus@tinc-vpn.org>
+    Copyright (C) 2004-2012 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -103,5 +103,7 @@ extern splay_node_t *splay_search_closest_greater_node(splay_tree_t *, const voi
 
 extern void splay_foreach(const splay_tree_t *, splay_action_t);
 extern void splay_foreach_node(const splay_tree_t *, splay_action_t);
+
+#define splay_each(type, item, tree) (type *item = (type *)1; item; item = NULL) for(splay_node_t *node = (tree)->head, *next; item = node ? node->data : NULL, next = node ? node->next : NULL, node; node = next)
 
 #endif

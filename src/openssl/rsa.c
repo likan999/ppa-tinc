@@ -1,6 +1,6 @@
 /*
     rsa.c -- RSA key handling
-    Copyright (C) 2007 Guus Sliepen <guus@tinc-vpn.org>
+    Copyright (C) 2007-2012 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -29,16 +29,21 @@
 
 bool rsa_set_hex_public_key(rsa_t *rsa, char *n, char *e) {
 	*rsa = RSA_new();
-	BN_hex2bn(&(*rsa)->n, n);
-	BN_hex2bn(&(*rsa)->e, e);
+	if(BN_hex2bn(&(*rsa)->n, n) != strlen(n))
+		return false;
+	if(BN_hex2bn(&(*rsa)->e, e) != strlen(e))
+		return false;
 	return true;
 }
 
 bool rsa_set_hex_private_key(rsa_t *rsa, char *n, char *e, char *d) {
 	*rsa = RSA_new();
-	BN_hex2bn(&(*rsa)->n, n);
-	BN_hex2bn(&(*rsa)->e, e);
-	BN_hex2bn(&(*rsa)->d, d);
+	if(BN_hex2bn(&(*rsa)->n, n) != strlen(n))
+		return false;
+	if(BN_hex2bn(&(*rsa)->e, e) != strlen(e))
+		return false;
+	if(BN_hex2bn(&(*rsa)->d, d) != strlen(d))
+		return false;
 	return true;
 }
 
@@ -49,13 +54,13 @@ bool rsa_read_pem_public_key(rsa_t *rsa, FILE *fp) {
 
 	if(*rsa)
 		return true;
-	
+
 	*rsa = PEM_read_RSA_PUBKEY(fp, rsa, NULL, NULL);
 
 	if(*rsa)
 		return true;
 
-	logger(LOG_ERR, "Unable to read RSA public key: %s", ERR_error_string(ERR_get_error(), NULL));
+	logger(DEBUG_ALWAYS, LOG_ERR, "Unable to read RSA public key: %s", ERR_error_string(ERR_get_error(), NULL));
 	return false;
 }
 
@@ -64,8 +69,8 @@ bool rsa_read_pem_private_key(rsa_t *rsa, FILE *fp) {
 
 	if(*rsa)
 		return true;
-	
-	logger(LOG_ERR, "Unable to read RSA private key: %s", ERR_error_string(ERR_get_error(), NULL));
+
+	logger(DEBUG_ALWAYS, LOG_ERR, "Unable to read RSA private key: %s", ERR_error_string(ERR_get_error(), NULL));
 	return false;
 }
 
@@ -77,16 +82,16 @@ bool rsa_public_encrypt(rsa_t *rsa, void *in, size_t len, void *out) {
 	if(RSA_public_encrypt(len, in, out, *rsa, RSA_NO_PADDING) == len)
 		return true;
 
-	logger(LOG_ERR, "Unable to perform RSA encryption: %s", ERR_error_string(ERR_get_error(), NULL));
-	return false;	
+	logger(DEBUG_ALWAYS, LOG_ERR, "Unable to perform RSA encryption: %s", ERR_error_string(ERR_get_error(), NULL));
+	return false;
 }
 
 bool rsa_private_decrypt(rsa_t *rsa, void *in, size_t len, void *out) {
 	if(RSA_private_decrypt(len, in, out, *rsa, RSA_NO_PADDING) == len)
 		return true;
 
-	logger(LOG_ERR, "Unable to perform RSA decryption: %s", ERR_error_string(ERR_get_error(), NULL));
-	return false;	
+	logger(DEBUG_ALWAYS, LOG_ERR, "Unable to perform RSA decryption: %s", ERR_error_string(ERR_get_error(), NULL));
+	return false;
 }
 
 bool rsa_active(rsa_t *rsa) {

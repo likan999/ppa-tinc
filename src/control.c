@@ -1,6 +1,6 @@
 /*
     control.c -- Control socket handling.
-    Copyright (C) 2007 Guus Sliepen <guus@tinc-vpn.org>
+    Copyright (C) 2012 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -29,7 +29,6 @@
 #include "netutl.h"
 #include "protocol.h"
 #include "route.h"
-#include "splay_tree.h"
 #include "utils.h"
 #include "xalloc.h"
 
@@ -44,16 +43,16 @@ static bool control_ok(connection_t *c, int type) {
 	return control_return(c, type, 0);
 }
 
-bool control_h(connection_t *c, char *request) {
+bool control_h(connection_t *c, const char *request) {
 	int type;
 
 	if(!c->status.control || c->allow_request != CONTROL) {
-		logger(LOG_ERR, "Unauthorized control request from %s (%s)", c->name, c->hostname);
+		logger(DEBUG_ALWAYS, LOG_ERR, "Unauthorized control request from %s (%s)", c->name, c->hostname);
 		return false;
 	}
 
 	if(sscanf(request, "%*d %d", &type) != 1) {
-		logger(LOG_ERR, "Got bad %s from %s (%s)", "CONTROL", c->name, c->hostname);
+		logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s)", "CONTROL", c->name, c->hostname);
 		return false;
 	}
 
@@ -64,7 +63,7 @@ bool control_h(connection_t *c, char *request) {
 
 		case REQ_DUMP_NODES:
 			return dump_nodes(c);
-			
+
 		case REQ_DUMP_EDGES:
 			return dump_edges(c);
 
@@ -93,22 +92,18 @@ bool control_h(connection_t *c, char *request) {
 			return control_ok(c, REQ_RETRY);
 
 		case REQ_RELOAD:
-			logger(LOG_NOTICE, "Got '%s' command", "reload");
+			logger(DEBUG_ALWAYS, LOG_NOTICE, "Got '%s' command", "reload");
 			int result = reload_configuration();
 			return control_return(c, REQ_RELOAD, result);
 
 		case REQ_DISCONNECT: {
 			char name[MAX_STRING_SIZE];
-			connection_t *other;
-			splay_node_t *node, *next;
 			bool found = false;
 
 			if(sscanf(request, "%*d %*d " MAX_STRING, name) != 1)
 				return control_return(c, REQ_DISCONNECT, -1);
 
-			for(node = connection_tree->head; node; node = next) {
-				next = node->next;
-				other = node->data;
+			for list_each(connection_t, other, connection_list) {
 				if(strcmp(other->name, name))
 					continue;
 				terminate_connection(other, other->status.active);
@@ -122,8 +117,15 @@ bool control_h(connection_t *c, char *request) {
 			return dump_traffic(c);
 
 		case REQ_PCAP:
+			sscanf(request, "%*d %*d %d", &c->outmaclength);
 			c->status.pcap = true;
 			pcap = true;
+			return true;
+
+		case REQ_LOG:
+			sscanf(request, "%*d %*d %d", &c->outcompression);
+			c->status.log = true;
+			logcontrol = true;
 			return true;
 
 		default:
@@ -137,7 +139,7 @@ bool init_control(void) {
 
 	FILE *f = fopen(pidfilename, "w");
 	if(!f) {
-		logger(LOG_ERR, "Cannot write control socket cookie file %s: %s", pidfilename, strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, "Cannot write control socket cookie file %s: %s", pidfilename, strerror(errno));
 		return false;
 	}
 

@@ -1,7 +1,7 @@
 /*
     protocol_auth.c -- handle the meta-protocol, authentication
     Copyright (C) 1999-2005 Ivo Timmermans,
-                  2000-2010 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2012 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -20,7 +20,6 @@
 
 #include "system.h"
 
-#include "splay_tree.h"
 #include "conf.h"
 #include "connection.h"
 #include "control.h"
@@ -31,14 +30,102 @@
 #include "edge.h"
 #include "graph.h"
 #include "logger.h"
+#include "meta.h"
 #include "net.h"
 #include "netutl.h"
 #include "node.h"
 #include "prf.h"
 #include "protocol.h"
 #include "rsa.h"
+#include "sptps.h"
 #include "utils.h"
 #include "xalloc.h"
+
+static bool send_proxyrequest(connection_t *c) {
+	switch(proxytype) {
+		case PROXY_HTTP: {
+			char *host;
+			char *port;
+
+			sockaddr2str(&c->address, &host, &port);
+			send_request(c, "CONNECT %s:%s HTTP/1.1\r\n\r", host, port);
+			free(host);
+			free(port);
+			return true;
+		}
+		case PROXY_SOCKS4: {
+			if(c->address.sa.sa_family != AF_INET) {
+				logger(DEBUG_ALWAYS, LOG_ERR, "Cannot connect to an IPv6 host through a SOCKS 4 proxy!");
+				return false;
+			}
+			char s4req[9 + (proxyuser ? strlen(proxyuser) : 0)];
+			s4req[0] = 4;
+			s4req[1] = 1;
+			memcpy(s4req + 2, &c->address.in.sin_port, 2);
+			memcpy(s4req + 4, &c->address.in.sin_addr, 4);
+			if(proxyuser)
+				memcpy(s4req + 8, proxyuser, strlen(proxyuser));
+			s4req[sizeof s4req - 1] = 0;
+			c->tcplen = 8;
+			return send_meta(c, s4req, sizeof s4req);
+		}
+		case PROXY_SOCKS5: {
+			int len = 3 + 6 + (c->address.sa.sa_family == AF_INET ? 4 : 16);
+			c->tcplen = 2;
+			if(proxypass)
+				len += 3 + strlen(proxyuser) + strlen(proxypass);
+			char s5req[len];
+			int i = 0;
+			s5req[i++] = 5;
+			s5req[i++] = 1;
+			if(proxypass) {
+				s5req[i++] = 2;
+				s5req[i++] = 1;
+				s5req[i++] = strlen(proxyuser);
+				memcpy(s5req + i, proxyuser, strlen(proxyuser));
+				i += strlen(proxyuser);
+				s5req[i++] = strlen(proxypass);
+				memcpy(s5req + i, proxypass, strlen(proxypass));
+				i += strlen(proxypass);
+				c->tcplen += 2;
+			} else {
+				s5req[i++] = 0;
+			}
+			s5req[i++] = 5;
+			s5req[i++] = 1;
+			s5req[i++] = 0;
+			if(c->address.sa.sa_family == AF_INET) {
+				s5req[i++] = 1;
+				memcpy(s5req + i, &c->address.in.sin_addr, 4);
+				i += 4;
+				memcpy(s5req + i, &c->address.in.sin_port, 2);
+				i += 2;
+				c->tcplen += 10;
+			} else if(c->address.sa.sa_family == AF_INET6) {
+				s5req[i++] = 3;
+				memcpy(s5req + i, &c->address.in6.sin6_addr, 16);
+				i += 16;
+				memcpy(s5req + i, &c->address.in6.sin6_port, 2);
+				i += 2;
+				c->tcplen += 22;
+			} else {
+				logger(DEBUG_ALWAYS, LOG_ERR, "Address family %hx not supported for SOCKS 5 proxies!", c->address.sa.sa_family);
+				return false;
+			}
+			if(i > len)
+				abort();
+			return send_meta(c, s5req, sizeof s5req);
+		}
+		case PROXY_SOCKS4A:
+			logger(DEBUG_ALWAYS, LOG_ERR, "Proxy type not implemented yet");
+			return false;
+		case PROXY_EXEC:
+			return true;
+		default:
+			logger(DEBUG_ALWAYS, LOG_ERR, "Unknown proxy type");
+			return false;
+	}
+}
 
 bool send_id(connection_t *c) {
 	gettimeofday(&c->start, NULL);
@@ -52,14 +139,18 @@ bool send_id(connection_t *c) {
 			minor = myself->connection->protocol_minor;
 	}
 
+	if(proxytype)
+		if(!send_proxyrequest(c))
+			return false;
+
 	return send_request(c, "%d %s %d.%d", ID, myself->connection->name, myself->connection->protocol_major, minor);
 }
 
-bool id_h(connection_t *c, char *request) {
+bool id_h(connection_t *c, const char *request) {
 	char name[MAX_STRING_SIZE];
 
 	if(sscanf(request, "%*d " MAX_STRING " %d.%d", name, &c->protocol_major, &c->protocol_minor) < 2) {
-		logger(LOG_ERR, "Got bad %s from %s (%s)", "ID", c->name,
+		logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s)", "ID", c->name,
 			   c->hostname);
 		return false;
 	}
@@ -70,13 +161,17 @@ bool id_h(connection_t *c, char *request) {
 		c->status.control = true;
 		c->allow_request = CONTROL;
 		c->last_ping_time = time(NULL) + 3600;
+
+		free(c->name);
+		c->name = xstrdup("<control>");
+
 		return send_request(c, "%d %d %d", ACK, TINC_CTL_VERSION_CURRENT, getpid());
 	}
 
 	/* Check if identity is a valid name */
 
 	if(!check_id(name)) {
-		logger(LOG_ERR, "Got bad %s from %s (%s): %s", "ID", c->name,
+		logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s): %s", "ID", c->name,
 			   c->hostname, "invalid name");
 		return false;
 	}
@@ -85,7 +180,7 @@ bool id_h(connection_t *c, char *request) {
 
 	if(c->outgoing) {
 		if(strcmp(c->name, name)) {
-			logger(LOG_ERR, "Peer %s is %s instead of %s", c->hostname, name,
+			logger(DEBUG_ALWAYS, LOG_ERR, "Peer %s is %s instead of %s", c->hostname, name,
 				   c->name);
 			return false;
 		}
@@ -98,7 +193,7 @@ bool id_h(connection_t *c, char *request) {
 	/* Check if version matches */
 
 	if(c->protocol_major != myself->connection->protocol_major) {
-		logger(LOG_ERR, "Peer %s (%s) uses incompatible version %d.%d",
+		logger(DEBUG_ALWAYS, LOG_ERR, "Peer %s (%s) uses incompatible version %d.%d",
 			   c->name, c->hostname, c->protocol_major, c->protocol_minor);
 		return false;
 	}
@@ -110,52 +205,41 @@ bool id_h(connection_t *c, char *request) {
 		return send_ack(c);
 	}
 
-	if(!c->config_tree) {
-		init_configuration(&c->config_tree);
-
-		if(!read_connection_config(c)) {
-			logger(LOG_ERR, "Peer %s had unknown identity (%s)", c->hostname,
-				   c->name);
-			return false;
-		}
-
-		if(experimental && c->protocol_minor >= 2)
-			if(!read_ecdsa_public_key(c))
-				return false;
-	} else {
-		if(!ecdsa_active(&c->ecdsa))
-			c->protocol_minor = 1;
-	}
-
 	if(!experimental)
 		c->protocol_minor = 0;
 
+	if(!c->config_tree) {
+		init_configuration(&c->config_tree);
+
+		if(!read_host_config(c->config_tree, c->name)) {
+			logger(DEBUG_ALWAYS, LOG_ERR, "Peer %s had unknown identity (%s)", c->hostname, c->name);
+			return false;
+		}
+
+		if(experimental && c->protocol_minor >= 2) {
+			if(!read_ecdsa_public_key(c))
+				return false;
+		}
+	} else {
+		if(c->protocol_minor && !ecdsa_active(&c->ecdsa))
+			c->protocol_minor = 1;
+	}
+
 	c->allow_request = METAKEY;
 
-	if(c->protocol_minor >= 2)
-		return send_metakey_ec(c);
-	else
+	if(c->protocol_minor >= 2) {
+		c->allow_request = ACK;
+		char label[25 + strlen(myself->name) + strlen(c->name)];
+
+		if(c->outgoing)
+			snprintf(label, sizeof label, "tinc TCP key expansion %s %s", myself->name, c->name);
+		else
+			snprintf(label, sizeof label, "tinc TCP key expansion %s %s", c->name, myself->name);
+
+		return sptps_start(&c->sptps, c, c->outgoing, false, myself->connection->ecdsa, c->ecdsa, label, sizeof label, send_meta_sptps, receive_meta_sptps);
+	} else {
 		return send_metakey(c);
-}
-
-bool send_metakey_ec(connection_t *c) {
-	logger(LOG_DEBUG, "Sending ECDH metakey to %s", c->name);
-
-	size_t siglen = ecdsa_size(&myself->connection->ecdsa);
-
-	char key[(ECDH_SIZE + siglen) * 2 + 1];
-
-	// TODO: include nonce? Use relevant parts of SSH or TLS protocol
-
-	if(!ecdh_generate_public(&c->ecdh, key))
-		return false;
-
-	if(!ecdsa_sign(&myself->connection->ecdsa, key, ECDH_SIZE, key + ECDH_SIZE))
-		return false;
-
-	b64encode(key, key, ECDH_SIZE + siglen);
-	
-	return send_request(c, "%d %s", METAKEY, key);
+	}
 }
 
 bool send_metakey(connection_t *c) {
@@ -164,7 +248,7 @@ bool send_metakey(connection_t *c) {
 
 	if(!cipher_open_blowfish_ofb(&c->outcipher))
 		return false;
-	
+
 	if(!digest_open_sha1(&c->outdigest, -1))
 		return false;
 
@@ -191,9 +275,9 @@ bool send_metakey(connection_t *c) {
 
 	cipher_set_key_from_rsa(&c->outcipher, key, len, true);
 
-	ifdebug(SCARY_THINGS) {
+	if(debug_level >= DEBUG_SCARY_THINGS) {
 		bin2hex(key, hexkey, len);
-		logger(LOG_DEBUG, "Generated random meta key (unencrypted): %s", hexkey);
+		logger(DEBUG_SCARY_THINGS, LOG_DEBUG, "Generated random meta key (unencrypted): %s", hexkey);
 	}
 
 	/* Encrypt the random data
@@ -204,7 +288,7 @@ bool send_metakey(connection_t *c) {
 	 */
 
 	if(!rsa_public_encrypt(&c->rsa, key, len, enckey)) {
-		logger(LOG_ERR, "Error during encryption of meta key for %s (%s)", c->name, c->hostname);
+		logger(DEBUG_ALWAYS, LOG_ERR, "Error during encryption of meta key for %s (%s)", c->name, c->hostname);
 		return false;
 	}
 
@@ -218,90 +302,12 @@ bool send_metakey(connection_t *c) {
 			 cipher_get_nid(&c->outcipher),
 			 digest_get_nid(&c->outdigest), c->outmaclength,
 			 c->outcompression, hexkey);
-	
+
 	c->status.encryptout = true;
 	return result;
 }
 
-static bool metakey_ec_h(connection_t *c, const char *request) {
-	size_t siglen = ecdsa_size(&c->ecdsa);
-	char key[MAX_STRING_SIZE];
-	char sig[siglen];
-
-	logger(LOG_DEBUG, "Got ECDH metakey from %s", c->name);
-
-	if(sscanf(request, "%*d " MAX_STRING, key) != 1) {
-		logger(LOG_ERR, "Got bad %s from %s (%s)", "METAKEY", c->name, c->hostname);
-		return false;
-	}
-
-	int inlen = b64decode(key, key, sizeof key);
-
-	if(inlen != (ECDH_SIZE + siglen)) {
-		logger(LOG_ERR, "Possible intruder %s (%s): %s", c->name, c->hostname, "wrong keylength");
-		return false;
-	}
-
-	if(!ecdsa_verify(&c->ecdsa, key, ECDH_SIZE, key + ECDH_SIZE)) {
-		logger(LOG_ERR, "Possible intruder %s (%s): %s", c->name, c->hostname, "invalid ECDSA signature");
-		return false;
-	}
-
-	char shared[ECDH_SHARED_SIZE];
-
-	if(!ecdh_compute_shared(&c->ecdh, key, shared))
-		return false;
-
-	/* Update our crypto end */
-
-	if(!cipher_open_by_name(&c->incipher, "aes-256-ofb"))
-		return false;
-	if(!digest_open_by_name(&c->indigest, "sha512", -1))
-		return false;
-	if(!cipher_open_by_name(&c->outcipher, "aes-256-ofb"))
-		return false;
-	if(!digest_open_by_name(&c->outdigest, "sha512", -1))
-		return false;
-
-	size_t mykeylen = cipher_keylength(&c->incipher);
-	size_t hiskeylen = cipher_keylength(&c->outcipher);
-
-	char *mykey;
-	char *hiskey;
-	char *seed;
-	
-	if(strcmp(myself->name, c->name) < 0) {
-		mykey = key;
-		hiskey = key + mykeylen * 2;
-		xasprintf(&seed, "tinc TCP key expansion %s %s", myself->name, c->name);
-	} else {
-		mykey = key + hiskeylen * 2;
-		hiskey = key;
-		xasprintf(&seed, "tinc TCP key expansion %s %s", c->name, myself->name);
-	}
-
-	if(!prf(shared, ECDH_SHARED_SIZE, seed, strlen(seed), key, hiskeylen * 2 + mykeylen * 2))
-		return false;
-
-	free(seed);
-
-	cipher_set_key(&c->incipher, mykey, false);
-	digest_set_key(&c->indigest, mykey + mykeylen, mykeylen);
-
-	cipher_set_key(&c->outcipher, hiskey, true);
-	digest_set_key(&c->outdigest, hiskey + hiskeylen, hiskeylen);
-
-	c->status.decryptin = true;
-	c->status.encryptout = true;
-	c->allow_request = CHALLENGE;
-
-	return send_challenge(c);
-}
-
-bool metakey_h(connection_t *c, char *request) {
-	if(c->protocol_minor >= 2)
-		return metakey_ec_h(c, request);
-
+bool metakey_h(connection_t *c, const char *request) {
 	char hexkey[MAX_STRING_SIZE];
 	int cipher, digest, maclength, compression;
 	size_t len = rsa_size(&myself->connection->rsa);
@@ -309,7 +315,7 @@ bool metakey_h(connection_t *c, char *request) {
 	char key[len];
 
 	if(sscanf(request, "%*d %d %d %d %d " MAX_STRING, &cipher, &digest, &maclength, &compression, hexkey) != 5) {
-		logger(LOG_ERR, "Got bad %s from %s (%s)", "METAKEY", c->name, c->hostname);
+		logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s)", "METAKEY", c->name, c->hostname);
 		return false;
 	}
 
@@ -320,31 +326,31 @@ bool metakey_h(connection_t *c, char *request) {
 	/* Check if the length of the meta key is all right */
 
 	if(inlen != len) {
-		logger(LOG_ERR, "Possible intruder %s (%s): %s", c->name, c->hostname, "wrong keylength");
+		logger(DEBUG_ALWAYS, LOG_ERR, "Possible intruder %s (%s): %s", c->name, c->hostname, "wrong keylength");
 		return false;
 	}
 
 	/* Decrypt the meta key */
 
 	if(!rsa_private_decrypt(&myself->connection->rsa, enckey, len, key)) {
-		logger(LOG_ERR, "Error during decryption of meta key for %s (%s)", c->name, c->hostname);
+		logger(DEBUG_ALWAYS, LOG_ERR, "Error during decryption of meta key for %s (%s)", c->name, c->hostname);
 		return false;
 	}
 
-	ifdebug(SCARY_THINGS) {
+	if(debug_level >= DEBUG_SCARY_THINGS) {
 		bin2hex(key, hexkey, len);
-		logger(LOG_DEBUG, "Received random meta key (unencrypted): %s", hexkey);
+		logger(DEBUG_SCARY_THINGS, LOG_DEBUG, "Received random meta key (unencrypted): %s", hexkey);
 	}
 
 	/* Check and lookup cipher and digest algorithms */
 
 	if(!cipher_open_by_nid(&c->incipher, cipher) || !cipher_set_key_from_rsa(&c->incipher, key, len, false)) {
-		logger(LOG_ERR, "Error during initialisation of cipher from %s (%s)", c->name, c->hostname);
+		logger(DEBUG_ALWAYS, LOG_ERR, "Error during initialisation of cipher from %s (%s)", c->name, c->hostname);
 		return false;
 	}
 
 	if(!digest_open_by_nid(&c->indigest, digest, -1)) {
-		logger(LOG_ERR, "Error during initialisation of digest from %s (%s)", c->name, c->hostname);
+		logger(DEBUG_ALWAYS, LOG_ERR, "Error during initialisation of digest from %s (%s)", c->name, c->hostname);
 		return false;
 	}
 
@@ -356,7 +362,7 @@ bool metakey_h(connection_t *c, char *request) {
 }
 
 bool send_challenge(connection_t *c) {
-	size_t len = c->protocol_minor >= 2 ? ECDH_SIZE : rsa_size(&c->rsa);
+	size_t len = rsa_size(&c->rsa);
 	char buffer[len * 2 + 1];
 
 	if(!c->hischallenge)
@@ -375,14 +381,14 @@ bool send_challenge(connection_t *c) {
 	return send_request(c, "%d %s", CHALLENGE, buffer);
 }
 
-bool challenge_h(connection_t *c, char *request) {
+bool challenge_h(connection_t *c, const char *request) {
 	char buffer[MAX_STRING_SIZE];
-	size_t len = c->protocol_minor >= 2 ? ECDH_SIZE : rsa_size(&myself->connection->rsa);
+	size_t len = rsa_size(&myself->connection->rsa);
 	size_t digestlen = digest_length(&c->indigest);
 	char digest[digestlen];
 
 	if(sscanf(request, "%*d " MAX_STRING, buffer) != 1) {
-		logger(LOG_ERR, "Got bad %s from %s (%s)", "CHALLENGE", c->name, c->hostname);
+		logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s)", "CHALLENGE", c->name, c->hostname);
 		return false;
 	}
 
@@ -393,7 +399,7 @@ bool challenge_h(connection_t *c, char *request) {
 	/* Check if the length of the challenge is all right */
 
 	if(inlen != len) {
-		logger(LOG_ERR, "Possible intruder %s (%s): %s", c->name, c->hostname, "wrong challenge length");
+		logger(DEBUG_ALWAYS, LOG_ERR, "Possible intruder %s (%s): %s", c->name, c->hostname, "wrong challenge length");
 		return false;
 	}
 
@@ -412,11 +418,11 @@ bool challenge_h(connection_t *c, char *request) {
 	return send_request(c, "%d %s", CHAL_REPLY, buffer);
 }
 
-bool chal_reply_h(connection_t *c, char *request) {
+bool chal_reply_h(connection_t *c, const char *request) {
 	char hishash[MAX_STRING_SIZE];
 
 	if(sscanf(request, "%*d " MAX_STRING, hishash) != 1) {
-		logger(LOG_ERR, "Got bad %s from %s (%s)", "CHAL_REPLY", c->name,
+		logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s)", "CHAL_REPLY", c->name,
 			   c->hostname);
 		return false;
 	}
@@ -428,15 +434,15 @@ bool chal_reply_h(connection_t *c, char *request) {
 	/* Check if the length of the hash is all right */
 
 	if(inlen != digest_length(&c->outdigest)) {
-		logger(LOG_ERR, "Possible intruder %s (%s): %s", c->name, c->hostname, "wrong challenge reply length");
+		logger(DEBUG_ALWAYS, LOG_ERR, "Possible intruder %s (%s): %s", c->name, c->hostname, "wrong challenge reply length");
 		return false;
 	}
 
 
 	/* Verify the hash */
 
-	if(!digest_verify(&c->outdigest, c->hischallenge, c->protocol_minor >= 2 ? ECDH_SIZE : rsa_size(&c->rsa), hishash)) {
-		logger(LOG_ERR, "Possible intruder %s (%s): %s", c->name, c->hostname, "wrong challenge reply");
+	if(!digest_verify(&c->outdigest, c->hischallenge, rsa_size(&c->rsa), hishash)) {
+		logger(DEBUG_ALWAYS, LOG_ERR, "Possible intruder %s (%s): %s", c->name, c->hostname, "wrong challenge reply");
 		return false;
 	}
 
@@ -498,61 +504,48 @@ bool send_ack(connection_t *c) {
 
 	get_config_int(lookup_config(c->config_tree, "Weight"), &c->estimated_weight);
 
-	return send_request(c, "%d %s %d %x", ACK, myport, c->estimated_weight, c->options);
+	return send_request(c, "%d %s %d %x", ACK, myport, c->estimated_weight, (c->options & 0xffffff) | (experimental ? (PROT_MINOR << 24) : 0));
 }
 
 static void send_everything(connection_t *c) {
-	splay_node_t *node, *node2;
-	node_t *n;
-	subnet_t *s;
-	edge_t *e;
-
 	/* Send all known subnets and edges */
 
 	if(tunnelserver) {
-		for(node = myself->subnet_tree->head; node; node = node->next) {
-			s = node->data;
+		for splay_each(subnet_t, s, myself->subnet_tree)
 			send_add_subnet(c, s);
-		}
 
 		return;
 	}
 
-	for(node = node_tree->head; node; node = node->next) {
-		n = node->data;
-
-		for(node2 = n->subnet_tree->head; node2; node2 = node2->next) {
-			s = node2->data;
+	for splay_each(node_t, n, node_tree) {
+		for splay_each(subnet_t, s, n->subnet_tree)
 			send_add_subnet(c, s);
-		}
 
-		for(node2 = n->edge_tree->head; node2; node2 = node2->next) {
-			e = node2->data;
+		for splay_each(edge_t, e, n->edge_tree)
 			send_add_edge(c, e);
-		}
 	}
 }
 
-static bool upgrade_h(connection_t *c, char *request) {
+static bool upgrade_h(connection_t *c, const char *request) {
 	char pubkey[MAX_STRING_SIZE];
 
 	if(sscanf(request, "%*d " MAX_STRING, pubkey) != 1) {
-		logger(LOG_ERR, "Got bad %s from %s (%s)", "ACK", c->name, c->hostname);
+		logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s)", "ACK", c->name, c->hostname);
 		return false;
 	}
 
 	if(ecdsa_active(&c->ecdsa) || read_ecdsa_public_key(c)) {
-		logger(LOG_INFO, "Already have ECDSA public key from %s (%s), not upgrading.", c->name, c->hostname);
+		logger(DEBUG_ALWAYS, LOG_INFO, "Already have ECDSA public key from %s (%s), not upgrading.", c->name, c->hostname);
 		return false;
 	}
 
-	logger(LOG_INFO, "Got ECDSA public key from %s (%s), upgrading!", c->name, c->hostname);
+	logger(DEBUG_ALWAYS, LOG_INFO, "Got ECDSA public key from %s (%s), upgrading!", c->name, c->hostname);
 	append_config_file(c->name, "ECDSAPublicKey", pubkey);
 	c->allow_request = TERMREQ;
 	return send_termreq(c);
 }
 
-bool ack_h(connection_t *c, char *request) {
+bool ack_h(connection_t *c, const char *request) {
 	if(c->protocol_minor == 1)
 		return upgrade_h(c, request);
 
@@ -564,7 +557,7 @@ bool ack_h(connection_t *c, char *request) {
 	bool choice;
 
 	if(sscanf(request, "%*d " MAX_STRING " %d %x", hisport, &weight, &options) != 3) {
-		logger(LOG_ERR, "Got bad %s from %s (%s)", "ACK", c->name,
+		logger(DEBUG_ALWAYS, LOG_ERR, "Got bad %s from %s (%s)", "ACK", c->name,
 			   c->hostname);
 		return false;
 	}
@@ -580,11 +573,11 @@ bool ack_h(connection_t *c, char *request) {
 	} else {
 		if(n->connection) {
 			/* Oh dear, we already have a connection to this node. */
-			ifdebug(CONNECTIONS) logger(LOG_DEBUG, "Established a second connection with %s (%s), closing old connection", n->connection->name, n->connection->hostname);
+			logger(DEBUG_CONNECTIONS, LOG_DEBUG, "Established a second connection with %s (%s), closing old connection", n->connection->name, n->connection->hostname);
 
 			if(n->connection->outgoing) {
 				if(c->outgoing)
-					logger(LOG_WARNING, "Two outgoing connections to the same node!");
+					logger(DEBUG_ALWAYS, LOG_WARNING, "Two outgoing connections to the same node!");
 				else
 					c->outgoing = n->connection->outgoing;
 
@@ -618,15 +611,12 @@ bool ack_h(connection_t *c, char *request) {
 			c->options &= ~OPTION_CLAMP_MSS;
 	}
 
-	if(c->protocol_minor > 0)
-		c->node->status.ecdh = true;
-
 	/* Activate this connection */
 
 	c->allow_request = ALL;
 	c->status.active = true;
 
-	ifdebug(CONNECTIONS) logger(LOG_NOTICE, "Connection with %s (%s) activated", c->name,
+	logger(DEBUG_CONNECTIONS, LOG_NOTICE, "Connection with %s (%s) activated", c->name,
 			   c->hostname);
 
 	/* Send him everything we know */
@@ -652,7 +642,7 @@ bool ack_h(connection_t *c, char *request) {
 	if(tunnelserver)
 		send_add_edge(c, c->edge);
 	else
-		send_add_edge(broadcast, c->edge);
+		send_add_edge(everyone, c->edge);
 
 	/* Run MST and SSSP algorithms */
 

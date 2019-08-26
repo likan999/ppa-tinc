@@ -1,7 +1,7 @@
 /*
     list.h -- header file for list.c
     Copyright (C) 2000-2005 Ivo Timmermans
-                  2000-2006 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2012 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -57,6 +57,8 @@ extern list_node_t *list_insert_tail(list_t *, void *);
 extern list_node_t *list_insert_after(list_t *, list_node_t *, void *);
 extern list_node_t *list_insert_before(list_t *, list_node_t *, void *);
 
+extern void list_delete(list_t *, const void *);
+
 extern void list_unlink_node(list_t *, list_node_t *);
 extern void list_delete_node(list_t *, list_node_t *);
 
@@ -77,4 +79,6 @@ extern void list_delete_list(list_t *);
 extern void list_foreach(list_t *, list_action_t);
 extern void list_foreach_node(list_t *, list_action_node_t);
 
-#endif							/* __TINC_LIST_H__ */
+#define list_each(type, item, list) (type *item = (type *)1; item; item = NULL) for(list_node_t *node = (list)->head, *next; item = node ? node->data : NULL, next = node ? node->next : NULL, node; node = next)
+
+#endif /* __TINC_LIST_H__ */

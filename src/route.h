@@ -1,7 +1,7 @@
 /*
     route.h -- header file for route.c
     Copyright (C) 2000-2005 Ivo Timmermans
-                  2000-2006 Guus Sliepen <guus@tinc-vpn.org>         
+                  2000-2012 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -36,8 +36,16 @@ typedef enum fmode_t {
 	FMODE_KERNEL,
 } fmode_t;
 
+typedef enum bmode_t {
+	BMODE_NONE = 0,
+	BMODE_MST,
+	BMODE_DIRECT,
+} bmode_t;
+
 extern rmode_t routing_mode;
 extern fmode_t forwarding_mode;
+extern bmode_t broadcast_mode;
+extern bool decrement_ttl;
 extern bool directonly;
 extern bool overwrite_mac;
 extern bool priorityinheritance;
@@ -48,4 +56,4 @@ extern mac_t mymac;
 
 extern void route(struct node_t *, struct vpn_packet_t *);
 
-#endif							/* __TINC_ROUTE_H__ */
+#endif /* __TINC_ROUTE_H__ */

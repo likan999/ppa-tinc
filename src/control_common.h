@@ -1,6 +1,7 @@
 /*
     control_protocol.h -- control socket protocol.
-    Copyright (C) 2007 Scott Lamb <slamb@slamb.org>
+    Copyright (C) 2007      Scott Lamb <slamb@slamb.org>
+                  2009-2012 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -39,6 +40,7 @@ enum request_type {
 	REQ_DISCONNECT,
 	REQ_DUMP_TRAFFIC,
 	REQ_PCAP,
+	REQ_LOG,
 };
 
 #define TINC_CTL_VERSION_CURRENT 0

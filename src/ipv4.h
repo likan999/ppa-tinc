@@ -1,7 +1,7 @@
 /*
     ipv4.h -- missing IPv4 related definitions
     Copyright (C) 2005 Ivo Timmermans
-                  2006 Guus Sliepen <guus@tinc-vpn.org>
+                  2006-2012 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -41,6 +41,14 @@
 #define ICMP_NET_UNKNOWN 6
 #endif
 
+#ifndef ICMP_TIME_EXCEEDED
+#define ICMP_TIME_EXCEEDED 11
+#endif
+
+#ifndef ICMP_EXC_TTL
+#define ICMP_EXC_TTL 0
+#endif
+
 #ifndef ICMP_NET_UNREACH
 #define ICMP_NET_UNREACH 0
 #endif
@@ -64,7 +72,7 @@ struct ip {
 #endif
 	uint8_t ip_tos;
 	uint16_t ip_len;
-	uint16_t ip_id; 
+	uint16_t ip_id;
 	uint16_t ip_off;
 #define IP_RF 0x8000
 #define IP_DF 0x4000

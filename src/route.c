@@ -1,7 +1,7 @@
 /*
     route.c -- routing
     Copyright (C) 2000-2005 Ivo Timmermans,
-                  2000-2010 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2012 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -20,7 +20,6 @@
 
 #include "system.h"
 
-#include "splay_tree.h"
 #include "connection.h"
 #include "control_common.h"
 #include "ethernet.h"
@@ -36,6 +35,8 @@
 
 rmode_t routing_mode = RMODE_ROUTER;
 fmode_t forwarding_mode = FMODE_INTERNAL;
+bmode_t broadcast_mode = BMODE_MST;
+bool decrement_ttl = false;
 bool directonly = false;
 bool priorityinheritance = false;
 int macexpire = 600;
@@ -70,7 +71,7 @@ static uint16_t inet_checksum(void *data, int len, uint16_t prevsum) {
 		checksum += *p++;
 		len -= 2;
 	}
-	
+
 	if(len)
 		checksum += *(uint8_t *)p;
 
@@ -84,21 +85,22 @@ static bool ratelimit(int frequency) {
 	static time_t lasttime = 0;
 	static int count = 0;
 	time_t now = time(NULL);
-	
+
 	if(lasttime == now) {
-		if(++count > frequency)
+		if(count >= frequency)
 			return true;
 	} else {
 		lasttime = now;
 		count = 0;
 	}
 
+	count++;
 	return false;
 }
 
 static bool checklength(node_t *source, vpn_packet_t *packet, length_t length) {
 	if(packet->len < length) {
-		ifdebug(TRAFFIC) logger(LOG_WARNING, "Got too short packet from %s (%s)", source->name, source->hostname);
+		logger(DEBUG_TRAFFIC, LOG_WARNING, "Got too short packet from %s (%s)", source->name, source->hostname);
 		return false;
 	} else
 		return true;
@@ -160,8 +162,8 @@ static void clamp_mss(const node_t *source, const node_t *via, vpn_packet_t *pac
 
 		if(oldmss <= newmss)
 			break;
-		
-		ifdebug(TRAFFIC) logger(LOG_INFO, "Clamping MSS of packet from %s to %s to %d", source->name, via->name, newmss);
+
+		logger(DEBUG_TRAFFIC, LOG_INFO, "Clamping MSS of packet from %s to %s to %d", source->name, via->name, newmss);
 
 		/* Update the MSS value and the checksum */
 		packet->data[start + 22 + i] = newmss >> 8;
@@ -182,29 +184,22 @@ static void swap_mac_addresses(vpn_packet_t *packet) {
 	memcpy(&packet->data[0], &packet->data[6], sizeof tmp);
 	memcpy(&packet->data[6], &tmp, sizeof tmp);
 }
-	
+
 static void age_subnets(int fd, short events, void *data) {
-	subnet_t *s;
-	connection_t *c;
-	splay_node_t *node, *next, *node2;
 	bool left = false;
 	time_t now = time(NULL);
 
-	for(node = myself->subnet_tree->head; node; node = next) {
-		next = node->next;
-		s = node->data;
+	for splay_each(subnet_t, s, myself->subnet_tree) {
 		if(s->expires && s->expires < now) {
-			ifdebug(TRAFFIC) {
+			if(debug_level >= DEBUG_TRAFFIC) {
 				char netstr[MAXNETSTR];
 				if(net2str(netstr, sizeof netstr, s))
-					logger(LOG_INFO, "Subnet %s expired", netstr);
+					logger(DEBUG_TRAFFIC, LOG_INFO, "Subnet %s expired", netstr);
 			}
 
-			for(node2 = connection_tree->head; node2; node2 = node2->next) {
-				c = node2->data;
+			for list_each(connection_t, c, connection_list)
 				if(c->status.active)
 					send_del_subnet(c, s);
-			}
 
 			subnet_del(myself, s);
 		} else {
@@ -218,16 +213,12 @@ static void age_subnets(int fd, short events, void *data) {
 }
 
 static void learn_mac(mac_t *address) {
-	subnet_t *subnet;
-	splay_node_t *node;
-	connection_t *c;
-
-	subnet = lookup_subnet_mac(myself, address);
+	subnet_t *subnet = lookup_subnet_mac(myself, address);
 
 	/* If we don't know this MAC address yet, store it */
 
 	if(!subnet) {
-		ifdebug(TRAFFIC) logger(LOG_INFO, "Learned new MAC address %hx:%hx:%hx:%hx:%hx:%hx",
+		logger(DEBUG_TRAFFIC, LOG_INFO, "Learned new MAC address %hx:%hx:%hx:%hx:%hx:%hx",
 				   address->x[0], address->x[1], address->x[2], address->x[3],
 				   address->x[4], address->x[5]);
 
@@ -241,11 +232,9 @@ static void learn_mac(mac_t *address) {
 
 		/* And tell all other tinc daemons it's our MAC */
 
-		for(node = connection_tree->head; node; node = node->next) {
-			c = node->data;
+		for list_each(connection_t, c, connection_list)
 			if(c->status.active)
 				send_add_subnet(c, subnet);
-		}
 
 		if(!timeout_initialized(&age_subnets_event))
 			timeout_set(&age_subnets_event, age_subnets, NULL);
@@ -261,14 +250,14 @@ static void learn_mac(mac_t *address) {
 static void route_ipv4_unreachable(node_t *source, vpn_packet_t *packet, uint8_t type, uint8_t code) {
 	struct ip ip = {0};
 	struct icmp icmp = {0};
-	
+
 	struct in_addr ip_src;
 	struct in_addr ip_dst;
 	uint32_t oldlen;
 
 	if(ratelimit(3))
 		return;
-	
+
 	/* Swap Ethernet source and destination addresses */
 
 	swap_mac_addresses(packet);
@@ -278,7 +267,7 @@ static void route_ipv4_unreachable(node_t *source, vpn_packet_t *packet, uint8_t
 	memcpy(&ip, packet->data + ether_size, ip_size);
 
 	/* Remember original source and destination */
-	
+
 	ip_src = ip.ip_src;
 	ip_dst = ip.ip_dst;
 
@@ -289,13 +278,13 @@ static void route_ipv4_unreachable(node_t *source, vpn_packet_t *packet, uint8_t
 
 	if(oldlen >= IP_MSS - ip_size - icmp_size)
 		oldlen = IP_MSS - ip_size - icmp_size;
-	
+
 	/* Copy first part of original contents to ICMP message */
-	
+
 	memmove(packet->data + ether_size + ip_size + icmp_size, packet->data + ether_size, oldlen);
 
 	/* Fill in IPv4 header */
-	
+
 	ip.ip_v = 4;
 	ip.ip_hl = ip_size / 4;
 	ip.ip_tos = 0;
@@ -309,13 +298,13 @@ static void route_ipv4_unreachable(node_t *source, vpn_packet_t *packet, uint8_t
 	ip.ip_dst = ip_src;
 
 	ip.ip_sum = inet_checksum(&ip, ip_size, ~0);
-	
+
 	/* Fill in ICMP header */
-	
+
 	icmp.icmp_type = type;
 	icmp.icmp_code = code;
 	icmp.icmp_cksum = 0;
-	
+
 	icmp.icmp_cksum = inet_checksum(&icmp, icmp_size, ~0);
 	icmp.icmp_cksum = inet_checksum(packet->data + ether_size + ip_size + icmp_size, oldlen, icmp.icmp_cksum);
 
@@ -323,7 +312,7 @@ static void route_ipv4_unreachable(node_t *source, vpn_packet_t *packet, uint8_t
 
 	memcpy(packet->data + ether_size, &ip, ip_size);
 	memcpy(packet->data + ether_size + ip_size, &icmp, icmp_size);
-	
+
 	packet->len = ether_size + ip_size + icmp_size + oldlen;
 
 	send_packet(source, packet);
@@ -337,28 +326,28 @@ static void fragment_ipv4_packet(node_t *dest, vpn_packet_t *packet) {
 	int len, maxlen, todo;
 	uint8_t *offset;
 	uint16_t ip_off, origf;
-	
+
 	memcpy(&ip, packet->data + ether_size, ip_size);
 	fragment.priority = packet->priority;
 
 	if(ip.ip_hl != ip_size / 4)
 		return;
-	
+
 	todo = ntohs(ip.ip_len) - ip_size;
 
 	if(ether_size + ip_size + todo != packet->len) {
-		ifdebug(TRAFFIC) logger(LOG_WARNING, "Length of packet (%d) doesn't match length in IPv4 header (%d)", packet->len, (int)(ether_size + ip_size + todo));
+		logger(DEBUG_TRAFFIC, LOG_WARNING, "Length of packet (%d) doesn't match length in IPv4 header (%d)", packet->len, (int)(ether_size + ip_size + todo));
 		return;
 	}
 
-	ifdebug(TRAFFIC) logger(LOG_INFO, "Fragmenting packet of %d bytes to %s (%s)", packet->len, dest->name, dest->hostname);
+	logger(DEBUG_TRAFFIC, LOG_INFO, "Fragmenting packet of %d bytes to %s (%s)", packet->len, dest->name, dest->hostname);
 
 	offset = packet->data + ether_size + ip_size;
 	maxlen = (dest->mtu - ether_size - ip_size) & ~0x7;
 	ip_off = ntohs(ip.ip_off);
 	origf = ip_off & ~IP_OFFMASK;
 	ip_off &= IP_OFFMASK;
-	
+
 	while(todo) {
 		len = todo > maxlen ? maxlen : todo;
 		memcpy(fragment.data + ether_size + ip_size, offset, len);
@@ -376,7 +365,7 @@ static void fragment_ipv4_packet(node_t *dest, vpn_packet_t *packet) {
 		send_packet(dest, &fragment);
 
 		ip_off += len / 8;
-	}	
+	}
 }
 
 static void route_ipv4_unicast(node_t *source, vpn_packet_t *packet) {
@@ -388,7 +377,7 @@ static void route_ipv4_unicast(node_t *source, vpn_packet_t *packet) {
 	subnet = lookup_subnet_ipv4(&dest);
 
 	if(!subnet) {
-		ifdebug(TRAFFIC) logger(LOG_WARNING, "Cannot route packet from %s (%s): unknown IPv4 destination address %d.%d.%d.%d",
+		logger(DEBUG_TRAFFIC, LOG_WARNING, "Cannot route packet from %s (%s): unknown IPv4 destination address %d.%d.%d.%d",
 				source->name, source->hostname,
 				dest.x[0],
 				dest.x[1],
@@ -398,9 +387,9 @@ static void route_ipv4_unicast(node_t *source, vpn_packet_t *packet) {
 		route_ipv4_unreachable(source, packet, ICMP_DEST_UNREACH, ICMP_NET_UNKNOWN);
 		return;
 	}
-	
+
 	if(subnet->owner == source) {
-		ifdebug(TRAFFIC) logger(LOG_WARNING, "Packet looping back to %s (%s)!", source->name, source->hostname);
+		logger(DEBUG_TRAFFIC, LOG_WARNING, "Packet looping back to %s (%s)!", source->name, source->hostname);
 		return;
 	}
 
@@ -414,12 +403,17 @@ static void route_ipv4_unicast(node_t *source, vpn_packet_t *packet) {
 		packet->priority = packet->data[15];
 
 	via = (subnet->owner->via == myself) ? subnet->owner->nexthop : subnet->owner->via;
-	
+
+	if(via == source) {
+		logger(DEBUG_TRAFFIC, LOG_ERR, "Routing loop for packet from %s (%s)!", source->name, source->hostname);
+		return;
+	}
+
 	if(directonly && subnet->owner != via)
 		return route_ipv4_unreachable(source, packet, ICMP_DEST_UNREACH, ICMP_NET_ANO);
 
 	if(via && packet->len > MAX(via->mtu, 590) && via != myself) {
-		ifdebug(TRAFFIC) logger(LOG_INFO, "Packet for %s (%s) length %d larger than MTU %d", subnet->owner->name, subnet->owner->hostname, packet->len, via->mtu);
+		logger(DEBUG_TRAFFIC, LOG_INFO, "Packet for %s (%s) length %d larger than MTU %d", subnet->owner->name, subnet->owner->hostname, packet->len, via->mtu);
 		if(packet->data[20] & 0x40) {
 			packet->len = MAX(via->mtu, 590);
 			route_ipv4_unreachable(source, packet, ICMP_DEST_UNREACH, ICMP_FRAG_NEEDED);
@@ -431,7 +425,7 @@ static void route_ipv4_unicast(node_t *source, vpn_packet_t *packet) {
 	}
 
 	clamp_mss(source, via, packet);
- 
+
 	send_packet(subnet->owner, packet);
 }
 
@@ -439,11 +433,11 @@ static void route_ipv4(node_t *source, vpn_packet_t *packet) {
 	if(!checklength(source, packet, ether_size + ip_size))
 		return;
 
-	if(((packet->data[30] & 0xf0) == 0xe0) || (
+	if(broadcast_mode && (((packet->data[30] & 0xf0) == 0xe0) || (
 			packet->data[30] == 255 &&
 			packet->data[31] == 255 &&
 			packet->data[32] == 255 &&
-			packet->data[33] == 255))
+			packet->data[33] == 255)))
 		broadcast_packet(source, packet);
 	else
 		route_ipv4_unicast(source, packet);
@@ -454,18 +448,18 @@ static void route_ipv4(node_t *source, vpn_packet_t *packet) {
 static void route_ipv6_unreachable(node_t *source, vpn_packet_t *packet, uint8_t type, uint8_t code) {
 	struct ip6_hdr ip6;
 	struct icmp6_hdr icmp6 = {0};
-	uint16_t checksum;	
+	uint16_t checksum;
 
 	struct {
-		struct in6_addr ip6_src;	/* source address */
-		struct in6_addr ip6_dst;	/* destination address */
+		struct in6_addr ip6_src;        /* source address */
+		struct in6_addr ip6_dst;        /* destination address */
 		uint32_t length;
 		uint32_t next;
 	} pseudo;
 
 	if(ratelimit(3))
 		return;
-	
+
 	/* Swap Ethernet source and destination addresses */
 
 	swap_mac_addresses(packet);
@@ -475,7 +469,7 @@ static void route_ipv6_unreachable(node_t *source, vpn_packet_t *packet, uint8_t
 	memcpy(&ip6, packet->data + ether_size, ip6_size);
 
 	/* Remember original source and destination */
-	
+
 	pseudo.ip6_src = ip6.ip6_dst;
 	pseudo.ip6_dst = ip6.ip6_src;
 
@@ -483,16 +477,16 @@ static void route_ipv6_unreachable(node_t *source, vpn_packet_t *packet, uint8_t
 
 	if(type == ICMP6_PACKET_TOO_BIG)
 		icmp6.icmp6_mtu = htonl(pseudo.length);
-	
+
 	if(pseudo.length >= IP_MSS - ip6_size - icmp6_size)
 		pseudo.length = IP_MSS - ip6_size - icmp6_size;
-	
+
 	/* Copy first part of original contents to ICMP message */
-	
+
 	memmove(packet->data + ether_size + ip6_size + icmp6_size, packet->data + ether_size, pseudo.length);
 
 	/* Fill in IPv6 header */
-	
+
 	ip6.ip6_flow = htonl(0x60000000UL);
 	ip6.ip6_plen = htons(icmp6_size + pseudo.length);
 	ip6.ip6_nxt = IPPROTO_ICMPV6;
@@ -501,18 +495,18 @@ static void route_ipv6_unreachable(node_t *source, vpn_packet_t *packet, uint8_t
 	ip6.ip6_dst = pseudo.ip6_dst;
 
 	/* Fill in ICMP header */
-	
+
 	icmp6.icmp6_type = type;
 	icmp6.icmp6_code = code;
 	icmp6.icmp6_cksum = 0;
 
 	/* Create pseudo header */
-		
+
 	pseudo.length = htonl(icmp6_size + pseudo.length);
 	pseudo.next = htonl(IPPROTO_ICMPV6);
 
 	/* Generate checksum */
-	
+
 	checksum = inet_checksum(&pseudo, sizeof pseudo, ~0);
 	checksum = inet_checksum(&icmp6, icmp6_size, checksum);
 	checksum = inet_checksum(packet->data + ether_size + ip6_size + icmp6_size, ntohl(pseudo.length) - icmp6_size, checksum);
@@ -523,9 +517,9 @@ static void route_ipv6_unreachable(node_t *source, vpn_packet_t *packet, uint8_t
 
 	memcpy(packet->data + ether_size, &ip6, ip6_size);
 	memcpy(packet->data + ether_size + ip6_size, &icmp6, icmp6_size);
-	
+
 	packet->len = ether_size + ip6_size + ntohl(pseudo.length);
-	
+
 	send_packet(source, packet);
 }
 
@@ -538,7 +532,7 @@ static void route_ipv6_unicast(node_t *source, vpn_packet_t *packet) {
 	subnet = lookup_subnet_ipv6(&dest);
 
 	if(!subnet) {
-		ifdebug(TRAFFIC) logger(LOG_WARNING, "Cannot route packet from %s (%s): unknown IPv6 destination address %hx:%hx:%hx:%hx:%hx:%hx:%hx:%hx",
+		logger(DEBUG_TRAFFIC, LOG_WARNING, "Cannot route packet from %s (%s): unknown IPv6 destination address %hx:%hx:%hx:%hx:%hx:%hx:%hx:%hx",
 				source->name, source->hostname,
 				ntohs(dest.x[0]),
 				ntohs(dest.x[1]),
@@ -554,7 +548,7 @@ static void route_ipv6_unicast(node_t *source, vpn_packet_t *packet) {
 	}
 
 	if(subnet->owner == source) {
-		ifdebug(TRAFFIC) logger(LOG_WARNING, "Packet looping back to %s (%s)!", source->name, source->hostname);
+		logger(DEBUG_TRAFFIC, LOG_WARNING, "Packet looping back to %s (%s)!", source->name, source->hostname);
 		return;
 	}
 
@@ -565,19 +559,24 @@ static void route_ipv6_unicast(node_t *source, vpn_packet_t *packet) {
 		return route_ipv6_unreachable(source, packet, ICMP6_DST_UNREACH, ICMP6_DST_UNREACH_ADMIN);
 
 	via = (subnet->owner->via == myself) ? subnet->owner->nexthop : subnet->owner->via;
-	
+
+	if(via == source) {
+		logger(DEBUG_TRAFFIC, LOG_ERR, "Routing loop for packet from %s (%s)!", source->name, source->hostname);
+		return;
+	}
+
 	if(directonly && subnet->owner != via)
 		return route_ipv6_unreachable(source, packet, ICMP6_DST_UNREACH, ICMP6_DST_UNREACH_ADMIN);
 
 	if(via && packet->len > MAX(via->mtu, 1294) && via != myself) {
-		ifdebug(TRAFFIC) logger(LOG_INFO, "Packet for %s (%s) length %d larger than MTU %d", subnet->owner->name, subnet->owner->hostname, packet->len, via->mtu);
+		logger(DEBUG_TRAFFIC, LOG_INFO, "Packet for %s (%s) length %d larger than MTU %d", subnet->owner->name, subnet->owner->hostname, packet->len, via->mtu);
 		packet->len = MAX(via->mtu, 1294);
 		route_ipv6_unreachable(source, packet, ICMP6_PACKET_TOO_BIG, 0);
 		return;
 	}
 
 	clamp_mss(source, via, packet);
- 
+
 	send_packet(subnet->owner, packet);
 }
 
@@ -592,19 +591,19 @@ static void route_neighborsol(node_t *source, vpn_packet_t *packet) {
 	bool has_opt;
 
 	struct {
-		struct in6_addr ip6_src;	/* source address */
-		struct in6_addr ip6_dst;	/* destination address */
+		struct in6_addr ip6_src;
+		struct in6_addr ip6_dst;
 		uint32_t length;
 		uint32_t next;
 	} pseudo;
 
 	if(!checklength(source, packet, ether_size + ip6_size + ns_size))
 		return;
-	
+
 	has_opt = packet->len >= ether_size + ip6_size + ns_size + opt_size + ETH_ALEN;
-	
+
 	if(source != myself) {
-		ifdebug(TRAFFIC) logger(LOG_WARNING, "Got neighbor solicitation request from %s (%s) while in router mode!", source->name, source->hostname);
+		logger(DEBUG_TRAFFIC, LOG_WARNING, "Got neighbor solicitation request from %s (%s) while in router mode!", source->name, source->hostname);
 		return;
 	}
 
@@ -624,7 +623,7 @@ static void route_neighborsol(node_t *source, vpn_packet_t *packet) {
 
 	if(ns.nd_ns_hdr.icmp6_type != ND_NEIGHBOR_SOLICIT ||
 	   (has_opt && opt.nd_opt_type != ND_OPT_SOURCE_LINKADDR)) {
-		ifdebug(TRAFFIC) logger(LOG_WARNING, "Cannot route packet: received unknown type neighbor solicitation request");
+		logger(DEBUG_TRAFFIC, LOG_WARNING, "Cannot route packet: received unknown type neighbor solicitation request");
 		return;
 	}
 
@@ -648,7 +647,7 @@ static void route_neighborsol(node_t *source, vpn_packet_t *packet) {
 	}
 
 	if(checksum) {
-		ifdebug(TRAFFIC) logger(LOG_WARNING, "Cannot route packet: checksum error for neighbor solicitation request");
+		logger(DEBUG_TRAFFIC, LOG_WARNING, "Cannot route packet: checksum error for neighbor solicitation request");
 		return;
 	}
 
@@ -657,7 +656,7 @@ static void route_neighborsol(node_t *source, vpn_packet_t *packet) {
 	subnet = lookup_subnet_ipv6((ipv6_t *) &ns.nd_ns_target);
 
 	if(!subnet) {
-		ifdebug(TRAFFIC) logger(LOG_WARNING, "Cannot route packet: neighbor solicitation request for unknown address %hx:%hx:%hx:%hx:%hx:%hx:%hx:%hx",
+		logger(DEBUG_TRAFFIC, LOG_WARNING, "Cannot route packet: neighbor solicitation request for unknown address %hx:%hx:%hx:%hx:%hx:%hx:%hx:%hx",
 				   ntohs(((uint16_t *) &ns.nd_ns_target)[0]),
 				   ntohs(((uint16_t *) &ns.nd_ns_target)[1]),
 				   ntohs(((uint16_t *) &ns.nd_ns_target)[2]),
@@ -673,22 +672,22 @@ static void route_neighborsol(node_t *source, vpn_packet_t *packet) {
 	/* Check if it is for our own subnet */
 
 	if(subnet->owner == myself)
-		return;					/* silently ignore */
+		return;                                          /* silently ignore */
 
 	/* Create neighbor advertation reply */
 
-	memcpy(packet->data, packet->data + ETH_ALEN, ETH_ALEN);	/* copy destination address */
-	packet->data[ETH_ALEN * 2 - 1] ^= 0xFF;	/* mangle source address so it looks like it's not from us */
+	memcpy(packet->data, packet->data + ETH_ALEN, ETH_ALEN); /* copy destination address */
+	packet->data[ETH_ALEN * 2 - 1] ^= 0xFF;                  /* mangle source address so it looks like it's not from us */
 
-	ip6.ip6_dst = ip6.ip6_src;			/* swap destination and source protocoll address */
+	ip6.ip6_dst = ip6.ip6_src;                               /* swap destination and source protocoll address */
 	ip6.ip6_src = ns.nd_ns_target;
 
 	if(has_opt)
-		memcpy(packet->data + ether_size + ip6_size + ns_size + opt_size, packet->data + ETH_ALEN, ETH_ALEN);	/* add fake source hard addr */
+		memcpy(packet->data + ether_size + ip6_size + ns_size + opt_size, packet->data + ETH_ALEN, ETH_ALEN);   /* add fake source hard addr */
 
 	ns.nd_ns_cksum = 0;
 	ns.nd_ns_type = ND_NEIGHBOR_ADVERT;
-	ns.nd_ns_reserved = htonl(0x40000000UL);	/* Set solicited flag */
+	ns.nd_ns_reserved = htonl(0x40000000UL);                 /* Set solicited flag */
 	opt.nd_opt_type = ND_OPT_TARGET_LINKADDR;
 
 	/* Create pseudo header */
@@ -731,7 +730,7 @@ static void route_ipv6(node_t *source, vpn_packet_t *packet) {
 		return;
 	}
 
-	if(packet->data[38] == 255)
+	if(broadcast_mode && packet->data[38] == 255)
 		broadcast_packet(source, packet);
 	else
 		route_ipv6_unicast(source, packet);
@@ -748,7 +747,7 @@ static void route_arp(node_t *source, vpn_packet_t *packet) {
 		return;
 
 	if(source != myself) {
-		ifdebug(TRAFFIC) logger(LOG_WARNING, "Got ARP request from %s (%s) while in router mode!", source->name, source->hostname);
+		logger(DEBUG_TRAFFIC, LOG_WARNING, "Got ARP request from %s (%s) while in router mode!", source->name, source->hostname);
 		return;
 	}
 
@@ -765,7 +764,7 @@ static void route_arp(node_t *source, vpn_packet_t *packet) {
 
 	if(ntohs(arp.arp_hrd) != ARPHRD_ETHER || ntohs(arp.arp_pro) != ETH_P_IP ||
 	   arp.arp_hln != ETH_ALEN || arp.arp_pln != sizeof addr || ntohs(arp.arp_op) != ARPOP_REQUEST) {
-		ifdebug(TRAFFIC) logger(LOG_WARNING, "Cannot route packet: received unknown type ARP request");
+		logger(DEBUG_TRAFFIC, LOG_WARNING, "Cannot route packet: received unknown type ARP request");
 		return;
 	}
 
@@ -774,7 +773,7 @@ static void route_arp(node_t *source, vpn_packet_t *packet) {
 	subnet = lookup_subnet_ipv4((ipv4_t *) &arp.arp_tpa);
 
 	if(!subnet) {
-		ifdebug(TRAFFIC) logger(LOG_WARNING, "Cannot route packet: ARP request for unknown address %d.%d.%d.%d",
+		logger(DEBUG_TRAFFIC, LOG_WARNING, "Cannot route packet: ARP request for unknown address %d.%d.%d.%d",
 				   arp.arp_tpa[0], arp.arp_tpa[1], arp.arp_tpa[2],
 				   arp.arp_tpa[3]);
 		return;
@@ -783,17 +782,17 @@ static void route_arp(node_t *source, vpn_packet_t *packet) {
 	/* Check if it is for our own subnet */
 
 	if(subnet->owner == myself)
-		return;					/* silently ignore */
+		return;                                          /* silently ignore */
 
-	memcpy(packet->data, packet->data + ETH_ALEN, ETH_ALEN);	/* copy destination address */
-	packet->data[ETH_ALEN * 2 - 1] ^= 0xFF;	/* mangle source address so it looks like it's not from us */
+	memcpy(packet->data, packet->data + ETH_ALEN, ETH_ALEN); /* copy destination address */
+	packet->data[ETH_ALEN * 2 - 1] ^= 0xFF;                  /* mangle source address so it looks like it's not from us */
 
-	memcpy(&addr, arp.arp_tpa, sizeof addr);	/* save protocol addr */
-	memcpy(arp.arp_tpa, arp.arp_spa, sizeof addr);	/* swap destination and source protocol address */
-	memcpy(arp.arp_spa, &addr, sizeof addr);	/* ... */
+	memcpy(&addr, arp.arp_tpa, sizeof addr);                 /* save protocol addr */
+	memcpy(arp.arp_tpa, arp.arp_spa, sizeof addr);           /* swap destination and source protocol address */
+	memcpy(arp.arp_spa, &addr, sizeof addr);                 /* ... */
 
-	memcpy(arp.arp_tha, arp.arp_sha, ETH_ALEN);	/* set target hard/proto addr */
-	memcpy(arp.arp_sha, packet->data + ETH_ALEN, ETH_ALEN);	/* add fake source hard addr */
+	memcpy(arp.arp_tha, arp.arp_sha, ETH_ALEN);              /* set target hard/proto addr */
+	memcpy(arp.arp_sha, packet->data + ETH_ALEN, ETH_ALEN);  /* add fake source hard addr */
 	arp.arp_op = htons(ARPOP_REPLY);
 
 	/* Copy structs on stack back to packet */
@@ -826,7 +825,7 @@ static void route_mac(node_t *source, vpn_packet_t *packet) {
 	}
 
 	if(subnet->owner == source) {
-		ifdebug(TRAFFIC) logger(LOG_WARNING, "Packet looping back to %s (%s)!", source->name, source->hostname);
+		logger(DEBUG_TRAFFIC, LOG_WARNING, "Packet looping back to %s (%s)!", source->name, source->hostname);
 		return;
 	}
 
@@ -839,9 +838,9 @@ static void route_mac(node_t *source, vpn_packet_t *packet) {
 
 	if(directonly && subnet->owner != via)
 		return;
-	
+
 	if(via && packet->len > via->mtu && via != myself) {
-		ifdebug(TRAFFIC) logger(LOG_INFO, "Packet for %s (%s) length %d larger than MTU %d", subnet->owner->name, subnet->owner->hostname, packet->len, via->mtu);
+		logger(DEBUG_TRAFFIC, LOG_INFO, "Packet for %s (%s) length %d larger than MTU %d", subnet->owner->name, subnet->owner->hostname, packet->len, via->mtu);
 		uint16_t type = packet->data[12] << 8 | packet->data[13];
 		if(type == ETH_P_IP && packet->len > 590) {
 			if(packet->data[20] & 0x40) {
@@ -859,20 +858,70 @@ static void route_mac(node_t *source, vpn_packet_t *packet) {
 	}
 
 	clamp_mss(source, via, packet);
- 
+
 	send_packet(subnet->owner, packet);
 }
 
 static void send_pcap(vpn_packet_t *packet) {
 	pcap = false;
-	for(splay_node_t *node = connection_tree->head; node; node = node->next) {
-		connection_t *c = node->data;
+
+	for list_each(connection_t, c, connection_list) {
 		if(!c->status.pcap)
 			continue;
-		else
-			pcap = true;
-		if(send_request(c, "%d %d %d", CONTROL, REQ_PCAP, packet->len))
-			send_meta(c, (char *)packet->data, packet->len);
+
+		pcap = true;
+		int len = packet->len;
+		if(c->outmaclength && c->outmaclength < len)
+			len = c->outmaclength;
+
+		if(send_request(c, "%d %d %d", CONTROL, REQ_PCAP, len))
+			send_meta(c, (char *)packet->data, len);
+	}
+}
+
+static bool do_decrement_ttl(node_t *source, vpn_packet_t *packet) {
+	uint16_t type = packet->data[12] << 8 | packet->data[13];
+
+	switch (type) {
+		case ETH_P_IP:
+			if(!checklength(source, packet, 14 + 32))
+				return false;
+
+			if(packet->data[22] < 1) {
+				if(packet->data[25] != IPPROTO_ICMP || packet->data[46] != ICMP_TIME_EXCEEDED)
+					route_ipv4_unreachable(source, packet, ICMP_TIME_EXCEEDED, ICMP_EXC_TTL);
+				return false;
+			}
+
+			uint16_t old = packet->data[22] << 8 | packet->data[23];
+			packet->data[22]--;
+			uint16_t new = packet->data[22] << 8 | packet->data[23];
+
+			uint32_t checksum = packet->data[24] << 8 | packet->data[25];
+			checksum += old + (~new & 0xFFFF);
+			while(checksum >> 16)
+				checksum = (checksum & 0xFFFF) + (checksum >> 16);
+			packet->data[24] = checksum >> 8;
+			packet->data[25] = checksum & 0xff;
+
+			return true;
+
+		case ETH_P_IPV6:
+			if(!checklength(source, packet, 14 + 40))
+				return false;
+
+			if(packet->data[21] < 1) {
+				if(packet->data[20] != IPPROTO_ICMPV6 || packet->data[54] != ICMP6_TIME_EXCEEDED)
+					route_ipv6_unreachable(source, packet, ICMP6_TIME_EXCEEDED, ICMP6_TIME_EXCEED_TRANSIT);
+				return false;
+			}
+
+			packet->data[21]--;
+
+			return true;
+
+		default:
+			return true;
 	}
 }
 
@@ -888,28 +937,30 @@ void route(node_t *source, vpn_packet_t *packet) {
 	if(!checklength(source, packet, ether_size))
 		return;
 
+	if(decrement_ttl && source != myself)
+		if(!do_decrement_ttl(source, packet))
+			return;
+
+	uint16_t type = packet->data[12] << 8 | packet->data[13];
+
 	switch (routing_mode) {
 		case RMODE_ROUTER:
-			{
-				uint16_t type = packet->data[12] << 8 | packet->data[13];
+			switch (type) {
+				case ETH_P_ARP:
+					route_arp(source, packet);
+					break;
 
-				switch (type) {
-					case ETH_P_ARP:
-						route_arp(source, packet);
-						break;
+				case ETH_P_IP:
+					route_ipv4(source, packet);
+					break;
 
-					case ETH_P_IP:
-						route_ipv4(source, packet);
-						break;
+				case ETH_P_IPV6:
+					route_ipv6(source, packet);
+					break;
 
-					case ETH_P_IPV6:
-						route_ipv6(source, packet);
-						break;
-
-					default:
-						ifdebug(TRAFFIC) logger(LOG_WARNING, "Cannot route packet from %s (%s): unknown type %hx", source->name, source->hostname, type);
-						break;
-				}
+				default:
+					logger(DEBUG_TRAFFIC, LOG_WARNING, "Cannot route packet from %s (%s): unknown type %hx", source->name, source->hostname, type);
+					break;
 			}
 			break;
 

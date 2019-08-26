@@ -1,4 +1,28 @@
-Version 1.1pre2              Juli 17 2011
+Version 1.1pre3              October 14 2012
+
+ * New experimental protocol:
+   * Uses 521 bit ECDSA keys for authentication.
+   * Uses AES-256-CTR and HMAC-SHA256.
+   * Always provides perfect forward secrecy.
+   * Used for both meta-connections and VPN packets.
+   * VPN packets are encrypted end-to-end.
+
+ * Many improvements to tincctl:
+   * "config" command shows/adds/changes configuration variables.
+   * "export" and "import" commands help exchange configuration files.
+   * "init" command sets up initial configuration files.
+   * "info" command shows details about a node, subnet or address.
+   * "log" command shows live log messages.
+   * Without a command it acts as a shell, with history and TAB completion.
+   * Improved starting/stopping tincd.
+   * Improved graph output.
+
+ * When trying to directly send UDP packets to a node for which multiple
+   addresses are known, all of them are tried.
+
+ * Many small fixes, code cleanups and documentation updates.
+
+Version 1.1pre2              July 17 2011
 
  * .cookie files are renamed to .pid files, which are compatible with 1.0.x.
 
@@ -27,6 +51,50 @@ Version 1.1pre1              June 25 2011
 
  Thanks to Scott Lamb and Sven-Haegar Koch for their contributions to this
  version of tinc.
+
+Version 1.0.19               June 25 2012
+
+ * Allow :: notation in IPv6 Subnets.
+
+ * Add support for systemd style socket activation.
+
+ * Allow environment variables to be used for the Name option.
+
+ * Add basic support for SOCKS proxies, HTTP proxies, and proxying through an
+   external command.
+
+Version 1.0.18               March 25 2012
+
+ * Fixed IPv6 in switch mode by turning off DecrementTTL by default.
+
+ * Allow a port number to be specified in BindToAddress, which also allows tinc
+   to listen on multiple ports.
+
+ * Add support for multicast communication with UML/QEMU/KVM.
+
+Version 1.0.17               March 10 2012
+
+ * The DeviceType option can now be used to select dummy, raw socket, UML and
+   VDE devices without needing to recompile tinc.
+
+ * Allow multiple BindToAddress statements.
+
+ * Decrement TTL value of IPv4 and IPv6 packets.
+
+ * Add LocalDiscovery option allowing tinc to detect peers that are behind the
+   same NAT.
+
+ * Accept Subnets passed with the -o option when StrictSubnets = yes.
+
+ * Disabling old RSA keys when generating new ones now also works properly on
+   Windows.
+
+Version 1.0.16               July 23 2011
+
+ * Fixed a performance issue with TCP communication under Windows.
+
+ * Fixed code that, during network outages, would cause tinc to exit when it
+   thought two nodes with identical Names were on the VPN.
 
 Version 1.0.15               June 24 2011
 

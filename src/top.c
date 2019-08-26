@@ -1,6 +1,6 @@
 /*
     top.c -- Show real-time statistics from a running tincd
-    Copyright (C) 2011 Guus Sliepen <guus@tinc-vpn.org>
+    Copyright (C) 2011-2012 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -59,7 +59,6 @@ static bool cumulative = false;
 static list_t node_list;
 static struct timeval now, prev, diff;
 static int delay = 1000;
-static bool running = true;
 static bool changed = true;
 static const char *unit = "bytes";
 static float scale = 1;
@@ -85,10 +84,8 @@ static void update(int fd) {
 	uint64_t out_packets;
 	uint64_t out_bytes;
 
-	for(list_node_t *i = node_list.head; i; i = i->next) {
-		nodestats_t *node = i->data;
-		node->known = false;
-	}
+	for list_each(nodestats_t, ns, &node_list)
+		ns->known = false;
 
 	while(recvline(fd, line, sizeof line)) {
 		int n = sscanf(line, "%d %d %s %"PRIu64" %"PRIu64" %"PRIu64" %"PRIu64, &code, &req, name, &in_packets, &in_bytes, &out_packets, &out_bytes);
@@ -104,18 +101,17 @@ static void update(int fd) {
 
 		nodestats_t *found = NULL;
 
-		for(list_node_t *i = node_list.head; i; i = i->next) {
-			nodestats_t *node = i->data;
-			int result = strcmp(name, node->name);
+		for list_each(nodestats_t, ns, &node_list) {
+			int result = strcmp(name, ns->name);
 			if(result > 0) {
 				continue;
 			} if(result == 0) {
-				found = node;
+				found = ns;
 				break;
 			} else {
 				found = xmalloc_and_zero(sizeof *found);
 				found->name = xstrdup(name);
-				list_insert_before(&node_list, i, found);
+				list_insert_before(&node_list, node, found);
 				changed = true;
 				break;
 			}
@@ -153,14 +149,14 @@ static void redraw(void) {
 	if(changed) {
 		n = 0;
 		sorted = xrealloc(sorted, node_list.count * sizeof *sorted);
-		for(list_node_t *i = node_list.head; i; i = i->next)
-			sorted[n++] = i->data;
+		for list_each(nodestats_t, ns, &node_list)
+			sorted[n++] = ns;
 		changed = false;
 	}
 
 	for(int i = 0; i < n; i++)
 		sorted[i]->i = i;
-	
+
 	int cmpfloat(float a, float b) {
 		if(a < b)
 			return -1;
@@ -247,6 +243,7 @@ static void redraw(void) {
 void top(int fd) {
 	initscr();
 	timeout(delay);
+	bool running = true;
 
 	while(running) {
 		update(fd);

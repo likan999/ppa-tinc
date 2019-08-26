@@ -1,6 +1,6 @@
 /*
     edge.c -- edge tree management
-    Copyright (C) 2000-2006 Guus Sliepen <guus@tinc-vpn.org>,
+    Copyright (C) 2000-2012 Guus Sliepen <guus@tinc-vpn.org>,
                   2000-2005 Ivo Timmermans
 
     This program is free software; you can redistribute it and/or modify
@@ -29,7 +29,7 @@
 #include "utils.h"
 #include "xalloc.h"
 
-splay_tree_t *edge_weight_tree;	/* Tree with all edges, sorted on weight */
+splay_tree_t *edge_weight_tree;
 
 static int edge_compare(const edge_t *a, const edge_t *b) {
 	return strcmp(a->to->name, b->to->name);
@@ -99,7 +99,7 @@ void edge_del(edge_t *e) {
 
 edge_t *lookup_edge(node_t *from, node_t *to) {
 	edge_t v;
-	
+
 	v.from = from;
 	v.to = to;
 
@@ -107,17 +107,10 @@ edge_t *lookup_edge(node_t *from, node_t *to) {
 }
 
 bool dump_edges(connection_t *c) {
-	splay_node_t *node, *node2;
-	node_t *n;
-	edge_t *e;
-	char *address;
-
-	for(node = node_tree->head; node; node = node->next) {
-		n = node->data;
-		for(node2 = n->edge_tree->head; node2; node2 = node2->next) {
-			e = node2->data;
-			address = sockaddr2hostname(&e->address);
-			send_request(c, "%d %d %s to %s at %s options %x weight %d",
+	for splay_each(node_t, n, node_tree) {
+		for splay_each(edge_t, e, n->edge_tree) {
+			char *address = sockaddr2hostname(&e->address);
+			send_request(c, "%d %d %s %s %s %x %d",
 					CONTROL, REQ_DUMP_EDGES,
 					e->from->name, e->to->name, address,
 					e->options, e->weight);

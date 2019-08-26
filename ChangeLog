@@ -1,3 +1,1953 @@
+commit 0db9e471ea53b48687ea247c855cd95ec453530c
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Oct 14 19:22:30 2012 +0200
+
+    Releasing 1.1pre3.
+
+commit 3254e75afe0ff28fed68d8682f61c184f442161d
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Oct 14 19:21:13 2012 +0200
+
+    Fix a few compiler errors/warnings.
+
+commit 70a1a5594af5d4e6a364186b42ba4e34c676009b
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Oct 14 17:42:49 2012 +0200
+
+    Update copyright notices.
+
+commit 4200a378c4fedf64e89b9f8481d7cd09dac14965
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Oct 14 16:39:16 2012 +0200
+
+    Fix compile error on Windows.
+
+commit 368727c3dac4a1f8343e2e0eccf5bc62d9b197e2
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Oct 14 16:07:35 2012 +0200
+
+    tincctl: add node colors and edge weight to graph dump.
+
+commit 40ed0c07dd3d4667054b0f5952b89ee39686493b
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Oct 14 15:37:24 2012 +0200
+
+    Log more messages using logger().
+
+commit b234304b6628aeddce63d7f751da97c3344bbb78
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Oct 14 14:48:35 2012 +0200
+
+    Make sure the ReplayWindow option works for SPTPS as well.
+
+commit ee1d655f2f1ede6da66b6268974d6f9585c616b3
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Oct 14 14:45:27 2012 +0200
+
+    Only log success of initial datagram SPTPS handshake.
+
+commit 44a24f63acc70d19904e5540986b8301b3c9b882
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Oct 14 14:33:54 2012 +0200
+
+    Fix handling of initial datagram SPTPS packet.
+    
+    Only the very first packet of an SPTPS session should be send with REQ_KEY,
+    this signals the peer to abort any previous session and start a new one as
+    well.
+
+commit ec1f7e525d046bcaeb8e7040b8cec9a34a568371
+Author: Sven-Haegar Koch <haegar@sdinet.de>
+Date:   Fri Oct 12 17:08:01 2012 +0200
+
+    sptps.c: Add missing newline to log message.
+
+commit 94ec8d34db0ddef14b5446975663e5ff37e27b45
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Thu Oct 11 22:47:13 2012 +0200
+
+    Strip newline from incoming SPTPS requests.
+    
+    Most of the code doesn't care whether requests are terminated with a newline or
+    not, except that when requests are forwarded, it is assumed they do not have
+    one and a newline is added.  When a node using SPTPS receives a request from
+    another SPTPS-using node, and forwards it to a non-SPTPS-using node, this will
+    result in two consecutive newlines, which the latter node will see as an empty,
+    and thus invalid, request.
+
+commit 45944e4514a7765f858fa33cc1d9719a603099e0
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Thu Oct 11 22:21:30 2012 +0200
+
+    Clear status and options fields of unreachable nodes.
+
+commit d917c8cb6b69475d568ccbe82389b9f2b3eb5e80
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Wed Oct 10 17:17:49 2012 +0200
+
+    Fix whitespace.
+
+commit 58f4b845b9a7d83739af77337f2ce263d8df7838
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Wed Oct 10 14:46:22 2012 +0200
+
+    Try all known addresses of node during the PMTU discovery phase.
+    
+    This helps in situations where some nodes have IPv6 and others have not.
+
+commit 0ed0cc6f9c30537bd74222fd99a41726d488dd37
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Tue Oct 9 17:49:09 2012 +0200
+
+    Fix hash functions for keys whose size is not divisible by 4.
+
+commit d1ec010660905ae0b99d783737350ccc08b37b16
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Tue Oct 9 16:27:28 2012 +0200
+
+    Fix memory leaks found by valgrind.
+
+commit 72642b40b3ad476101622da202b6f977a32b472f
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Tue Oct 9 15:52:58 2012 +0200
+
+    Clear Ethernet header when reading packets from a tun device.
+    
+    This fixes a warning from valgrind about uninitialized bytes, which were being
+    sent to other nodes.
+
+commit b346338f9c2de6f71d87cb4ad8e61b0af0052688
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Tue Oct 9 13:28:09 2012 +0200
+
+    Remove unused variables, fix some #includes.
+
+commit f62b4a91344bd0de09e7fb4e4c8c1993ffc027c3
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Tue Oct 9 13:23:12 2012 +0200
+
+    Fix deleting connections from the connection list.
+
+commit 0b8b23e0dd7219344543f135ca0aeba8a4a42d48
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Mon Oct 8 00:35:38 2012 +0200
+
+    C99 extravaganza.
+
+commit ff306f0cdaedb50de1472e7c1fb55de922a6ca60
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Oct 7 21:59:53 2012 +0200
+
+    Replace the connection_tree with a connection_list.
+    
+    The tree functions were never used on the connection_tree, a list is more appropriate.
+    Also be more paranoid about connections disappearing while traversing the list.
+
+commit ce059e36fdb3d3049c278e8b2f36b03c93778996
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Oct 7 21:02:40 2012 +0200
+
+    Refactor outgoing connection handling.
+    
+    Struct outgoing_ts and connection_ts were depending too much on each other,
+    causing lots of problems, especially the reuse of a connection_t. Now, whenever
+    a connection is closed it is immediately removed from the list of connections
+    and destroyed.
+
+commit d93a37928b75b17ac5e1eae5c2d62fd0760a6608
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Oct 7 17:53:23 2012 +0200
+
+    Fix warnings from cppcheck.
+
+commit 5d0812d49275ec8bda2b5b0ac813239045463777
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Oct 7 14:06:47 2012 +0200
+
+    Remove a debug message.
+
+commit c2a9ed9e98e3dc4218c74fff774ddfe654adfd72
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Oct 7 14:03:50 2012 +0200
+
+    Handle packets encrypted via SPTPS that need to be forwarded via TCP.
+
+commit bb6b97ce3493d49b79f1bd57fdac420c312ef8d6
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Oct 7 13:31:19 2012 +0200
+
+    Make datagram SPTPS key exchange more robust.
+    
+    Similar to old style key exchange requests, keep track of whether a key
+    exchange is already in progress and how long it took. If no key is known yet
+    or if key exchange takes too long, (re)start a new key exchange.
+
+commit b99af2f813b897e1fd49c87a7cf44241cad3a017
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Oct 7 11:45:54 2012 +0200
+
+    Useful error messages when writing to a meta connection fails.
+
+commit e05371346548dee977d4ee45e12e3058e749afb6
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sat Oct 6 21:16:17 2012 +0200
+
+    When terminating, keep control connections open until the end.
+    
+    This ensures all device files and listening sockets have been closed before
+    tincctl gets notified of tincd's termination.
+
+commit 86116bb022f0b885638ff9ba21b359fc9f55286a
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sat Oct 6 21:15:19 2012 +0200
+
+    Clear connection options and status fields in free_connection_partially().
+    
+    Most fields should be zero when reusing a connection. In particular, when an
+    outgoing connection to a node which is reachable on more than one address is
+    made, the second connection to that node will have status.encryptout set but
+    outctx will be NULL, causing a NULL pointer dereference when
+    EVP_EncryptUpdate() is called in send_meta() when it shouldn't.
+
+commit ef9358c0d616c5ff3391c8ec3da5d357286a4457
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sat Oct 6 17:45:03 2012 +0200
+
+    Improve starting/stopping tincd using tincctl.
+    
+    When starting tincd, tincctl now strips non-options from the command line, and
+    sets argv[0] to the name of the tincd command instead of copying its own
+    command name.
+    
+    When stopping a running tincd, tincctl now waits for it to terminate.
+
+commit 47f33e07ff90b557cfa96999e921d35ea537ca80
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sat Oct 6 16:53:43 2012 +0200
+
+    Fix off-by-one error.
+    
+    Apart from writing 1 byte beyond an array allocated on the stack, this slipped
+    an unitialized byte in the seed used for key generation.
+
+commit 20b441a6de743b2149df59cfb94a7663e1924fa3
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Mon Oct 1 10:42:13 2012 +0200
+
+    Libreadline might depend on libcurses.
+
+commit 3887e6dcb54494ee11798e721e274e06b0a5621a
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Mon Oct 1 10:39:15 2012 +0200
+
+    Remove abort() call that accidentily sneaked into commit dd1b69e.
+
+commit 0b0949e5bb63f9545feb4714812e2aa2112fb092
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Mon Oct 1 10:36:23 2012 +0200
+
+    Make sure sptps_test compiles without -flto.
+
+commit b381acd60dbadbb4bc679d35a7d86bf425f21f86
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Sep 30 23:12:43 2012 +0200
+
+    Remove unused function declaration.
+
+commit dd1b69e31f83e2cc200ecc10e6d927373823332b
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Sep 30 22:43:48 2012 +0200
+
+    Fix not reading Port statement from host config file.
+
+commit 6dfdb323612184529b4b83c1be914dda8262de47
+Merge: 9e76c46 c4940a5
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Sep 30 15:00:47 2012 +0200
+
+    Merge branch 'master' into 1.1
+    
+    Conflicts:
+    	lib/utils.c
+    	src/net_setup.c
+    	src/process.c
+    	src/protocol_auth.c
+    	src/protocol_key.c
+    	src/utils.h
+
+commit c4940a5c888d85b4c477b6face5e9a618e64718d
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Sep 30 13:45:47 2012 +0200
+
+    Add strict checks to hex to binary conversions.
+    
+    The main goal is to catch misuse of the obsolete PrivateKey and PublicKey
+    statements.
+
+commit 3bd810ea79d6933839ddac4a2cf1445c51947d38
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Sep 30 13:45:39 2012 +0200
+
+    Attribution for Martin Schürrer.
+
+commit 5a161e86cf35351f5274d7a8e17fef4630b40686
+Author: Martin Schürrer <martin@schuerrer.org>
+Date:   Sun Sep 30 02:04:55 2012 +0200
+
+    Output details of encryption errors
+
+commit 9e76c464b26b066e1eb3aa5232e573792e28020d
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Fri Sep 28 17:51:48 2012 +0200
+
+    Remove some debugging messages.
+
+commit e971130b601064090815c31c90b876e3d0d1d5b1
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Fri Sep 28 17:36:25 2012 +0200
+
+    Make tincctl robust against dropped control connections.
+
+commit c5325ffdd1c6749beaf842c272eb28ecd5a070b6
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Fri Sep 28 17:05:01 2012 +0200
+
+    Correctly add/remove outgoing connections when reloading configuration.
+
+commit f417271ea1447589ea05901f54fbb0377e7afaf9
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Fri Sep 28 17:03:14 2012 +0200
+
+    Fix column sorting, make all lists sortable.
+
+commit aee86011ff2d389832fc9a23081ea23ab8484607
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Thu Sep 27 22:12:15 2012 +0200
+
+    Let the GUI handle the new dump format.
+
+commit fac5593f44e47f3bd4f4b425ada38ab49fbe3b42
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Thu Sep 27 17:19:02 2012 +0200
+
+    Fix links in documenation.
+
+commit 2e09986a1fd6dc5b6313f10e5d86aaaf4a531235
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Thu Sep 27 17:18:49 2012 +0200
+
+    Fix links in documentation.
+
+commit f70cbc9d3ee3a88cf956592007e57f7a1dde2c17
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Thu Sep 27 15:45:02 2012 +0200
+
+    Comment out old public/private keys when generating new ones.
+
+commit 38dbc63f118dbfdb955b56740b8c20a9379fb3ba
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Wed Sep 26 23:56:21 2012 +0200
+
+    Update documentation of the "dump graph" command.
+
+commit 1f312137d5ab12a2d996d5f7972f169aeb852040
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Wed Sep 26 23:52:36 2012 +0200
+
+    Allow dumping either directed or undirected graphs.
+    
+    Internally, tinc maintains a directed graph of the meta connections between
+    nodes. However, this causes graphviz to draw two lines between nodes, which is
+    not always desirable. The "dump graph" command now defaults to dumping an
+    undirected graph, the "dump digraph" command will dump a directed graph.
+
+commit d6388d782ede1bbe49a5c2643362e2e0f383fa89
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Wed Sep 26 23:18:32 2012 +0200
+
+    Let tincctl parse and format dumps.
+    
+    At the moment it just reproduces the old format.
+
+commit 9ade39b7d5564fb6f5a41946c9a23cfa7851a19f
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Wed Sep 26 22:20:43 2012 +0200
+
+    Keep last known address and time since reachability changed.
+    
+    This allows tincctl info to show since when a node is online or offline.
+
+commit 1e5deec973cd366b9d9cec6c1314a97e7051ce0f
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Tue Sep 25 22:28:08 2012 +0200
+
+    Remove remnants of Ethertap and old TUNSETIFF ioctl().
+
+commit 125dd0dbcf4f46033ead3486044eb00b413fe537
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Tue Sep 25 22:12:36 2012 +0200
+
+    Fix typo in manpage.
+
+commit 72f08932cf6f1ac0cfb837d377b423207e8c671a
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Mon Sep 24 14:56:00 2012 +0200
+
+    Don't ignore Makefile.am.
+
+commit 66e702d90d83977dc089736d7e4146330bc5df28
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Mon Sep 24 14:02:07 2012 +0200
+
+    Attribution for Vil Brekin and some code style cleanups.
+
+commit f421a640777bd9484c59fa6feacadcf3e05d4b44
+Author: Vilbrekin <vilbrekin@gmail.com>
+Date:   Sat Aug 25 20:32:38 2012 +0200
+
+    Android cross-compilation instructions.
+
+commit afe4bf62eccab76c75e5a661fb2c16f1391a8417
+Author: Vilbrekin <vilbrekin@gmail.com>
+Date:   Sat Aug 25 20:01:11 2012 +0200
+
+    Use __ANDROID__ define rather than dirty hard-code to allow android NDK cross-compilation.
+
+commit c6720f1a608d19c722d8601fab1048773dbad59b
+Author: Vilbrekin <vilbrekin@gmail.com>
+Date:   Sat Aug 25 19:59:26 2012 +0200
+
+    Add basic .gitignore file, cleaning (most) files generated by autotools.
+
+commit f2570c1b7f5813e087c867cf002f36f0c09b5cfa
+Author: Vilbrekin <vilbrekin@gmail.com>
+Date:   Sat Aug 25 19:14:00 2012 +0200
+
+    Replace hard-code with new ScriptsInterpreter configuration property.
+    
+    This new setting allows choosing a custom script interpreter used for the various tinc callbacks.
+    If none is specified, the script itself is called as executable (as before).
+    This is particularly useful when storing tinc configuration and script on a mount point with no-exec attribute.
+
+commit 8a6f278fd2606c0a8f133f05df83b2649eacf6c3
+Author: Vilbrekin <vilbrekin@gmail.com>
+Date:   Wed Aug 22 10:46:24 2012 +0200
+
+    Basic patch for android cross-compilation.
+    
+    Commented non-existing functions in android NDK.
+    Prefix scripts execution with shell binary to allow execution on no-exec mount points.
+    Everyything is currently hard coded, while it should use pre-compiler variables...
+
+commit 2dc8deb1047a076d1c040f47bedf36ad4b41b17c
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Thu Sep 13 21:35:29 2012 +0200
+
+    Ensure sptps_test compiles with -flto.
+
+commit 90f1cba1fd9e748ec4b8274511d5a36ec1a24d9d
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Wed Sep 5 13:05:48 2012 +0200
+
+    Replace node_udp_tree with a hash table.
+
+commit 4c05afd19acada4781e1b8865cf702b197882e5d
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Wed Sep 5 12:45:36 2012 +0200
+
+    Use hash tables to lookup owners of addresses.
+
+commit 6b6a025488f289f749498a7e6cc1994be19f53e8
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Wed Sep 5 12:44:41 2012 +0200
+
+    Add a simple hash table implementation.
+
+commit e9de08be0dab58a48f9a8ce3d250516cf05d6b8e
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Tue Sep 4 14:21:50 2012 +0200
+
+    Remove newlines at end of log messages.
+
+commit 05dac63dbc03dc5a64a7f4b50e24eb3766135916
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Tue Sep 4 14:16:05 2012 +0200
+
+    Remove some debug messages.
+
+commit 742f7bb04e72d93f2c4a858534144a599b3fc14d
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Thu Aug 30 14:21:23 2012 +0200
+
+    Properly handle SPTPS packets with stripped Ethernet headers.
+
+commit d74b81b61e87c66d364a8590a48d87773ad2652c
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Thu Aug 30 14:00:34 2012 +0200
+
+    Fix node name check for "connect" and "disconnect" commands.
+
+commit 5567c0d4107e6ff6f4639d8664651841bd59ddad
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Aug 5 17:25:31 2012 +0200
+
+    Quit when "exit" or "quit" commands are used in tincctl's shell.
+
+commit d18519ae21345fea68dd7f0f5525adba3a7639a9
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Aug 5 17:03:57 2012 +0200
+
+    Fix segfault when using tincctl's shell without readline.
+
+commit b332bd964663b7109a5fc4be596d36fbf1dbaa47
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Aug 5 13:50:51 2012 +0200
+
+    Add bash completion script.
+
+commit e29e0fee8812851473bcf24324a15cbf3cc854a0
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Fri Aug 3 14:17:02 2012 +0200
+
+    Make sure the top command can be used more than once in tincctl's shell.
+
+commit a57db1dfe0736fd902a45ed5f695630faf3f0e1e
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Fri Aug 3 14:15:50 2012 +0200
+
+    Fork when using the "start" command in tincctl.
+    
+    This allows the command to be given in its shell without immediatly exiting tincctl.
+
+commit 36c6afede36b6956bd86df824f5616c1afee35ed
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Fri Aug 3 13:23:07 2012 +0200
+
+    Add readline completion for tincctl config and tincctl info.
+
+commit 8af2f3f5a4061a8dbfd4f7d259e0038df06a373e
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Thu Aug 2 17:44:59 2012 +0200
+
+    Optionally compress and/or strip Ethernet header from SPTPS packets.
+
+commit 73348be58ecb9c40cf435122a00e72ac4d1a4c9b
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Thu Aug 2 17:24:42 2012 +0200
+
+    Have tincctl act as a shell when no command is given.
+    
+    By default it uses readline to read commands. If the input and output are not a
+    tty, no prompt is shown.
+
+commit 91937812bdfe74699e4f7cdf86265d07423acbba
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Thu Aug 2 17:23:51 2012 +0200
+
+    Clear struct sptps before reusing it.
+
+commit 6bcd03c2027636f82ab7228566717d112df7bc6d
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Wed Aug 1 22:22:52 2012 +0200
+
+    Update the documentation to encourage using "tincctl init" and "tincctl config".
+
+commit 6396f42d74f22ab5f8e736dc5cb04c57917f9319
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Wed Aug 1 16:51:59 2012 +0200
+
+    Stricter checks for netname and node names.
+    
+    - Node names should not be empty.
+    - Net names should not contain slashes or start with a dot, because they are
+      used in pathnames.
+
+commit 61006ced88e1bf62e8883216cabc636f2d4cb12a
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Wed Aug 1 16:13:23 2012 +0200
+
+    Add missing configuration variables.
+
+commit b0f3a76e9bf8ceeab75c1e6f4dce6763aecddc5e
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Wed Aug 1 15:50:45 2012 +0200
+
+    Add the ability to query configuration variables to tincctl.
+
+commit a9caa2a6ea3aa553c9d2140ad4f5b34b7ab7297b
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Wed Aug 1 15:15:37 2012 +0200
+
+    tincctl restart should work even if no tincd is running.
+
+commit 07980b056c5371f8b6fdd50172f501be07155bdf
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Wed Aug 1 15:14:48 2012 +0200
+
+    Try sending SIGTERM if we cannot connect to a tincd but we know its PID.
+
+commit 7a71d48009e03ff1143a6e1084803f456a27c849
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Tue Jul 31 21:43:49 2012 +0200
+
+    Use a status bit to track which nodes use SPTPS.
+
+commit 6bc8df3e010509f69af95d2cc14ec893def6f644
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Tue Jul 31 20:39:15 2012 +0200
+
+    Add Brandon Black's replay window code to SPTPS.
+
+commit 5ede437307cc3bbb20431f4b82f4a2ef79c9b746
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Tue Jul 31 20:36:35 2012 +0200
+
+    Handle SPTPS datagrams in try_mac().
+
+commit aaff0ed08916f936b0a7b8a3d0607b8111b7a185
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Tue Jul 31 20:29:13 2012 +0200
+
+    Remove unused #include.
+
+commit 153abaa4d940bf2bc9bd7275d5efe5c01c354190
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Mon Jul 30 18:36:59 2012 +0200
+
+    Use datagram SPTPS for packet exchange between nodes.
+    
+    When two nodes which support SPTPS want to send packets to each other, they now
+    always use SPTPS. The node initiating the SPTPS session send the first SPTPS
+    packet via an extended REQ_KEY messages. All other handshake messages are sent
+    using ANS_KEY messages. This ensures that intermediate nodes using an older
+    version of tinc can still help with NAT traversal. After the authentication
+    phase is over, SPTPS packets are sent via UDP, or are encapsulated in extended
+    REQ_KEY messages instead of PACKET messages.
+
+commit 248d300f1be0d5f2aae39202041699ab2b46c56b
+Merge: e1355e2 3391018
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Fri Jul 27 22:48:24 2012 +0200
+
+    Merge branch 'master' into 1.1
+
+commit 3391018efbd41858d42ccae6ae919749ba94c8db
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Fri Jul 27 22:43:01 2012 +0200
+
+    Also clarify hostnames=[yes|no] in tinc.conf(5).
+
+commit e895b358db8863d19dfa3d77c861ae19b76bc750
+Author: Mesar Hameed <mhameed@src.gnome.org>
+Date:   Tue Jul 24 07:18:50 2012 +0100
+
+    Minor clarification, tinc.conf hostnames=[yes|no] variable only resolves names for logging purposes.
+
+commit e1355e24eb7fe36bdb5dd7c818815fa266046a51
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Jul 22 13:05:56 2012 +0200
+
+    Remove unused po/ directory.
+
+commit 6c9b33c8b67374d38525b88f292840034c559a45
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Jul 22 12:55:04 2012 +0200
+
+    Have tinc-gui use same way of locating pidfile as tincd and tincctl.
+
+commit 2b97a7d7cf6ca7f4d84d3df754062a55bdf55305
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Jul 22 12:52:31 2012 +0200
+
+    tincctl init now also creates a template tinc-up script.
+
+commit eb430005c74b6b5f717e7e264afa3bd35284740d
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sat Jul 21 17:10:10 2012 +0200
+
+    Fix exit code when installing tincd as a service on Windows.
+
+commit e5e96882c3825cee81ff163490b2f39fad3192b8
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sat Jul 21 16:33:09 2012 +0200
+
+    Windows doesn't like quotes around "edit" when calling it through system().
+    
+    Even though that works fine on the command line.
+
+commit 18237e1f2d9dd5eef4a4e0d746d016bf94a42ad4
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sat Jul 21 16:26:55 2012 +0200
+
+    Use backslashes on Windows.
+    
+    Although Windows itself supports the forward slash, some programs may not.
+
+commit 09a8ff649cc7aa51d291c89e1556526a6265cc81
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sat Jul 21 15:58:16 2012 +0200
+
+    Don't try to mkdir(CONFDIR) on Windows when there is a registry key for tinc.
+
+commit ed8ce60845dc0568840c64c692838136f342fa54
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sat Jul 21 15:51:15 2012 +0200
+
+    Fix crash when no netname is specified.
+
+commit 7303b512b0e4f0d9cbc3236e846b2618f527b830
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sat Jul 21 15:50:50 2012 +0200
+
+    Fix some compiler warnings.
+
+commit 33521eabd4501b4add35468618453ac4f76311f3
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sat Jul 21 15:15:04 2012 +0200
+
+    Have tincd and tincctl use the same method of determining netname.
+
+commit 1d322d2eda8223f21b0c00381af34b94054f251a
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sat Jul 21 15:02:44 2012 +0200
+
+    Add a newline to a configuration file if it is missing.
+
+commit dea722c4aca9a8cfa463807d279aa10cc6a0fc64
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sat Jul 21 15:02:17 2012 +0200
+
+    Add some checks when changing configuration.
+
+commit cc0c35267f8fac4f82622ff73474ed1e2d3a1e36
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sat Jul 21 14:19:23 2012 +0200
+
+    Call event_init() after detaching.
+    
+    Otherwise, the call to daemon() could close filedescriptors in use by libevent
+    itself; for example if it uses kqueue or epoll instead of a select() or poll()
+    backend.
+
+commit 4e0fc52197546bbf8a0be7af946f4b569e13048c
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sat Jul 21 13:53:22 2012 +0200
+
+    Fix various compiler warnings.
+
+commit b161088b35fad1d284855f6434a895a20e34a250
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sat Jul 21 13:38:14 2012 +0200
+
+    BSD make doesn't like $<.
+
+commit 98a72d686983178f71cd2bf336c1f3d5c647f1e7
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sat Jul 21 13:02:35 2012 +0200
+
+    Make sure sptps.h and info.h are in the tarball.
+
+commit 5eeed38b8eb15f4c0464675b7d8c7722bc8be168
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sat Jul 21 12:51:53 2012 +0200
+
+    Make sure tinc compiles on Windows.
+
+commit 1d4590ca5cae09ea3b7a7e80355639e20861d349
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Fri Jul 20 20:35:07 2012 +0200
+
+    Prefer routes with lower weight as long as they do not increase the number of hops.
+    
+    This should improve traffic to nodes that are not directly reachable somewhat.
+
+commit 4c8ead98743254be97c830e942f0cc53539d780c
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Fri Jul 20 20:01:29 2012 +0200
+
+    Allow more configuration variables to be changed when reloading configuration.
+    
+    In particular, Subnets may be added or removed from the local node on the fly.
+
+commit c678e7c4fb52d93350eafaed0f666018ed469e10
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Fri Jul 20 19:59:47 2012 +0200
+
+    Split setup_myself() into two functions, one for reloading configuration.
+
+commit 4591e96c76914795aaae317c067f16abc22fb2e0
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Fri Jul 20 17:29:16 2012 +0200
+
+    Never remove items from cmdline_conf.
+    
+    We should treat cmdline_conf as const, so we can call read_config_options()
+    more than once with prefix = NULL.
+
+commit 68a20876d0c4a6c370064d78786dd9f2aa6273cb
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Fri Jul 20 01:02:51 2012 +0200
+
+    Use minor protocol version to determine whether to use ECDH key exchange between nodes.
+
+commit 76a3ada4eb4032172c3d780915a07680f9954d42
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Tue Jul 17 18:05:55 2012 +0200
+
+    Put minor protocol version in connection options so other nodes can see it.
+    
+    This allows two nodes that do not have a meta-connection with each other see
+    which version they are.
+
+commit 68de7b481e54d6a7c573d9a2d61f76d4d3a6b2f9
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Mon Jul 16 18:49:39 2012 +0200
+
+    When exporting configuration files, don't copy Name variables.
+    
+    These interfere with tincctl import. Besides, host configuration files should
+    not contain Name at all.
+
+commit c52c46f8717aac6904f32766d774fa3fdf9611d8
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Mon Jul 16 16:48:24 2012 +0200
+
+    Add an easy way to export and import host configuration files.
+
+commit 6319dc9dde3b328ba800f25a6bb4cf303d27f664
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Mon Jul 16 01:14:08 2012 +0200
+
+    Strip default subnet weight from output.
+
+commit 74646a4afa6557a0363cc85e0a95d578d4ab0ac2
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Mon Jul 16 01:09:47 2012 +0200
+
+    Give an error message when tincctl info cannot parse the given subnet or address.
+
+commit 53735a9d964579829d089f4b7572aef50c4e1468
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Mon Jul 16 01:05:25 2012 +0200
+
+    "tincctl info" gives more human readable information about nodes or subnets.
+
+commit 3c7003893fe2f82023d0d4f54b488bb7a16d0007
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Mon Jul 16 00:52:50 2012 +0200
+
+    Move all functions related to subnet parsing to subnet_parse.c.
+
+commit e72e6febfeddbd4354560388c8e0e125a8017909
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Jul 15 22:53:03 2012 +0200
+
+    Fix tincctl dump.
+
+commit 9be8980a2bb6245da017270f85bd6da186fb433b
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Jul 15 21:17:10 2012 +0200
+
+    Let tincctl ignore tincd options, so they will be passed on.
+
+commit 36dee4c539521578005eed5e58b4803b73f0c889
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Jul 15 21:15:35 2012 +0200
+
+    Fix tincctl start.
+
+commit 439069bda62b25baaabeb765ac0557efa57b6cfb
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Jul 15 20:59:17 2012 +0200
+
+    Have tincctl notify a running tincd of configuration file changes.
+
+commit eb01fd96258e5f99be0e4930eac04e5487a108a0
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Jul 15 20:37:38 2012 +0200
+
+    Add an easy way to edit a configuration file.
+
+commit cedfeccb247abb00063316068d7d2ade880f9d09
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Jul 15 20:22:21 2012 +0200
+
+    Stricter checks for node names.
+
+commit 03f72c6173f27198e2e68227cb41e00f8ec4ddc9
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Jul 15 18:16:35 2012 +0200
+
+    Allow configuration variables to be added/removed using tincctl.
+
+commit dd102efd24d847c41890adfcc7ce6d9d2592dcdb
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Jul 15 15:46:16 2012 +0200
+
+    Put every command in its own function.
+
+commit a444ec396456a25546a4ab3d185c7fb5e4bb7ae3
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Jul 15 14:49:36 2012 +0200
+
+    "tincctl init" creates initial directory structure, tinc.conf and keypairs.
+
+commit 268c8545aaf83b7433f43402f5c77e39e20006ef
+Merge: bce1777 f13fd8c
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sat Jul 14 15:13:21 2012 +0200
+
+    Merge branch 'master' into 1.1
+
+commit f13fd8c35068cd1f776e33362dcac40be9499035
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Thu Jul 12 11:32:08 2012 +0200
+
+    Update THANKS file.
+
+commit 2eb0043e1352944b1113c1f7e40f37dffac0021d
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Thu Jul 12 11:30:56 2012 +0200
+
+    Document how to load the tap driver on FreeBSD.
+
+commit ae8c0b65d8f97942d7eff5f96344f781b8dec35d
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Thu Jul 12 11:25:11 2012 +0200
+
+    Use /dev/tap0 by default on FreeBSD and NetBSD when using Mode = switch.
+
+commit bce177767d521b47efd458c5cd570959a98d940d
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Tue Jun 26 14:22:57 2012 +0200
+
+    Fix crash when handling the ALRM signal.
+    
+    In retry() the function do_outgoing_connection() is called, which can delete
+    items from the connection_tree, so when walking the tree we must first save the
+    pointer to the next item.
+
+commit 19be9cf7150858311f7898fa3fb525d692d02f64
+Merge: 62b61a1 00e71ec
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Tue Jun 26 13:24:20 2012 +0200
+
+    Merge branch 'master' of git://tinc-vpn.org/tinc into 1.1
+    
+    Conflicts:
+    	NEWS
+    	README
+    	configure.in
+    	lib/utils.c
+    	src/linux/device.c
+    	src/meta.c
+    	src/net.h
+    	src/net_setup.c
+    	src/net_socket.c
+    	src/protocol.c
+    	src/protocol_auth.c
+    	src/tincd.c
+
+commit 00e71ece25070dc919f9bc0696e4ff3a387360d0
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Mon Jun 25 19:45:51 2012 +0200
+
+    Releasing 1.0.19.
+
+commit 236b0ba4ebba01e22e382e79897100338a039bbb
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Mon Jun 25 19:03:54 2012 +0200
+
+    Fix crash when using Broadcast = direct.
+
+commit 0a84f9cb8f52f2d2b4f03a5ad5ef9dfcd3509033
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Mon Jun 25 19:01:51 2012 +0200
+
+    Fix compiler warnings.
+
+commit 62ee9b776d45af41c8b040ad86e50ba8f6f8e6c4
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Mon Jun 25 15:01:42 2012 +0200
+
+    #include <winsock2.h> on Windows.
+    
+    MinGW complained about it not being included.
+
+commit c0af4c37d2046ffb3e07dd62f266a4fb99ea5614
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Mon Jun 25 15:00:24 2012 +0200
+
+    Small fixes in proxy code.
+
+commit 62b61a1b7c2382b1bade142b3a41a9b27c1fd40d
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun May 13 22:16:42 2012 +0200
+
+    Don't forget to send a newline when forwarding requests.
+
+commit 42a8158b1dca6ee4ec1707176199cc36c26da7af
+Author: Michael Tokarev <mjt@tls.msk.ru>
+Date:   Fri May 4 16:41:47 2012 +0400
+
+    add (errnum) in front of windows error messages
+    
+    On localized, non-English versions of windows, it is
+    common to have two active charsets -- for console applications
+    and for GUI applications, together with localized error messages
+    returned by windows.  But two charsets are rarely compatible,
+    so sending the same byte sequence to console and to windows
+    event log makes one or another to be unreadable.  So at least
+    include the error number, this way it will be possible to
+    lookup the actual error test using external ways.
+    
+    Signed-off-by: Michael Tokarev <mjt@tls.msk.ru>
+
+commit 58007d7efa3940c863c5a398f8b257a686ce37ba
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Tue May 8 16:44:15 2012 +0200
+
+    Always pass request strings to other functions as const char *.
+
+commit 291a59b5b732de084e392daea1433b1fdb9fbfd5
+Author: Sven-Haegar Koch <haegar@sdinet.de>
+Date:   Sun Apr 22 03:44:28 2012 +0200
+
+    free_connection_partially(): also reset remote protocol version infos
+    
+    The used remote protocol can change between two reconnects, aka if
+    the remote side has enabled/disabled for example their ExperimentalProtocols
+    setting.
+
+commit 32e5c5bb7c2c9127274247cb74cffa7345b04fad
+Author: Sven-Haegar Koch <haegar@sdinet.de>
+Date:   Sun Apr 22 03:05:29 2012 +0200
+
+    Silence SPTPS log messages, reduce them from DEBUG_ALWAYS to DEBUG_META.
+
+commit c78bb143030162f0c820f08c87808e157c014a07
+Author: Sven-Haegar Koch <haegar@sdinet.de>
+Date:   Sun Apr 22 02:55:06 2012 +0200
+
+    terminate_connection(): delete non-outgoing (aka incoming) connections.
+
+commit 8b9e5af0d93069a81ce2ebed9899eedf3b7b184b
+Author: Sven-Haegar Koch <haegar@sdinet.de>
+Date:   Sat Apr 21 03:44:24 2012 +0200
+
+    Label control connections for log output as "<control>", not "<unknown>".
+
+commit d3f4cf59ca917386e7c6358a98adbe3b8e9ce87a
+Author: Sven-Haegar Koch <haegar@sdinet.de>
+Date:   Sat Apr 21 01:59:01 2012 +0200
+
+    free_connection_partially(): Avoid possible use-after-free for c->hischallenge
+
+commit 7a6ca7a993e5907497d97fef09e375698dde182f
+Author: Sven-Haegar Koch <haegar@sdinet.de>
+Date:   Sat Apr 21 01:51:36 2012 +0200
+
+    terminate_connection(): only kill c->node->connection if it is pointing
+    to the same connection
+
+commit a96c4f016c9fff2392d85f762e16f5430c0b6463
+Author: Sven-Haegar Koch <haegar@sdinet.de>
+Date:   Fri Apr 20 00:24:38 2012 +0200
+
+    terminate_connection(): Avoid use-after-free and double-free for
+    already freed edge structure.
+
+commit 5c0dd104f94519c3cb50e9ca44227656c5adc7ae
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Thu Apr 19 15:56:08 2012 +0200
+
+    Document new proxy types.
+
+commit 5ae19cb0bb8dd6be1e9bcd560bb051f496a373ec
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Thu Apr 19 15:18:31 2012 +0200
+
+    Add support for proxying through an external command.
+    
+    Proxy type "exec" can be used to have an external script or binary set
+    up an outgoing connection. Standard input and output will be used to
+    exchange data with the external command. The variables REMOTEADDRESS and
+    REMOTEPORT are set to the intended destination address and port.
+
+commit fb5588856fa4dd6f140c72f7360302fe85b20c75
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Thu Apr 19 14:10:54 2012 +0200
+
+    Add support for SOCKS 5 proxies.
+    
+    This only covers outgoing TCP connections, and supports only
+    username/password authentication or no authentication.
+
+commit b58d95eb29662bce4388f95dbc5762b9e2999806
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Wed Apr 18 23:19:40 2012 +0200
+
+    Add basic support for SOCKS 4 and HTTP CONNECT proxies.
+    
+    When the Proxy option is used, outgoing connections will be made via the
+    specified proxy. There is no support for authentication methods or for having
+    the proxy forward incoming connections, and there is no attempt to proxy UDP.
+
+commit 84531fb6e621959e06519fdbb7f2a8f7578f66bd
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Mon Apr 16 01:57:25 2012 +0200
+
+    Allow broadcast packets to be sent directly instead of via the MST.
+    
+    When the "Broadcast = direct" option is used, broadcast packets are not sent
+    and forwarded via the Minimum Spanning Tree to all nodes, but are sent directly
+    to all nodes that can be reached in one hop.
+    
+    One use for this is to allow running ad-hoc routing protocols, such as OLSR, on
+    top of tinc.
+
+commit 9ebb34f907e8a15cb71dd20b111270d80bad1e96
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Mon Apr 16 01:16:59 2012 +0200
+
+    Update README to reflect that only OpenSSL is currently supported.
+
+commit a851d8a9f6e3b69ab75695d84471ff4d525341b7
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Mon Apr 16 01:14:59 2012 +0200
+
+    Add autoconf checks for OpenSSL's elliptic curve functions.
+
+commit f8e15dfe8d155b5bdb1e39bf6b9af486606145e8
+Author: Sven-Haegar Koch <haegar@sdinet.de>
+Date:   Sat Apr 14 02:28:43 2012 +0200
+
+    ecdh & ecdsa: avoid some possible memory leaks in error conditions.
+
+commit 8792b9a9f343e751dc3cfd789db9528da609ba9f
+Author: Sven-Haegar Koch <haegar@sdinet.de>
+Date:   Sat Apr 14 02:02:11 2012 +0200
+
+    Remove confusing error message for failed reading in ECDSA keys.
+    
+    Most likeley the error is that there just is no valid key inside the used
+    host file, and in this case errno just contains a random value from the
+    last previously failed call.
+
+commit a5bb6d40fb517aa175510ec179091e4f9ffaf6f6
+Author: Sven-Haegar Koch <haegar@sdinet.de>
+Date:   Sat Apr 14 02:29:32 2012 +0200
+
+    sptps_stop(): clear pointers after free to avoid double free.
+    
+    sptps_stop() may get called twice on some failed connection setups.
+
+commit 535a55100bb77f107c85361e9f72a194e92bc8bc
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Thu Mar 29 16:45:25 2012 +0100
+
+    Allow environment variables to be used for Name.
+    
+    When the Name starts with a $, the rest will be interpreted as the name of an
+    environment variable containing the real Name. When Name is $HOST, but this
+    environment variable does not exist, gethostname() will be used to set the
+    Name. In both cases, illegal characters will be converted to underscores.
+
+commit 1d9dacb1f26971e19463b5501c2410c57f780ecb
+Merge: 86c2990 89f4574
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Mon Mar 26 19:06:39 2012 +0100
+
+    Merge branch 'master' of git://tinc-vpn.org/tinc into 1.1
+    
+    Conflicts:
+    	src/logger.c
+    	src/net_setup.c
+
+commit 89f4574e0b1553c8e5dcbfc275e829a759b697f6
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Mon Mar 26 14:46:09 2012 +0100
+
+    Add support for systemd style socket activation.
+    
+    If the LISTEN_FDS environment variable is set and tinc is run in the
+    foreground, tinc will use filedescriptors 3 to 3 + LISTEN_FDS for its listening
+    TCP sockets. For now, tinc will create matching listening UDP sockets itself.
+    
+    There is no dependency on systemd or on libsystemd-daemon.
+
+commit cc6aee784659bfbd21eb8d414e00a8f1a801cac4
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Mon Mar 26 14:45:20 2012 +0100
+
+    Remove newline from log message.
+
+commit 16e6769feef21a5bf58f6022d990452987bb5efb
+Author: Anthony G. Basile <basile@opensource.dyc.edu>
+Date:   Mon Mar 26 06:29:40 2012 -0400
+
+    configure.in: fix AC_ARG_ENABLE and AC_ARG_WITH
+    
+    The current configure.in file does not correctly make use of these
+    macros.  The resulting configure file will therefore enable an item
+    even if --disable-FEATURE is given.  This patch restores the intended
+    behavior.
+
+commit 86c2990327fdf7ec1197aa73cb2b9a926a734db4
+Merge: d7bf63c b23681d
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Mar 25 23:35:31 2012 +0100
+
+    Merge branch 'master' of git://tinc-vpn.org/tinc into 1.1
+    
+    Conflicts:
+    	NEWS
+    	README
+    	configure.in
+    	src/Makefile.am
+    	src/conf.c
+    	src/conf.h
+    	src/connection.c
+    	src/net.c
+    	src/tincd.c
+
+commit b23681dddb8987571f04d46fc14f0ba012a7929c
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Mar 25 22:54:36 2012 +0100
+
+    Support :: in IPv6 Subnets.
+
+commit 482c6119a7ae80f320e5b519ef2e785e04a77b8e
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Mar 25 15:32:26 2012 +0100
+
+    Releasing 1.0.18.
+
+commit 64c657b32d1eb34eb669c6d5b0ec26c1a643b194
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Mar 25 15:30:58 2012 +0100
+
+    Mark DecrementTTL option experimental.
+
+commit f71ce341800739c7cdee01d7cf025e7492da22ac
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Mar 25 15:17:50 2012 +0100
+
+    Fix return type of vde_recv() as well.
+    
+    In this case it is not really necessary as the conversion to int will already
+    take care of ensuring the return value is treated as signed.
+
+commit 6225b1884a25af4debc2d0821a4c377ddbaec696
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Mar 25 14:55:56 2012 +0100
+
+    Document OpenBSD "ifconfig link0" and Linux "ip tuntap" commands.
+
+commit 399835385380d485416d6d59a8f27ce71f1db644
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Mar 25 14:46:50 2012 +0100
+
+    Fix some more compiler warnings.
+
+commit cfe6558d4ba4f572311aeafd62737f6f2692ad86
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Mar 25 14:00:21 2012 +0100
+
+    Fix return value type of vde_send().
+    
+    The libvdeplug_dyn.h header file incorrectly declares the return type of
+    vde_send() to size_t, while in reality it is ssize_t.
+
+commit 95968c67f9df9102ddbce5b7c8d34107989ad51a
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Mar 25 13:58:14 2012 +0100
+
+    Fix compiler warnings.
+
+commit e2d1b0b899ef66cd7ff227549e58b96c292f784e
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Mar 25 13:42:10 2012 +0100
+
+    Allow scoped addresses to be used for IPv6 multicast socket.
+
+commit 251204063255d95910f9a079015e2f9b428fd983
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Mar 25 13:40:55 2012 +0100
+
+    Add #ifdefs in case not all platforms support IPv4 and IPv6 multicast.
+
+commit b5e3bf1a85462f0c41638c11305d28f87af24395
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Fri Mar 23 13:18:36 2012 +0100
+
+    Set default value of DecrementTTL to "no".
+    
+    Decrementing the TTL causes IPv6 to fail when Mode = switch, and there may be
+    other unforeseen side-effects.
+
+commit c373de2e9812700c0568640727ad917b6fc7d758
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Wed Mar 21 17:00:53 2012 +0100
+
+    Add support for multicast communication with UML/QEMU/KVM.
+    
+    DeviceType = multicast allows one to specify a multicast address and port with
+    a Device statement. Tinc will then read/send packets to that multicast group
+    instead of to a tun/tap device. This allows interaction with UML, QEMU and KVM
+    instances that are listening on the same group.
+
+commit a7dbb50c23f447a23b543c92ec096ff178bc2de3
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Wed Mar 21 13:20:15 2012 +0100
+
+    Allow a port to be specified in BindToAddress statements.
+    
+    This can be used to let tinc listen on multiple ports for incoming connections.
+
+commit 80e15d8b96e5313b33c91003b1f75d7f6db9924e
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Tue Mar 20 23:49:16 2012 +0100
+
+    Always try next Address when an outgoing connection fails to authenticate.
+    
+    When making outgoing connections, tinc goes through the list of Addresses and
+    tries all of them until one succeeds. However, before it would consider
+    establishing a TCP connection a success, even when the authentication failed.
+    This would be a problem if the first Address would point to a hostname and port
+    combination that belongs to the wrong tinc node, or perhaps even to a non-tinc
+    service, causing tinc to endlessly try this Address instead of moving to the
+    next one.
+    
+    Problem found by Delf Eldkraft.
+
+commit d7bf63c63ab397cf3e5ca4a065922364925788e7
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Mar 18 21:24:46 2012 +0100
+
+    Make sure the signature also covers the session label.
+
+commit 42a0b61076d5d0f6391f0dd5c2c400b8fb89c5c5
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Mar 18 20:38:48 2012 +0100
+
+    Start documenting the SPTPS protocol.
+
+commit d756bb92ed52d5b1ecdd42af32f11f733db64d91
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Mar 18 17:46:30 2012 +0100
+
+    Don't send an ACK message after the first key exchange in the SPTPS protocol.
+
+commit c970ecdd75d4e7b3203a788f28b6e40cd532759b
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Mar 18 17:42:43 2012 +0100
+
+    Test SPTPS messages sent while key renegotation is in progress.
+
+commit 3a4fe104a06b73fd19c550546e7c65a59ff2afe3
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Mar 18 16:42:02 2012 +0100
+
+    Add datagram mode to the SPTPS protocol.
+    
+    * Everything is identical except the headers of the records.
+    * Instead of sending explicit message length and having an implicit sequence
+      number, datagram mode has an implicit message length and an explicit sequence
+      number.
+    * The sequence number is used to set the most significant bytes of the counter.
+
+commit 03e06fd43aff73b4a5c9d367968a1279371ae252
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Mar 18 16:41:13 2012 +0100
+
+    Allow CTR mode counter to be set to a specific value.
+
+commit 28a1501b9a8b4c730f7f965d6b2e8fc50feba261
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sat Mar 10 13:31:36 2012 +0100
+
+    Releasing 1.0.17.
+
+commit 4712d8f92e63e86e835ffb624d6399343ee568ea
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sat Mar 10 13:23:08 2012 +0100
+
+    Update copyright notices.
+
+commit 5b0f5ad958d6db4e73aebc5ee6c608cdae81b7b5
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Thu Mar 8 23:23:39 2012 +0100
+
+    Make sure disabling old RSA keys works on Windows.
+    
+    Seeking in files and rewriting parts of them does not seem to work properly on
+    Windows. Instead, when old RSA keys are found when generating new ones, the
+    file containing the old keys is copied to a temporary file where the changes
+    are made, and that file is renamed back to the original filename. On Windows,
+    we cannot atomically replace files with a rename(), so we need to move the
+    original file out of the way first. If anything fails, the new code will warn
+    that the user has to solve the problem by hand.
+
+commit 2f1c337c541fcb7e2c62aeeab245ff7a43eb51a5
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Thu Mar 8 22:19:20 2012 +0100
+
+    Add missing ICMP6 message type definitions.
+
+commit 40c28589328a2aa96c2ce1419c5d90616c758b3d
+Merge: 8ac096b 9dea33f
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Thu Mar 8 21:15:08 2012 +0100
+
+    Merge branch 'master' of git://tinc-vpn.org/tinc into 1.1
+    
+    Conflicts:
+    	src/net_packet.c
+
+commit 9dea33f5301119dd4423eb962956cf2d246af3f3
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Wed Mar 7 10:40:06 2012 +0100
+
+    Accept Subnets passed with the -o option when StrictSubnets = yes.
+
+commit 63f8303a5dc1758876451a580a8317dbc3d295d6
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Fri Mar 2 16:09:58 2012 +0100
+
+    Only log errors sending UDP packets when debug level >= 5.
+    
+    Since tinc will fall back to TCP or route via another node, it is not necessary
+    to log such errors unconditionally.
+
+commit 8ac096b5bf9da1b3961a3ac4a03d083629222a63
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Feb 26 18:37:36 2012 +0100
+
+    Allow log messages to be captured by tincctl.
+    
+    This allows tincctl to receive log messages from a running tincd,
+    independent of what is logged to syslog or to file. Tincctl can receive
+    debug messages with an arbitrary level.
+
+commit a1bd3a291379492c8ffecd53792065dc20a28c79
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Feb 26 16:56:53 2012 +0100
+
+    Don't close control connections when handling a reload command.
+    
+    Because this would terminate the connection while the control message
+    handler was still running, it would lead to a segmentation fault later
+    on.
+
+commit 483c5dcfb43719e5fd50902641252e28a04fd74e
+Merge: 344d6b9 ae52496
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Feb 26 16:27:13 2012 +0100
+
+    Merge branch 'master' of git://tinc-vpn.org/tinc into 1.1
+
+commit ae5249610954af17c68c547bb1b45ad286ad647e
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Feb 26 16:23:02 2012 +0100
+
+    Only use broadcast at the start of the PMTU discovery phase.
+    
+    For local peer discovery, only a handful of packets are necessary for
+    peers to detect each other.
+
+commit 344d6b9ac3c795f2942e457c1ab38b1dac5f7242
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Feb 26 12:39:46 2012 +0100
+
+    Let tincctl use the NETNAME environment variable if no -n option is given.
+    
+    This allows administrators who frequently want to work with one tinc
+    network to omit the -n option. Since the NETNAME variable is set by
+    tincd when executing scripts, this makes it slightly easier to use
+    tincctl from within scripts.
+
+commit 84570275acd84628586a6ca591a283d074ca10f0
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Feb 26 12:33:16 2012 +0100
+
+    Ensure all SPTPS functions are prefixed with sptps_.
+
+commit 8b1ad6f76f821648079818f6ff018bbc33b9d9e9
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sat Feb 25 23:03:09 2012 +0100
+
+    Go back to breadth first search for path finding.
+    
+    If 1.1.x nodes using Dijkstra's algorithm are mixed with 1.0.x nodes using BFS,
+    then routing loops can occur.
+
+commit 36623e15a1c8685e5d8730345c1a7f9c93710fef
+Merge: 65d6f02 5140656
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sat Feb 25 22:52:57 2012 +0100
+
+    Merge branch 'master' of git://tinc-vpn.org/tinc into 1.1
+
+commit 5140656de6bcfda72951a7827b05414ce306e3ca
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sat Feb 25 22:11:30 2012 +0100
+
+    Stricter checks against routing loops.
+    
+    If a packet that had to be sent via an intermediate hop, and that intermediate
+    hop was the one that sent the packet, we drop it.
+
+commit f1d5eae643cdf537ef357f10f2da8ff83bdf32b4
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sat Feb 25 21:46:18 2012 +0100
+
+    Don't send ICMP Time Exceeded messages for other Time Exceeded messages.
+    
+    That would be silly.
+
+commit 65d6f023c46ac3a087f59b60762f87c869783f21
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sat Feb 25 18:25:21 2012 +0100
+
+    Use SPTPS when ExperimentalProtocol is enabled.
+
+commit efd21e232dced3225f119aeb7a585ebf55b7cf77
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sat Feb 25 15:18:15 2012 +0100
+
+    Apply HMAC after encryption.
+
+commit f5dc136cfd7a3a195b75f7174722734e25f30fd9
+Merge: 3fba801 5a28aa7
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Thu Feb 23 13:26:01 2012 +0100
+
+    Merge branch 'master' of git://tinc-vpn.org/tinc into 1.1
+    
+    Conflicts:
+    	src/net.c
+    	src/net_packet.c
+    	src/net_socket.c
+
+commit 5a28aa7b8b0ab6237c2eab5f8b11253ea3ec5a05
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Wed Feb 22 23:17:43 2012 +0100
+
+    Add LocalDiscovery option which tries to detect peers on the local network.
+    
+    Currently, this is implemented by sending IPv4 broadcast packets to the
+    LAN during path MTU discovery.
+
+commit 8e717ddb602f01f656369106ec0398efbe9ca4a4
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Wed Feb 22 14:37:56 2012 +0100
+
+    Pass index into listen_socket[] to handle_incoming_vpn_data().
+
+commit 3fba80174dbe29bcfe0d121a2a1d2e61be5ee57b
+Merge: fba1c85 65e8e06
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Wed Feb 22 14:23:59 2012 +0100
+
+    Merge branch 'master' of git://tinc-vpn.org/tinc into 1.1
+    
+    Conflicts:
+    	NEWS
+    	README
+    	configure.in
+    	doc/tincd.8.in
+    	src/Makefile.am
+    	src/bsd/device.c
+    	src/connection.c
+    	src/connection.h
+    	src/cygwin/device.c
+    	src/device.h
+    	src/dropin.h
+    	src/linux/device.c
+    	src/mingw/device.c
+    	src/net.c
+    	src/net_packet.c
+    	src/net_setup.c
+    	src/net_socket.c
+    	src/process.c
+    	src/protocol.c
+    	src/protocol_key.c
+    	src/raw_socket_device.c
+    	src/route.c
+    	src/solaris/device.c
+    	src/tincd.c
+    	src/uml_device.c
+
+commit fba1c85f44edfc56c19d35332b1eb825179a8bb6
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Tue Feb 21 23:19:51 2012 +0100
+
+    Remove useless warning about signature length being shorter than expected.
+
+commit cb6cbf452f6183a00746afc5bff8f63f3f55235f
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Tue Feb 21 23:17:12 2012 +0100
+
+    Use only one hash algorithm (SHA512) in the PRF.
+    
+    On some platforms, OpenSSL by default does not support the Whirlpool algorithm.
+
+commit 65e8e06c6dc7349b11c3c1e8f4071b51e2994c65
+Author: Nick Hibma <nick@van-laarhoven.org>
+Date:   Tue Feb 21 15:26:58 2012 +0100
+
+    Add missing ICMP message type definitions.
+
+commit ac48c4ee8c09c8144f830cb66386b9dbe7298440
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Tue Feb 21 14:06:55 2012 +0100
+
+    Fix check for raw socket support.
+    
+    Also, move some variables so there are no compiler warnings about unused
+    variables when there is no support for raw sockets.
+
+commit d9ad3d313d96d30ef45cd53367dff9a855a396d4
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Tue Feb 21 13:31:21 2012 +0100
+
+    Fix a bug that caused tinc to ignore all but the last listening socket.
+
+commit 46506b7aaf6c6a8a85561c38fdb9c95eae21aa75
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Tue Feb 21 13:13:40 2012 +0100
+
+    Document the command line flag -o and provide --option as well.
+
+commit 7d76e287598c8c18cadfb5818046d9dd1b0ad881
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Tue Feb 21 11:39:21 2012 +0100
+
+    Move initialization of char *priority up to prevent freeing an uninitialized pointer.
+
+commit 8420a0c8bde1781db04dd2436eb9d5dca5a1732a
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Mon Feb 20 17:19:00 2012 +0100
+
+    Allow disabling of broadcast packets.
+    
+    The Broadcast option can be used to cause tinc to drop all broadcast and
+    multicast packets. This option might be expanded in the future to selectively
+    allow only some broadcast packet types.
+
+commit ea415ccc1690d6e5864a7500977b181e5c8faafe
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Mon Feb 20 17:12:48 2012 +0100
+
+    Rename connection_t *broadcast to everyone.
+
+commit cff5a844a3e6b494f4a4f6eb5b48a84780f2d0e5
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Mon Feb 20 16:52:53 2012 +0100
+
+    Don't bind outgoing TCP sockets anymore.
+    
+    The code introduced in commit 41a05f59ba2c3eb5caab555f096ed1b9fbe69ee3 is not
+    needed anymore, since tinc has been able to handle UDP packets from a different
+    source address than those of the TCP packets since 1.0.10.  When using multiple
+    BindToAddress statements, this code does not make sense anymore, we do want the
+    kernel to choose the source address on its own.
+
+commit 0233b1d710222cb09be0cbd08c1297e3ece38a9f
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Mon Feb 20 16:34:02 2012 +0100
+
+    Decrement TTL of incoming packets.
+    
+    Tinc will now, by default, decrement the TTL field of incoming IPv4 and IPv6
+    packets, before forwarding them to the virtual network device or to another
+    node. Packets with a TTL value of zero will be dropped, and an ICMP Time
+    Exceeded message will be sent back.
+    
+    This behaviour can be disabled using the DecrementTTL option.
+
+commit 6289859ab365dc1c0d420323174418b316b14502
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Mon Feb 20 15:44:52 2012 +0100
+
+    Only compile raw socket code when it is supported on that platform.
+
+commit d1dcdf8eb6f800704be426b1ce6f6c1a8e65ba0d
+Merge: 1b2846d 3b1fad0
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sat Feb 18 14:31:08 2012 +0100
+
+    Merge branch 'master' of black:tinc
+
+commit 3b1fad04de6bed2f284fdf3d5b27d4162aeebc8c
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sat Feb 18 14:37:52 2012 +0100
+
+    Allow setting DeviceType to tun or tap on Linux.
+
+commit 6455654d26d204cea4bbc102e5bd6550b7fff7a7
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sat Feb 18 11:48:21 2012 +0100
+
+    Send packets back using the same socket as they were received on.
+
+commit 1b2846d907adfc8472fc9da0c951c3243c7ee143
+Merge: 9f6a96a 6455654
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sat Feb 18 11:43:00 2012 +0100
+
+    Merge branch 'master' of black:tinc
+
+commit 9f6a96af3939bd2de410ce346a8c8fbcf93e7c9b
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Fri Feb 17 16:25:00 2012 +0100
+
+    Allow multiple BindToAddress statements.
+
+commit 708314df2f61675d0f54e541c9fff62ac1f433b5
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Fri Feb 17 16:13:38 2012 +0100
+
+    Set FD_CLOEXEC flag on all sockets.
+    
+    Scripts called by tinc would inherit its open filedescriptors. This could
+    be a problem if other long-running daemons are started from those scripts,
+    if those daemons would not close all filedescriptors before going into the
+    background.
+    
+    Problem found and solution suggested by Nick Hibma.
+
+commit 1f00111e94b2f9a4beb9608b1e03a5e73c9c5d21
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Mon Dec 26 23:11:27 2011 +0100
+
+    Fix a few small memory leaks.
+
+commit b50d6a7f2ad98239018bc5ce7a5739e3bf4f50f7
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Mon Dec 26 23:04:40 2011 +0100
+
+    Fix compiler warnings.
+
+commit 178e52f76ef4ba40748c13ea7e518837394d6dbc
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Dec 4 01:20:59 2011 +0100
+
+    Allow linking with multiple device drivers.
+    
+    Apart from the platform specific tun/tap driver, link with the dummy and
+    raw_socket devices, and optionally with support for UML and VDE devices.
+    At runtime, the DeviceType option can be used to select which driver to
+    use.
+
+commit 5672863e59e6a114ac6b66de98254b14266c0e61
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sat Dec 3 21:59:47 2011 +0100
+
+    Fix a few small memory leaks.
+
+commit 52ded09d1713b83222b56db7d29ff061aefb95e3
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Nov 27 12:13:16 2011 +0100
+
+    Add vde/device.c to the tarball.
+
+commit 2c7c87ec75c94d0b3cca9f7a5aeba34384f77cc1
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Nov 27 12:12:34 2011 +0100
+
+    Fix compilation of VDE and UML interfaces.
+
+commit 2a9060bba62d78f73da9b09ca791fe80993520fc
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Thu Oct 6 15:32:12 2011 +0200
+
+    Exchange ACK records to indicate switch to new keys.
+    
+    This allow application records to be sent while key renegotiation is still
+    happening.
+
+commit 3b5898078af1ab86797b3e24f2381131e6e702f7
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Thu Oct 6 09:34:34 2011 +0200
+
+    Use counter mode encryption.
+
+commit a0f795ff5bd671ca10a7203e4234b37a12d8d1cd
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Thu Oct 6 09:33:09 2011 +0200
+
+    Add counter mode encryption.
+
+commit 67ff81ec16b8ab5f15d16efbedfecfaf0be17c13
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Wed Oct 5 22:05:13 2011 +0200
+
+    Test corner cases in the SPTPS protocol.
+    
+    * Test zero-byte messages.
+    * Test maximum size (65535 byte) messages.
+    * Test different message types.
+    * Test key renegotiation.
+
+commit 30013511504e925729ebc67772205a74c4b8aeea
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Wed Oct 5 22:00:51 2011 +0200
+
+    Update SPTPS protocol.
+    
+    * Exchange nonce and ECDH public key first, calculate the ECDSA signature
+      over the complete key exchange.
+    * Make an explicit distinction between client and server in the signatures.
+    * Add more comments and replace some magic numbers by #defines.
+    
+    Thanks to Erik Tews for very helpful hints and comments!
+
+commit 810847248ae90140ee6f3e568add80aef88c3def
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Wed Oct 5 21:59:33 2011 +0200
+
+    Fix compiler warning.
+
+commit ddea7a23a66b8fee4942f2ce237dcabe02e17270
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Tue Aug 30 20:49:48 2011 +0200
+
+    Return false instead of void when there is an error.
+
+commit e838289683c0039fac0ae6172d40b4177c17911b
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Tue Aug 30 19:56:56 2011 +0200
+
+    Prevent read_rsa_public_key() from returning an uninitialized RSA structure.
+    
+    In case the config file could not be opened a new but unitialized RSA structure
+    would be returned, causing a segmentation fault later on. This would only
+    happen in the case that the config file could be opened before, but not when
+    read_rsa_public_key() was called. This situation could occur when the --user
+    option was used, and the config files were not readable by the specified user.
+
+commit 5d4336e5429b88dcc53e80c00412e76a5269b384
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Wed Aug 10 17:04:17 2011 +0200
+
+    Handle UDP packets with unknown source addresses properly.
+    
+    Probably due to a merge, the try_harder() function had duplicated the
+    rate-limiting code for detecting the sender node based on the HMAC of the
+    packet. This prevented this detection from running at all. The function is now
+    identical again to that in the 1.0 branch.
+
+commit bbc0ba9e87f76111529d6dc9cb00c0b9435b5858
+Author: Michael Tokarev <mjt@tls.msk.ru>
+Date:   Sun Aug 7 12:18:20 2011 +0400
+
+    use execvp() not execve() in tincctl start
+    
+    sometimes argv[0] will have directory-less name (when the
+    command is started by shell searching in $PATH for example).
+    For tincctl start we want the same rules to run tincd as for
+    tincctl itself (having full path is better but if shell does
+    not provide one we've no other choice).  Previous code tried
+    to run ./tincd in this case, which is obviously wrong.
+    
+    This is a fix for the previous commit.
+    
+    Signed-off-by: Michael Tokarev <mjt@tls.msk.ru>
+
+commit a7556a9d2c943a6317d2dab66d9f742997f0d47a
+Author: Michael Tokarev <mjt@tls.msk.ru>
+Date:   Sun Aug 7 12:05:07 2011 +0400
+
+    run tincd from the same directory as tincctl and pass all options to it
+    
+    For tincctl start, run tincd from dirname($0) not SBINDIR -
+    this allows painless alternative directory installation and
+    running from build directory too.
+    
+    Also while at it, pass the rest of command line to tincd, not
+    only options before "start" argument.  This way it's possible
+    to pass options to tincd like this:
+      tincctl -n net start -- -d 1 -R -U tincuser ...
+    
+    And also add missing newline at the end of error message there.
+    
+    Signed-Off-By: Michael Tokarev <mjt@tls.msk.ru>
+
+commit 2696ad2cca73aee13e38f740d5530dc33e4a92e6
+Author: Michael Tokarev <mjt@tls.msk.ru>
+Date:   Sun Aug 7 11:25:03 2011 +0400
+
+    don't mention reload twice in tincctl help
+    
+    Signed-Off-By: Michael Tokarev <mjt@tls.msk.ru>
+
+commit 3d75dbc0880484ff6d2f689a9b981def3cd75b5e
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Jul 24 15:44:51 2011 +0200
+
+    Start of "Simple Peer-To-Peer Security" protocol.
+    
+    Encryption and authentication of the meta connection is spread out over
+    meta.c and protocol_auth.c. The new protocol was added there as well,
+    leading to spaghetti code. To improve things, the new protocol will now
+    be implemented in sptps.[ch].
+    
+    The goal is to have a very simplified version of TLS. There is a record
+    layer, and there are only two record types: application data and
+    handshake messages. The handshake message contains a random nonce, an
+    ephemeral ECDH public key, and an ECDSA signature over the former. After
+    the ECDH public keys are exchanged, a shared secret is calculated, and a
+    TLS style PRF is used to generate the key material for the cipher and
+    HMAC algorithm, and further communication is encrypted and authenticated.
+    
+    A lot of the simplicity comes from the fact that both sides must have
+    each other's public keys in advance, and there are no options to choose.
+    There will be one fixed cipher suite, and both peers always authenticate
+    each other. (Inspiration taken from Ian Grigg's hypotheses[0].)
+    There might be some compromise in the future, to enable or disable
+    encryption, authentication and compression, but there will be no choice
+    of algorithms. This will allow SPTPS to be built with a few embedded
+    crypto algorithms instead of linking with huge crypto libraries.
+    
+    The API is also kept simple. There is a start and a stop function. All
+    data necessary to make the connection work is passed in the start
+    function. Instead having both send- and receive-record functions, there
+    is a send-record function and a receive-data function. The latter will
+    pass protocol data received from the peer to the SPTPS implementation,
+    which will in turn call a receive-record callback function when
+    necessary. This hides all the handshaking from the application, and is
+    completely independent from any event loop or socket characteristics.
+    
+    [0] http://iang.org/ssl/hn_hypotheses_in_secure_protocol_design.html
+
+commit 0f2aa4bd8b698608876bec141c5aef1aa619730b
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sat Jul 23 14:12:23 2011 +0200
+
+    Releasing 1.0.16.
+
+commit e16ead8dd9d4600664058069f0695832dfe068b2
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sat Jul 23 14:11:44 2011 +0200
+
+    Use usleep() instead of sleep(), MinGW complained.
+
+commit ff751903aa82bd6dd66a099f9c05dcdae9fc57f2
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Wed Jul 20 08:19:18 2011 +0200
+
+    Don't abort() on low-level crypto errors, just return false.
+    
+    The abort() calls were accidentily left in for debugging.
+
+commit 2f4ccfe2473948372f7c9f14d9ffce1d77f5fd8c
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Tue Jul 19 21:11:11 2011 +0200
+
+    Fix tinc 1.0.x daemons connecting when ExperimentalProtocol = yes.
+
 commit f8d94f34fc5d7fe9ed4a076a2fd77eacbd83adca
 Author: Guus Sliepen <guus@tinc-vpn.org>
 Date:   Sun Jul 17 20:09:08 2011 +0200
@@ -15,6 +1965,18 @@ Author: Guus Sliepen <guus@tinc-vpn.org>
 Date:   Sun Jul 17 20:01:24 2011 +0200
 
     Write loopback address instead of "any" address in pidfile.
+
+commit 50fcfea127c9d2fdf8894498a9fdcc6fb3bbb2ce
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Jul 17 19:34:01 2011 +0200
+
+    Flush output buffer in send_tcppacket().
+    
+    This is mainly important for Windows, where the select() call in the
+    main thread is not being woken up when the tapreader thread calls
+    route(), causing a delay of up to 1 second before the output buffer is
+    flushed. This would cause bad performance when UDP communication is not
+    possible.
 
 commit 25091454da21941dd92375ddbee7dd6151343058
 Author: Guus Sliepen <guus@tinc-vpn.org>
@@ -75,6 +2037,20 @@ Date:   Sat Jul 16 15:15:29 2011 +0200
     
     The flag was set incorrectly, but for most ciphers this does not have
     any effect. AES in any of the block modes is picky about it though.
+
+commit be2fc8b0458b1e2ced3b5de410356d8d8639acff
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sat Jul 16 10:47:35 2011 +0200
+
+    Make code to detect two nodes with the same Name less triggerhappy.
+    
+    First of all, if there really are two nodes with the same name, much
+    more than 10 contradicting ADD_EDGE and DEL_EDGE messages will be sent.
+    Also, we forgot to reset the counters when nothing happened.
+    
+    In case there is a ADD_EDGE/DEL_EDGE storm, we do not shut down, but
+    sleep an increasing amount of time, allowing tinc to recover gracefully
+    from temporary failures.
 
 commit 303dd1e70219a7542921f6e63d9391ab326d434f
 Author: Guus Sliepen <guus@tinc-vpn.org>

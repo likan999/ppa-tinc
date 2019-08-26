@@ -2,9 +2,9 @@
     conf.c -- configuration code
     Copyright (C) 1998 Robert van der Meulen
                   1998-2005 Ivo Timmermans
-                  2000-2010 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2012 Guus Sliepen <guus@tinc-vpn.org>
                   2010-2011 Julien Muchembled <jm@jmuchemb.eu>
-		  2000 Cris van Pelt
+                  2000 Cris van Pelt
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -28,18 +28,18 @@
 #include "conf.h"
 #include "list.h"
 #include "logger.h"
-#include "netutl.h"				/* for str2address */
+#include "netutl.h"             /* for str2address */
 #include "protocol.h"
-#include "utils.h"				/* for cp */
+#include "utils.h"              /* for cp */
 #include "xalloc.h"
 
 splay_tree_t *config_tree;
 
-int pinginterval = 0;			/* seconds between pings */
-int pingtimeout = 0;			/* seconds to wait for response */
-char *confbase = NULL;			/* directory in which all config files are */
-char *netname = NULL;			/* name of the vpn network */
-list_t *cmdline_conf = NULL;	/* global/host configuration values given at the command line */
+int pinginterval = 0;           /* seconds between pings */
+int pingtimeout = 0;            /* seconds to wait for response */
+char *confbase = NULL;          /* directory in which all config files are */
+char *netname = NULL;           /* name of the vpn network */
+list_t *cmdline_conf = NULL;    /* global/host configuration values given at the command line */
 
 
 static int config_compare(const config_t *a, const config_t *b) {
@@ -141,7 +141,7 @@ bool get_config_bool(const config_t *cfg, bool *result) {
 		return true;
 	}
 
-	logger(LOG_ERR, "\"yes\" or \"no\" expected for configuration variable %s in %s line %d",
+	logger(DEBUG_ALWAYS, LOG_ERR, "\"yes\" or \"no\" expected for configuration variable %s in %s line %d",
 		   cfg->variable, cfg->file, cfg->line);
 
 	return false;
@@ -154,7 +154,7 @@ bool get_config_int(const config_t *cfg, int *result) {
 	if(sscanf(cfg->value, "%d", result) == 1)
 		return true;
 
-	logger(LOG_ERR, "Integer expected for configuration variable %s in %s line %d",
+	logger(DEBUG_ALWAYS, LOG_ERR, "Integer expected for configuration variable %s in %s line %d",
 		   cfg->variable, cfg->file, cfg->line);
 
 	return false;
@@ -182,7 +182,7 @@ bool get_config_address(const config_t *cfg, struct addrinfo **result) {
 		return true;
 	}
 
-	logger(LOG_ERR, "Hostname or IP address expected for configuration variable %s in %s line %d",
+	logger(DEBUG_ALWAYS, LOG_ERR, "Hostname or IP address expected for configuration variable %s in %s line %d",
 		   cfg->variable, cfg->file, cfg->line);
 
 	return false;
@@ -195,7 +195,7 @@ bool get_config_subnet(const config_t *cfg, subnet_t ** result) {
 		return false;
 
 	if(!str2net(&subnet, cfg->value)) {
-		logger(LOG_ERR, "Subnet expected for configuration variable %s in %s line %d",
+		logger(DEBUG_ALWAYS, LOG_ERR, "Subnet expected for configuration variable %s in %s line %d",
 			   cfg->variable, cfg->file, cfg->line);
 		return false;
 	}
@@ -206,7 +206,7 @@ bool get_config_subnet(const config_t *cfg, subnet_t ** result) {
 		&& !maskcheck(&subnet.net.ipv4.address, subnet.net.ipv4.prefixlength, sizeof subnet.net.ipv4.address))
 		|| ((subnet.type == SUBNET_IPV6)
 		&& !maskcheck(&subnet.net.ipv6.address, subnet.net.ipv6.prefixlength, sizeof subnet.net.ipv6.address))) {
-		logger(LOG_ERR, "Network address and prefix length do not match for configuration variable %s in %s line %d",
+		logger(DEBUG_ALWAYS, LOG_ERR, "Network address and prefix length do not match for configuration variable %s in %s line %d",
 			   cfg->variable, cfg->file, cfg->line);
 		return false;
 	}
@@ -236,8 +236,9 @@ static char *readline(FILE * fp, char *buf, size_t buflen) {
 	if(!newline)
 		return buf;
 
-	*newline = '\0';	/* kill newline */
-	if(newline > p && newline[-1] == '\r')	/* and carriage return if necessary */
+	/* kill newline and carriage return if necessary */
+	*newline = '\0';
+	if(newline > p && newline[-1] == '\r')
 		newline[-1] = '\0';
 
 	return buf;
@@ -265,10 +266,10 @@ config_t *parse_config_line(char *line, const char *fname, int lineno) {
 	if(!*value) {
 		const char err[] = "No value for variable";
 		if (fname)
-			logger(LOG_ERR, "%s `%s' on line %d while reading config file %s",
+			logger(DEBUG_ALWAYS, LOG_ERR, "%s `%s' on line %d while reading config file %s",
 				err, variable, lineno, fname);
 		else
-			logger(LOG_ERR, "%s `%s' in command line option %d",
+			logger(DEBUG_ALWAYS, LOG_ERR, "%s `%s' in command line option %d",
 				err, variable, lineno);
 		return NULL;
 	}
@@ -298,7 +299,7 @@ bool read_config_file(splay_tree_t *config_tree, const char *fname) {
 	fp = fopen(fname, "r");
 
 	if(!fp) {
-		logger(LOG_ERR, "Cannot open config file %s: %s", fname, strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, "Cannot open config file %s: %s", fname, strerror(errno));
 		return false;
 	}
 
@@ -321,7 +322,7 @@ bool read_config_file(splay_tree_t *config_tree, const char *fname) {
 				ignore = false;
 			continue;
 		}
-		
+
 		if(!strncmp(line, "-----BEGIN", 10)) {
 			ignore = true;
 			continue;
@@ -339,33 +340,31 @@ bool read_config_file(splay_tree_t *config_tree, const char *fname) {
 }
 
 void read_config_options(splay_tree_t *config_tree, const char *prefix) {
-	list_node_t *node, *next;
 	size_t prefix_len = prefix ? strlen(prefix) : 0;
 
-	for(node = cmdline_conf->tail; node; node = next) {
-		config_t *orig_cfg, *cfg = (config_t *)node->data;
-		next = node->prev;
+	for(const list_node_t *node = cmdline_conf->tail; node; node = node->prev) {
+		const config_t *cfg = node->data;
+		config_t *new;
 
 		if(!prefix) {
 			if(strchr(cfg->variable, '.'))
 				continue;
-			node->data = NULL;
-			list_unlink_node(cmdline_conf, node);
 		} else {
 			if(strncmp(prefix, cfg->variable, prefix_len) ||
 			   cfg->variable[prefix_len] != '.')
 				continue;
-			/* Because host configuration is parsed again when
-			   reconnecting, nodes must not be freed when a prefix
-			   is given. */
-			orig_cfg = cfg;
-			cfg = new_config();
-			cfg->variable = xstrdup(orig_cfg->variable + prefix_len + 1);
-			cfg->value = xstrdup(orig_cfg->value);
-			cfg->file = NULL;
-			cfg->line = orig_cfg->line;
 		}
-		config_add(config_tree, cfg);
+
+		new = new_config();
+		if(prefix)
+			new->variable = xstrdup(cfg->variable + prefix_len + 1);
+		else
+			new->variable = xstrdup(cfg->variable);
+		new->value = xstrdup(cfg->value);
+		new->file = NULL;
+		new->line = cfg->line;
+
+		config_add(config_tree, new);
 	}
 }
 
@@ -375,26 +374,25 @@ bool read_server_config(void) {
 
 	read_config_options(config_tree, NULL);
 
-	xasprintf(&fname, "%s/tinc.conf", confbase);
+	xasprintf(&fname, "%s" SLASH "tinc.conf", confbase);
 	x = read_config_file(config_tree, fname);
 
-	if(!x) {				/* System error: complain */
-		logger(LOG_ERR, "Failed to read `%s': %s", fname, strerror(errno));
-	}
+	if(!x)
+		logger(DEBUG_ALWAYS, LOG_ERR, "Failed to read `%s': %s", fname, strerror(errno));
 
 	free(fname);
 
 	return x;
 }
 
-bool read_connection_config(connection_t *c) {
+bool read_host_config(splay_tree_t *config_tree, const char *name) {
 	char *fname;
 	bool x;
 
-	read_config_options(c->config_tree, c->name);
+	read_config_options(config_tree, name);
 
-	xasprintf(&fname, "%s/hosts/%s", confbase, c->name);
-	x = read_config_file(c->config_tree, fname);
+	xasprintf(&fname, "%s" SLASH "hosts" SLASH "%s", confbase, name);
+	x = read_config_file(config_tree, fname);
 	free(fname);
 
 	return x;
@@ -402,12 +400,12 @@ bool read_connection_config(connection_t *c) {
 
 bool append_config_file(const char *name, const char *key, const char *value) {
 	char *fname;
-	xasprintf(&fname, "%s/hosts/%s", confbase, name);
+	xasprintf(&fname, "%s" SLASH "hosts" SLASH "%s", confbase, name);
 
 	FILE *fp = fopen(fname, "a");
 
 	if(!fp) {
-		logger(LOG_ERR, "Cannot open config file %s: %s", fname, strerror(errno));
+		logger(DEBUG_ALWAYS, LOG_ERR, "Cannot open config file %s: %s", fname, strerror(errno));
 	} else {
 		fprintf(fp, "\n# The following line was automatically added by tinc\n%s = %s\n", key, value);
 		fclose(fp);
@@ -415,45 +413,5 @@ bool append_config_file(const char *name, const char *key, const char *value) {
 
 	free(fname);
 
-	return fp;
-}
-
-bool disable_old_keys(FILE *f) {
-	char buf[100];
-	long pos;
-	bool disabled = false;
-
-	rewind(f);
-	pos = ftell(f);
-
-	if(pos < 0)
-		return false;
-
-	while(fgets(buf, sizeof buf, f)) {
-		if(!strncmp(buf, "-----BEGIN RSA", 14)) {	
-			buf[11] = 'O';
-			buf[12] = 'L';
-			buf[13] = 'D';
-			if(fseek(f, pos, SEEK_SET))
-				break;
-			if(fputs(buf, f) <= 0)
-				break;
-			disabled = true;
-		}
-		else if(!strncmp(buf, "-----END RSA", 12)) {	
-			buf[ 9] = 'O';
-			buf[10] = 'L';
-			buf[11] = 'D';
-			if(fseek(f, pos, SEEK_SET))
-				break;
-			if(fputs(buf, f) <= 0)
-				break;
-			disabled = true;
-		}
-		pos = ftell(f);
-		if(pos < 0)
-			break;
-	}
-
-	return disabled;
+	return fp != NULL;
 }

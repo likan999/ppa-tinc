@@ -1,7 +1,7 @@
 /*
     have.h -- include headers which are known to exist
     Copyright (C) 1998-2005 Ivo Timmermans
-                  2003-2011 Guus Sliepen <guus@tinc-vpn.org>
+                  2003-2012 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -42,6 +42,7 @@
 
 #ifdef HAVE_MINGW
 #include <w32api.h>
+#include <winsock2.h>
 #include <windows.h>
 #include <ws2tcpip.h>
 #endif
@@ -197,6 +198,12 @@
 
 #ifdef HAVE_EVENT_H
 #include <event.h>
+#endif
+
+#ifdef HAVE_MINGW
+#define SLASH "\\"
+#else
+#define SLASH "/"
 #endif
 
 #endif /* __TINC_SYSTEM_H__ */

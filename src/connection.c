@@ -1,6 +1,6 @@
 /*
     connection.c -- connection list management
-    Copyright (C) 2000-2009 Guus Sliepen <guus@tinc-vpn.org>,
+    Copyright (C) 2000-2012 Guus Sliepen <guus@tinc-vpn.org>,
                   2000-2005 Ivo Timmermans
                   2008      Max Rijevski <maksuf@gmail.com>
 
@@ -21,7 +21,7 @@
 
 #include "system.h"
 
-#include "splay_tree.h"
+#include "list.h"
 #include "cipher.h"
 #include "conf.h"
 #include "control_common.h"
@@ -31,23 +31,19 @@
 #include "utils.h"
 #include "xalloc.h"
 
-splay_tree_t *connection_tree;	/* Meta connections */
-connection_t *broadcast;
-
-static int connection_compare(const connection_t *a, const connection_t *b) {
-	return a < b ? -1 : a == b ? 0 : 1;
-}
+list_t *connection_list;
+connection_t *everyone;
 
 void init_connections(void) {
-	connection_tree = splay_alloc_tree((splay_compare_t) connection_compare, (splay_action_t) free_connection);
-	broadcast = new_connection();
-	broadcast->name = xstrdup("everyone");
-	broadcast->hostname = xstrdup("BROADCAST");
+	connection_list = list_alloc((list_action_t) free_connection);
+	everyone = new_connection();
+	everyone->name = xstrdup("everyone");
+	everyone->hostname = xstrdup("BROADCAST");
 }
 
 void exit_connections(void) {
-	splay_delete_tree(connection_tree);
-	free_connection(broadcast);
+	list_delete_list(connection_list);
+	free_connection(everyone);
 }
 
 connection_t *new_connection(void) {
@@ -58,30 +54,20 @@ void free_connection(connection_t *c) {
 	if(!c)
 		return;
 
-	if(c->name)
-		free(c->name);
-
-	if(c->hostname)
-		free(c->hostname);
-
 	cipher_close(&c->incipher);
 	digest_close(&c->indigest);
 	cipher_close(&c->outcipher);
 	digest_close(&c->outdigest);
 
-	ecdh_free(&c->ecdh);
+	sptps_stop(&c->sptps);
 	ecdsa_free(&c->ecdsa);
 	rsa_free(&c->rsa);
 
-	if(c->hischallenge)
-		free(c->hischallenge);
-
-	if(c->config_tree)
-		exit_configuration(&c->config_tree);
+	free(c->hischallenge);
 
 	buffer_clear(&c->inbuf);
 	buffer_clear(&c->outbuf);
-	
+
 	if(event_initialized(&c->inevent))
 		event_del(&c->inevent);
 
@@ -91,24 +77,26 @@ void free_connection(connection_t *c) {
 	if(c->socket > 0)
 		closesocket(c->socket);
 
+	free(c->name);
+	free(c->hostname);
+
+	if(c->config_tree)
+		exit_configuration(&c->config_tree);
+
 	free(c);
 }
 
 void connection_add(connection_t *c) {
-	splay_insert(connection_tree, c);
+	list_insert_tail(connection_list, c);
 }
 
 void connection_del(connection_t *c) {
-	splay_delete(connection_tree, c);
+	list_delete(connection_list, c);
 }
 
 bool dump_connections(connection_t *cdump) {
-	splay_node_t *node;
-	connection_t *c;
-
-	for(node = connection_tree->head; node; node = node->next) {
-		c = node->data;
-		send_request(cdump, "%d %d %s at %s options %x socket %d status %04x",
+	for list_each(connection_t, c, connection_list) {
+		send_request(cdump, "%d %d %s %s %x %d %x",
 				CONTROL, REQ_DUMP_CONNECTIONS,
 				c->name, c->hostname, c->options, c->socket,
 				bitfield_to_int(&c->status, sizeof c->status));
