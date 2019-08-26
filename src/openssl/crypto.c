@@ -31,8 +31,11 @@ static int random_fd = -1;
 
 static void random_init(void) {
 	random_fd = open("/dev/urandom", O_RDONLY);
-	if(random_fd < 0)
+
+	if(random_fd < 0) {
 		random_fd = open("/dev/random", O_RDONLY);
+	}
+
 	if(random_fd < 0) {
 		fprintf(stderr, "Could not open source of random numbers: %s\n", strerror(errno));
 		abort();
@@ -43,15 +46,21 @@ static void random_exit(void) {
 	close(random_fd);
 }
 
-void randomize(void *out, size_t outlen) {
+void randomize(void *vout, size_t outlen) {
+	char *out = vout;
+
 	while(outlen) {
 		size_t len = read(random_fd, out, outlen);
+
 		if(len <= 0) {
-			if(errno == EAGAIN || errno == EINTR)
+			if(errno == EAGAIN || errno == EINTR) {
 				continue;
+			}
+
 			fprintf(stderr, "Could not read random numbers: %s\n", strerror(errno));
 			abort();
 		}
+
 		out += len;
 		outlen -= len;
 	}
