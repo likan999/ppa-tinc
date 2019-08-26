@@ -1,3 +1,45 @@
+Version 1.0.33                                          November 04 2017
+------------------------------------------------------------------------
+
+Guus Sliepen (31):
+      Udpate THANKS.
+      Fix a potential memory leak.
+      Use AC_CONFIG_MACRO_DIR().
+      Give absolute path for #include to AC_CHECK_HEADERS().
+      Prepare for automatic code formatting using Artistic Style.
+      Never remove items from cmdline_conf.
+      Use stack-allocated strings for temporary filenames.
+      Fix a few minor memory leaks.
+      Remove unused/obsolete checks from configure.ac.
+      Use getcwd() instead of get_current_dir_name().
+      Remove xmalloc.c, backport xalloc.h from tinc 1.1.
+      Update all header guards.
+      Convert sizeof foo to sizeof(foo).
+      Reformat all code using astyle.
+      Don't call ERR_remove_state().
+      Unconditionally include stdbool.h and inttypes.h.
+      Remove more obsolete autoconf checks.
+      Remove obsolete m4/README.
+      Fix some "make distcheck" errors.
+      Add some information about the requirements of a chroot environment.
+      Handle tun/tap device returning EPERM or EBUSY.
+      Disable PMTU discovery when TCPOnly is used.
+      Fix all -Wall -W compiler warnings.
+      Realign comments.
+      Remove unused functions.
+      Ensure all parameters have names in header files.
+      Support autoconf's --runstatedir option.
+      Const correctness.
+      Fix compilation errors when --enable-uml is used.
+      Update THANKS.
+      Releasing 1.0.33.
+
+Rafael Sadowski (1):
+      fix tinc.conf for OpenBSD
+
+nemunaire (1):
+      Allow compilation from a build directory
+
 Version 1.0.32                                         September 02 2017
 ------------------------------------------------------------------------
 
@@ -183,7 +225,20 @@ VittGam (1):
 Version 1.0.24                                               May 11 2014
 ------------------------------------------------------------------------
 
-Guus Sliepen (13):
+Guus Sliepen (26):
+      Mention in the manual that multiple Address staments are allowed.
+      If no Port is specified, set myport to actual port of first listening socket.
+      Enable compiler hardening flags by default.
+      Update support for Solaris.
+      Include <limits.h> for PATH_MAX.
+      Stricter check for raw socket support.
+      Use hardcoded value for TUNNEWPPA if net/if_tun.h is missing on Solaris.
+      Fix incorrectly merged bits from 80cd2ff73071941a5356555b85a00ee90dfd0e16.
+      Don't enable -fstack-protector-all.
+      Remove or lower the priority of some debug messages.
+      Clarify StrictSubnets.
+      Attribution for various contributors.
+      Handle errors from TAP-Win32/64 adapter in a better way.
       Remove useless variable 'hard' from try_harder().
       Merge pull request #14 from luckyhacky/master
       Add an autoconf check for res_init().
@@ -203,39 +258,21 @@ Steffan Karger (3):
       Use cryptographically strong random when generating keys.
       Check RAND_bytes() return value, fail when getting random fails.
 
+Florent Clairambault (2):
+      Adding "conf.d" configuration dir support.
+      Adding some documentation around the /etc/tinc/$NET/conf.d directory.
+
 Armin Fisslthaler (1):
       reload /etc/resolv.conf in SIGALRM handler
 
 Loic Dachary (1):
       fix documentation typo
 
-luckyhacky (1):
-      update to openssl version 1.0.1g due to lack of heartbleed bug in prior version of openssl
-
-refs/tags/1.0.23-android-1                                 March 11 2014
-------------------------------------------------------------------------
-
-Guus Sliepen (13):
-      Mention in the manual that multiple Address staments are allowed.
-      If no Port is specified, set myport to actual port of first listening socket.
-      Enable compiler hardening flags by default.
-      Update support for Solaris.
-      Include <limits.h> for PATH_MAX.
-      Stricter check for raw socket support.
-      Use hardcoded value for TUNNEWPPA if net/if_tun.h is missing on Solaris.
-      Fix incorrectly merged bits from 80cd2ff73071941a5356555b85a00ee90dfd0e16.
-      Don't enable -fstack-protector-all.
-      Remove or lower the priority of some debug messages.
-      Clarify StrictSubnets.
-      Attribution for various contributors.
-      Handle errors from TAP-Win32/64 adapter in a better way.
-
-Florent Clairambault (2):
-      Adding "conf.d" configuration dir support.
-      Adding some documentation around the /etc/tinc/$NET/conf.d directory.
-
 Vilbrekin (1):
       Update android build instructions. Disable PIE as this is not supported on some devices.
+
+luckyhacky (1):
+      update to openssl version 1.0.1g due to lack of heartbleed bug in prior version of openssl
 
 Version 1.0.23                                           October 19 2013
 ------------------------------------------------------------------------
