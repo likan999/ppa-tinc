@@ -1,7 +1,7 @@
 /*
     have.h -- include headers which are known to exist
     Copyright (C) 1998-2005 Ivo Timmermans
-                  2003-2014 Guus Sliepen <guus@tinc-vpn.org>
+                  2003-2015 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -194,6 +194,21 @@
 
 #ifdef HAVE_NETINET_IF_ETHER_H
 #include <netinet/if_ether.h>
+#endif
+
+#ifdef HAVE_ARPA_NAMESER_H
+#include <arpa/nameser.h>
+#ifdef STATUS
+#undef STATUS
+#endif
+#endif
+
+#ifdef HAVE_RESOLV_H
+#include <resolv.h>
+#endif
+
+#ifdef HAVE_LINUX_IF_TUN_H
+#include <linux/if_tun.h>
 #endif
 
 #endif /* __TINC_SYSTEM_H__ */
