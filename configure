@@ -707,9 +707,6 @@ enable_maintainer_mode
 enable_dependency_tracking
 enable_tunemu
 with_windows2000
-with_openssl
-with_openssl_include
-with_openssl_lib
 enable_zlib
 with_zlib
 with_zlib_include
@@ -718,6 +715,9 @@ enable_lzo
 with_lzo
 with_lzo_include
 with_lzo_lib
+with_openssl
+with_openssl_include
+with_openssl_lib
 enable_jumbograms
 '
       ac_precious_vars='build_alias
@@ -1362,17 +1362,17 @@ Optional Packages:
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
   --with-windows2000      compile with support for Windows 2000. This disables
                           support for tunneling over existing IPv6 networks.
-  --with-openssl=DIR      OpenSSL base directory, or:
-  --with-openssl-include=DIR
-                          OpenSSL headers directory (without trailing
-                          /openssl)
-  --with-openssl-lib=DIR  OpenSSL library directory
   --with-zlib=DIR         zlib base directory, or:
   --with-zlib-include=DIR zlib headers directory
   --with-zlib-lib=DIR     zlib library directory
   --with-lzo=DIR          lzo base directory, or:
   --with-lzo-include=DIR  lzo headers directory
   --with-lzo-lib=DIR      lzo library directory
+  --with-openssl=DIR      OpenSSL base directory, or:
+  --with-openssl-include=DIR
+                          OpenSSL headers directory (without trailing
+                          /openssl)
+  --with-openssl-lib=DIR  OpenSSL library directory
 
 Some influential environment variables:
   CC          C compiler command
@@ -2731,7 +2731,7 @@ fi
 
 # Define the identity of the package.
  PACKAGE=tinc
- VERSION=1.0.14
+ VERSION=1.0.15
 
 
 cat >>confdefs.h <<_ACEOF
@@ -5041,7 +5041,7 @@ $as_echo "#define STDC_HEADERS 1" >>confdefs.h
 
 fi
 
-for ac_header in stdbool.h syslog.h sys/file.h sys/ioctl.h sys/mman.h sys/param.h sys/resource.h sys/socket.h sys/time.h sys/uio.h sys/wait.h netdb.h arpa/inet.h dirent.h
+for ac_header in stdbool.h syslog.h sys/file.h sys/ioctl.h sys/mman.h sys/param.h sys/resource.h sys/socket.h sys/time.h time.h sys/uio.h sys/wait.h netdb.h arpa/inet.h dirent.h
 do :
   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
 ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
@@ -5782,7 +5782,7 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
 
-for ac_func in asprintf daemon fchmod flock ftime fork get_current_dir_name gettimeofday mlockall putenv random select strdup strerror strsignal strtol system unsetenv usleep vsyslog writev
+for ac_func in asprintf daemon fchmod flock ftime fork get_current_dir_name gettimeofday mlockall pselect putenv random select strdup strerror strsignal strtol system unsetenv usleep vsyslog writev
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
 ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
@@ -6175,178 +6175,6 @@ rm -f confcache
 
 
 
-
-# Check whether --with-openssl was given.
-if test "${with_openssl+set}" = set; then :
-  withval=$with_openssl; openssl="$withval"
-     CPPFLAGS="$CPPFLAGS -I$withval/include"
-     LDFLAGS="$LDFLAGS -L$withval/lib"
-
-fi
-
-
-
-# Check whether --with-openssl-include was given.
-if test "${with_openssl_include+set}" = set; then :
-  withval=$with_openssl_include; openssl_include="$withval"
-     CPPFLAGS="$CPPFLAGS -I$withval"
-
-fi
-
-
-
-# Check whether --with-openssl-lib was given.
-if test "${with_openssl_lib+set}" = set; then :
-  withval=$with_openssl_lib; openssl_lib="$withval"
-     LDFLAGS="$LDFLAGS -L$withval"
-
-fi
-
-
-  for ac_header in openssl/evp.h openssl/rsa.h openssl/rand.h openssl/err.h openssl/sha.h openssl/pem.h openssl/engine.h
-do :
-  as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
-ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
-if eval test \"x\$"$as_ac_Header"\" = x"yes"; then :
-  cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_header" | $as_tr_cpp` 1
-_ACEOF
-
-else
-  as_fn_error $? "OpenSSL header files not found." "$LINENO" 5; break
-
-fi
-
-done
-
-
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for EVP_EncryptInit_ex in -lcrypto" >&5
-$as_echo_n "checking for EVP_EncryptInit_ex in -lcrypto... " >&6; }
-if ${ac_cv_lib_crypto_EVP_EncryptInit_ex+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lcrypto  $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char EVP_EncryptInit_ex ();
-int
-main ()
-{
-return EVP_EncryptInit_ex ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_crypto_EVP_EncryptInit_ex=yes
-else
-  ac_cv_lib_crypto_EVP_EncryptInit_ex=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_crypto_EVP_EncryptInit_ex" >&5
-$as_echo "$ac_cv_lib_crypto_EVP_EncryptInit_ex" >&6; }
-if test "x$ac_cv_lib_crypto_EVP_EncryptInit_ex" = xyes; then :
-  LIBS="-lcrypto $LIBS"
-else
-  as_fn_error $? "OpenSSL libraries not found." "$LINENO" 5
-
-fi
-
-
-case $host_os in
-  *mingw*)
-  ;;
-  *)
-    ac_fn_c_check_func "$LINENO" "dlopen" "ac_cv_func_dlopen"
-if test "x$ac_cv_func_dlopen" = xyes; then :
-
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for dlopen in -ldl" >&5
-$as_echo_n "checking for dlopen in -ldl... " >&6; }
-if ${ac_cv_lib_dl_dlopen+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-ldl  $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char dlopen ();
-int
-main ()
-{
-return dlopen ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_dl_dlopen=yes
-else
-  ac_cv_lib_dl_dlopen=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_dl_dlopen" >&5
-$as_echo "$ac_cv_lib_dl_dlopen" >&6; }
-if test "x$ac_cv_lib_dl_dlopen" = xyes; then :
-  LIBS="$LIBS -ldl"
-else
-  as_fn_error $? "OpenSSL depends on libdl." "$LINENO" 5; break
-
-fi
-
-
-fi
-
-  ;;
-esac
-
-  for ac_func in RAND_pseudo_bytes EVP_EncryptInit_ex
-do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
-  cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
-_ACEOF
-
-else
-  as_fn_error $? "Missing OpenSSL functionality, make sure you have installed the latest version." "$LINENO" 5; break
-fi
-done
-
-
-  ac_fn_c_check_decl "$LINENO" "OpenSSL_add_all_algorithms" "ac_cv_have_decl_OpenSSL_add_all_algorithms" "#include <openssl/evp.h>
-
-"
-if test "x$ac_cv_have_decl_OpenSSL_add_all_algorithms" = xyes; then :
-
-else
-  as_fn_error $? "Missing OpenSSL functionality, make sure you have installed the latest version." "$LINENO" 5; break
-fi
-
-
-
   # Check whether --enable-zlib was given.
 if test "${enable_zlib+set}" = set; then :
   enableval=$enable_zlib;
@@ -6623,6 +6451,178 @@ done
 
 
 fi
+
+
+  case $host_os in
+    *mingw*)
+    ;;
+    *)
+      ac_fn_c_check_func "$LINENO" "dlopen" "ac_cv_func_dlopen"
+if test "x$ac_cv_func_dlopen" = xyes; then :
+
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for dlopen in -ldl" >&5
+$as_echo_n "checking for dlopen in -ldl... " >&6; }
+if ${ac_cv_lib_dl_dlopen+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-ldl  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char dlopen ();
+int
+main ()
+{
+return dlopen ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_dl_dlopen=yes
+else
+  ac_cv_lib_dl_dlopen=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_dl_dlopen" >&5
+$as_echo "$ac_cv_lib_dl_dlopen" >&6; }
+if test "x$ac_cv_lib_dl_dlopen" = xyes; then :
+  LIBS="$LIBS -ldl"
+else
+  as_fn_error $? "OpenSSL depends on libdl." "$LINENO" 5; break
+
+fi
+
+
+fi
+
+    ;;
+  esac
+
+
+# Check whether --with-openssl was given.
+if test "${with_openssl+set}" = set; then :
+  withval=$with_openssl; openssl="$withval"
+     CPPFLAGS="$CPPFLAGS -I$withval/include"
+     LDFLAGS="$LDFLAGS -L$withval/lib"
+
+fi
+
+
+
+# Check whether --with-openssl-include was given.
+if test "${with_openssl_include+set}" = set; then :
+  withval=$with_openssl_include; openssl_include="$withval"
+     CPPFLAGS="$CPPFLAGS -I$withval"
+
+fi
+
+
+
+# Check whether --with-openssl-lib was given.
+if test "${with_openssl_lib+set}" = set; then :
+  withval=$with_openssl_lib; openssl_lib="$withval"
+     LDFLAGS="$LDFLAGS -L$withval"
+
+fi
+
+
+  for ac_header in openssl/evp.h openssl/rsa.h openssl/rand.h openssl/err.h openssl/sha.h openssl/pem.h openssl/engine.h
+do :
+  as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
+ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
+if eval test \"x\$"$as_ac_Header"\" = x"yes"; then :
+  cat >>confdefs.h <<_ACEOF
+#define `$as_echo "HAVE_$ac_header" | $as_tr_cpp` 1
+_ACEOF
+
+else
+  as_fn_error $? "OpenSSL header files not found." "$LINENO" 5; break
+
+fi
+
+done
+
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for EVP_EncryptInit_ex in -lcrypto" >&5
+$as_echo_n "checking for EVP_EncryptInit_ex in -lcrypto... " >&6; }
+if ${ac_cv_lib_crypto_EVP_EncryptInit_ex+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lcrypto  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char EVP_EncryptInit_ex ();
+int
+main ()
+{
+return EVP_EncryptInit_ex ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_crypto_EVP_EncryptInit_ex=yes
+else
+  ac_cv_lib_crypto_EVP_EncryptInit_ex=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_crypto_EVP_EncryptInit_ex" >&5
+$as_echo "$ac_cv_lib_crypto_EVP_EncryptInit_ex" >&6; }
+if test "x$ac_cv_lib_crypto_EVP_EncryptInit_ex" = xyes; then :
+  LIBS="-lcrypto $LIBS"
+else
+  as_fn_error $? "OpenSSL libraries not found." "$LINENO" 5
+
+fi
+
+
+  for ac_func in RAND_pseudo_bytes EVP_EncryptInit_ex
+do :
+  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
+ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
+if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  cat >>confdefs.h <<_ACEOF
+#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+_ACEOF
+
+else
+  as_fn_error $? "Missing OpenSSL functionality, make sure you have installed the latest version." "$LINENO" 5; break
+fi
+done
+
+
+  ac_fn_c_check_decl "$LINENO" "OpenSSL_add_all_algorithms" "ac_cv_have_decl_OpenSSL_add_all_algorithms" "#include <openssl/evp.h>
+
+"
+if test "x$ac_cv_have_decl_OpenSSL_add_all_algorithms" = xyes; then :
+
+else
+  as_fn_error $? "Missing OpenSSL functionality, make sure you have installed the latest version." "$LINENO" 5; break
+fi
+
 
 
 # Check whether --enable-jumbograms was given.

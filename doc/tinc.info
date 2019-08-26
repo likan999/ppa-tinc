@@ -5,7 +5,7 @@ START-INFO-DIR-ENTRY
 * tinc: (tinc).              The tinc Manual.
 END-INFO-DIR-ENTRY
 
-   This is the info manual for tinc version 1.0.14, a Virtual Private
+   This is the info manual for tinc version 1.0.15, a Virtual Private
 Network daemon.
 
    Copyright (C) 1998-2011 Ivo Timmermans, Guus Sliepen
@@ -1503,7 +1503,9 @@ You can also send the following signals to a running tincd process:
 `HUP'
      Partially rereads configuration files.  Connections to hosts whose
      host config file are removed are closed.  New outgoing connections
-     specified in `tinc.conf' will be made.
+     specified in `tinc.conf' will be made.  If the -logfile option is
+     used, this will also close and reopen the log file, useful when
+     log rotation is used.
 
 `INT'
      Temporarily increases debug level to 5.  Send this signal again to
@@ -2509,25 +2511,25 @@ Node: Example configuration47500
 Node: Running tinc52823
 Node: Runtime options53413
 Node: Signals56369
-Node: Debug levels57438
-Node: Solving problems58374
-Node: Error messages59926
-Node: Sending bug reports63939
-Node: Technical information64891
-Node: The connection65122
-Node: The UDP tunnel65434
-Node: The meta-connection68495
-Node: The meta-protocol69964
-Node: Security74973
-Node: Authentication protocol76103
-Node: Encryption of network packets81107
-Node: Security issues82480
-Node: Platform specific information84097
-Node: Interface configuration84325
-Node: Routes86224
-Node: About us88140
-Node: Contact information88315
-Node: Authors88719
-Node: Concept Index89124
+Node: Debug levels57561
+Node: Solving problems58497
+Node: Error messages60049
+Node: Sending bug reports64062
+Node: Technical information65014
+Node: The connection65245
+Node: The UDP tunnel65557
+Node: The meta-connection68618
+Node: The meta-protocol70087
+Node: Security75096
+Node: Authentication protocol76226
+Node: Encryption of network packets81230
+Node: Security issues82603
+Node: Platform specific information84220
+Node: Interface configuration84448
+Node: Routes86347
+Node: About us88263
+Node: Contact information88438
+Node: Authors88842
+Node: Concept Index89247
 
 End Tag Table

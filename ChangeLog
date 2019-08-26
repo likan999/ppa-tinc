@@ -1,6 +1,86 @@
-commit f3f7ccfb2890576cb8992ec5e432310cec27627a
+commit 05260f941c2a24eb3f09070a2550cf15e431266a
 Author: Guus Sliepen <guus@tinc-vpn.org>
-Date:   Sun May 8 23:15:25 2011 +0200
+Date:   Fri Jun 24 14:50:20 2011 +0200
+
+    Releasing 1.0.15.
+
+commit 3c0511984f0041f79e64bcc55d58680f86e8e408
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Fri Jun 24 12:27:04 2011 +0200
+
+    Remove redundant @CFLAGS@ from AM_CFLAGS.
+
+commit 4b3fd94b1cc79c24c4092b6b10ed4627a2648d26
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Mon Jun 6 16:26:11 2011 +0200
+
+    Improved --logfile option.
+    
+    Instead of UNIX time, the log messages now start with the time in RFC3339
+    format, which human-readable and still easy for the computer to parse and sort.
+    The HUP signal will also cause the log file to be closed and reopened, which is
+    useful when log rotation is used. If there is an error while opening the log
+    file, this is logged to stderr.
+
+commit b3bbeab6e669795f6f5a6b98590da359178bfdce
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sat Jun 4 11:27:54 2011 +0200
+
+    Attribution for Loïc Grenié.
+
+commit 50af33d01f425983dd2b1d7b61092a6325be3f41
+Author: Loïc Grenié <loic.grenie@gmail.com>
+Date:   Sat Jun 4 09:05:23 2011 +0200
+
+    Nearly tickless tinc.
+    
+    Use pselect instead of select in main_loop (if available). This lets
+    tincd sleeps as long as there is nothing to do.
+
+commit 64771f73ebbff04262defcde59263e98f89f0fa1
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sat May 28 23:46:56 2011 +0200
+
+    Remove a few unnecessary #includes.
+    
+    Some spotted by Michael Tokarev.
+
+commit 5cff8c47c1781a88123c128a4cec6cdd39925aa5
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sat May 28 23:42:18 2011 +0200
+
+    Remove newlines from log messages.
+
+commit 6d08eb1614b59d5f86a43edda9db06fca72b76cd
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sat May 28 23:36:52 2011 +0200
+
+    Fix sparse warnings and add an extra sprinkling of const.
+    
+    This is more or less the equivalent of Sven-Haegar Koch's fixes in the 1.1
+    branch.
+
+commit 07ffb1a19859791d419b83a876ba552dadedbf46
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun May 22 15:56:04 2011 +0200
+
+    Make return value of SetPriorityClass() behave the same as setpriority().
+
+commit 03b7118139f57033659730afb740bf5cef7c961c
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Fri May 13 12:37:26 2011 +0200
+
+    Reorder checks for libraries to allow ./configure LDFLAGS=-static.
+    
+    OpenSSL depends on libdl and libz. When linking dynamically, libcrypto will
+    automatically link with the other two libraries.  However, when linking
+    statically, these libraries need to be specified explicitly while linking.  By
+    moving the autoconf checks for libdl and libz before those for libcrypto, we
+    ensure the latter test will be done with the proper libraries.
+
+commit 5686ad80b545afa3de9ed2f4176a5346e289aaa8
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun May 8 23:17:46 2011 +0200
 
     Releasing 1.0.14.
 

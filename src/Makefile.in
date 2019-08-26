@@ -197,7 +197,7 @@ noinst_HEADERS = conf.h connection.h device.h edge.h event.h graph.h logger.h me
 tincd_LDADD = \
 	$(top_builddir)/lib/libvpn.a
 
-AM_CFLAGS = @CFLAGS@ -DCONFDIR=\"$(sysconfdir)\" -DLOCALSTATEDIR=\"$(localstatedir)\"
+AM_CFLAGS = -DCONFDIR=\"$(sysconfdir)\" -DLOCALSTATEDIR=\"$(localstatedir)\"
 all: all-am
 
 .SUFFIXES:

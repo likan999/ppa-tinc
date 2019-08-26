@@ -52,7 +52,7 @@ static subnet_t *cache_mac_subnet[2];
 static bool cache_mac_valid[2];
 static int cache_mac_slot;
 
-void subnet_cache_flush() {
+void subnet_cache_flush(void) {
 	cache_ipv4_valid[0] = cache_ipv4_valid[1] = false;
 	cache_ipv6_valid[0] = cache_ipv6_valid[1] = false;
 	cache_mac_valid[0] = cache_mac_valid[1] = false;
@@ -273,7 +273,7 @@ bool str2net(subnet_t *subnet, const char *subnetstr) {
 
 bool net2str(char *netstr, int len, const subnet_t *subnet) {
 	if(!netstr || !subnet) {
-		logger(LOG_ERR, "net2str() was called with netstr=%p, subnet=%p!\n", netstr, subnet);
+		logger(LOG_ERR, "net2str() was called with netstr=%p, subnet=%p!", netstr, subnet);
 		return false;
 	}
 
@@ -451,7 +451,7 @@ subnet_t *lookup_subnet_ipv6(const ipv6_t *address) {
 void subnet_update(node_t *owner, subnet_t *subnet, bool up) {
 	avl_node_t *node;
 	int i;
-	char *envp[9] = {0};
+	char *envp[9] = {NULL};
 	char netstr[MAXNETSTR];
 	char *name, *address, *port;
 	char empty[] = "";
