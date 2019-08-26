@@ -1,6 +1,6 @@
 /*
     subnet.c -- handle subnet lookups and lists
-    Copyright (C) 2000-2012 Guus Sliepen <guus@tinc-vpn.org>,
+    Copyright (C) 2000-2013 Guus Sliepen <guus@tinc-vpn.org>,
                   2000-2005 Ivo Timmermans
 
     This program is free software; you can redistribute it and/or modify
@@ -25,6 +25,7 @@
 #include "device.h"
 #include "hash.h"
 #include "logger.h"
+#include "names.h"
 #include "net.h"
 #include "netutl.h"
 #include "node.h"

@@ -1,7 +1,7 @@
 /*
     net_socket.c -- Handle various kinds of sockets.
     Copyright (C) 1998-2005 Ivo Timmermans,
-                  2000-2012 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2013 Guus Sliepen <guus@tinc-vpn.org>
                   2006      Scott Lamb <slamb@slamb.org>
                   2009      Florian Forster <octo@verplant.org>
 
@@ -24,9 +24,11 @@
 
 #include "conf.h"
 #include "connection.h"
+#include "control_common.h"
 #include "list.h"
 #include "logger.h"
 #include "meta.h"
+#include "names.h"
 #include "net.h"
 #include "netutl.h"
 #include "protocol.h"
@@ -46,6 +48,9 @@ int udp_sndbuf = 0;
 
 listen_socket_t listen_socket[MAXSOCKETS];
 int listen_sockets;
+#ifndef HAVE_MINGW
+io_t unix_socket;
+#endif
 list_t *outgoing_list = NULL;
 
 /* Setup sockets */
@@ -289,9 +294,6 @@ void retry_outgoing(outgoing_t *outgoing) {
 void finish_connecting(connection_t *c) {
 	logger(DEBUG_CONNECTIONS, LOG_INFO, "Connected to %s (%s)", c->name, c->hostname);
 
-	if(proxytype != PROXY_EXEC)
-		configure_tcp(c);
-
 	c->last_ping_time = time(NULL);
 	c->status.connecting = false;
 
@@ -368,10 +370,28 @@ static void handle_meta_write(connection_t *c) {
 }
 
 static void handle_meta_io(void *data, int flags) {
+	connection_t *c = data;
+
+	if(c->status.connecting) {
+		c->status.connecting = false;
+
+		int result;
+		socklen_t len = sizeof result;
+		getsockopt(c->socket, SOL_SOCKET, SO_ERROR, (void *)&result, &len);
+
+		if(!result)
+			finish_connecting(c);
+		else {
+			logger(DEBUG_CONNECTIONS, LOG_DEBUG, "Error while connecting to %s (%s): %s", c->name, c->hostname, sockstrerror(result));
+			terminate_connection(c, false);
+			return;
+		}
+	}
+
 	if(flags & IO_WRITE)
-		handle_meta_write(data);
+		handle_meta_write(c);
 	else
-		handle_meta_connection_data(data);
+		handle_meta_connection_data(c);
 }
 
 bool do_outgoing_connection(outgoing_t *outgoing) {
@@ -436,6 +456,7 @@ begin:
 		}
 		logger(DEBUG_CONNECTIONS, LOG_INFO, "Using proxy at %s port %s", proxyhost, proxyport);
 		c->socket = socket(proxyai->ai_family, SOCK_STREAM, IPPROTO_TCP);
+		configure_tcp(c);
 	}
 
 	if(c->socket == -1) {
@@ -488,7 +509,7 @@ begin:
 
 	connection_add(c);
 
-	io_add(&c->io, handle_meta_io, c, c->socket, IO_READ);
+	io_add(&c->io, handle_meta_io, c, c->socket, IO_READ|IO_WRITE);
 
 	return true;
 }
@@ -560,6 +581,45 @@ void handle_new_meta_connection(void *data, int flags) {
 	c->allow_request = ID;
 	send_id(c);
 }
+
+#ifndef HAVE_MINGW
+/*
+  accept a new UNIX socket connection
+*/
+void handle_new_unix_connection(void *data, int flags) {
+	io_t *io = data;
+	connection_t *c;
+	sockaddr_t sa;
+	int fd;
+	socklen_t len = sizeof sa;
+
+	fd = accept(io->fd, &sa.sa, &len);
+
+	if(fd < 0) {
+		logger(DEBUG_ALWAYS, LOG_ERR, "Accepting a new connection failed: %s", sockstrerror(sockerrno));
+		return;
+	}
+
+	sockaddrunmap(&sa);
+
+	c = new_connection();
+	c->name = xstrdup("<control>");
+	c->address = sa;
+	c->hostname = xstrdup("localhost port unix");
+	c->socket = fd;
+	c->last_ping_time = time(NULL);
+
+	logger(DEBUG_CONNECTIONS, LOG_NOTICE, "Connection from %s", c->hostname);
+
+	io_add(&c->io, handle_meta_io, c, c->socket, IO_READ);
+
+	connection_add(c);
+
+	c->allow_request = ID;
+
+	send_id(c);
+}
+#endif
 
 static void free_outgoing(outgoing_t *outgoing) {
 	timeout_del(&outgoing->ev);

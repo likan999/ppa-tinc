@@ -1,6 +1,6 @@
 /*
     control.c -- Control socket handling.
-    Copyright (C) 2012 Guus Sliepen <guus@tinc-vpn.org>
+    Copyright (C) 2013 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -25,6 +25,7 @@
 #include "graph.h"
 #include "logger.h"
 #include "meta.h"
+#include "names.h"
 #include "net.h"
 #include "netutl.h"
 #include "protocol.h"
@@ -33,7 +34,6 @@
 #include "xalloc.h"
 
 char controlcookie[65];
-extern char *pidfilename;
 
 static bool control_return(connection_t *c, int type, int error) {
 	return send_request(c, "%d %d %d", CONTROL, type, error);

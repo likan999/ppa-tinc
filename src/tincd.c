@@ -1,7 +1,7 @@
 /*
     tincd.c -- the main file for tincd
     Copyright (C) 1998-2005 Ivo Timmermans
-                  2000-2012 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2013 Guus Sliepen <guus@tinc-vpn.org>
                   2008      Max Rijevski <maksuf@gmail.com>
                   2009      Michael Tokarev <mjt@tls.msk.ru>
                   2010      Julien Muchembled <jm@jmuchemb.eu>
@@ -33,12 +33,6 @@
 #include <sys/mman.h>
 #endif
 
-#include <openssl/rand.h>
-#include <openssl/rsa.h>
-#include <openssl/pem.h>
-#include <openssl/evp.h>
-#include <openssl/engine.h>
-
 #ifdef HAVE_LZO
 #include LZO1X_H
 #endif
@@ -56,15 +50,13 @@
 #include "crypto.h"
 #include "device.h"
 #include "logger.h"
+#include "names.h"
 #include "net.h"
 #include "netutl.h"
 #include "process.h"
 #include "protocol.h"
 #include "utils.h"
 #include "xalloc.h"
-
-/* The name this program was run with. */
-char *program_name = NULL;
 
 /* If nonzero, display usage information and exit. */
 static bool show_help = false;
@@ -75,21 +67,22 @@ static bool show_version = false;
 /* If nonzero, use null ciphers and skip all key exchanges. */
 bool bypass_security = false;
 
+#ifdef HAVE_MLOCKALL
 /* If nonzero, disable swapping for this process. */
 static bool do_mlock = false;
+#endif
 
+#ifndef HAVE_MINGW
 /* If nonzero, chroot to netdir after startup. */
 static bool do_chroot = false;
 
 /* If !NULL, do setuid to given user after startup */
 static const char *switchuser = NULL;
+#endif
 
 /* If nonzero, write log entries to a separate file. */
 bool use_logfile = false;
 
-char *identname = NULL;         /* program name for syslog */
-char *logfilename = NULL;       /* log file location */
-char *pidfilename = NULL;
 char **g_argv;                  /* a copy of the cmdline arguments */
 
 static int status = 1;
@@ -127,13 +120,18 @@ static void usage(bool status) {
 				"  -D, --no-detach               Don't fork and detach.\n"
 				"  -d, --debug[=LEVEL]           Increase debug level or set it to LEVEL.\n"
 				"  -n, --net=NETNAME             Connect to net NETNAME.\n"
+#ifdef HAVE_MLOCKALL
 				"  -L, --mlock                   Lock tinc into main memory.\n"
+#endif
 				"      --logfile[=FILENAME]      Write log entries to a logfile.\n"
 				"      --pidfile=FILENAME        Write PID and control socket cookie to FILENAME.\n"
 				"      --bypass-security         Disables meta protocol security, for debugging.\n"
 				"  -o, --option[HOST.]KEY=VALUE  Set global/host configuration value.\n"
+#ifndef HAVE_MINGW
 				"  -R, --chroot                  chroot to NET dir at startup.\n"
-				"  -U, --user=USER               setuid to given USER at startup.\n"                            "      --help                    Display this help and exit.\n"
+				"  -U, --user=USER               setuid to given USER at startup.\n"
+#endif
+				"      --help                    Display this help and exit.\n"
 				"      --version                 Output version information and exit.\n\n");
 		printf("Report bugs to tinc@tinc-vpn.org.\n");
 	}
@@ -162,7 +160,7 @@ static bool parse_options(int argc, char **argv) {
 
 			case 'L': /* no detach */
 #ifndef HAVE_MLOCKALL
-				logger(DEBUG_ALWAYS, LOG_ERR, "%s not supported on this platform", "mlockall()");
+				logger(DEBUG_ALWAYS, LOG_ERR, "The %s option is not supported on this platform.", argv[optind - 1]);
 				return false;
 #else
 				do_mlock = true;
@@ -187,6 +185,12 @@ static bool parse_options(int argc, char **argv) {
 				list_insert_tail(cmdline_conf, cfg);
 				break;
 
+#ifdef HAVE_MINGW
+			case 'R':
+			case 'U':
+				logger(DEBUG_ALWAYS, LOG_ERR, "The %s option is not supported on this platform.", argv[optind - 1]);
+				return false;
+#else
 			case 'R': /* chroot to NETNAME dir */
 				do_chroot = true;
 				break;
@@ -194,6 +198,7 @@ static bool parse_options(int argc, char **argv) {
 			case 'U': /* setuid to USER */
 				switchuser = optarg;
 				break;
+#endif
 
 			case 1:   /* show help */
 				show_help = true;
@@ -244,77 +249,8 @@ static bool parse_options(int argc, char **argv) {
 	return true;
 }
 
-/*
-  Set all files and paths according to netname
-*/
-static void make_names(void) {
-#ifdef HAVE_MINGW
-	HKEY key;
-	char installdir[1024] = "";
-	long len = sizeof installdir;
-#endif
-
-	if(netname)
-		xasprintf(&identname, "tinc.%s", netname);
-	else
-		identname = xstrdup("tinc");
-
-#ifdef HAVE_MINGW
-	if(!RegOpenKeyEx(HKEY_LOCAL_MACHINE, "SOFTWARE\\tinc", 0, KEY_READ, &key)) {
-		if(!RegQueryValueEx(key, NULL, 0, 0, installdir, &len)) {
-			if(!logfilename)
-				xasprintf(&logfilename, "%s" SLASH "log" SLASH "%s.log", identname);
-			if(!confbase) {
-				if(netname)
-					xasprintf(&confbase, "%s" SLASH "%s", installdir, netname);
-				else
-					xasprintf(&confbase, "%s", installdir);
-			}
-			if(!pidfilename)
-				xasprintf(&pidfilename, "%s" SLASH "pid", confbase);
-		}
-		RegCloseKey(key);
-		if(*installdir)
-			return;
-	}
-#endif
-
-	if(!logfilename)
-		xasprintf(&logfilename, LOCALSTATEDIR SLASH "log" SLASH "%s.log", identname);
-
-	if(!pidfilename)
-		xasprintf(&pidfilename, LOCALSTATEDIR SLASH "run" SLASH "%s.pid", identname);
-
-	if(netname) {
-		if(!confbase)
-			xasprintf(&confbase, CONFDIR SLASH "tinc" SLASH "%s", netname);
-		else
-			logger(DEBUG_ALWAYS, LOG_INFO, "Both netname and configuration directory given, using the latter...");
-	} else {
-		if(!confbase)
-			xasprintf(&confbase, CONFDIR SLASH "tinc");
-	}
-}
-
-static void free_names(void) {
-	if (identname) free(identname);
-	if (netname) free(netname);
-	if (pidfilename) free(pidfilename);
-	if (logfilename) free(logfilename);
-	if (confbase) free(confbase);
-}
-
 static bool drop_privs(void) {
-#ifdef HAVE_MINGW
-	if (switchuser) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "%s not supported on this platform", "-U");
-		return false;
-	}
-	if (do_chroot) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "%s not supported on this platform", "-R");
-		return false;
-	}
-#else
+#ifndef HAVE_MINGW
 	uid_t uid = 0;
 	if (switchuser) {
 		struct passwd *pw = getpwnam(switchuser);

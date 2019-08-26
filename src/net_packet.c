@@ -1,7 +1,7 @@
 /*
     net_packet.c -- Handles in- and outgoing VPN packets
     Copyright (C) 1998-2005 Ivo Timmermans,
-                  2000-2012 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2013 Guus Sliepen <guus@tinc-vpn.org>
                   2010      Timothy Redaelli <timothy@redaelli.eu>
                   2010      Brandon Black <blblack@gmail.com>
 
@@ -21,12 +21,6 @@
 */
 
 #include "system.h"
-
-#include <openssl/rand.h>
-#include <openssl/err.h>
-#include <openssl/evp.h>
-#include <openssl/pem.h>
-#include <openssl/hmac.h>
 
 #ifdef HAVE_ZLIB
 #include <zlib.h>
@@ -70,11 +64,15 @@ bool localdiscovery = false;
    mtuprobes ==    32: send 1 burst, sleep pingtimeout second
    mtuprobes ==    33: no response from other side, restart PMTU discovery process
 
-   Probes are sent in batches of three, with random sizes between the lower and
-   upper boundaries for the MTU thus far discovered.
+   Probes are sent in batches of at least three, with random sizes between the
+   lower and upper boundaries for the MTU thus far discovered.
 
-   In case local discovery is enabled, a fourth packet is added to each batch,
+   After the initial discovery, a fourth packet is added to each batch with a
+   size larger than the currently known PMTU, to test if the PMTU has increased.
+
+   In case local discovery is enabled, another packet is added to each batch,
    which will be broadcast to the local network.
+
 */
 
 static void send_mtu_probe_handler(void *data) {
@@ -125,13 +123,18 @@ static void send_mtu_probe_handler(void *data) {
 		timeout = pingtimeout;
 	}
 
-	for(int i = 0; i < 3 + localdiscovery; i++) {
+	for(int i = 0; i < 4 + localdiscovery; i++) {
 		int len;
 
-		if(n->maxmtu <= n->minmtu)
+		if(i == 0) {
+			if(n->mtuprobes < 30 || n->maxmtu + 8 >= MTU)
+				continue;
+			len = n->maxmtu + 8;
+		} else if(n->maxmtu <= n->minmtu) {
 			len = n->maxmtu;
-		else
+		} else {
 			len = n->minmtu + 1 + rand() % (n->maxmtu - n->minmtu);
+		}
 
 		if(len < 64)
 			len = 64;
@@ -140,7 +143,7 @@ static void send_mtu_probe_handler(void *data) {
 		memset(packet.data, 0, 14);
 		randomize(packet.data + 14, len - 14);
 		packet.len = len;
-		if(i >= 3 && n->mtuprobes <= 10)
+		if(i >= 4 && n->mtuprobes <= 10)
 			packet.priority = -1;
 		else
 			packet.priority = 0;
@@ -149,6 +152,21 @@ static void send_mtu_probe_handler(void *data) {
 
 		send_udppacket(n, &packet);
 	}
+
+	n->probe_counter = 0;
+	gettimeofday(&n->probe_time, NULL);
+
+	/* Calculate the packet loss of incoming traffic by comparing the rate of
+	   packets received to the rate with which the sequence number has increased.
+	 */
+
+	if(n->received > n->prev_received)
+		n->packetloss = 1.0 - (n->received - n->prev_received) / (float)(n->received_seqno - n->prev_received_seqno);
+	else
+		n->packetloss = n->received_seqno <= n->prev_received_seqno;
+
+	n->prev_received_seqno = n->received_seqno;
+	n->prev_received = n->received;
 
 end:
 	timeout_set(&n->mtutimeout, &(struct timeval){timeout, rand() % 100000});
@@ -184,6 +202,13 @@ static void mtu_probe_h(node_t *n, vpn_packet_t *packet, length_t len) {
 		/* If we haven't established the PMTU yet, restart the discovery process. */
 
 		if(n->mtuprobes > 30) {
+			if (len == n->maxmtu + 8) {
+				logger(DEBUG_TRAFFIC, LOG_INFO, "Increase in PMTU to %s (%s) detected, restarting PMTU discovery", n->name, n->hostname);
+				n->maxmtu = MTU;
+				n->mtuprobes = 10;
+				return;
+			}
+
 			if(n->minmtu)
 				n->mtuprobes = 30;
 			else
@@ -196,6 +221,25 @@ static void mtu_probe_h(node_t *n, vpn_packet_t *packet, length_t len) {
 			len = n->maxmtu;
 		if(n->minmtu < len)
 			n->minmtu = len;
+
+		/* Calculate RTT and bandwidth.
+		   The RTT is the time between the MTU probe burst was sent and the first
+		   reply is received. The bandwidth is measured using the time between the
+		   arrival of the first and third probe reply.
+		 */
+
+		struct timeval now, diff;
+		gettimeofday(&now, NULL);
+		timersub(&now, &n->probe_time, &diff);
+		n->probe_counter++;
+
+		if(n->probe_counter == 1) {
+			n->rtt = diff.tv_sec + diff.tv_usec * 1e-6;
+			n->probe_time = now;
+		} else if(n->probe_counter == 3) {
+			n->bandwidth = 2.0 * len / (diff.tv_sec + diff.tv_usec * 1e-6);
+			logger(DEBUG_TRAFFIC, LOG_DEBUG, "%s (%s) RTT %.2f ms, burst bandwidth %.3f Mbit/s, rx packet loss %.2f %%", n->name, n->hostname, n->rtt * 1e3, n->bandwidth * 8e-6, n->packetloss * 1e2);
+		}
 	}
 }
 
@@ -364,6 +408,8 @@ static void receive_udppacket(node_t *n, vpn_packet_t *inpkt) {
 
 	if(inpkt->seqno > n->received_seqno)
 		n->received_seqno = inpkt->seqno;
+
+	n->received++;
 
 	if(n->received_seqno > MAX_SEQNO)
 		regenerate_key();

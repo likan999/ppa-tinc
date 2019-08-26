@@ -1,4 +1,4 @@
-.Dd 2012-09-27
+.Dd 2013-01-14
 .Dt TINC.CONF 5
 .\" Manual page created by:
 .\" Ivo Timmermans
@@ -343,7 +343,7 @@ This option selects the way packets are routed to other daemons.
 In this mode
 .Va Subnet
 variables in the host configuration files will be used to form a routing table.
-Only unicast packets of routable protocols (IPv4 and IPv6) are supported in this mode.
+Only packets of routable protocols (IPv4 and IPv6) are supported in this mode.
 .Pp
 This is the default mode, and unless you really know you need another mode, don't change it.
 .It switch
@@ -361,7 +361,7 @@ while no routing table is managed.
 .It Va Name Li = Ar name Bq required
 This is the name which identifies this tinc daemon.
 It must be unique for the virtual private network this daemon will connect to.
-The Name may only consist of alphanumeric and underscore characters.
+The Name may only consist of alphanumeric and underscore characters (a-z, A-Z, 0-9 and _), and is case sensitive.
 If 
 .Va Name
 starts with a
@@ -372,7 +372,7 @@ If
 .Va Name
 is
 .Li $HOST ,
-but no such environment variable exist, the hostname will be read using the gethostnname() system call.
+but no such environment variable exist, the hostname will be read using the gethostname() system call.
 .It Va PingInterval Li = Ar seconds Pq 60
 The number of seconds of inactivity that
 .Nm tinc
@@ -428,7 +428,7 @@ and
 are available.
 .El
 .It Va ReplayWindow Li = Ar bytes Pq 16
-vhis is the size of the replay tracking window for each remote node, in bytes.
+This is the size of the replay tracking window for each remote node, in bytes.
 The window is a bitfield which tracks 1 packet per bit, so for example
 the default setting of 16 will track up to 128 packets in the window.  In high
 bandwidth scenarios, setting this to a higher value can reduce packet loss from
@@ -497,12 +497,9 @@ Furthermore, specifying
 .Qq none
 will turn off packet authentication.
 .It Va IndirectData Li = yes | no Pq no
-This option specifies whether other tinc daemons besides the one you specified with
-.Va ConnectTo
-can make a direct connection to you.
-This is especially useful if you are behind a firewall
-and it is impossible to make a connection from the outside to your tinc daemon.
-Otherwise, it is best to leave this option out or set it to no.
+When set to yes, other nodes which do not already have a meta connection to you
+will not try to establish direct communication with you.
+It is best to leave this option out or set it to no.
 .It Va MACLength Li = Ar length Pq 4
 The length of the message authentication code used to authenticate UDP packets.
 Can be anything from

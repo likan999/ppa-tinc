@@ -1,6 +1,6 @@
 /*
     top.c -- Show real-time statistics from a running tincd
-    Copyright (C) 2011-2012 Guus Sliepen <guus@tinc-vpn.org>
+    Copyright (C) 2011-2013 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -25,6 +25,7 @@
 
 #include "control_common.h"
 #include "list.h"
+#include "names.h"
 #include "tincctl.h"
 #include "top.h"
 #include "xalloc.h"
@@ -64,10 +65,6 @@ static const char *bunit = "bytes";
 static float bscale = 1;
 static const char *punit = "pkts";
 static float pscale = 1;
-
-#ifndef timersub
-#define timersub(a, b, c) do {(c)->tv_sec = (a)->tv_sec - (b)->tv_sec; (c)->tv_usec = (a)->tv_usec = (b)->tv_usec;} while(0)
-#endif
 
 static void update(int fd) {
 	sendline(fd, "%d %d", CONTROL, REQ_DUMP_TRAFFIC);
@@ -229,7 +226,7 @@ static void redraw(void) {
 			attrset(A_DIM);
 
 		if(cumulative)
-			mvprintw(row, 0, "%-16s %10"PRIu64" %10.0f %10"PRIu64" %10.0f",
+			mvprintw(row, 0, "%-16s %10.0f %10.0f %10.0f %10.0f",
 					node->name, node->in_packets * pscale, node->in_bytes * bscale, node->out_packets * pscale, node->out_bytes * bscale);
 		else
 			mvprintw(row, 0, "%-16s %10.0f %10.0f %10.0f %10.0f",
