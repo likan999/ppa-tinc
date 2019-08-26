@@ -1,7 +1,7 @@
 /*
     process.h -- header file for process.c
-    Copyright (C) 1999-2002 Ivo Timmermans <itimmermans@bigfoot.com>,
-                  2000-2002 Guus Sliepen <guus@sliepen.warande.net>
+    Copyright (C) 1999-2004 Ivo Timmermans <ivo@tinc-vpn.org>,
+                  2000-2004 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,20 +17,19 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.h,v 1.1.2.10 2002/02/10 21:57:54 guus Exp $
+    $Id: process.h 1374 2004-03-21 14:21:22Z guus $
 */
 
 #ifndef __TINC_PROCESS_H__
 #define __TINC_PROCESS_H__
 
-#include "config.h"
-
-extern int do_detach;
+extern bool do_detach;
+extern bool sighup;
+extern bool sigalrm;
 
 extern void setup_signals(void);
-extern int execute_script(const char *);
-extern int detach(void);
-extern int kill_other(int);
-extern void cleanup_and_exit(int);
+extern bool execute_script(const char *, char **);
+extern bool detach(void);
+extern bool kill_other(int);
 
-#endif /* __TINC_PROCESS_H__ */
+#endif							/* __TINC_PROCESS_H__ */

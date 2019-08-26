@@ -1,7 +1,7 @@
 /*
     graph.c -- graph algorithms
-    Copyright (C) 2001-2002 Guus Sliepen <guus@sliepen.warande.net>,
-                  2001-2002 Ivo Timmermans <itimmermans@bigfoot.com>
+    Copyright (C) 2001-2004 Guus Sliepen <guus@tinc-vpn.org>,
+                  2001-2004 Ivo Timmermans <ivo@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: graph.c,v 1.1.2.11 2002/03/24 16:28:27 guus Exp $
+    $Id: graph.c 1374 2004-03-21 14:21:22Z guus $
 */
 
 /* We need to generate two trees from the graph:
@@ -44,27 +44,17 @@
    destination address and port of a node if possible.
 */
 
-#include "config.h"
+#include "system.h"
 
-#include <stdio.h>
-#include <syslog.h>
-#include "config.h"
-#include <string.h>
-#if defined(HAVE_FREEBSD) || defined(HAVE_OPENBSD)
- #include <sys/param.h>
-#endif
-#include <netinet/in.h>
-
-#include <avl_tree.h>
-#include <utils.h>
-
+#include "avl_tree.h"
+#include "connection.h"
+#include "device.h"
+#include "edge.h"
+#include "logger.h"
 #include "netutl.h"
 #include "node.h"
-#include "edge.h"
-#include "connection.h"
 #include "process.h"
-
-#include "system.h"
+#include "utils.h"
 
 /* Implementation of Kruskal's algorithm.
    Running time: O(EN)
@@ -73,75 +63,76 @@
 
 void mst_kruskal(void)
 {
-  avl_node_t *node, *next;
-  edge_t *e;
-  node_t *n;
-  connection_t *c;
-  int nodes = 0;
-  int safe_edges = 0;
-  int skipped;
+	avl_node_t *node, *next;
+	edge_t *e;
+	node_t *n;
+	connection_t *c;
+	int nodes = 0;
+	int safe_edges = 0;
+	bool skipped;
 
-  /* Clear MST status on connections */
+	cp();
+	
+	/* Clear MST status on connections */
 
-  for(node = connection_tree->head; node; node = node->next)
-    {
-      c = (connection_t *)node->data;
-      c->status.mst = 0;
-    }
+	for(node = connection_tree->head; node; node = node->next) {
+		c = node->data;
+		c->status.mst = false;
+	}
 
-  /* Do we have something to do at all? */
-  
-  if(!edge_weight_tree->head)
-    return;
+	/* Do we have something to do at all? */
 
-  if(debug_lvl >= DEBUG_SCARY_THINGS)
-    syslog(LOG_DEBUG, "Running Kruskal's algorithm:");
+	if(!edge_weight_tree->head)
+		return;
 
-  /* Clear visited status on nodes */
+	ifdebug(SCARY_THINGS) logger(LOG_DEBUG, "Running Kruskal's algorithm:");
 
-  for(node = node_tree->head; node; node = node->next)
-    {
-      n = (node_t *)node->data;
-      n->status.visited = 0;
-      nodes++;
-    }
+	/* Clear visited status on nodes */
 
-  /* Starting point */
-  
-  ((edge_t *)edge_weight_tree->head->data)->from.node->status.visited = 1;
+	for(node = node_tree->head; node; node = node->next) {
+		n = node->data;
+		n->status.visited = false;
+		nodes++;
+	}
 
-  /* Add safe edges */
+	/* Starting point */
 
-  for(skipped = 0, node = edge_weight_tree->head; node; node = next)
-    {
-      next = node->next;
-      e = (edge_t *)node->data;
+	((edge_t *) edge_weight_tree->head->data)->from->status.visited = true;
 
-      if(e->from.node->status.visited == e->to.node->status.visited)
-        {
-          skipped = 1;
-          continue;
-        }
+	/* Add safe edges */
 
-      e->from.node->status.visited = 1;
-      e->to.node->status.visited = 1;
-      if(e->connection)
-        e->connection->status.mst = 1;
+	for(skipped = false, node = edge_weight_tree->head; node; node = next) {
+		next = node->next;
+		e = node->data;
 
-      safe_edges++;
+		if(!e->reverse || e->from->status.visited == e->to->status.visited) {
+			skipped = true;
+			continue;
+		}
 
-      if(debug_lvl >= DEBUG_SCARY_THINGS)
-	syslog(LOG_DEBUG, " Adding edge %s - %s weight %d", e->from.node->name, e->to.node->name, e->weight);
+		e->from->status.visited = true;
+		e->to->status.visited = true;
 
-      if(skipped)
-        {
-          next = edge_weight_tree->head;
-          continue;
-        }
-    }
+		if(e->connection)
+			e->connection->status.mst = true;
 
-  if(debug_lvl >= DEBUG_SCARY_THINGS)
-    syslog(LOG_DEBUG, "Done, counted %d nodes and %d safe edges.", nodes, safe_edges);
+		if(e->reverse->connection)
+			e->reverse->connection->status.mst = true;
+
+		safe_edges++;
+
+		ifdebug(SCARY_THINGS) logger(LOG_DEBUG, " Adding edge %s - %s weight %d", e->from->name,
+				   e->to->name, e->weight);
+
+		if(skipped) {
+			skipped = false;
+			next = edge_weight_tree->head;
+			continue;
+		}
+	}
+
+	ifdebug(SCARY_THINGS) logger(LOG_DEBUG, "Done, counted %d nodes and %d safe edges.", nodes,
+			   safe_edges);
 }
 
 /* Implementation of a simple breadth-first search algorithm.
@@ -150,141 +141,165 @@ void mst_kruskal(void)
 
 void sssp_bfs(void)
 {
-  avl_node_t *node, *from, *next, *to;
-  edge_t *e;
-  node_t *n;
-  halfconnection_t to_hc, from_hc;
-  avl_tree_t *todo_tree;
-  int indirect;
-  char *name;
+	avl_node_t *node, *from, *next, *to;
+	edge_t *e;
+	node_t *n;
+	avl_tree_t *todo_tree;
+	bool indirect;
+	char *name;
+	char *address, *port;
+	char *envp[7];
+	int i;
 
-  todo_tree = avl_alloc_tree(NULL, NULL);
+	cp();
 
-  /* Clear visited status on nodes */
+	todo_tree = avl_alloc_tree(NULL, NULL);
 
-  for(node = node_tree->head; node; node = node->next)
-    {
-      n = (node_t *)node->data;
-      n->status.visited = 0;
-      n->status.indirect = 1;
-    }
+	/* Clear visited status on nodes */
 
-  /* Begin with myself */
-
-  myself->status.visited = 1;
-  myself->status.indirect = 0;
-  myself->nexthop = myself;
-  myself->via = myself;
-  node = avl_alloc_node();
-  node->data = myself;
-  avl_insert_top(todo_tree, node);
-
-  /* Loop while todo_tree is filled */
-
-  while(todo_tree->head)
-    {
-      for(from = todo_tree->head; from; from = next)             /* "from" is the node from which we start */
-        {
-          next = from->next;
-          n = (node_t *)from->data;
-
-          for(to = n->edge_tree->head; to; to = to->next)        /* "to" is the edge connected to "from" */
-            {
-              e = (edge_t *)to->data;
-
-              if(e->from.node == n)                              /* "from_hc" is the halfconnection with .node == from */
-                to_hc = e->to, from_hc = e->from;
-              else
-                to_hc = e->from, from_hc = e->to;
-
-              /* Situation:
-
-	        	  /
-	        	 /
-		 ------(n)from_hc-----to_hc
-                	 \
-                	  \
-
-                 n->address is set to the to_hc.udpaddress of the edge left of n.
-		 We are currently examining the edge right of n:
-
-                 - If from_hc.udpaddress != n->address, then to_hc.node is probably
-		   not reachable for the nodes left of n. We do as if the indirectdata
-		   flag is set on edge e.
-		 - If edge e provides for better reachability of to_hc.node, update
-		   to_hc.node and (re)add it to the todo_tree to (re)examine the reachability
-		   of nodes behind it.
-	      */
-
-              indirect = n->status.indirect || e->options & OPTION_INDIRECT || ((n != myself) && sockaddrcmp(&n->address, &from_hc.udpaddress));
-
-              if(to_hc.node->status.visited && (!to_hc.node->status.indirect || indirect))
-	        continue;
-
-              to_hc.node->status.visited = 1;
-              to_hc.node->status.indirect = indirect;
-              to_hc.node->nexthop = (n->nexthop == myself) ? to_hc.node : n->nexthop;
-              to_hc.node->via = indirect ? n->via : to_hc.node;
-	      to_hc.node->options = e->options;
-              if(sockaddrcmp(&to_hc.node->address, &to_hc.udpaddress))
-	      {
-                node = avl_unlink(node_udp_tree, to_hc.node);
-                to_hc.node->address = to_hc.udpaddress;
-		if(to_hc.node->hostname)
-		  free(to_hc.node->hostname);
-		to_hc.node->hostname = sockaddr2hostname(&to_hc.udpaddress);
-                avl_insert_node(node_udp_tree, node);
-	      }
-              node = avl_alloc_node();
-              node->data = to_hc.node;
-              avl_insert_before(todo_tree, from, node);
-            }
-
-          avl_delete_node(todo_tree, from);
-        }
-    }
-
-  avl_free_tree(todo_tree);
-  
-  /* Check reachability status. */
-
-  for(node = node_tree->head; node; node = next)
-    {
-      next = node->next;
-      n = (node_t *)node->data;
-
-      if(n->status.visited)
-      {
-        if(!n->status.reachable)
-	{
-          if(debug_lvl >= DEBUG_TRAFFIC)
-            syslog(LOG_DEBUG, _("Node %s (%s) became reachable"), n->name, n->hostname);
-          n->status.reachable = 1;
-	  asprintf(&name, "hosts/%s-up", n->name);
-	  execute_script(name);
-	  free(name);
+	for(node = node_tree->head; node; node = node->next) {
+		n = node->data;
+		n->status.visited = false;
+		n->status.indirect = true;
 	}
-      }
-      else
-      {
-        if(n->status.reachable)
-	{
-          if(debug_lvl >= DEBUG_TRAFFIC)
-            syslog(LOG_DEBUG, _("Node %s (%s) became unreachable"), n->name, n->hostname);
-          n->status.reachable = 0;
-	  n->status.validkey = 0;
-	  n->status.waitingforkey = 0;
-	  n->sent_seqno = 0;
-	  asprintf(&name, "hosts/%s-down", n->name);
-	  execute_script(name);
-	  free(name);
+
+	/* Begin with myself */
+
+	myself->status.visited = true;
+	myself->status.indirect = false;
+	myself->nexthop = myself;
+	myself->via = myself;
+	node = avl_alloc_node();
+	node->data = myself;
+	avl_insert_top(todo_tree, node);
+
+	/* Loop while todo_tree is filled */
+
+	while(todo_tree->head) {
+		for(from = todo_tree->head; from; from = next) {	/* "from" is the node from which we start */
+			next = from->next;
+			n = from->data;
+
+			for(to = n->edge_tree->head; to; to = to->next) {	/* "to" is the edge connected to "from" */
+				e = to->data;
+
+				if(!e->reverse)
+					continue;
+
+				/* Situation:
+
+				           /
+				          /
+				   ----->(n)---e-->(e->to)
+				          \
+				           \
+
+				   Where e is an edge, (n) and (e->to) are nodes.
+				   n->address is set to the e->address of the edge left of n to n.
+				   We are currently examining the edge e right of n from n:
+
+				   - If e->reverse->address != n->address, then e->to is probably
+				     not reachable for the nodes left of n. We do as if the indirectdata
+				     flag is set on edge e.
+				   - If edge e provides for better reachability of e->to, update
+				     e->to and (re)add it to the todo_tree to (re)examine the reachability
+				     of nodes behind it.
+				 */
+
+				indirect = n->status.indirect || e->options & OPTION_INDIRECT
+					|| ((n != myself) && sockaddrcmp(&n->address, &e->reverse->address));
+
+				if(e->to->status.visited
+				   && (!e->to->status.indirect || indirect))
+					continue;
+
+				e->to->status.visited = true;
+				e->to->status.indirect = indirect;
+				e->to->nexthop = (n->nexthop == myself) ? e->to : n->nexthop;
+				e->to->via = indirect ? n->via : e->to;
+				e->to->options = e->options;
+
+				if(sockaddrcmp(&e->to->address, &e->address)) {
+					node = avl_unlink(node_udp_tree, e->to);
+					sockaddrfree(&e->to->address);
+					sockaddrcpy(&e->to->address, &e->address);
+
+					if(e->to->hostname)
+						free(e->to->hostname);
+
+					e->to->hostname = sockaddr2hostname(&e->to->address);
+					avl_insert_node(node_udp_tree, node);
+
+					if(e->to->options & OPTION_PMTU_DISCOVERY) {
+						e->to->mtuprobes = 0;
+						e->to->minmtu = 0;
+						e->to->maxmtu = MTU;
+						if(e->to->status.validkey)
+							send_mtu_probe(e->to);
+					}
+				}
+
+				node = avl_alloc_node();
+				node->data = e->to;
+				avl_insert_before(todo_tree, from, node);
+			}
+
+			avl_delete_node(todo_tree, from);
+		}
 	}
-      }
-    }
+
+	avl_free_tree(todo_tree);
+
+	/* Check reachability status. */
+
+	for(node = node_tree->head; node; node = next) {
+		next = node->next;
+		n = node->data;
+
+		if(n->status.visited != n->status.reachable) {
+			n->status.reachable = !n->status.reachable;
+
+			if(n->status.reachable) {
+				ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Node %s (%s) became reachable"),
+					   n->name, n->hostname);
+			} else {
+				ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Node %s (%s) became unreachable"),
+					   n->name, n->hostname);
+			}
+
+			n->status.validkey = false;
+			n->status.waitingforkey = false;
+
+			n->maxmtu = MTU;
+			n->minmtu = 0;
+			n->mtuprobes = 0;
+
+			asprintf(&envp[0], "NETNAME=%s", netname ? : "");
+			asprintf(&envp[1], "DEVICE=%s", device ? : "");
+			asprintf(&envp[2], "INTERFACE=%s", iface ? : "");
+			asprintf(&envp[3], "NODE=%s", n->name);
+			sockaddr2str(&n->address, &address, &port);
+			asprintf(&envp[4], "REMOTEADDRESS=%s", address);
+			asprintf(&envp[5], "REMOTEPORT=%s", port);
+			envp[6] = NULL;
+
+			asprintf(&name,
+					 n->status.reachable ? "hosts/%s-up" : "hosts/%s-down",
+					 n->name);
+			execute_script(name, envp);
+
+			free(name);
+			free(address);
+			free(port);
+
+			for(i = 0; i < 7; i++)
+				free(envp[i]);
+		}
+	}
 }
 
 void graph(void)
 {
-  mst_kruskal();
-  sssp_bfs();
+	mst_kruskal();
+	sssp_bfs();
 }

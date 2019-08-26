@@ -1,7 +1,7 @@
 /*
     meta.h -- header for meta.c
-    Copyright (C) 2000-2002 Guus Sliepen <guus@sliepen.warande.net>,
-                  2000-2002 Ivo Timmermans <itimmermans@bigfoot.com>
+    Copyright (C) 2000-2004 Guus Sliepen <guus@tinc-vpn.org>,
+                  2000-2004 Ivo Timmermans <ivo@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: meta.h,v 1.1.2.6 2002/02/10 21:57:54 guus Exp $
+    $Id: meta.h 1374 2004-03-21 14:21:22Z guus $
 */
 
 #ifndef __TINC_META_H__
@@ -25,8 +25,8 @@
 
 #include "connection.h"
 
-extern int send_meta(connection_t *, const char *, int);
-extern int broadcast_meta(connection_t *, const char *, int);
-extern int receive_meta(connection_t *);
+extern bool send_meta(struct connection_t *, const char *, int);
+extern void broadcast_meta(struct connection_t *, const char *, int);
+extern bool receive_meta(struct connection_t *);
 
-#endif /* __TINC_META_H__ */
+#endif							/* __TINC_META_H__ */

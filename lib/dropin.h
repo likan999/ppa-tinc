@@ -1,7 +1,7 @@
 /*
     dropin.h -- header file for dropin.c
-    Copyright (C) 2000,2001 Ivo Timmermans <itimmermans@bigfoot.com>,
-                  2000,2001 Guus Sliepen <guus@sliepen.warande.net>
+    Copyright (C) 2000-2004 Ivo Timmermans <ivo@tinc-vpn.org>,
+                  2000-2004 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,22 +17,38 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: dropin.h,v 1.1.2.6 2002/02/10 21:57:51 guus Exp $
+    $Id: dropin.h 1374 2004-03-21 14:21:22Z guus $
 */
 
 #ifndef __DROPIN_H__
 #define __DROPIN_H__
+
+#include "fake-getaddrinfo.h"
+#include "fake-getnameinfo.h"
 
 #ifndef HAVE_DAEMON
 extern int daemon(int, int);
 #endif
 
 #ifndef HAVE_GET_CURRENT_DIR_NAME
-extern char* get_current_dir_name(void);
+extern char *get_current_dir_name(void);
 #endif
 
 #ifndef HAVE_ASPRINTF
 extern int asprintf(char **, const char *, ...);
 #endif
 
-#endif /* __DROPIN_H__ */
+#ifndef HAVE_GETNAMEINFO
+extern int getnameinfo(const struct sockaddr *sa, size_t salen, char *host,
+					   size_t hostlen, char *serv, size_t servlen, int flags);
+#endif
+
+#ifndef HAVE_GETTIMEOFDAY
+extern int gettimeofday(struct timeval *, void *);
+#endif
+
+#ifndef HAVE_RANDOM
+extern long int random(void);
+#endif
+
+#endif							/* __DROPIN_H__ */

@@ -1,7 +1,7 @@
 /*
     graph.h -- header for graph.c
-    Copyright (C) 2001-2002 Guus Sliepen <guus@sliepen.warande.net>,
-                  2001-2002 Ivo Timmermans <itimmermans@bigfoot.com>
+    Copyright (C) 2001-2004 Guus Sliepen <guus@tinc-vpn.org>,
+                  2001-2004 Ivo Timmermans <ivo@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,9 +17,14 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: graph.h,v 1.1.2.3 2002/02/10 21:57:54 guus Exp $
+    $Id: graph.h 1374 2004-03-21 14:21:22Z guus $
 */
+
+#ifndef __TINC_GRAPH_H__
+#define __TINC_GRAPH_H__
 
 extern void graph(void);
 extern void mst_kruskal(void);
 extern void sssp_bfs(void);
+
+#endif /* __TINC_GRAPH_H__ */

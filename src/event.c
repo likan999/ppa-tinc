@@ -1,7 +1,7 @@
 /*
     event.c -- event queue
-    Copyright (C) 2002 Guus Sliepen <guus@sliepen.warande.net>,
-                  2002 Ivo Timmermans <itimmermans@bigfoot.com>
+    Copyright (C) 2002-2004 Guus Sliepen <guus@tinc-vpn.org>,
+                  2002-2004 Ivo Timmermans <ivo@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,94 +17,89 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: event.c,v 1.1.4.2 2002/03/01 14:09:30 guus Exp $
+    $Id: event.c 1374 2004-03-21 14:21:22Z guus $
 */
 
-#include "config.h"
-
-#include <stdlib.h>
-#include <xalloc.h>
-#include <string.h>
-#include <utils.h>
-#include <avl_tree.h>
-#include <time.h>
-
-#include "event.h"
-
 #include "system.h"
+
+#include "avl_tree.h"
+#include "event.h"
+#include "utils.h"
+#include "xalloc.h"
 
 avl_tree_t *event_tree;
 extern time_t now;
 
 int id;
 
-int event_compare(event_t *a, event_t *b)
+static int event_compare(const event_t *a, const event_t *b)
 {
-  if(a->time > b->time)
-    return 1;
-  if(a->time < b->time)
-    return -1;
-  return a->id - b->id; 
+	if(a->time > b->time)
+		return 1;
+
+	if(a->time < b->time)
+		return -1;
+
+	return a->id - b->id;
 }
 
 void init_events(void)
 {
-cp
-  event_tree = avl_alloc_tree((avl_compare_t)event_compare, NULL);
-cp
+	cp();
+
+	event_tree = avl_alloc_tree((avl_compare_t) event_compare, NULL);
 }
 
 void exit_events(void)
 {
-cp
-  avl_delete_tree(event_tree);
-cp
+	cp();
+
+	avl_delete_tree(event_tree);
 }
 
 event_t *new_event(void)
 {
-  event_t *event;
-cp
-  event = (event_t *)xmalloc_and_zero(sizeof(*event));
-cp
-  return event;
+	cp();
+
+	return xmalloc_and_zero(sizeof(event_t));
 }
 
 void free_event(event_t *event)
 {
-cp
-  free(event);
-cp
+	cp();
+
+	free(event);
 }
 
 void event_add(event_t *event)
 {
-cp
-  event->id = ++id;
-  avl_insert(event_tree, event);
-cp
+	cp();
+
+	event->id = ++id;
+	avl_insert(event_tree, event);
 }
 
 void event_del(event_t *event)
 {
-cp
-  avl_delete(event_tree, event);
-cp
+	cp();
+
+	avl_delete(event_tree, event);
 }
 
 event_t *get_expired_event(void)
 {
-  event_t *event;
-cp
-  if(event_tree->head)
-  {
-    event = (event_t *)event_tree->head->data;
-    if(event->time < now)
-    {
-      avl_delete(event_tree, event);
-      return event;
-    }
-  }
-cp  
-  return NULL;
+	event_t *event;
+
+	cp();
+
+	if(event_tree->head) {
+		event = event_tree->head->data;
+
+		if(event->time < now) {
+			avl_delete(event_tree, event);
+			return event;
+		}
+	}
+
+	return NULL;
 }

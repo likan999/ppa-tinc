@@ -1,6 +1,7 @@
 /*
-    system.h -- header for locale settings
-    Copyright (C) 1998,99,2000 Ivo Timmermans <itimmermans@bigfoot.com.com>
+    system.h -- system headers
+    Copyright (C) 1998-2004 Ivo Timmermans <ivo@tinc-vpn.org>
+                  2003-2004 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -20,33 +21,30 @@
 #ifndef __TINC_SYSTEM_H__
 #define __TINC_SYSTEM_H__
 
-/* Take care of NLS matters. -- from fileutils 4.0 */
+#include "config.h"
 
-#if HAVE_LOCALE_H
-# include <locale.h>
-#endif
-#if !HAVE_SETLOCALE
-# define setlocale(Category, Locale) /* empty */
+#include "have.h"
+
+#ifndef HAVE_STDBOOL_H
+typedef int bool;
+#define true 1
+#define false 0
 #endif
 
-#if ENABLE_NLS
-# include <libintl.h>
-# define _(Text) gettext (Text)
-#else
-# undef bindtextdomain
-# define bindtextdomain(Domain, Directory) /* empty */
-# undef textdomain
-# define textdomain(Domain) /* empty */
-# define _(Text) Text
-#endif
-#define N_(Text) Text
+/* Include localisation support */
+
+#include "gettext.h"
 
 #ifndef HAVE_STRSIGNAL
 # define strsignal(p) ""
 #endif
 
 /* Other functions */
-#include <dropin.h>
+
+#include "dropin.h"
+
+#ifndef HAVE_SOCKLEN_T
+typedef int socklen_t;
+#endif
 
 #endif /* __TINC_SYSTEM_H__ */
-

@@ -19,13 +19,14 @@
     Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111, USA.
 */
 
+#ifndef HAVE_MINGW
 /* read_pid
  *
  * Reads the specified pidfile and returns the read pid.
  * 0 is returned if either there's no pidfile, it's empty
  * or no pid can be read.
  */
-int read_pid (char *pidfile);
+pid_t read_pid (char *pidfile);
 
 /* check_pid
  *
@@ -33,14 +34,14 @@ int read_pid (char *pidfile);
  * table (using /proc) to determine if the process already exists. If
  * so 1 is returned, otherwise 0.
  */
-int check_pid (char *pidfile);
+pid_t check_pid (char *pidfile);
 
 /* write_pid
  *
  * Writes the pid to the specified file. If that fails 0 is
  * returned, otherwise the pid.
  */
-int write_pid (char *pidfile);
+pid_t write_pid (char *pidfile);
 
 /* remove_pid
  *
@@ -48,3 +49,4 @@ int write_pid (char *pidfile);
  * is returned
  */
 int remove_pid (char *pidfile);
+#endif
