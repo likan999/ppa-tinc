@@ -1,3 +1,51 @@
+Version 1.1pre9                                        September 08 2013
+------------------------------------------------------------------------
+
+Guus Sliepen (40):
+      Stop using EXTRA_DIST in src/Makefile.am.
+      Remove texi2html rule in docs/Makefile.
+      Create UNIX socket at the same time as the PID file is created.
+      Don't force a .bat extension for scripts under Windows.
+      Fix order of tincd's initialization.
+      Remove broadcast of KEY_CHANGED message during tinc's initialization.
+      Bind outgoing sockets again.
+      Resolve the local host name before generating the invitation file.
+      Use our own infrastructure for finding out the local node's externally visible host name.
+      Let a server explicitly send a notification when the invitation protocol succeeded.
+      Ensure the invitation filenames do not reveal the secret cookie.
+      Execute scripts when invitations are created or accepted.
+      Use PATHEXT when checking for the presence of scripts on Windows.
+      Tell invited node about Mode and Broadcast settings.
+      Call WSAStartup() in main().
+      When generating invitations, handle any order of Port and Adress statements.
+      Add an option to test datagram SPTPS with packet loss.
+      Fix CTR mode.
+      Fix the replay window in SPTPS.
+      Allow testing the replay window with sptps_test.
+      Start of a test suite.
+      Some shells set $_ to an absolute path.
+      Make sptps_test more easy to work with.
+      Small fixes for tests.
+      Add test for import, export and exchange commands.
+      Fix tincd logfile location when running tests.
+      Clean up leftover tincd and sptps_test processes.
+      Send a RELOAD to a running tincd when a new invitation key has been generated.
+      Slightly relax the connection rate limit for a single address.
+      Also test whether tinc daemons can connect to each other after import/export.
+      Add a test for invite and join commands.
+      Exit value 1 instead of a random non-zero value.
+      Fix multicast device.
+      Add two more test scripts.
+      Don't return zero-length packets when receiving multicast loopback packets.
+      Test running ping through two tinc daemons.
+      Automake doesn't like info files being mentioned in CLEANFILES.
+      Make sure test scripts end up in the tarball.
+      Don't try to mkdir(CONFDIR) if --config is used.
+      Releasing 1.1pre9.
+
+Etienne Dechamps (1):
+      Fix broken build with --with-openssl, --with-libgcrypt.
+
 Version 1.1pre8                                           August 13 2013
 ------------------------------------------------------------------------
 

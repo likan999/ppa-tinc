@@ -5,7 +5,7 @@ START-INFO-DIR-ENTRY
 * tinc: (tinc).              The tinc Manual.
 END-INFO-DIR-ENTRY
 
-This is the info manual for tinc version 1.1pre7, a Virtual Private
+This is the info manual for tinc version 1.1pre9, a Virtual Private
 Network daemon.
 
    Copyright (C) 1998-2013 Ivo Timmermans, Guus Sliepen
@@ -1242,7 +1242,7 @@ File: tinc.info,  Node: Scripts,  Next: How to configure,  Prev: Host configurat
 
 Apart from reading the server and host configuration files, tinc can
 also run scripts at certain moments.  Under Windows (not Cygwin), the
-scripts should have the extension .bat.
+scripts should have the extension '.bat' or '.cmd'.
 
 '/etc/tinc/NETNAME/tinc-up'
      This is the most important script.  If it is present it will be
@@ -1276,10 +1276,17 @@ scripts should have the extension .bat.
 '/etc/tinc/NETNAME/subnet-down'
      This script is started when a Subnet becomes unreachable.
 
+'/etc/tinc/NETNAME/invitation-created'
+     This script is started when a new invitation has been created.
+
+'/etc/tinc/NETNAME/invitation-accepted'
+     This script is started when an invitation has been used.
+
 The scripts are started without command line arguments, but can make use
 of certain environment variables.  Under UNIX like operating systems the
 names of environment variables must be preceded by a $ in scripts.
-Under Windows, in '.bat' files, they have to be put between % signs.
+Under Windows, in '.bat' or '.cmd' files, they have to be put between %
+signs.
 
 'NETNAME'
      If a netname was specified, this environment variable contains it.
@@ -1308,6 +1315,21 @@ Under Windows, in '.bat' files, they have to be put between % signs.
 
 'SUBNET'
      When a subnet becomes (un)reachable, this is set to the subnet.
+
+'WEIGHT'
+     When a subnet becomes (un)reachable, this is set to the subnet
+     weight.
+
+'INVITATION_FILE'
+     When the 'invitation-created' script is called, this is set to the
+     file where the invitation details will be stored.
+
+'INVITATION_URL'
+     When the 'invitation-created' script is called, this is set to the
+     invitation URL that has been created.
+
+Do not forget that under UNIX operating systems, you have to make the
+scripts executable, using the command 'chmod a+x script'.
 
 
 File: tinc.info,  Node: How to configure,  Prev: Scripts,  Up: Configuration files
@@ -3043,7 +3065,7 @@ Concept Index
 * DEL_SUBNET:                            The meta-protocol.   (line  46)
 * Device:                                Main configuration variables.
                                                               (line  80)
-* DEVICE:                                Scripts.             (line  53)
+* DEVICE:                                Scripts.             (line  60)
 * device files:                          Device files.        (line   6)
 * DeviceType:                            Main configuration variables.
                                                               (line  87)
@@ -3058,7 +3080,7 @@ Concept Index
 * encapsulating:                         The UDP tunnel.      (line  30)
 * encryption:                            Encryption of network packets.
                                                               (line   6)
-* environment variables:                 Scripts.             (line  42)
+* environment variables:                 Scripts.             (line  48)
 * example:                               Example configuration.
                                                               (line   6)
 * exec:                                  Main configuration variables.
@@ -3080,7 +3102,9 @@ Concept Index
                                                               (line  38)
 * Interface:                             Main configuration variables.
                                                               (line 201)
-* INTERFACE:                             Scripts.             (line  56)
+* INTERFACE:                             Scripts.             (line  63)
+* INVITATION_FILE:                       Scripts.             (line  86)
+* INVITATION_URL:                        Scripts.             (line  90)
 * IRC:                                   Contact information. (line   9)
 * KeyExpire:                             Main configuration variables.
                                                               (line 251)
@@ -3112,15 +3136,15 @@ Concept Index
 * multiple networks:                     Multiple networks.   (line   6)
 * Name:                                  Main configuration variables.
                                                               (line 268)
-* NAME:                                  Scripts.             (line  50)
+* NAME:                                  Scripts.             (line  57)
 * netmask:                               Network interfaces.  (line  39)
 * netname:                               Multiple networks.   (line   6)
-* NETNAME:                               Scripts.             (line  47)
+* NETNAME:                               Scripts.             (line  54)
 * NETNAME <1>:                           tinc environment variables.
                                                               (line   6)
 * Network Administrators Guide:          Configuration introduction.
                                                               (line  15)
-* NODE:                                  Scripts.             (line  60)
+* NODE:                                  Scripts.             (line  67)
 * OpenSSL:                               OpenSSL.             (line   6)
 * options:                               Runtime options.     (line   9)
 * PEM format:                            Host configuration variables.
@@ -3158,8 +3182,8 @@ Concept Index
 * raw_socket:                            Main configuration variables.
                                                               (line  99)
 * release:                               Supported platforms. (line  14)
-* REMOTEADDRESS:                         Scripts.             (line  65)
-* REMOTEPORT:                            Scripts.             (line  68)
+* REMOTEADDRESS:                         Scripts.             (line  72)
+* REMOTEPORT:                            Scripts.             (line  75)
 * ReplayWindow:                          Main configuration variables.
                                                               (line 333)
 * requirements:                          Libraries.           (line   6)
@@ -3182,7 +3206,7 @@ Concept Index
                                                               (line 344)
 * Subnet:                                Host configuration variables.
                                                               (line  77)
-* SUBNET:                                Scripts.             (line  72)
+* SUBNET:                                Scripts.             (line  79)
 * SVPN:                                  Security.            (line  11)
 * switch:                                Main configuration variables.
                                                               (line 235)
@@ -3222,6 +3246,7 @@ Concept Index
                                                               (line   6)
 * vpnd:                                  tinc.                (line   6)
 * website:                               Contact information. (line   6)
+* WEIGHT:                                Scripts.             (line  82)
 * zlib:                                  zlib.                (line   6)
 
 
@@ -3263,38 +3288,38 @@ Node: Configuration files27607
 Node: Main configuration variables29135
 Node: Host configuration variables45893
 Node: Scripts51364
-Node: How to configure54033
-Node: Network interfaces58509
-Node: Example configuration60888
-Node: Running tinc65981
-Node: Runtime options66568
-Node: Signals69428
-Node: Debug levels70277
-Node: Solving problems71213
-Node: Error messages72639
-Node: Sending bug reports76956
-Node: Controlling tinc77903
-Node: tinc runtime options78280
-Node: tinc environment variables78967
-Node: tinc commands79296
-Node: tinc examples84406
-Node: tinc top84969
-Node: Technical information86554
-Node: The connection86789
-Node: The UDP tunnel87101
-Node: The meta-connection90146
-Node: The meta-protocol91604
-Node: Security96587
-Node: Legacy authentication protocol97924
-Node: Simple Peer-to-Peer Security102541
-Node: Encryption of network packets108201
-Node: Security issues110830
-Node: Platform specific information112565
-Node: Interface configuration112793
-Node: Routes115234
-Node: About us117145
-Node: Contact information117320
-Node: Authors117722
-Node: Concept Index118124
+Node: How to configure54765
+Node: Network interfaces59241
+Node: Example configuration61620
+Node: Running tinc66713
+Node: Runtime options67300
+Node: Signals70160
+Node: Debug levels71009
+Node: Solving problems71945
+Node: Error messages73371
+Node: Sending bug reports77688
+Node: Controlling tinc78635
+Node: tinc runtime options79012
+Node: tinc environment variables79699
+Node: tinc commands80028
+Node: tinc examples85138
+Node: tinc top85701
+Node: Technical information87286
+Node: The connection87521
+Node: The UDP tunnel87833
+Node: The meta-connection90878
+Node: The meta-protocol92336
+Node: Security97319
+Node: Legacy authentication protocol98656
+Node: Simple Peer-to-Peer Security103273
+Node: Encryption of network packets108933
+Node: Security issues111562
+Node: Platform specific information113297
+Node: Interface configuration113525
+Node: Routes115966
+Node: About us117877
+Node: Contact information118052
+Node: Authors118454
+Node: Concept Index118856
 
 End Tag Table

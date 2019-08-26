@@ -1346,7 +1346,7 @@ Setting this options also implicitly sets IndirectData.
 @cindex scripts
 Apart from reading the server and host configuration files,
 tinc can also run scripts at certain moments.
-Under Windows (not Cygwin), the scripts should have the extension .bat.
+Under Windows (not Cygwin), the scripts should have the extension @file{.bat} or @file{.cmd}.
 
 @table @file
 @cindex tinc-up
@@ -1380,13 +1380,20 @@ The Subnet and the node it belongs to are passed in environment variables.
 
 @item @value{sysconfdir}/tinc/@var{netname}/subnet-down
 This script is started when a Subnet becomes unreachable.
+
+@item @value{sysconfdir}/tinc/@var{netname}/invitation-created
+This script is started when a new invitation has been created.
+
+@item @value{sysconfdir}/tinc/@var{netname}/invitation-accepted
+This script is started when an invitation has been used.
+
 @end table
 
 @cindex environment variables
 The scripts are started without command line arguments,
 but can make use of certain environment variables.
 Under UNIX like operating systems the names of environment variables must be preceded by a $ in scripts.
-Under Windows, in @file{.bat} files, they have to be put between % signs.
+Under Windows, in @file{.bat} or @file{.cmd} files, they have to be put between % signs.
 
 @table @env
 @cindex NETNAME
@@ -1424,7 +1431,23 @@ this is set to the port number it uses for communication with other tinc daemons
 @item SUBNET
 When a subnet becomes (un)reachable, this is set to the subnet.
 
+@cindex WEIGHT
+@item WEIGHT
+When a subnet becomes (un)reachable, this is set to the subnet weight.
+
+@cindex INVITATION_FILE
+@item INVITATION_FILE
+When the @file{invitation-created} script is called,
+this is set to the file where the invitation details will be stored.
+
+@cindex INVITATION_URL
+@item INVITATION_URL
+When the @file{invitation-created} script is called,
+this is set to the invitation URL that has been created.
 @end table
+
+Do not forget that under UNIX operating systems,
+you have to make the scripts executable, using the command @samp{chmod a+x script}.
 
 
 @c ==================================================================

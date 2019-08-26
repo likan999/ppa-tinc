@@ -27,18 +27,55 @@
 #include "names.h"
 #include "netutl.h"
 #include "rsagen.h"
+#include "script.h"
 #include "sptps.h"
 #include "tincctl.h"
 #include "utils.h"
 #include "xalloc.h"
 
-#ifdef HAVE_MINGW
-#define SCRIPTEXTENSION ".bat"
-#else
-#define SCRIPTEXTENSION ""
-#endif
-
 int addressfamily = AF_UNSPEC;
+
+static void scan_for_hostname(const char *filename, char **hostname, char **port) {
+	if(!filename || (*hostname && *port))
+		return;
+
+	FILE *f = fopen(filename, "r");
+	if(!f)
+		return;
+
+	while(fgets(line, sizeof line, f)) {
+		if(!rstrip(line))
+			continue;
+		char *p = line, *q;
+		p += strcspn(p, "\t =");
+		if(!*p)
+			continue;
+		q = p + strspn(p, "\t ");
+		if(*q == '=')
+			q += 1 + strspn(q + 1, "\t ");
+		*p = 0;
+		p = q + strcspn(q, "\t ");
+		if(*p)
+			*p++ = 0;
+		p += strspn(p, "\t ");
+		p[strcspn(p, "\t ")] = 0;
+
+		if(!*port && !strcasecmp(line, "Port")) {
+			*port = xstrdup(q);
+		} else if(!*hostname && !strcasecmp(line, "Address")) {
+			*hostname = xstrdup(q);
+			if(*p) {
+				free(*port);
+				*port = xstrdup(p);
+			}
+		}
+
+		if(*hostname && *port)
+			break;
+	}
+
+	fclose(f);
+}
 
 char *get_my_hostname() {
 	char *hostname = NULL;
@@ -50,39 +87,8 @@ char *get_my_hostname() {
 	// Use first Address statement in own host config file
 	if(check_id(name)) {
 		xasprintf(&filename, "%s" SLASH "hosts" SLASH "%s", confbase, name);
-		FILE *f = fopen(filename, "r");
-		if(f) {
-			while(fgets(line, sizeof line, f)) {
-				if(!rstrip(line))
-					continue;
-				char *p = line, *q;
-				p += strcspn(p, "\t =");
-				if(!*p)
-					continue;
-				q = p + strspn(p, "\t ");
-				if(*q == '=')
-					q += 1 + strspn(q + 1, "\t ");
-				*p = 0;
-				p = q + strcspn(q, "\t ");
-				if(*p)
-					*p++ = 0;
-				p += strspn(p, "\t ");
-				p[strcspn(p, "\t ")] = 0;
-				if(!port && !strcasecmp(line, "Port")) {
-					port = xstrdup(q);
-					continue;
-				}
-				if(strcasecmp(line, "Address"))
-					continue;
-				hostname = xstrdup(q);
-				if(*p) {
-					free(port);
-					port = xstrdup(p);
-				}
-				break;
-			}
-			fclose(f);
-		}
+		scan_for_hostname(filename, &hostname, &port);
+		scan_for_hostname(tinc_conf, &hostname, &port);
 	}
 
 	if(hostname)
@@ -90,12 +96,14 @@ char *get_my_hostname() {
 
 	// If that doesn't work, guess externally visible hostname
 	fprintf(stderr, "Trying to discover externally visible hostname...\n");
-	struct addrinfo *ai = str2addrinfo("ifconfig.me", "80", SOCK_STREAM);
-	static const char request[] = "GET /host HTTP/1.0\r\n\r\n";
-	if(ai) {
-		int s = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
+	struct addrinfo *ai = str2addrinfo("tinc-vpn.org", "80", SOCK_STREAM);
+	struct addrinfo *aip = ai;
+	static const char request[] = "GET http://tinc-vpn.org/host.cgi HTTP/1.0\r\n\r\n";
+
+	while(aip) {
+		int s = socket(aip->ai_family, aip->ai_socktype, aip->ai_protocol);
 		if(s >= 0) {
-			if(connect(s, ai->ai_addr, ai->ai_addrlen)) {
+			if(connect(s, aip->ai_addr, aip->ai_addrlen)) {
 				closesocket(s);
 				s = -1;
 			}
@@ -112,14 +120,20 @@ char *get_my_hostname() {
 					hostname = xstrdup(p + 1);
 			}
 			closesocket(s);
+			if(hostname)
+				break;
 		}
-		freeaddrinfo(ai);
+		aip = aip->ai_next;
+		continue;
 	}
+
+	if(ai)
+		freeaddrinfo(ai);
 
 	// Check that the hostname is reasonable
 	if(hostname) {
 		for(char *p = hostname; *p; p++) {
-			if(isalnum(*p) || *p == '-' || *p == '.')
+			if(isalnum(*p) || *p == '-' || *p == '.' || *p == ':')
 				continue;
 			// If not, forget it.
 			free(hostname);
@@ -326,12 +340,17 @@ int cmd_invite(int argc, char *argv[]) {
 		}
 		chmod(filename, 0600);
 		ecdsa_write_pem_private_key(key, f);
+		fclose(f);
+
+		if(connect_tincd(false))
+			sendline(fd, "%d %d", CONTROL, REQ_RELOAD);
 	} else {
 		key = ecdsa_read_pem_private_key(f);
+		fclose(f);
 		if(!key)
 			fprintf(stderr, "Could not read private key from %s\n", filename);
 	}
-	fclose(f);
+
 	free(filename);
 	if(!key)
 		return 1;
@@ -347,37 +366,76 @@ int cmd_invite(int argc, char *argv[]) {
 	// Create a random cookie for this invitation.
 	char cookie[25];
 	randomize(cookie, 18);
+
+	// Create a filename that doesn't reveal the cookie itself
+	char buf[18 + strlen(fingerprint)];
+	char cookiehash[25];
+	memcpy(buf, cookie, 18);
+	memcpy(buf + 18, fingerprint, sizeof buf - 18);
+	digest_create(digest, buf, sizeof buf, cookiehash);
+	b64encode_urlsafe(cookiehash, cookiehash, 18);
+
 	b64encode_urlsafe(cookie, cookie, 18);
 
 	// Create a file containing the details of the invitation.
-	xasprintf(&filename, "%s" SLASH "invitations" SLASH "%s", confbase, cookie);
+	xasprintf(&filename, "%s" SLASH "invitations" SLASH "%s", confbase, cookiehash);
 	int ifd = open(filename, O_RDWR | O_CREAT | O_EXCL, 0600);
 	if(!ifd) {
 		fprintf(stderr, "Could not create invitation file %s: %s\n", filename, strerror(errno));
 		free(filename);
 		return 1;
 	}
-	free(filename);
 	f = fdopen(ifd, "w");
 	if(!f)
 		abort();
+
+	// Get the local address
+	char *address = get_my_hostname();
 
 	// Fill in the details.
 	fprintf(f, "Name = %s\n", argv[1]);
 	if(netname)
 		fprintf(f, "NetName = %s\n", netname);
 	fprintf(f, "ConnectTo = %s\n", myname);
-	// TODO: copy Broadcast and Mode
+
+	// Copy Broadcast and Mode
+	FILE *tc = fopen(tinc_conf, "r");
+	if(tc) {
+		char buf[1024];
+		while(fgets(buf, sizeof buf, tc)) {
+			if((!strncasecmp(buf, "Mode", 4) && strchr(" \t=", buf[4]))
+					|| (!strncasecmp(buf, "Broadcast", 9) && strchr(" \t=", buf[9])))
+				fputs(buf, f);
+		}
+		fclose(tc);
+	}
+
 	fprintf(f, "#---------------------------------------------------------------#\n");
 	fprintf(f, "Name = %s\n", myname);
 
-	xasprintf(&filename, "%s" SLASH "hosts" SLASH "%s", confbase, myname);
-	fcopy(f, filename);
+	char *filename2;
+	xasprintf(&filename2, "%s" SLASH "hosts" SLASH "%s", confbase, myname);
+	fcopy(f, filename2);
 	fclose(f);
+	free(filename2);
 
 	// Create an URL from the local address, key hash and cookie
-	char *address = get_my_hostname();
-	printf("%s/%s%s\n", address, hash, cookie);
+	char *url;
+	xasprintf(&url, "%s/%s%s", address, hash, cookie);
+
+	// Call the inviation-created script
+	char *envp[6] = {};
+	xasprintf(&envp[0], "NAME=%s", myname);
+	xasprintf(&envp[1], "NETNAME=%s", netname);
+	xasprintf(&envp[2], "NODE=%s", argv[1]);
+	xasprintf(&envp[3], "INVITATION_FILE=%s", filename);
+	xasprintf(&envp[4], "INVITATION_URL=%s", url);
+	execute_script("invitation-created", envp);
+	for(int i = 0; i < 6 && envp[i]; i++)
+		free(envp[i]);
+
+	puts(url);
+	free(url);
 	free(filename);
 	free(address);
 
@@ -684,10 +742,6 @@ make_names:
 
 	check_port(name);
 
-	fprintf(stderr, "Invitation succesfully accepted.\n");
-	shutdown(sock, SHUT_RDWR);
-	success = true;
-
 ask_netname:
 	if(ask_netname) {
 		fprintf(stderr, "Enter a new netname: ");
@@ -715,6 +769,7 @@ ask_netname:
 
 	return true;
 }
+
 
 static bool invitation_send(void *handle, uint8_t type, const char *data, size_t len) {
 	while(len) {
@@ -744,6 +799,12 @@ static bool invitation_receive(void *handle, uint8_t type, const char *msg, uint
 		case 1:
 			return finalize_join();
 
+		case 2:
+			fprintf(stderr, "Invitation succesfully accepted.\n");
+			shutdown(sock, SHUT_RDWR);
+			success = true;
+			break;
+
 		default:
 			return false;
 	}
@@ -762,7 +823,7 @@ int cmd_join(int argc, char *argv[]) {
 	}
 
 	// Make sure confbase exists and is accessible.
-	if(strcmp(confdir, confbase) && mkdir(confdir, 0755) && errno != EEXIST) {
+	if(!confbase_given && mkdir(confdir, 0755) && errno != EEXIST) {
 		fprintf(stderr, "Could not create directory %s: %s\n", confdir, strerror(errno));
 		return 1;
 	}

@@ -136,8 +136,6 @@ static bool setup_device(void) {
 			goto error;
 	}
 
-	freeaddrinfo(ai);
-
 	logger(DEBUG_ALWAYS, LOG_INFO, "%s is a %s", device, device_info);
 
 	return true;
@@ -173,8 +171,7 @@ static bool read_packet(vpn_packet_t *packet) {
 
 	if(!memcmp(&ignore_src, packet->data + 6, sizeof ignore_src)) {
 		logger(DEBUG_SCARY_THINGS, LOG_DEBUG, "Ignoring loopback packet of %d bytes from %s", lenin, device_info);
-		packet->len = 0;
-		return true;
+		return false;
 	}
 
 	packet->len = lenin;

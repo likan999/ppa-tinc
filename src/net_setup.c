@@ -38,6 +38,7 @@
 #include "protocol.h"
 #include "route.h"
 #include "rsa.h"
+#include "script.h"
 #include "subnet.h"
 #include "utils.h"
 #include "xalloc.h"
@@ -455,11 +456,7 @@ bool setup_myself_reloadable(void) {
 
 	free(scriptextension);
 	if(!get_config_string(lookup_config(config_tree, "ScriptsExtension"), &scriptextension))
-#ifdef HAVE_MINGW
-		scriptextension = xstrdup(".bat");
-#else
 		scriptextension = xstrdup("");
-#endif
 
 	get_config_string(lookup_config(config_tree, "Proxy"), &proxy);
 	if(proxy) {
@@ -754,7 +751,6 @@ static bool setup_myself(void) {
 
 	free(cipher);
 
-	send_key_changed();
 	timeout_add(&keyexpire_timeout, keyexpire_handler, &keyexpire_timeout, &(struct timeval){keylifetime, rand() % 100000});
 
 	/* Check if we want to use message authentication codes... */
@@ -832,59 +828,7 @@ static bool setup_myself(void) {
 	if(device_fd >= 0)
 		io_add(&device_io, handle_device_data, NULL, device_fd, IO_READ);
 
-	/* Run tinc-up script to further initialize the tap interface */
-	char *envp[5] = {NULL};
-	xasprintf(&envp[0], "NETNAME=%s", netname ? : "");
-	xasprintf(&envp[1], "DEVICE=%s", device ? : "");
-	xasprintf(&envp[2], "INTERFACE=%s", iface ? : "");
-	xasprintf(&envp[3], "NAME=%s", myself->name);
-
-	execute_script("tinc-up", envp);
-
-	for(int i = 0; i < 4; i++)
-		free(envp[i]);
-
-	/* Run subnet-up scripts for our own subnets */
-
-	subnet_update(myself, NULL, true);
-
 	/* Open sockets */
-
-#ifndef HAVE_MINGW
-	int unix_fd = socket(AF_UNIX, SOCK_STREAM, 0);
-	if(unix_fd < 0) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Could not create UNIX socket: %s", sockstrerror(errno));
-		return false;
-	}
-
-	struct sockaddr_un sa;
-	sa.sun_family = AF_UNIX;
-	strncpy(sa.sun_path, unixsocketname, sizeof sa.sun_path);
-
-	if(connect(unix_fd, (struct sockaddr *)&sa, sizeof sa) >= 0) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "UNIX socket %s is still in use!", unixsocketname);
-		return false;
-	}
-
-	unlink(unixsocketname);
-
-	mode_t mask = umask(0);
-	umask(mask | 077);
-	int result = bind(unix_fd, (struct sockaddr *)&sa, sizeof sa);
-	umask(mask);
-
-	if(result < 0) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Could not bind UNIX socket to %s: %s", unixsocketname, sockstrerror(errno));
-		return false;
-	}
-
-	if(listen(unix_fd, 3) < 0) {
-		logger(DEBUG_ALWAYS, LOG_ERR, "Could not listen on UNIX socket %s: %s", unixsocketname, sockstrerror(errno));
-		return false;
-	}
-
-	io_add(&unix_socket, handle_new_unix_connection, &unix_socket, unix_fd, IO_READ);
-#endif
 
 	if(!do_detach && getenv("LISTEN_FDS")) {
 		sockaddr_t sa;
@@ -997,9 +941,7 @@ static bool setup_myself(void) {
 		} while(cfg);
 	}
 
-	if(listen_sockets)
-		logger(DEBUG_ALWAYS, LOG_NOTICE, "Ready");
-	else {
+	if(!listen_sockets) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Unable to create any listening socket!");
 		return false;
 	}
@@ -1037,6 +979,26 @@ bool setup_network(void) {
 	if(!setup_myself())
 		return false;
 
+	if(!init_control())
+		return false;
+
+	/* Run tinc-up script to further initialize the tap interface */
+
+	char *envp[5] = {NULL};
+	xasprintf(&envp[0], "NETNAME=%s", netname ? : "");
+	xasprintf(&envp[1], "DEVICE=%s", device ? : "");
+	xasprintf(&envp[2], "INTERFACE=%s", iface ? : "");
+	xasprintf(&envp[3], "NAME=%s", myself->name);
+
+	execute_script("tinc-up", envp);
+
+	for(int i = 0; i < 4; i++)
+		free(envp[i]);
+
+	/* Run subnet-up scripts for our own subnets */
+
+	subnet_update(myself, NULL, true);
+
 	return true;
 }
 
@@ -1069,11 +1031,6 @@ void close_network_connections(void) {
 		close(listen_socket[i].udp.fd);
 	}
 
-#ifndef HAVE_MINGW
-	io_del(&unix_socket);
-	close(unix_socket.fd);
-#endif
-
 	char *envp[5] = {NULL};
 	xasprintf(&envp[0], "NETNAME=%s", netname ? : "");
 	xasprintf(&envp[1], "DEVICE=%s", device ? : "");
@@ -1094,6 +1051,8 @@ void close_network_connections(void) {
 		free(envp[i]);
 
 	devops.close();
+
+	exit_control();
 
 	return;
 }
