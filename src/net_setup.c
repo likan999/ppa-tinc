@@ -1,7 +1,8 @@
 /*
     net_setup.c -- Setup.
     Copyright (C) 1998-2005 Ivo Timmermans,
-                  2000-2008 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2009 Guus Sliepen <guus@tinc-vpn.org>
+                  2006      Scott Lamb <slamb@slamb.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -13,11 +14,9 @@
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with this program; if not, write to the Free Software
-    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-
-    $Id: net_setup.c 1596 2008-12-22 20:35:45Z guus $
+    You should have received a copy of the GNU General Public License along
+    with this program; if not, write to the Free Software Foundation, Inc.,
+    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
 #include "system.h"
@@ -46,13 +45,10 @@
 
 char *myport;
 
-bool read_rsa_public_key(connection_t *c)
-{
+bool read_rsa_public_key(connection_t *c) {
 	FILE *fp;
 	char *fname;
 	char *key;
-
-	cp();
 
 	if(!c->rsa_key) {
 		c->rsa_key = RSA_new();
@@ -74,7 +70,7 @@ bool read_rsa_public_key(connection_t *c)
 		fp = fopen(fname, "r");
 
 		if(!fp) {
-			logger(LOG_ERR, _("Error reading RSA public key file `%s': %s"),
+			logger(LOG_ERR, "Error reading RSA public key file `%s': %s",
 				   fname, strerror(errno));
 			free(fname);
 			return false;
@@ -91,7 +87,7 @@ bool read_rsa_public_key(connection_t *c)
 		fp = fopen(fname, "r");
 
 		if(!fp) {
-			logger(LOG_ERR, _("Error reading RSA public key file `%s': %s"),
+			logger(LOG_ERR, "Error reading RSA public key file `%s': %s",
 				   fname, strerror(errno));
 			free(fname);
 			return false;
@@ -106,14 +102,14 @@ bool read_rsa_public_key(connection_t *c)
 			return true;
 		}
 
-		logger(LOG_ERR, _("Reading RSA public key file `%s' failed: %s"),
+		logger(LOG_ERR, "Reading RSA public key file `%s' failed: %s",
 			   fname, strerror(errno));
 		return false;
 	}
 
 	/* Else, check if a harnessed public key is in the config file */
 
-	asprintf(&fname, "%s/hosts/%s", confbase, c->name);
+	xasprintf(&fname, "%s/hosts/%s", confbase, c->name);
 	fp = fopen(fname, "r");
 
 	if(fp) {
@@ -128,7 +124,7 @@ bool read_rsa_public_key(connection_t *c)
 
 	/* Try again with PEM_read_RSA_PUBKEY. */
 
-	asprintf(&fname, "%s/hosts/%s", confbase, c->name);
+	xasprintf(&fname, "%s/hosts/%s", confbase, c->name);
 	fp = fopen(fname, "r");
 
 	if(fp) {
@@ -142,22 +138,19 @@ bool read_rsa_public_key(connection_t *c)
 	if(c->rsa_key)
 		return true;
 
-	logger(LOG_ERR, _("No public key for %s specified!"), c->name);
+	logger(LOG_ERR, "No public key for %s specified!", c->name);
 
 	return false;
 }
 
-bool read_rsa_private_key(void)
-{
+bool read_rsa_private_key(void) {
 	FILE *fp;
 	char *fname, *key, *pubkey;
 	struct stat s;
 
-	cp();
-
 	if(get_config_string(lookup_config(config_tree, "PrivateKey"), &key)) {
 		if(!get_config_string(lookup_config(myself->connection->config_tree, "PublicKey"), &pubkey)) {
-			logger(LOG_ERR, _("PrivateKey used but no PublicKey found!"));
+			logger(LOG_ERR, "PrivateKey used but no PublicKey found!");
 			return false;
 		}
 		myself->connection->rsa_key = RSA_new();
@@ -171,12 +164,12 @@ bool read_rsa_private_key(void)
 	}
 
 	if(!get_config_string(lookup_config(config_tree, "PrivateKeyFile"), &fname))
-		asprintf(&fname, "%s/rsa_key.priv", confbase);
+		xasprintf(&fname, "%s/rsa_key.priv", confbase);
 
 	fp = fopen(fname, "r");
 
 	if(!fp) {
-		logger(LOG_ERR, _("Error reading RSA private key file `%s': %s"),
+		logger(LOG_ERR, "Error reading RSA private key file `%s': %s",
 			   fname, strerror(errno));
 		free(fname);
 		return false;
@@ -184,21 +177,21 @@ bool read_rsa_private_key(void)
 
 #if !defined(HAVE_MINGW) && !defined(HAVE_CYGWIN)
 	if(fstat(fileno(fp), &s)) {
-		logger(LOG_ERR, _("Could not stat RSA private key file `%s': %s'"),
+		logger(LOG_ERR, "Could not stat RSA private key file `%s': %s'",
 				fname, strerror(errno));
 		free(fname);
 		return false;
 	}
 
 	if(s.st_mode & ~0100700)
-		logger(LOG_WARNING, _("Warning: insecure file permissions for RSA private key file `%s'!"), fname);
+		logger(LOG_WARNING, "Warning: insecure file permissions for RSA private key file `%s'!", fname);
 #endif
 
 	myself->connection->rsa_key = PEM_read_RSAPrivateKey(fp, NULL, NULL, NULL);
 	fclose(fp);
 
 	if(!myself->connection->rsa_key) {
-		logger(LOG_ERR, _("Reading RSA private key file `%s' failed: %s"),
+		logger(LOG_ERR, "Reading RSA private key file `%s' failed: %s",
 			   fname, strerror(errno));
 		free(fname);
 		return false;
@@ -211,8 +204,7 @@ bool read_rsa_private_key(void)
 /*
   Configure node_t myself and set up the local sockets (listen only)
 */
-bool setup_myself(void)
-{
+bool setup_myself(void) {
 	config_t *cfg;
 	subnet_t *subnet;
 	char *name, *hostname, *mode, *afname, *cipher, *digest;
@@ -222,25 +214,23 @@ bool setup_myself(void)
 	bool choice;
 	int i, err;
 
-	cp();
-
 	myself = new_node();
 	myself->connection = new_connection();
 	init_configuration(&myself->connection->config_tree);
 
-	asprintf(&myself->hostname, _("MYSELF"));
-	asprintf(&myself->connection->hostname, _("MYSELF"));
+	xasprintf(&myself->hostname, "MYSELF");
+	xasprintf(&myself->connection->hostname, "MYSELF");
 
 	myself->connection->options = 0;
 	myself->connection->protocol_version = PROT_CURRENT;
 
 	if(!get_config_string(lookup_config(config_tree, "Name"), &name)) {	/* Not acceptable */
-		logger(LOG_ERR, _("Name for tinc daemon required!"));
+		logger(LOG_ERR, "Name for tinc daemon required!");
 		return false;
 	}
 
 	if(!check_id(name)) {
-		logger(LOG_ERR, _("Invalid name for myself!"));
+		logger(LOG_ERR, "Invalid name for myself!");
 		free(name);
 		return false;
 	}
@@ -249,7 +239,7 @@ bool setup_myself(void)
 	myself->connection->name = xstrdup(name);
 
 	if(!read_connection_config(myself->connection)) {
-		logger(LOG_ERR, _("Cannot open host configuration file for myself!"));
+		logger(LOG_ERR, "Cannot open host configuration file for myself!");
 		return false;
 	}
 
@@ -257,7 +247,7 @@ bool setup_myself(void)
 		return false;
 
 	if(!get_config_string(lookup_config(myself->connection->config_tree, "Port"), &myport))
-		asprintf(&myport, "655");
+		xasprintf(&myport, "655");
 
 	/* Read in all the subnets specified in the host configuration file */
 
@@ -286,9 +276,6 @@ bool setup_myself(void)
 	if(get_config_bool(lookup_config(myself->connection->config_tree, "TCPOnly"), &choice) && choice)
 		myself->options |= OPTION_TCPONLY;
 
-	if(!get_config_bool(lookup_config(myself->connection->config_tree, "PMTUDiscovery"), &choice) || choice)
-		myself->options |= OPTION_PMTU_DISCOVERY;
-
 	if(myself->options & OPTION_TCPONLY)
 		myself->options |= OPTION_INDIRECT;
 
@@ -302,18 +289,25 @@ bool setup_myself(void)
 		else if(!strcasecmp(mode, "hub"))
 			routing_mode = RMODE_HUB;
 		else {
-			logger(LOG_ERR, _("Invalid routing mode!"));
+			logger(LOG_ERR, "Invalid routing mode!");
 			return false;
 		}
 		free(mode);
 	} else
 		routing_mode = RMODE_ROUTER;
 
+	// Enable PMTUDiscovery by default if we are in router mode.
+
+	choice = routing_mode == RMODE_ROUTER;
+	get_config_bool(lookup_config(myself->connection->config_tree, "PMTUDiscovery"), &choice);
+	if(choice)	
+		myself->options |= OPTION_PMTU_DISCOVERY;
+
 	get_config_bool(lookup_config(config_tree, "PriorityInheritance"), &priorityinheritance);
 
 #if !defined(SOL_IP) || !defined(IP_TOS)
 	if(priorityinheritance)
-		logger(LOG_WARNING, _("PriorityInheritance not supported on this platform"));
+		logger(LOG_WARNING, "%s not supported on this platform", "PriorityInheritance");
 #endif
 
 	if(!get_config_int(lookup_config(config_tree, "MACExpire"), &macexpire))
@@ -321,7 +315,7 @@ bool setup_myself(void)
 
 	if(get_config_int(lookup_config(config_tree, "MaxTimeout"), &maxtimeout)) {
 		if(maxtimeout <= 0) {
-			logger(LOG_ERR, _("Bogus maximum timeout!"));
+			logger(LOG_ERR, "Bogus maximum timeout!");
 			return false;
 		}
 	} else
@@ -335,7 +329,7 @@ bool setup_myself(void)
 		else if(!strcasecmp(afname, "any"))
 			addressfamily = AF_UNSPEC;
 		else {
-			logger(LOG_ERR, _("Invalid address family!"));
+			logger(LOG_ERR, "Invalid address family!");
 			return false;
 		}
 		free(afname);
@@ -348,88 +342,72 @@ bool setup_myself(void)
 	if(get_config_string
 	   (lookup_config(myself->connection->config_tree, "Cipher"), &cipher)) {
 		if(!strcasecmp(cipher, "none")) {
-			myself->cipher = NULL;
+			myself->incipher = NULL;
 		} else {
-			myself->cipher = EVP_get_cipherbyname(cipher);
+			myself->incipher = EVP_get_cipherbyname(cipher);
 
-			if(!myself->cipher) {
-				logger(LOG_ERR, _("Unrecognized cipher type!"));
+			if(!myself->incipher) {
+				logger(LOG_ERR, "Unrecognized cipher type!");
 				return false;
 			}
 		}
 	} else
-		myself->cipher = EVP_bf_cbc();
+		myself->incipher = EVP_bf_cbc();
 
-	if(myself->cipher)
-		myself->keylength = myself->cipher->key_len + myself->cipher->iv_len;
+	if(myself->incipher)
+		myself->inkeylength = myself->incipher->key_len + myself->incipher->iv_len;
 	else
-		myself->keylength = 1;
+		myself->inkeylength = 1;
 
 	myself->connection->outcipher = EVP_bf_ofb();
-
-	myself->key = xmalloc(myself->keylength);
-	RAND_pseudo_bytes((unsigned char *)myself->key, myself->keylength);
 
 	if(!get_config_int(lookup_config(config_tree, "KeyExpire"), &keylifetime))
 		keylifetime = 3600;
 
 	keyexpires = now + keylifetime;
 	
-	if(myself->cipher) {
-		EVP_CIPHER_CTX_init(&packet_ctx);
-		if(!EVP_DecryptInit_ex(&packet_ctx, myself->cipher, NULL, (unsigned char *)myself->key, (unsigned char *)myself->key + myself->cipher->key_len)) {
-			logger(LOG_ERR, _("Error during initialisation of cipher for %s (%s): %s"),
-					myself->name, myself->hostname, ERR_error_string(ERR_get_error(), NULL));
-			return false;
-		}
-
-	}
-
 	/* Check if we want to use message authentication codes... */
 
-	if(get_config_string
-	   (lookup_config(myself->connection->config_tree, "Digest"), &digest)) {
+	if(get_config_string(lookup_config(myself->connection->config_tree, "Digest"), &digest)) {
 		if(!strcasecmp(digest, "none")) {
-			myself->digest = NULL;
+			myself->indigest = NULL;
 		} else {
-			myself->digest = EVP_get_digestbyname(digest);
+			myself->indigest = EVP_get_digestbyname(digest);
 
-			if(!myself->digest) {
-				logger(LOG_ERR, _("Unrecognized digest type!"));
+			if(!myself->indigest) {
+				logger(LOG_ERR, "Unrecognized digest type!");
 				return false;
 			}
 		}
 	} else
-		myself->digest = EVP_sha1();
+		myself->indigest = EVP_sha1();
 
 	myself->connection->outdigest = EVP_sha1();
 
-	if(get_config_int(lookup_config(myself->connection->config_tree, "MACLength"),
-		&myself->maclength)) {
-		if(myself->digest) {
-			if(myself->maclength > myself->digest->md_size) {
-				logger(LOG_ERR, _("MAC length exceeds size of digest!"));
+	if(get_config_int(lookup_config(myself->connection->config_tree, "MACLength"), &myself->inmaclength)) {
+		if(myself->indigest) {
+			if(myself->inmaclength > myself->indigest->md_size) {
+				logger(LOG_ERR, "MAC length exceeds size of digest!");
 				return false;
-			} else if(myself->maclength < 0) {
-				logger(LOG_ERR, _("Bogus MAC length!"));
+			} else if(myself->inmaclength < 0) {
+				logger(LOG_ERR, "Bogus MAC length!");
 				return false;
 			}
 		}
 	} else
-		myself->maclength = 4;
+		myself->inmaclength = 4;
 
 	myself->connection->outmaclength = 0;
 
 	/* Compression */
 
-	if(get_config_int(lookup_config(myself->connection->config_tree, "Compression"),
-		&myself->compression)) {
-		if(myself->compression < 0 || myself->compression > 11) {
-			logger(LOG_ERR, _("Bogus compression level!"));
+	if(get_config_int(lookup_config(myself->connection->config_tree, "Compression"), &myself->incompression)) {
+		if(myself->incompression < 0 || myself->incompression > 11) {
+			logger(LOG_ERR, "Bogus compression level!");
 			return false;
 		}
 	} else
-		myself->compression = 0;
+		myself->incompression = 0;
 
 	myself->connection->outcompression = 0;
 
@@ -448,10 +426,10 @@ bool setup_myself(void)
 		return false;
 
 	/* Run tinc-up script to further initialize the tap interface */
-	asprintf(&envp[0], "NETNAME=%s", netname ? : "");
-	asprintf(&envp[1], "DEVICE=%s", device ? : "");
-	asprintf(&envp[2], "INTERFACE=%s", iface ? : "");
-	asprintf(&envp[3], "NAME=%s", myself->name);
+	xasprintf(&envp[0], "NETNAME=%s", netname ? : "");
+	xasprintf(&envp[1], "DEVICE=%s", device ? : "");
+	xasprintf(&envp[2], "INTERFACE=%s", iface ? : "");
+	xasprintf(&envp[3], "NAME=%s", myself->name);
 	envp[4] = NULL;
 
 	execute_script("tinc-up", envp);
@@ -475,7 +453,7 @@ bool setup_myself(void)
 	err = getaddrinfo(address, myport, &hint, &ai);
 
 	if(err || !ai) {
-		logger(LOG_ERR, _("System call `%s' failed: %s"), "getaddrinfo",
+		logger(LOG_ERR, "System call `%s' failed: %s", "getaddrinfo",
 			   gai_strerror(err));
 		return false;
 	}
@@ -497,7 +475,7 @@ bool setup_myself(void)
 
 		ifdebug(CONNECTIONS) {
 			hostname = sockaddr2hostname((sockaddr_t *) aip->ai_addr);
-			logger(LOG_NOTICE, _("Listening on %s"), hostname);
+			logger(LOG_NOTICE, "Listening on %s", hostname);
 			free(hostname);
 		}
 
@@ -508,9 +486,9 @@ bool setup_myself(void)
 	freeaddrinfo(ai);
 
 	if(listen_sockets)
-		logger(LOG_NOTICE, _("Ready"));
+		logger(LOG_NOTICE, "Ready");
 	else {
-		logger(LOG_ERR, _("Unable to create any listening socket!"));
+		logger(LOG_ERR, "Unable to create any listening socket!");
 		return false;
 	}
 
@@ -518,12 +496,9 @@ bool setup_myself(void)
 }
 
 /*
-  setup all initial network connections
+  initialize network
 */
-bool setup_network_connections(void)
-{
-	cp();
-
+bool setup_network(void) {
 	now = time(NULL);
 
 	init_events();
@@ -546,12 +521,10 @@ bool setup_network_connections(void)
 		pingtimeout = pinginterval;
 
 	if(!get_config_int(lookup_config(config_tree, "MaxOutputBufferSize"), &maxoutbufsize))
-		maxoutbufsize = 4 * MTU;
+		maxoutbufsize = 10 * MTU;
 
 	if(!setup_myself())
 		return false;
-
-	try_outgoing_connections();
 
 	return true;
 }
@@ -559,33 +532,25 @@ bool setup_network_connections(void)
 /*
   close all open network connections
 */
-void close_network_connections(void)
-{
+void close_network_connections(void) {
 	avl_node_t *node, *next;
 	connection_t *c;
 	char *envp[5];
 	int i;
 
-	cp();
-
 	for(node = connection_tree->head; node; node = next) {
 		next = node->next;
 		c = node->data;
-
-		if(c->outgoing) {
-			if(c->outgoing->ai)
-				freeaddrinfo(c->outgoing->ai);
-			free(c->outgoing->name);
-			free(c->outgoing);
-			c->outgoing = NULL;
-		}
-
+		c->outgoing = false;
 		terminate_connection(c, false);
 	}
+
+	list_delete_list(outgoing_list);
 
 	if(myself && myself->connection) {
 		subnet_update(myself, NULL, false);
 		terminate_connection(myself->connection, false);
+		free_connection(myself->connection);
 	}
 
 	for(i = 0; i < listen_sockets; i++) {
@@ -593,10 +558,10 @@ void close_network_connections(void)
 		close(listen_socket[i].udp);
 	}
 
-	asprintf(&envp[0], "NETNAME=%s", netname ? : "");
-	asprintf(&envp[1], "DEVICE=%s", device ? : "");
-	asprintf(&envp[2], "INTERFACE=%s", iface ? : "");
-	asprintf(&envp[3], "NAME=%s", myself->name);
+	xasprintf(&envp[0], "NETNAME=%s", netname ? : "");
+	xasprintf(&envp[1], "DEVICE=%s", device ? : "");
+	xasprintf(&envp[2], "INTERFACE=%s", iface ? : "");
+	xasprintf(&envp[3], "NAME=%s", myself->name);
 	envp[4] = NULL;
 
 	exit_requests();
@@ -607,6 +572,8 @@ void close_network_connections(void)
 	exit_events();
 
 	execute_script("tinc-down", envp);
+
+	if(myport) free(myport);
 
 	for(i = 0; i < 4; i++)
 		free(envp[i]);

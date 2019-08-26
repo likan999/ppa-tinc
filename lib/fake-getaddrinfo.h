@@ -1,5 +1,3 @@
-/* $Id: fake-getaddrinfo.h 1374 2004-03-21 14:21:22Z guus $ */
-
 #ifndef _FAKE_GETADDRINFO_H
 #define _FAKE_GETADDRINFO_H
 
@@ -33,16 +31,16 @@ struct addrinfo {
 };
 #endif /* !HAVE_STRUCT_ADDRINFO */
 
-#ifndef HAVE_GETADDRINFO
+#if !HAVE_DECL_GETADDRINFO
 int getaddrinfo(const char *hostname, const char *servname, 
                 const struct addrinfo *hints, struct addrinfo **res);
 #endif /* !HAVE_GETADDRINFO */
 
-#ifndef HAVE_GAI_STRERROR
+#if !HAVE_DECL_GAI_STRERROR
 char *gai_strerror(int ecode);
 #endif /* !HAVE_GAI_STRERROR */
 
-#ifndef HAVE_FREEADDRINFO
+#if !HAVE_DECL_FREEADDRINFO
 void freeaddrinfo(struct addrinfo *ai);
 #endif /* !HAVE_FREEADDRINFO */
 

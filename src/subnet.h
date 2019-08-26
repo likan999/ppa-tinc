@@ -1,6 +1,6 @@
 /*
     subnet.h -- header for subnet.c
-    Copyright (C) 2000-2006 Guus Sliepen <guus@tinc-vpn.org>,
+    Copyright (C) 2000-2009 Guus Sliepen <guus@tinc-vpn.org>,
                   2000-2005 Ivo Timmermans
 
     This program is free software; you can redistribute it and/or modify
@@ -13,11 +13,9 @@
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with this program; if not, write to the Free Software
-    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-
-    $Id: subnet.h 1452 2006-04-26 13:52:58Z guus $
+    You should have received a copy of the GNU General Public License along
+    with this program; if not, write to the Free Software Foundation, Inc.,
+    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
 #ifndef __TINC_SUBNET_H__
@@ -53,6 +51,7 @@ typedef struct subnet_t {
 
 	subnet_type_t type;		/* subnet type (IPv4? IPv6? MAC? something even weirder?) */
 	time_t expires;			/* expiry time */
+	int weight;			/* weight (higher value is higher priority) */
 
 	/* And now for the actual subnet: */
 
@@ -82,5 +81,6 @@ extern subnet_t *lookup_subnet_mac(const mac_t *);
 extern subnet_t *lookup_subnet_ipv4(const ipv4_t *);
 extern subnet_t *lookup_subnet_ipv6(const ipv6_t *);
 extern void dump_subnets(void);
+extern void subnet_cache_flush(void);
 
 #endif							/* __TINC_SUBNET_H__ */

@@ -13,11 +13,9 @@
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with this program; if not, write to the Free Software
-    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-
-    $Id: edge.c 1452 2006-04-26 13:52:58Z guus $
+    You should have received a copy of the GNU General Public License along
+    with this program; if not, write to the Free Software Foundation, Inc.,
+    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
 #include "system.h"
@@ -32,13 +30,11 @@
 
 avl_tree_t *edge_weight_tree;	/* Tree with all edges, sorted on weight */
 
-static int edge_compare(const edge_t *a, const edge_t *b)
-{
+static int edge_compare(const edge_t *a, const edge_t *b) {
 	return strcmp(a->to->name, b->to->name);
 }
 
-static int edge_weight_compare(const edge_t *a, const edge_t *b)
-{
+static int edge_weight_compare(const edge_t *a, const edge_t *b) {
 	int result;
 
 	result = a->weight - b->weight;
@@ -54,56 +50,35 @@ static int edge_weight_compare(const edge_t *a, const edge_t *b)
 	return strcmp(a->to->name, b->to->name);
 }
 
-void init_edges(void)
-{
-	cp();
-
+void init_edges(void) {
 	edge_weight_tree = avl_alloc_tree((avl_compare_t) edge_weight_compare, NULL);
 }
 
-avl_tree_t *new_edge_tree(void)
-{
-	cp();
-
+avl_tree_t *new_edge_tree(void) {
 	return avl_alloc_tree((avl_compare_t) edge_compare, (avl_action_t) free_edge);
 }
 
-void free_edge_tree(avl_tree_t *edge_tree)
-{
-	cp();
-
+void free_edge_tree(avl_tree_t *edge_tree) {
 	avl_delete_tree(edge_tree);
 }
 
-void exit_edges(void)
-{
-	cp();
-
+void exit_edges(void) {
 	avl_delete_tree(edge_weight_tree);
 }
 
 /* Creation and deletion of connection elements */
 
-edge_t *new_edge(void)
-{
-	cp();
-
+edge_t *new_edge(void) {
 	return xmalloc_and_zero(sizeof(edge_t));
 }
 
-void free_edge(edge_t *e)
-{
-	cp();
-	
+void free_edge(edge_t *e) {
 	sockaddrfree(&e->address);
 
 	free(e);
 }
 
-void edge_add(edge_t *e)
-{
-	cp();
-
+void edge_add(edge_t *e) {
 	avl_insert(edge_weight_tree, e);
 	avl_insert(e->from->edge_tree, e);
 
@@ -113,10 +88,7 @@ void edge_add(edge_t *e)
 		e->reverse->reverse = e;
 }
 
-void edge_del(edge_t *e)
-{
-	cp();
-
+void edge_del(edge_t *e) {
 	if(e->reverse)
 		e->reverse->reverse = NULL;
 
@@ -124,39 +96,33 @@ void edge_del(edge_t *e)
 	avl_delete(e->from->edge_tree, e);
 }
 
-edge_t *lookup_edge(node_t *from, node_t *to)
-{
+edge_t *lookup_edge(node_t *from, node_t *to) {
 	edge_t v;
 	
-	cp();
-
 	v.from = from;
 	v.to = to;
 
 	return avl_search(from->edge_tree, &v);
 }
 
-void dump_edges(void)
-{
+void dump_edges(void) {
 	avl_node_t *node, *node2;
 	node_t *n;
 	edge_t *e;
 	char *address;
 
-	cp();
-
-	logger(LOG_DEBUG, _("Edges:"));
+	logger(LOG_DEBUG, "Edges:");
 
 	for(node = node_tree->head; node; node = node->next) {
 		n = node->data;
 		for(node2 = n->edge_tree->head; node2; node2 = node2->next) {
 			e = node2->data;
 			address = sockaddr2hostname(&e->address);
-			logger(LOG_DEBUG, _(" %s to %s at %s options %lx weight %d"),
+			logger(LOG_DEBUG, " %s to %s at %s options %lx weight %d",
 				   e->from->name, e->to->name, address, e->options, e->weight);
 			free(address);
 		}
 	}
 
-	logger(LOG_DEBUG, _("End of edges."));
+	logger(LOG_DEBUG, "End of edges.");
 }

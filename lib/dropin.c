@@ -1,7 +1,7 @@
 /*
     dropin.c -- a set of drop-in replacements for libc functions
     Copyright (C) 2000-2005 Ivo Timmermans,
-                  2000-2006 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2009 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -13,11 +13,9 @@
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with this program; if not, write to the Free Software
-    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-
-    $Id: dropin.c 1452 2006-04-26 13:52:58Z guus $
+    You should have received a copy of the GNU General Public License along
+    with this program; if not, write to the Free Software Foundation, Inc.,
+    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
 #include "system.h"
@@ -38,8 +36,7 @@
   Unless the argument noclose is non-zero, daemon() will redirect
   standard input, standard output and standard error to /dev/null.
 */
-int daemon(int nochdir, int noclose)
-{
+int daemon(int nochdir, int noclose) {
 #ifdef HAVE_FORK
 	pid_t pid;
 	int fd;
@@ -97,8 +94,7 @@ int daemon(int nochdir, int noclose)
   current directory name.  If the environment variable PWD is set, and
   its value is correct, then that value will be returned.
 */
-char *get_current_dir_name(void)
-{
+char *get_current_dir_name(void) {
 	size_t size;
 	char *buf;
 	char *r;
@@ -125,27 +121,35 @@ char *get_current_dir_name(void)
 #endif
 
 #ifndef HAVE_ASPRINTF
-int asprintf(char **buf, const char *fmt, ...)
-{
-	int status;
+int asprintf(char **buf, const char *fmt, ...) {
+	int result;
 	va_list ap;
+	va_start(ap, fmt);
+	result = vasprintf(buf, fmt, ap);
+	va_end(ap);
+	return result;
+}
+
+int vasprintf(char **buf, const char *fmt, va_list ap) {
+	int status;
+	va_list aq;
 	int len;
 
 	len = 4096;
 	*buf = xmalloc(len);
 
-	va_start(ap, fmt);
-	status = vsnprintf(*buf, len, fmt, ap);
-	va_end(ap);
+	va_copy(aq, ap);
+	status = vsnprintf(*buf, len, fmt, aq);
+	va_end(aq);
 
 	if(status >= 0)
 		*buf = xrealloc(*buf, status + 1);
 
 	if(status > len - 1) {
 		len = status;
-		va_start(ap, fmt);
-		status = vsnprintf(*buf, len, fmt, ap);
-		va_end(ap);
+		va_copy(aq, ap);
+		status = vsnprintf(*buf, len, fmt, aq);
+		va_end(aq);
 	}
 
 	return status;
@@ -157,17 +161,5 @@ int gettimeofday(struct timeval *tv, void *tz) {
 	tv->tv_sec = time(NULL);
 	tv->tv_usec = 0;
 	return 0;
-}
-#endif
-
-#ifndef HAVE_RANDOM
-#include <openssl/rand.h>
-
-long int random(void) {
-	long int x;
-	
-	RAND_pseudo_bytes((unsigned char *)&x, sizeof(x));
-
-	return x;
 }
 #endif

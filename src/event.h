@@ -1,6 +1,6 @@
 /*
     event.h -- header for event.c
-    Copyright (C) 2002-2007 Guus Sliepen <guus@tinc-vpn.org>,
+    Copyright (C) 2002-2009 Guus Sliepen <guus@tinc-vpn.org>,
                   2002-2005 Ivo Timmermans
 
     This program is free software; you can redistribute it and/or modify
@@ -13,11 +13,9 @@
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with this program; if not, write to the Free Software
-    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-
-    $Id: event.h 1595 2008-12-22 20:27:52Z guus $
+    You should have received a copy of the GNU General Public License along
+    with this program; if not, write to the Free Software Foundation, Inc.,
+    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
 #ifndef __TINC_EVENT_H__
@@ -38,7 +36,7 @@ typedef struct {
 
 extern void init_events(void);
 extern void exit_events(void);
-extern void flush_events(void);
+extern void expire_events(void);
 extern event_t *new_event(void) __attribute__ ((__malloc__));
 extern void free_event(event_t *);
 extern void event_add(event_t *);

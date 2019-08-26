@@ -1,7 +1,7 @@
 /*
     netutl.h -- header file for netutl.c
-    Copyright (C) 1998-2005 Ivo Timmermans <zarq@iname.com>
-                  2000-2006 Guus Sliepen <guus@tinc-vpn.org>
+    Copyright (C) 1998-2005 Ivo Timmermans
+                  2000-2009 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -13,11 +13,9 @@
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with this program; if not, write to the Free Software
-    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-
-    $Id: netutl.h 1459 2006-08-08 13:44:37Z guus $
+    You should have received a copy of the GNU General Public License along
+    with this program; if not, write to the Free Software Foundation, Inc.,
+    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
 #ifndef __TINC_NETUTL_H__
@@ -32,6 +30,7 @@ extern sockaddr_t str2sockaddr(const char *, const char *);
 extern void sockaddr2str(const sockaddr_t *, char **, char **);
 extern char *sockaddr2hostname(const sockaddr_t *);
 extern int sockaddrcmp(const sockaddr_t *, const sockaddr_t *);
+extern int sockaddrcmp_noport(const sockaddr_t *, const sockaddr_t *);
 extern void sockaddrunmap(sockaddr_t *);
 extern void sockaddrfree(sockaddr_t *);
 extern void sockaddrcpy(sockaddr_t *, const sockaddr_t *);

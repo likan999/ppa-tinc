@@ -1,6 +1,6 @@
 /*
     node.h -- header for node.c
-    Copyright (C) 2001-2006 Guus Sliepen <guus@tinc-vpn.org>,
+    Copyright (C) 2001-2009 Guus Sliepen <guus@tinc-vpn.org>,
                   2001-2005 Ivo Timmermans
 
     This program is free software; you can redistribute it and/or modify
@@ -13,11 +13,9 @@
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with this program; if not, write to the Free Software
-    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-
-    $Id: node.h 1462 2006-11-11 13:43:00Z guus $
+    You should have received a copy of the GNU General Public License along
+    with this program; if not, write to the Free Software Foundation, Inc.,
+    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
 #ifndef __TINC_NODE_H__
@@ -29,17 +27,14 @@
 #include "list.h"
 #include "subnet.h"
 
-typedef union node_status_t {
-	struct {
-		int unused_active:1;			/* 1 if active (not used for nodes) */
-		int validkey:1;				/* 1 if we currently have a valid key for him */
-		int waitingforkey:1;			/* 1 if we already sent out a request */
-		int visited:1;				/* 1 if this node has been visited by one of the graph algorithms */
-		int reachable:1;			/* 1 if this node is reachable in the graph */
-		int indirect:1;				/* 1 if this node is not directly reachable by us */
-		int unused:26;
-	};
-	uint32_t value;
+typedef struct node_status_t {
+	int unused_active:1;			/* 1 if active (not used for nodes) */
+	int validkey:1;				/* 1 if we currently have a valid key for him */
+	int waitingforkey:1;			/* 1 if we already sent out a request */
+	int visited:1;				/* 1 if this node has been visited by one of the graph algorithms */
+	int reachable:1;			/* 1 if this node is reachable in the graph */
+	int indirect:1;				/* 1 if this node is not directly reachable by us */
+	int unused:26;
 } node_status_t;
 
 typedef struct node_t {
@@ -51,17 +46,24 @@ typedef struct node_t {
 
 	node_status_t status;
 
-	const EVP_CIPHER *cipher;		/* Cipher type for UDP packets */
-	char *key;				/* Cipher key and iv */
-	int keylength;				/* Cipher key and iv length */
-	EVP_CIPHER_CTX packet_ctx;		/* Cipher context */
+	const EVP_CIPHER *incipher;		/* Cipher type for UDP packets received from him */
+	char *inkey;				/* Cipher key and iv */
+	int inkeylength;			/* Cipher key and iv length */
+	EVP_CIPHER_CTX inctx;			/* Cipher context */
 	
-	const EVP_MD *digest;			/* Digest type for MAC */
-	int maclength;				/* Length of MAC */
+	const EVP_CIPHER *outcipher;		/* Cipher type for UDP packets sent to him*/
+	char *outkey;				/* Cipher key and iv */
+	int outkeylength;			/* Cipher key and iv length */
+	EVP_CIPHER_CTX outctx;			/* Cipher context */
+	
+	const EVP_MD *indigest;			/* Digest type for MAC of packets received from him */
+	int inmaclength;			/* Length of MAC */
 
-	int compression;			/* Compressionlevel, 0 = no compression */
+	const EVP_MD *outdigest;		/* Digest type for MAC of packets sent to him*/
+	int outmaclength;			/* Length of MAC */
 
-	list_t *queue;				/* Queue for packets awaiting to be encrypted */
+	int incompression;			/* Compressionlevel, 0 = no compression */
+	int outcompression;			/* Compressionlevel, 0 = no compression */
 
 	struct node_t *nexthop;			/* nearest node from us to him */
 	struct node_t *via;			/* next hop for UDP packets */
@@ -95,6 +97,7 @@ extern void node_add(node_t *);
 extern void node_del(node_t *);
 extern node_t *lookup_node(char *);
 extern node_t *lookup_node_udp(const sockaddr_t *);
+extern void update_node_udp(node_t *, const sockaddr_t *);
 extern void dump_nodes(void);
 
 #endif							/* __TINC_NODE_H__ */

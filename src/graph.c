@@ -1,6 +1,6 @@
 /*
     graph.c -- graph algorithms
-    Copyright (C) 2001-2007 Guus Sliepen <guus@tinc-vpn.org>,
+    Copyright (C) 2001-2009 Guus Sliepen <guus@tinc-vpn.org>,
                   2001-2005 Ivo Timmermans
 
     This program is free software; you can redistribute it and/or modify
@@ -13,11 +13,9 @@
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with this program; if not, write to the Free Software
-    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-
-    $Id: graph.c 1595 2008-12-22 20:27:52Z guus $
+    You should have received a copy of the GNU General Public License along
+    with this program; if not, write to the Free Software Foundation, Inc.,
+    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
 /* We need to generate two trees from the graph:
@@ -57,6 +55,7 @@
 #include "process.h"
 #include "subnet.h"
 #include "utils.h"
+#include "xalloc.h"
 
 static bool graph_changed = true;
 
@@ -65,8 +64,7 @@ static bool graph_changed = true;
    Please note that sorting on weight is already done by add_edge().
 */
 
-void mst_kruskal(void)
-{
+void mst_kruskal(void) {
 	avl_node_t *node, *next;
 	edge_t *e;
 	node_t *n;
@@ -75,8 +73,6 @@ void mst_kruskal(void)
 	int safe_edges = 0;
 	bool skipped;
 
-	cp();
-	
 	/* Clear MST status on connections */
 
 	for(node = connection_tree->head; node; node = node->next) {
@@ -149,8 +145,7 @@ void mst_kruskal(void)
    Running time: O(E)
 */
 
-void sssp_bfs(void)
-{
+void sssp_bfs(void) {
 	avl_node_t *node, *next, *to;
 	edge_t *e;
 	node_t *n;
@@ -161,8 +156,6 @@ void sssp_bfs(void)
 	char *address, *port;
 	char *envp[7];
 	int i;
-
-	cp();
 
 	todo_list = list_alloc(NULL);
 
@@ -226,27 +219,8 @@ void sssp_bfs(void)
 			e->to->via = indirect ? n->via : e->to;
 			e->to->options = e->options;
 
-			if(sockaddrcmp(&e->to->address, &e->address)) {
-				node = avl_unlink(node_udp_tree, e->to);
-				sockaddrfree(&e->to->address);
-				sockaddrcpy(&e->to->address, &e->address);
-
-				if(e->to->hostname)
-					free(e->to->hostname);
-
-				e->to->hostname = sockaddr2hostname(&e->to->address);
-
-				if(node)
-					avl_insert_node(node_udp_tree, node);
-
-				if(e->to->options & OPTION_PMTU_DISCOVERY) {
-					e->to->mtuprobes = 0;
-					e->to->minmtu = 0;
-					e->to->maxmtu = MTU;
-					if(e->to->status.validkey)
-						send_mtu_probe(e->to);
-				}
-			}
+			if(e->to->address.sa.sa_family == AF_UNSPEC && e->address.sa.sa_family != AF_UNKNOWN)
+				update_node_udp(e->to, &e->address);
 
 			list_insert_tail(todo_list, e->to);
 		}
@@ -267,14 +241,14 @@ void sssp_bfs(void)
 			n->status.reachable = !n->status.reachable;
 
 			if(n->status.reachable) {
-				ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Node %s (%s) became reachable"),
+				ifdebug(TRAFFIC) logger(LOG_DEBUG, "Node %s (%s) became reachable",
 					   n->name, n->hostname);
-				avl_insert(node_udp_tree, n);
 			} else {
-				ifdebug(TRAFFIC) logger(LOG_DEBUG, _("Node %s (%s) became unreachable"),
+				ifdebug(TRAFFIC) logger(LOG_DEBUG, "Node %s (%s) became unreachable",
 					   n->name, n->hostname);
-				avl_delete(node_udp_tree, n);
 			}
+
+			/* TODO: only clear status.validkey if node is unreachable? */
 
 			n->status.validkey = false;
 			n->status.waitingforkey = false;
@@ -283,18 +257,23 @@ void sssp_bfs(void)
 			n->minmtu = 0;
 			n->mtuprobes = 0;
 
-			asprintf(&envp[0], "NETNAME=%s", netname ? : "");
-			asprintf(&envp[1], "DEVICE=%s", device ? : "");
-			asprintf(&envp[2], "INTERFACE=%s", iface ? : "");
-			asprintf(&envp[3], "NODE=%s", n->name);
+			if(n->mtuevent) {
+				event_del(n->mtuevent);
+				n->mtuevent = NULL;
+			}
+
+			xasprintf(&envp[0], "NETNAME=%s", netname ? : "");
+			xasprintf(&envp[1], "DEVICE=%s", device ? : "");
+			xasprintf(&envp[2], "INTERFACE=%s", iface ? : "");
+			xasprintf(&envp[3], "NODE=%s", n->name);
 			sockaddr2str(&n->address, &address, &port);
-			asprintf(&envp[4], "REMOTEADDRESS=%s", address);
-			asprintf(&envp[5], "REMOTEPORT=%s", port);
+			xasprintf(&envp[4], "REMOTEADDRESS=%s", address);
+			xasprintf(&envp[5], "REMOTEPORT=%s", port);
 			envp[6] = NULL;
 
 			execute_script(n->status.reachable ? "host-up" : "host-down", envp);
 
-			asprintf(&name,
+			xasprintf(&name,
 					 n->status.reachable ? "hosts/%s-up" : "hosts/%s-down",
 					 n->name);
 			execute_script(name, envp);
@@ -311,8 +290,8 @@ void sssp_bfs(void)
 	}
 }
 
-void graph(void)
-{
+void graph(void) {
+	subnet_cache_flush();
 	sssp_bfs();
 	mst_kruskal();
 	graph_changed = true;
@@ -326,8 +305,7 @@ void graph(void)
    dot -Tpng graph_filename -o image_filename.png -Gconcentrate=true
 */
 
-void dump_graph(void)
-{
+void dump_graph(void) {
 	avl_node_t *node;
 	node_t *n;
 	edge_t *e;
@@ -344,7 +322,7 @@ void dump_graph(void)
 	if(filename[0] == '|') {
 		file = popen(filename + 1, "w");
 	} else {
-		asprintf(&tmpname, "%s.new", filename);
+		xasprintf(&tmpname, "%s.new", filename);
 		file = fopen(tmpname, "w");
 	}
 
