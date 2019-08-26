@@ -1,7 +1,7 @@
 /*
     node.c -- node tree management
-    Copyright (C) 2001-2005 Guus Sliepen <guus@tinc-vpn.org>,
-                  2001-2005 Ivo Timmermans <ivo@tinc-vpn.org>
+    Copyright (C) 2001-2006 Guus Sliepen <guus@tinc-vpn.org>,
+                  2001-2005 Ivo Timmermans
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: node.c 1439 2005-05-04 18:09:30Z guus $
+    $Id: node.c 1469 2006-11-11 22:44:15Z guus $
 */
 
 #include "system.h"
@@ -93,12 +93,6 @@ void free_node(node_t *n)
 	if(n->queue)
 		list_delete_list(n->queue);
 
-	if(n->name)
-		free(n->name);
-
-	if(n->hostname)
-		free(n->hostname);
-
 	if(n->key)
 		free(n->key);
 
@@ -112,9 +106,17 @@ void free_node(node_t *n)
 
 	EVP_CIPHER_CTX_cleanup(&n->packet_ctx);
 
-	if(n->mtuevent)
+	if(n->mtuevent) {
 		event_del(n->mtuevent);
+		free_event(n->mtuevent);
+	}
 	
+	if(n->hostname)
+		free(n->hostname);
+
+	if(n->name)
+		free(n->name);
+
 	free(n);
 }
 

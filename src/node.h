@@ -1,7 +1,7 @@
 /*
     node.h -- header for node.c
-    Copyright (C) 2001-2005 Guus Sliepen <guus@tinc-vpn.org>,
-                  2001-2005 Ivo Timmermans <ivo@tinc-vpn.org>
+    Copyright (C) 2001-2006 Guus Sliepen <guus@tinc-vpn.org>,
+                  2001-2005 Ivo Timmermans
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: node.h 1439 2005-05-04 18:09:30Z guus $
+    $Id: node.h 1462 2006-11-11 13:43:00Z guus $
 */
 
 #ifndef __TINC_NODE_H__
@@ -29,14 +29,17 @@
 #include "list.h"
 #include "subnet.h"
 
-typedef struct node_status_t {
-	int active:1;				/* 1 if active.. */
-	int validkey:1;				/* 1 if we currently have a valid key for him */
-	int waitingforkey:1;			/* 1 if we already sent out a request */
-	int visited:1;				/* 1 if this node has been visited by one of the graph algorithms */
-	int reachable:1;			/* 1 if this node is reachable in the graph */
-	int indirect:1;				/* 1 if this node is not directly reachable by us */
-	int unused:26;
+typedef union node_status_t {
+	struct {
+		int unused_active:1;			/* 1 if active (not used for nodes) */
+		int validkey:1;				/* 1 if we currently have a valid key for him */
+		int waitingforkey:1;			/* 1 if we already sent out a request */
+		int visited:1;				/* 1 if this node has been visited by one of the graph algorithms */
+		int reachable:1;			/* 1 if this node is reachable in the graph */
+		int indirect:1;				/* 1 if this node is not directly reachable by us */
+		int unused:26;
+	};
+	uint32_t value;
 } node_status_t;
 
 typedef struct node_t {

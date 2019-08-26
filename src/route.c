@@ -1,7 +1,7 @@
 /*
     route.c -- routing
-    Copyright (C) 2000-2005 Ivo Timmermans <ivo@tinc-vpn.org>,
-                  2000-2005 Guus Sliepen <guus@tinc-vpn.org>
+    Copyright (C) 2000-2005 Ivo Timmermans,
+                  2000-2006 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: route.c 1439 2005-05-04 18:09:30Z guus $
+    $Id: route.c 1461 2006-08-09 22:31:10Z guus $
 */
 
 #include "system.h"
@@ -163,17 +163,23 @@ void age_subnets(void)
 static void route_mac(node_t *source, vpn_packet_t *packet)
 {
 	subnet_t *subnet;
+	mac_t dest;
 
 	cp();
 
+
 	/* Learn source address */
 
-	if(source == myself)
-		learn_mac((mac_t *)(&packet->data[6]));
+	if(source == myself) {
+		mac_t src;
+		memcpy(&src, &packet->data[6], sizeof src);
+		learn_mac(&src);
+	}
 
 	/* Lookup destination address */
 
-	subnet = lookup_subnet_mac((mac_t *)(&packet->data[0]));
+	memcpy(&dest, &packet->data[0], sizeof dest);
+	subnet = lookup_subnet_mac(&dest);
 
 	if(!subnet) {
 		broadcast_packet(source, packet);
@@ -280,7 +286,7 @@ static void fragment_ipv4_packet(node_t *dest, vpn_packet_t *packet) {
 	todo = ntohs(ip.ip_len) - ip_size;
 
 	if(ether_size + ip_size + todo != packet->len) {
-		ifdebug(TRAFFIC) logger(LOG_WARNING, _("Length of packet (%d) doesn't match length in IPv4 header (%d)"), packet->len, ether_size + ip_size + todo);
+		ifdebug(TRAFFIC) logger(LOG_WARNING, _("Length of packet (%d) doesn't match length in IPv4 header (%zd)"), packet->len, ether_size + ip_size + todo);
 		return;
 	}
 
@@ -316,18 +322,20 @@ static void route_ipv4_unicast(node_t *source, vpn_packet_t *packet)
 {
 	subnet_t *subnet;
 	node_t *via;
+	ipv4_t dest;
 
 	cp();
 
-	subnet = lookup_subnet_ipv4((ipv4_t *) &packet->data[30]);
+	memcpy(&dest, &packet->data[30], sizeof dest);
+	subnet = lookup_subnet_ipv4(&dest);
 
 	if(!subnet) {
 		ifdebug(TRAFFIC) logger(LOG_WARNING, _("Cannot route packet from %s (%s): unknown IPv4 destination address %d.%d.%d.%d"),
 				source->name, source->hostname,
-				packet->data[30],
-				packet->data[31],
-				packet->data[32],
-				packet->data[33]);
+				dest.x[0],
+				dest.x[1],
+				dest.x[2],
+				dest.x[3]);
 
 		route_ipv4_unreachable(source, packet, ICMP_DEST_UNREACH, ICMP_NET_UNKNOWN);
 		return;
@@ -454,22 +462,24 @@ static void route_ipv6_unicast(node_t *source, vpn_packet_t *packet)
 {
 	subnet_t *subnet;
 	node_t *via;
+	ipv6_t dest;
 
 	cp();
 
-	subnet = lookup_subnet_ipv6((ipv6_t *) &packet->data[38]);
+	memcpy(&dest, &packet->data[38], sizeof dest);
+	subnet = lookup_subnet_ipv6(&dest);
 
 	if(!subnet) {
 		ifdebug(TRAFFIC) logger(LOG_WARNING, _("Cannot route packet from %s (%s): unknown IPv6 destination address %hx:%hx:%hx:%hx:%hx:%hx:%hx:%hx"),
 				source->name, source->hostname,
-				ntohs(*(uint16_t *) &packet->data[38]),
-				ntohs(*(uint16_t *) &packet->data[40]),
-				ntohs(*(uint16_t *) &packet->data[42]),
-				ntohs(*(uint16_t *) &packet->data[44]),
-				ntohs(*(uint16_t *) &packet->data[46]),
-				ntohs(*(uint16_t *) &packet->data[48]),
-				ntohs(*(uint16_t *) &packet->data[50]),
-				ntohs(*(uint16_t *) &packet->data[52]));
+				ntohs(dest.x[0]),
+				ntohs(dest.x[1]),
+				ntohs(dest.x[2]),
+				ntohs(dest.x[3]),
+				ntohs(dest.x[4]),
+				ntohs(dest.x[5]),
+				ntohs(dest.x[6]),
+				ntohs(dest.x[7]));
 
 		route_ipv6_unreachable(source, packet, ICMP6_DST_UNREACH, ICMP6_DST_UNREACH_ADDR);
 		return;

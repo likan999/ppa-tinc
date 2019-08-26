@@ -1,7 +1,7 @@
 /*
     event.c -- event queue
-    Copyright (C) 2002-2005 Guus Sliepen <guus@tinc-vpn.org>,
-                  2002-2005 Ivo Timmermans <ivo@tinc-vpn.org>
+    Copyright (C) 2002-2006 Guus Sliepen <guus@tinc-vpn.org>,
+                  2002-2005 Ivo Timmermans
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: event.c 1439 2005-05-04 18:09:30Z guus $
+    $Id: event.c 1469 2006-11-11 22:44:15Z guus $
 */
 
 #include "system.h"
@@ -96,7 +96,7 @@ event_t *get_expired_event(void)
 		event = event_tree->head->data;
 
 		if(event->time < now) {
-			avl_delete(event_tree, event);
+			event_del(event);
 			return event;
 		}
 	}

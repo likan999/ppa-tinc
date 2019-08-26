@@ -1,7 +1,7 @@
 /*
     net_setup.c -- Setup.
-    Copyright (C) 1998-2005 Ivo Timmermans <ivo@tinc-vpn.org>,
-                  2000-2005 Guus Sliepen <guus@tinc-vpn.org>
+    Copyright (C) 1998-2005 Ivo Timmermans,
+                  2000-2006 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net_setup.c 1439 2005-05-04 18:09:30Z guus $
+    $Id: net_setup.c 1469 2006-11-11 22:44:15Z guus $
 */
 
 #include "system.h"
@@ -286,8 +286,6 @@ bool setup_myself(void)
 	if(get_config_bool(lookup_config(myself->connection->config_tree, "TCPOnly"), &choice) && choice)
 		myself->options |= OPTION_TCPONLY;
 
-	get_config_bool(lookup_config(config_tree, "BlockingTCP"), &blockingtcp);
-
 	if(get_config_bool(lookup_config(myself->connection->config_tree, "PMTUDiscovery"), &choice) && choice)
 		myself->options |= OPTION_PMTU_DISCOVERY;
 
@@ -370,7 +368,7 @@ bool setup_myself(void)
 	myself->connection->outcipher = EVP_bf_ofb();
 
 	myself->key = xmalloc(myself->keylength);
-	RAND_pseudo_bytes(myself->key, myself->keylength);
+	RAND_pseudo_bytes((unsigned char *)myself->key, myself->keylength);
 
 	if(!get_config_int(lookup_config(config_tree, "KeyExpire"), &keylifetime))
 		keylifetime = 3600;
@@ -379,7 +377,7 @@ bool setup_myself(void)
 	
 	if(myself->cipher) {
 		EVP_CIPHER_CTX_init(&packet_ctx);
-		if(!EVP_DecryptInit_ex(&packet_ctx, myself->cipher, NULL, myself->key, myself->key + myself->cipher->key_len)) {
+		if(!EVP_DecryptInit_ex(&packet_ctx, myself->cipher, NULL, (unsigned char *)myself->key, (unsigned char *)myself->key + myself->cipher->key_len)) {
 			logger(LOG_ERR, _("Error during initialisation of cipher for %s (%s): %s"),
 					myself->name, myself->hostname, ERR_error_string(ERR_get_error(), NULL));
 			return false;
@@ -439,7 +437,6 @@ bool setup_myself(void)
 
 	myself->nexthop = myself;
 	myself->via = myself;
-	myself->status.active = true;
 	myself->status.reachable = true;
 	node_add(myself);
 
@@ -504,7 +501,7 @@ bool setup_myself(void)
 			free(hostname);
 		}
 
-		listen_socket[listen_sockets].sa.sa = *aip->ai_addr;
+		memcpy(&listen_socket[listen_sockets].sa, aip->ai_addr, aip->ai_addrlen);
 		listen_sockets++;
 	}
 
@@ -529,19 +526,27 @@ bool setup_network_connections(void)
 
 	now = time(NULL);
 
+	init_events();
 	init_connections();
 	init_subnets();
 	init_nodes();
 	init_edges();
-	init_events();
 	init_requests();
 
-	if(get_config_int(lookup_config(config_tree, "PingTimeout"), &pingtimeout)) {
-		if(pingtimeout < 1) {
-			pingtimeout = 86400;
+	if(get_config_int(lookup_config(config_tree, "PingInterval"), &pinginterval)) {
+		if(pinginterval < 1) {
+			pinginterval = 86400;
 		}
 	} else
-		pingtimeout = 60;
+		pinginterval = 60;
+
+	if(!get_config_int(lookup_config(config_tree, "PingTimeout"), &pingtimeout))
+		pingtimeout = 5;
+	if(pingtimeout < 1 || pingtimeout > pinginterval)
+		pingtimeout = pinginterval;
+
+	if(!get_config_int(lookup_config(config_tree, "MaxOutputBufferSize"), &maxoutbufsize))
+		maxoutbufsize = 4 * MTU;
 
 	if(!setup_myself())
 		return false;
@@ -582,18 +587,18 @@ void close_network_connections(void)
 		close(listen_socket[i].udp);
 	}
 
-	exit_requests();
-	exit_events();
-	exit_edges();
-	exit_subnets();
-	exit_nodes();
-	exit_connections();
-
 	asprintf(&envp[0], "NETNAME=%s", netname ? : "");
 	asprintf(&envp[1], "DEVICE=%s", device ? : "");
 	asprintf(&envp[2], "INTERFACE=%s", iface ? : "");
 	asprintf(&envp[3], "NAME=%s", myself->name);
 	envp[4] = NULL;
+
+	exit_requests();
+	exit_edges();
+	exit_subnets();
+	exit_nodes();
+	exit_connections();
+	exit_events();
 
 	execute_script("tinc-down", envp);
 

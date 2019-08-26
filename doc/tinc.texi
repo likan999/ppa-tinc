@@ -1,5 +1,5 @@
 \input texinfo   @c -*-texinfo-*-
-@c $Id: tinc.texi 1439 2005-05-04 18:09:30Z guus $
+@c $Id: tinc.texi 1467 2006-11-11 20:37:58Z guus $
 @c %**start of header
 @setfilename tinc.info
 @settitle tinc Manual
@@ -16,11 +16,11 @@
 
 This is the info manual for @value{PACKAGE} version @value{VERSION}, a Virtual Private Network daemon.
 
-Copyright @copyright{} 1998-2005 Ivo Timmermans
-<ivo@@tinc-vpn.org>, Guus Sliepen <guus@@tinc-vpn.org> and
+Copyright @copyright{} 1998-2006 Ivo Timmermans,
+Guus Sliepen <guus@@tinc-vpn.org> and
 Wessel Dankers <wsl@@tinc-vpn.org>.
 
-$Id: tinc.texi 1439 2005-05-04 18:09:30Z guus $
+$Id: tinc.texi 1467 2006-11-11 20:37:58Z guus $
 
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -43,11 +43,11 @@ permission notice identical to this one.
 @cindex copyright
 This is the info manual for @value{PACKAGE} version @value{VERSION}, a Virtual Private Network daemon.
 
-Copyright @copyright{} 1998-2005 Ivo Timmermans
-<ivo@@tinc-vpn.org>, Guus Sliepen <guus@@tinc-vpn.org> and
+Copyright @copyright{} 1998-2006 Ivo Timmermans,
+Guus Sliepen <guus@@tinc-vpn.org> and
 Wessel Dankers <wsl@@tinc-vpn.org>.
 
-$Id: tinc.texi 1439 2005-05-04 18:09:30Z guus $
+$Id: tinc.texi 1467 2006-11-11 20:37:58Z guus $
 
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -841,15 +841,6 @@ variable.
 
 This option may not work on all platforms.
 
-@cindex BlockingTCP
-@item BlockingTCP = <yes|no> (no) [experimental]
-This options selects whether TCP connections, when established, should use blocking writes.
-When turned off, tinc will never block when a TCP connection becomes congested,
-but will have to terminate that connection instead.
-If turned on, tinc will not terminate connections but will block,
-thereby unable to process data to/from other connections.
-Turn this option on if you also use TCPOnly and tinc terminates connections frequently.
-
 @cindex ConnectTo
 @item ConnectTo = <@var{name}>
 Specifies which other tinc daemon to connect to on startup.
@@ -870,6 +861,16 @@ Note that you can only use one device per daemon.
 Under Windows, use @var{Interface} instead of @var{Device}.
 Note that you can only use one device per daemon.
 See also @ref{Device files}.
+
+@cindex GraphDumpFile
+@item GraphDumpFile = <@var{filename}> [experimental]
+If this option is present,
+tinc will dump the current network graph to the file @var{filename}
+every minute, unless there were no changes to the graph.
+The file is in a format that can be read by graphviz tools.
+If @var{filename} starts with a pipe symbol |,
+then the rest of the filename is interpreted as a shell command
+that is executed, the graph is then sent to stdin.
 
 @cindex Hostnames
 @item Hostnames = <yes|no> (no)
@@ -933,12 +934,16 @@ This only has effect when Mode is set to "switch".
 @item Name = <@var{name}> [required]
 This is a symbolic name for this connection.  It can be anything
 
-@cindex PingTimeout
-@item PingTimeout = <@var{seconds}> (60)
+@cindex PingInterval
+@item PingInterval = <@var{seconds}> (60)
 The number of seconds of inactivity that tinc will wait before sending a
-probe to the other end.  If that other end doesn't answer within that
-same amount of seconds, the connection is terminated, and the others
-will be notified of this.
+probe to the other end.
+
+@cindex PingTimeout
+@item PingTimeout = <@var{seconds}> (5)
+The number of seconds to wait for a response to pings or to allow meta
+connections to block. If the other end doesn't respond within this time,
+the connection is terminated, and the others will be notified of this.
 
 @cindex PriorityInheritance
 @item PriorityInheritance = <yes|no> (no) [experimental]
@@ -1100,6 +1105,12 @@ This script is started when the tinc daemon with name @var{host} becomes reachab
 
 @item @value{sysconfdir}/tinc/@var{netname}/hosts/@var{host}-down
 This script is started when the tinc daemon with name @var{host} becomes unreachable.
+
+@item @value{sysconfdir}/tinc/@var{netname}/host-up
+This script is started when any host becomes reachable.
+
+@item @value{sysconfdir}/tinc/@var{netname}/host-down
+This script is started when any host becomes unreachable.
 
 @item @value{sysconfdir}/tinc/@var{netname}/subnet-up
 This script is started when a Subnet becomes reachable.

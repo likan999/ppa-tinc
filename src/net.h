@@ -1,7 +1,7 @@
 /*
     net.h -- header for net.c
     Copyright (C) 1998-2005 Ivo Timmermans <zarq@iname.com>
-                  2000-2005 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2006 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: net.h 1439 2005-05-04 18:09:30Z guus $
+    $Id: net.h 1452 2006-04-26 13:52:58Z guus $
 */
 
 #ifndef __TINC_NET_H__
@@ -114,10 +114,9 @@ typedef struct outgoing_t {
 	struct addrinfo *aip;
 } outgoing_t;
 
-extern int maxtimeout;
+extern int maxoutbufsize;
 extern int seconds_till_retry;
 extern int addressfamily;
-extern bool blockingtcp;
 
 extern listen_socket_t listen_socket[MAXSOCKETS];
 extern int listen_sockets;

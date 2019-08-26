@@ -1,7 +1,7 @@
 /*
     meta.c -- handle the meta communication
-    Copyright (C) 2000-2005 Guus Sliepen <guus@tinc-vpn.org>,
-                  2000-2005 Ivo Timmermans <ivo@tinc-vpn.org>
+    Copyright (C) 2000-2006 Guus Sliepen <guus@tinc-vpn.org>,
+                  2000-2005 Ivo Timmermans
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: meta.c 1439 2005-05-04 18:09:30Z guus $
+    $Id: meta.c 1471 2006-11-14 12:28:04Z guus $
 */
 
 #include "system.h"
@@ -32,12 +32,11 @@
 #include "net.h"
 #include "protocol.h"
 #include "utils.h"
+#include "xalloc.h"
 
 bool send_meta(connection_t *c, const char *buffer, int length)
 {
-	const char *bufp;
 	int outlen;
-	char outbuf[MAXBUFSIZE];
 	int result;
 
 	cp();
@@ -45,35 +44,75 @@ bool send_meta(connection_t *c, const char *buffer, int length)
 	ifdebug(META) logger(LOG_DEBUG, _("Sending %d bytes of metadata to %s (%s)"), length,
 			   c->name, c->hostname);
 
+	if(!c->outbuflen)
+		c->last_flushed_time = now;
+
+	/* Find room in connection's buffer */
+	if(length + c->outbuflen > c->outbufsize) {
+		c->outbufsize = length + c->outbuflen;
+		c->outbuf = xrealloc(c->outbuf, c->outbufsize);
+	}
+
+	if(length + c->outbuflen + c->outbufstart > c->outbufsize) {
+		memmove(c->outbuf, c->outbuf + c->outbufstart, c->outbuflen);
+		c->outbufstart = 0;
+	}
+
+	/* Add our data to buffer */
 	if(c->status.encryptout) {
-		result = EVP_EncryptUpdate(c->outctx, outbuf, &outlen, buffer, length);
-		if(!result || outlen != length) {
+		result = EVP_EncryptUpdate(c->outctx, (unsigned char *)c->outbuf + c->outbufstart + c->outbuflen,
+				&outlen, (unsigned char *)buffer, length);
+		if(!result || outlen < length) {
 			logger(LOG_ERR, _("Error while encrypting metadata to %s (%s): %s"),
 					c->name, c->hostname, ERR_error_string(ERR_get_error(), NULL));
 			return false;
+		} else if(outlen > length) {
+			logger(LOG_EMERG, _("Encrypted data too long! Heap corrupted!"));
+			abort();
 		}
-		bufp = outbuf;
-		length = outlen;
-	} else
-		bufp = buffer;
+		c->outbuflen += outlen;
+	} else {
+		memcpy(c->outbuf + c->outbufstart + c->outbuflen, buffer, length);
+		c->outbuflen += length;
+	}
 
-	while(length) {
-		result = send(c->socket, bufp, length, 0);
+	return true;
+}
+
+bool flush_meta(connection_t *c)
+{
+	int result;
+	
+	ifdebug(META) logger(LOG_DEBUG, _("Flushing %d bytes to %s (%s)"),
+			 c->outbuflen, c->name, c->hostname);
+
+	while(c->outbuflen) {
+		result = send(c->socket, c->outbuf + c->outbufstart, c->outbuflen, 0);
 		if(result <= 0) {
 			if(!errno || errno == EPIPE) {
 				ifdebug(CONNECTIONS) logger(LOG_NOTICE, _("Connection closed by %s (%s)"),
 						   c->name, c->hostname);
-			} else if(errno == EINTR)
+			} else if(errno == EINTR) {
 				continue;
-			else
-				logger(LOG_ERR, _("Sending meta data to %s (%s) failed: %s"), c->name,
+#ifdef EWOULDBLOCK
+			} else if(errno == EWOULDBLOCK) {
+				ifdebug(CONNECTIONS) logger(LOG_DEBUG, _("Flushing %d bytes to %s (%s) would block"),
+						c->outbuflen, c->name, c->hostname);
+				return true;
+#endif
+			} else {
+				logger(LOG_ERR, _("Flushing meta data to %s (%s) failed: %s"), c->name,
 					   c->hostname, strerror(errno));
+			}
+
 			return false;
 		}
-		bufp += result;
-		length -= result;
+
+		c->outbufstart += result;
+		c->outbuflen -= result;
 	}
-	
+
+	c->outbufstart = 0; /* avoid unnecessary memmoves */
 	return true;
 }
 
@@ -132,7 +171,7 @@ bool receive_meta(connection_t *c)
 		/* Decrypt */
 
 		if(c->status.decryptin && !decrypted) {
-			result = EVP_DecryptUpdate(c->inctx, inbuf, &lenout, c->buffer + oldlen, lenin);
+			result = EVP_DecryptUpdate(c->inctx, (unsigned char *)inbuf, &lenout, (unsigned char *)c->buffer + oldlen, lenin);
 			if(!result || lenout != lenin) {
 				logger(LOG_ERR, _("Error while decrypting metadata from %s (%s): %s"),
 						c->name, c->hostname, ERR_error_string(ERR_get_error(), NULL));
