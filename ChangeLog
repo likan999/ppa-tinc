@@ -1,3 +1,263 @@
+commit 28a1501b9a8b4c730f7f965d6b2e8fc50feba261
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sat Mar 10 13:31:36 2012 +0100
+
+    Releasing 1.0.17.
+
+commit 4712d8f92e63e86e835ffb624d6399343ee568ea
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sat Mar 10 13:23:08 2012 +0100
+
+    Update copyright notices.
+
+commit 5b0f5ad958d6db4e73aebc5ee6c608cdae81b7b5
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Thu Mar 8 23:23:39 2012 +0100
+
+    Make sure disabling old RSA keys works on Windows.
+    
+    Seeking in files and rewriting parts of them does not seem to work properly on
+    Windows. Instead, when old RSA keys are found when generating new ones, the
+    file containing the old keys is copied to a temporary file where the changes
+    are made, and that file is renamed back to the original filename. On Windows,
+    we cannot atomically replace files with a rename(), so we need to move the
+    original file out of the way first. If anything fails, the new code will warn
+    that the user has to solve the problem by hand.
+
+commit 2f1c337c541fcb7e2c62aeeab245ff7a43eb51a5
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Thu Mar 8 22:19:20 2012 +0100
+
+    Add missing ICMP6 message type definitions.
+
+commit 9dea33f5301119dd4423eb962956cf2d246af3f3
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Wed Mar 7 10:40:06 2012 +0100
+
+    Accept Subnets passed with the -o option when StrictSubnets = yes.
+
+commit 63f8303a5dc1758876451a580a8317dbc3d295d6
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Fri Mar 2 16:09:58 2012 +0100
+
+    Only log errors sending UDP packets when debug level >= 5.
+    
+    Since tinc will fall back to TCP or route via another node, it is not necessary
+    to log such errors unconditionally.
+
+commit ae5249610954af17c68c547bb1b45ad286ad647e
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Feb 26 16:23:02 2012 +0100
+
+    Only use broadcast at the start of the PMTU discovery phase.
+    
+    For local peer discovery, only a handful of packets are necessary for
+    peers to detect each other.
+
+commit 5140656de6bcfda72951a7827b05414ce306e3ca
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sat Feb 25 22:11:30 2012 +0100
+
+    Stricter checks against routing loops.
+    
+    If a packet that had to be sent via an intermediate hop, and that intermediate
+    hop was the one that sent the packet, we drop it.
+
+commit f1d5eae643cdf537ef357f10f2da8ff83bdf32b4
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sat Feb 25 21:46:18 2012 +0100
+
+    Don't send ICMP Time Exceeded messages for other Time Exceeded messages.
+    
+    That would be silly.
+
+commit 5a28aa7b8b0ab6237c2eab5f8b11253ea3ec5a05
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Wed Feb 22 23:17:43 2012 +0100
+
+    Add LocalDiscovery option which tries to detect peers on the local network.
+    
+    Currently, this is implemented by sending IPv4 broadcast packets to the
+    LAN during path MTU discovery.
+
+commit 8e717ddb602f01f656369106ec0398efbe9ca4a4
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Wed Feb 22 14:37:56 2012 +0100
+
+    Pass index into listen_socket[] to handle_incoming_vpn_data().
+
+commit 65e8e06c6dc7349b11c3c1e8f4071b51e2994c65
+Author: Nick Hibma <nick@van-laarhoven.org>
+Date:   Tue Feb 21 15:26:58 2012 +0100
+
+    Add missing ICMP message type definitions.
+
+commit ac48c4ee8c09c8144f830cb66386b9dbe7298440
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Tue Feb 21 14:06:55 2012 +0100
+
+    Fix check for raw socket support.
+    
+    Also, move some variables so there are no compiler warnings about unused
+    variables when there is no support for raw sockets.
+
+commit d9ad3d313d96d30ef45cd53367dff9a855a396d4
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Tue Feb 21 13:31:21 2012 +0100
+
+    Fix a bug that caused tinc to ignore all but the last listening socket.
+
+commit 46506b7aaf6c6a8a85561c38fdb9c95eae21aa75
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Tue Feb 21 13:13:40 2012 +0100
+
+    Document the command line flag -o and provide --option as well.
+
+commit 7d76e287598c8c18cadfb5818046d9dd1b0ad881
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Tue Feb 21 11:39:21 2012 +0100
+
+    Move initialization of char *priority up to prevent freeing an uninitialized pointer.
+
+commit 8420a0c8bde1781db04dd2436eb9d5dca5a1732a
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Mon Feb 20 17:19:00 2012 +0100
+
+    Allow disabling of broadcast packets.
+    
+    The Broadcast option can be used to cause tinc to drop all broadcast and
+    multicast packets. This option might be expanded in the future to selectively
+    allow only some broadcast packet types.
+
+commit ea415ccc1690d6e5864a7500977b181e5c8faafe
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Mon Feb 20 17:12:48 2012 +0100
+
+    Rename connection_t *broadcast to everyone.
+
+commit cff5a844a3e6b494f4a4f6eb5b48a84780f2d0e5
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Mon Feb 20 16:52:53 2012 +0100
+
+    Don't bind outgoing TCP sockets anymore.
+    
+    The code introduced in commit 41a05f59ba2c3eb5caab555f096ed1b9fbe69ee3 is not
+    needed anymore, since tinc has been able to handle UDP packets from a different
+    source address than those of the TCP packets since 1.0.10.  When using multiple
+    BindToAddress statements, this code does not make sense anymore, we do want the
+    kernel to choose the source address on its own.
+
+commit 0233b1d710222cb09be0cbd08c1297e3ece38a9f
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Mon Feb 20 16:34:02 2012 +0100
+
+    Decrement TTL of incoming packets.
+    
+    Tinc will now, by default, decrement the TTL field of incoming IPv4 and IPv6
+    packets, before forwarding them to the virtual network device or to another
+    node. Packets with a TTL value of zero will be dropped, and an ICMP Time
+    Exceeded message will be sent back.
+    
+    This behaviour can be disabled using the DecrementTTL option.
+
+commit 6289859ab365dc1c0d420323174418b316b14502
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Mon Feb 20 15:44:52 2012 +0100
+
+    Only compile raw socket code when it is supported on that platform.
+
+commit d1dcdf8eb6f800704be426b1ce6f6c1a8e65ba0d
+Merge: 1b2846d 3b1fad0
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sat Feb 18 14:31:08 2012 +0100
+
+    Merge branch 'master' of black:tinc
+
+commit 3b1fad04de6bed2f284fdf3d5b27d4162aeebc8c
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sat Feb 18 14:37:52 2012 +0100
+
+    Allow setting DeviceType to tun or tap on Linux.
+
+commit 6455654d26d204cea4bbc102e5bd6550b7fff7a7
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sat Feb 18 11:48:21 2012 +0100
+
+    Send packets back using the same socket as they were received on.
+
+commit 1b2846d907adfc8472fc9da0c951c3243c7ee143
+Merge: 9f6a96a 6455654
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sat Feb 18 11:43:00 2012 +0100
+
+    Merge branch 'master' of black:tinc
+
+commit 9f6a96af3939bd2de410ce346a8c8fbcf93e7c9b
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Fri Feb 17 16:25:00 2012 +0100
+
+    Allow multiple BindToAddress statements.
+
+commit 708314df2f61675d0f54e541c9fff62ac1f433b5
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Fri Feb 17 16:13:38 2012 +0100
+
+    Set FD_CLOEXEC flag on all sockets.
+    
+    Scripts called by tinc would inherit its open filedescriptors. This could
+    be a problem if other long-running daemons are started from those scripts,
+    if those daemons would not close all filedescriptors before going into the
+    background.
+    
+    Problem found and solution suggested by Nick Hibma.
+
+commit 178e52f76ef4ba40748c13ea7e518837394d6dbc
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Dec 4 01:20:59 2011 +0100
+
+    Allow linking with multiple device drivers.
+    
+    Apart from the platform specific tun/tap driver, link with the dummy and
+    raw_socket devices, and optionally with support for UML and VDE devices.
+    At runtime, the DeviceType option can be used to select which driver to
+    use.
+
+commit 5672863e59e6a114ac6b66de98254b14266c0e61
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sat Dec 3 21:59:47 2011 +0100
+
+    Fix a few small memory leaks.
+
+commit 52ded09d1713b83222b56db7d29ff061aefb95e3
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Nov 27 12:13:16 2011 +0100
+
+    Add vde/device.c to the tarball.
+
+commit 2c7c87ec75c94d0b3cca9f7a5aeba34384f77cc1
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Nov 27 12:12:34 2011 +0100
+
+    Fix compilation of VDE and UML interfaces.
+
+commit ddea7a23a66b8fee4942f2ce237dcabe02e17270
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Tue Aug 30 20:49:48 2011 +0200
+
+    Return false instead of void when there is an error.
+
+commit e838289683c0039fac0ae6172d40b4177c17911b
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Tue Aug 30 19:56:56 2011 +0200
+
+    Prevent read_rsa_public_key() from returning an uninitialized RSA structure.
+    
+    In case the config file could not be opened a new but unitialized RSA structure
+    would be returned, causing a segmentation fault later on. This would only
+    happen in the case that the config file could be opened before, but not when
+    read_rsa_public_key() was called. This situation could occur when the --user
+    option was used, and the config files were not readable by the specified user.
+
 commit 0f2aa4bd8b698608876bec141c5aef1aa619730b
 Author: Guus Sliepen <guus@tinc-vpn.org>
 Date:   Sat Jul 23 14:12:23 2011 +0200

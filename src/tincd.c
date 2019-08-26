@@ -1,7 +1,7 @@
 /*
     tincd.c -- the main file for tincd
     Copyright (C) 1998-2005 Ivo Timmermans
-                  2000-2011 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2012 Guus Sliepen <guus@tinc-vpn.org>
                   2008      Max Rijevski <maksuf@gmail.com>
                   2009      Michael Tokarev <mjt@tls.msk.ru>
                   2010      Julien Muchembled <jm@jmuchemb.eu>
@@ -114,6 +114,7 @@ static struct option const long_options[] = {
 	{"user", required_argument, NULL, 'U'},
 	{"logfile", optional_argument, NULL, 4},
 	{"pidfile", required_argument, NULL, 5},
+	{"option", required_argument, NULL, 'o'},
 	{NULL, 0, NULL, 0}
 };
 
@@ -129,20 +130,20 @@ static void usage(bool status) {
 				program_name);
 	else {
 		printf("Usage: %s [option]...\n\n", program_name);
-		printf("  -c, --config=DIR           Read configuration options from DIR.\n"
-				"  -D, --no-detach            Don't fork and detach.\n"
-				"  -d, --debug[=LEVEL]        Increase debug level or set it to LEVEL.\n"
-				"  -k, --kill[=SIGNAL]        Attempt to kill a running tincd and exit.\n"
-				"  -n, --net=NETNAME          Connect to net NETNAME.\n"
-				"  -K, --generate-keys[=BITS] Generate public/private RSA keypair.\n"
-				"  -L, --mlock                Lock tinc into main memory.\n"
-				"      --logfile[=FILENAME]   Write log entries to a logfile.\n"
-				"      --pidfile=FILENAME     Write PID to FILENAME.\n"
-				"  -o [HOST.]KEY=VALUE        Set global/host configuration value.\n"
-				"  -R, --chroot               chroot to NET dir at startup.\n"
-				"  -U, --user=USER            setuid to given USER at startup.\n"
-				"      --help                 Display this help and exit.\n"
-				"      --version              Output version information and exit.\n\n");
+		printf("  -c, --config=DIR               Read configuration options from DIR.\n"
+				"  -D, --no-detach                Don't fork and detach.\n"
+				"  -d, --debug[=LEVEL]            Increase debug level or set it to LEVEL.\n"
+				"  -k, --kill[=SIGNAL]            Attempt to kill a running tincd and exit.\n"
+				"  -n, --net=NETNAME              Connect to net NETNAME.\n"
+				"  -K, --generate-keys[=BITS]     Generate public/private RSA keypair.\n"
+				"  -L, --mlock                    Lock tinc into main memory.\n"
+				"      --logfile[=FILENAME]       Write log entries to a logfile.\n"
+				"      --pidfile=FILENAME         Write PID to FILENAME.\n"
+				"  -o, --option=[HOST.]KEY=VALUE  Set global/host configuration value.\n"
+				"  -R, --chroot                   chroot to NET dir at startup.\n"
+				"  -U, --user=USER                setuid to given USER at startup.\n"
+				"      --help                     Display this help and exit.\n"
+				"      --version                  Output version information and exit.\n\n");
 		printf("Report bugs to tinc@tinc-vpn.org.\n");
 	}
 }
@@ -361,9 +362,6 @@ static bool keygen(int bits) {
 	if(!f)
 		return false;
 
-	if(disable_old_keys(f))
-		fprintf(stderr, "Warning: old key(s) found and disabled.\n");
-  
 #ifdef HAVE_FCHMOD
 	/* Make it unreadable for others. */
 	fchmod(fileno(f), 0600);
@@ -383,9 +381,6 @@ static bool keygen(int bits) {
 
 	if(!f)
 		return false;
-
-	if(disable_old_keys(f))
-		fprintf(stderr, "Warning: old key(s) found and disabled.\n");
 
 	fputc('\n', f);
 	PEM_write_RSAPublicKey(f, rsa_key);
@@ -523,7 +518,7 @@ int main(int argc, char **argv) {
 	if(show_version) {
 		printf("%s version %s (built %s %s, protocol %d)\n", PACKAGE,
 			   VERSION, __DATE__, __TIME__, PROT_CURRENT);
-		printf("Copyright (C) 1998-2011 Ivo Timmermans, Guus Sliepen and others.\n"
+		printf("Copyright (C) 1998-2012 Ivo Timmermans, Guus Sliepen and others.\n"
 				"See the AUTHORS file for a complete list.\n\n"
 				"tinc comes with ABSOLUTELY NO WARRANTY.  This is free software,\n"
 				"and you are welcome to redistribute it under certain conditions;\n"
@@ -586,6 +581,7 @@ int main2(int argc, char **argv) {
 	InitializeCriticalSection(&mutex);
 	EnterCriticalSection(&mutex);
 #endif
+        char *priority = NULL;
 
 	if(!detach())
 		return 1;
@@ -611,8 +607,6 @@ int main2(int argc, char **argv) {
 	try_outgoing_connections();
 
 	/* Change process priority */
-
-        char *priority = 0;
 
         if(get_config_string(lookup_config(config_tree, "ProcessPriority"), &priority)) {
                 if(!strcasecmp(priority, "Normal")) {
@@ -650,7 +644,7 @@ int main2(int argc, char **argv) {
 	/* Shutdown properly. */
 
 	ifdebug(CONNECTIONS)
-		dump_device_stats();
+		devops.dump_stats();
 
 	close_network_connections();
 
@@ -661,6 +655,8 @@ end:
 	remove_pid(pidfilename);
 #endif
 
+	free(priority);
+
 	EVP_cleanup();
 	ENGINE_cleanup();
 	CRYPTO_cleanup_all_ex_data();
@@ -668,6 +664,7 @@ end:
 	ERR_free_strings();
 
 	exit_configuration(&config_tree);
+	list_free(cmdline_conf);
 	free_names();
 
 	return status;

@@ -1,7 +1,7 @@
 /*
     device.c -- Interaction with Linux ethertap and tun/tap device
     Copyright (C) 2001-2005 Ivo Timmermans,
-                  2001-2009 Guus Sliepen <guus@tinc-vpn.org>
+                  2001-2012 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -45,13 +45,14 @@ int device_fd = -1;
 static device_type_t device_type;
 char *device = NULL;
 char *iface = NULL;
+static char *type = NULL;
 static char ifrname[IFNAMSIZ];
 static char *device_info;
 
 static uint64_t device_total_in = 0;
 static uint64_t device_total_out = 0;
 
-bool setup_device(void) {
+static bool setup_device(void) {
 	struct ifreq ifr;
 	bool t1q = false;
 
@@ -72,11 +73,23 @@ bool setup_device(void) {
 		return false;
 	}
 
+#ifdef FD_CLOEXEC
+	fcntl(device_fd, F_SETFD, FD_CLOEXEC);
+#endif
+
 #ifdef HAVE_LINUX_IF_TUN_H
 	/* Ok now check if this is an old ethertap or a new tun/tap thingie */
 
 	memset(&ifr, 0, sizeof(ifr));
-	if(routing_mode == RMODE_ROUTER) {
+
+	get_config_string(lookup_config(config_tree, "DeviceType"), &type);
+
+	if(type && strcasecmp(type, "tun") && strcasecmp(type, "tap")) {
+		logger(LOG_ERR, "Unknown device type %s!", type);
+		return false;
+	}
+
+	if((type && !strcasecmp(type, "tun")) || (!type && routing_mode == RMODE_ROUTER)) {
 		ifr.ifr_flags = IFF_TUN;
 		device_type = DEVICE_TYPE_TUN;
 		device_info = "Linux tun/tap device (tun mode)";
@@ -121,14 +134,15 @@ bool setup_device(void) {
 	return true;
 }
 
-void close_device(void) {
+static void close_device(void) {
 	close(device_fd);
 
+	free(type);
 	free(device);
 	free(iface);
 }
 
-bool read_packet(vpn_packet_t *packet) {
+static bool read_packet(vpn_packet_t *packet) {
 	int lenin;
 	
 	switch(device_type) {
@@ -175,7 +189,7 @@ bool read_packet(vpn_packet_t *packet) {
 	return true;
 }
 
-bool write_packet(vpn_packet_t *packet) {
+static bool write_packet(vpn_packet_t *packet) {
 	ifdebug(TRAFFIC) logger(LOG_DEBUG, "Writing packet of %d bytes to %s",
 			   packet->len, device_info);
 
@@ -211,8 +225,16 @@ bool write_packet(vpn_packet_t *packet) {
 	return true;
 }
 
-void dump_device_stats(void) {
+static void dump_device_stats(void) {
 	logger(LOG_DEBUG, "Statistics for %s %s:", device_info, device);
 	logger(LOG_DEBUG, " total bytes in:  %10"PRIu64, device_total_in);
 	logger(LOG_DEBUG, " total bytes out: %10"PRIu64, device_total_out);
 }
+
+const devops_t os_devops = {
+	.setup = setup_device,
+	.close = close_device,
+	.read = read_packet,
+	.write = write_packet,
+	.dump_stats = dump_device_stats,
+};

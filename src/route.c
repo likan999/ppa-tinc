@@ -1,7 +1,7 @@
 /*
     route.c -- routing
     Copyright (C) 2000-2005 Ivo Timmermans,
-                  2000-2010 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2012 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -34,10 +34,12 @@
 
 rmode_t routing_mode = RMODE_ROUTER;
 fmode_t forwarding_mode = FMODE_INTERNAL;
+bool decrement_ttl = true;
 bool directonly = false;
 bool priorityinheritance = false;
 int macexpire = 600;
 bool overwrite_mac = false;
+bool broadcast = true;
 mac_t mymac = {{0xFE, 0xFD, 0, 0, 0, 0}};
 
 /* Sizes of various headers */
@@ -80,13 +82,14 @@ static bool ratelimit(int frequency) {
 	static int count = 0;
 	
 	if(lasttime == now) {
-		if(++count > frequency)
+		if(count >= frequency)
 			return true;
 	} else {
 		lasttime = now;
 		count = 0;
 	}
 
+	count++;
 	return false;
 }
 
@@ -397,6 +400,11 @@ static void route_ipv4_unicast(node_t *source, vpn_packet_t *packet) {
 		packet->priority = packet->data[15];
 
 	via = (subnet->owner->via == myself) ? subnet->owner->nexthop : subnet->owner->via;
+
+	if(via == source) {
+		ifdebug(TRAFFIC) logger(LOG_ERR, "Routing loop for packet from %s (%s)!", source->name, source->hostname);
+		return;
+	}
 	
 	if(directonly && subnet->owner != via)
 		return route_ipv4_unreachable(source, packet, ICMP_DEST_UNREACH, ICMP_NET_ANO);
@@ -422,11 +430,11 @@ static void route_ipv4(node_t *source, vpn_packet_t *packet) {
 	if(!checklength(source, packet, ether_size + ip_size))
 		return;
 
-	if(((packet->data[30] & 0xf0) == 0xe0) || (
+	if(broadcast && (((packet->data[30] & 0xf0) == 0xe0) || (
 			packet->data[30] == 255 &&
 			packet->data[31] == 255 &&
 			packet->data[32] == 255 &&
-			packet->data[33] == 255))
+			packet->data[33] == 255)))
 		broadcast_packet(source, packet);
 	else
 		route_ipv4_unicast(source, packet);
@@ -548,6 +556,11 @@ static void route_ipv6_unicast(node_t *source, vpn_packet_t *packet) {
 		return route_ipv6_unreachable(source, packet, ICMP6_DST_UNREACH, ICMP6_DST_UNREACH_ADMIN);
 
 	via = (subnet->owner->via == myself) ? subnet->owner->nexthop : subnet->owner->via;
+	
+	if(via == source) {
+		ifdebug(TRAFFIC) logger(LOG_ERR, "Routing loop for packet from %s (%s)!", source->name, source->hostname);
+		return;
+	}
 	
 	if(directonly && subnet->owner != via)
 		return route_ipv6_unreachable(source, packet, ICMP6_DST_UNREACH, ICMP6_DST_UNREACH_ADMIN);
@@ -714,7 +727,7 @@ static void route_ipv6(node_t *source, vpn_packet_t *packet) {
 		return;
 	}
 
-	if(packet->data[38] == 255)
+	if(broadcast && packet->data[38] == 255)
 		broadcast_packet(source, packet);
 	else
 		route_ipv6_unicast(source, packet);
@@ -804,7 +817,8 @@ static void route_mac(node_t *source, vpn_packet_t *packet) {
 	subnet = lookup_subnet_mac(NULL, &dest);
 
 	if(!subnet) {
-		broadcast_packet(source, packet);
+		if(broadcast)
+			broadcast_packet(source, packet);
 		return;
 	}
 
@@ -846,6 +860,52 @@ static void route_mac(node_t *source, vpn_packet_t *packet) {
 	send_packet(subnet->owner, packet);
 }
 
+static bool do_decrement_ttl(node_t *source, vpn_packet_t *packet) {
+	uint16_t type = packet->data[12] << 8 | packet->data[13];
+
+	switch (type) {
+		case ETH_P_IP:
+			if(!checklength(source, packet, 14 + 32))
+				return false;
+
+			if(packet->data[22] < 1) {
+				if(packet->data[25] != IPPROTO_ICMP || packet->data[46] != ICMP_TIME_EXCEEDED)
+					route_ipv4_unreachable(source, packet, ICMP_TIME_EXCEEDED, ICMP_EXC_TTL);
+				return false;
+			}
+
+			uint16_t old = packet->data[22] << 8 | packet->data[23];
+			packet->data[22]--;
+			uint16_t new = packet->data[22] << 8 | packet->data[23];
+
+			uint32_t checksum = packet->data[24] << 8 | packet->data[25];
+			checksum += old + (~new & 0xFFFF);
+			while(checksum >> 16)
+				checksum = (checksum & 0xFFFF) + (checksum >> 16);
+			packet->data[24] = checksum >> 8;
+			packet->data[25] = checksum & 0xff;
+
+			return true;
+
+		case ETH_P_IPV6:
+			if(!checklength(source, packet, 14 + 40))
+				return false;
+
+			if(packet->data[21] < 1) {
+				if(packet->data[20] != IPPROTO_ICMPV6 || packet->data[54] != ICMP6_TIME_EXCEEDED)
+					route_ipv6_unreachable(source, packet, ICMP6_TIME_EXCEEDED, ICMP6_TIME_EXCEED_TRANSIT);
+				return false;
+			}
+
+			packet->data[21]--;
+
+			return true;
+
+		default:
+			return true;
+	}
+}
+
 void route(node_t *source, vpn_packet_t *packet) {
 	if(forwarding_mode == FMODE_KERNEL && source != myself) {
 		send_packet(myself, packet);
@@ -854,6 +914,10 @@ void route(node_t *source, vpn_packet_t *packet) {
 
 	if(!checklength(source, packet, ether_size))
 		return;
+
+	if(decrement_ttl && source != myself)
+		if(!do_decrement_ttl(source, packet))
+			return;
 
 	switch (routing_mode) {
 		case RMODE_ROUTER:

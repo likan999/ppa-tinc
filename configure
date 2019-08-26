@@ -607,6 +607,10 @@ ALLOCA
 LIBOBJS
 TUNEMU_FALSE
 TUNEMU_TRUE
+VDE_FALSE
+VDE_TRUE
+UML_FALSE
+UML_TRUE
 host_os
 host_vendor
 host_cpu
@@ -623,6 +627,7 @@ CPP
 am__fastdepCC_FALSE
 am__fastdepCC_TRUE
 CCDEPMODE
+am__nodep
 AMDEPBACKSLASH
 AMDEP_FALSE
 AMDEP_TRUE
@@ -705,6 +710,8 @@ ac_user_opts='
 enable_option_checking
 enable_maintainer_mode
 enable_dependency_tracking
+enable_uml
+enable_vde
 enable_tunemu
 with_windows2000
 enable_zlib
@@ -1351,6 +1358,8 @@ Optional Features:
 			  (and sometimes confusing) to the casual installer
   --disable-dependency-tracking  speeds up one-time build
   --enable-dependency-tracking   do not reject slow dependency extractors
+  --enable-uml            enable support for User Mode Linux
+  --enable-vde            enable support for Virtual Distributed Ethernet
   --enable-tunemu         enable support for the tunemu driver
   --disable-zlib          disable zlib compression support
   --disable-lzo           disable lzo compression support
@@ -2731,7 +2740,7 @@ fi
 
 # Define the identity of the package.
  PACKAGE=tinc
- VERSION=1.0.16
+ VERSION=1.0.17
 
 
 cat >>confdefs.h <<_ACEOF
@@ -2761,11 +2770,11 @@ MAKEINFO=${MAKEINFO-"${am_missing_run}makeinfo"}
 
 # We need awk for the "check" target.  The system "awk" is bad on
 # some platforms.
-# Always define AMTAR for backward compatibility.
+# Always define AMTAR for backward compatibility.  Yes, it's still used
+# in the wild :-(  We should find a proper way to deprecate it ...
+AMTAR='$${TAR-tar}'
 
-AMTAR=${AMTAR-"${am_missing_run}tar"}
-
-am__tar='${AMTAR} chof - "$$tardir"'; am__untar='${AMTAR} xf -'
+am__tar='$${TAR-tar} chof - "$$tardir"' am__untar='$${TAR-tar} xf -'
 
 
 
@@ -2852,6 +2861,7 @@ fi
 if test "x$enable_dependency_tracking" != xno; then
   am_depcomp="$ac_aux_dir/depcomp"
   AMDEPBACKSLASH='\'
+  am__nodep='_no'
 fi
  if test "x$enable_dependency_tracking" != xno; then
   AMDEP_TRUE=
@@ -3665,6 +3675,7 @@ else
   # instance it was reported that on HP-UX the gcc test will end up
   # making a dummy file named `D' -- because `-MD' means `put the output
   # in D'.
+  rm -rf conftest.dir
   mkdir conftest.dir
   # Copy depcomp to subdir because otherwise we won't find it if we're
   # using a relative directory.
@@ -3724,7 +3735,7 @@ else
 	break
       fi
       ;;
-    msvisualcpp | msvcmsys)
+    msvc7 | msvc7msys | msvisualcpp | msvcmsys)
       # This compiler won't grok `-c -o', but also, the minuso test has
       # not run yet.  These depmodes are late enough in the game, and
       # so weak that their functioning should not be impacted.
@@ -4804,6 +4815,42 @@ $as_echo "#define HAVE_MINGW 1" >>confdefs.h
   ;;
 esac
 
+# Check whether --enable-uml was given.
+if test "${enable_uml+set}" = set; then :
+  enableval=$enable_uml;
+$as_echo "#define ENABLE_UML 1" >>confdefs.h
+
+    uml=true
+
+
+fi
+
+
+# Check whether --enable-vde was given.
+if test "${enable_vde+set}" = set; then :
+  enableval=$enable_vde;  for ac_header in libvdeplug_dyn.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "libvdeplug_dyn.h" "ac_cv_header_libvdeplug_dyn_h" "$ac_includes_default"
+if test "x$ac_cv_header_libvdeplug_dyn_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LIBVDEPLUG_DYN_H 1
+_ACEOF
+
+else
+  as_fn_error $? "VDE plug header files not found." "$LINENO" 5; break
+fi
+
+done
+
+
+$as_echo "#define ENABLE_VDE 1" >>confdefs.h
+
+    vde=true
+
+
+fi
+
+
 # Check whether --enable-tunemu was given.
 if test "${enable_tunemu+set}" = set; then :
   enableval=$enable_tunemu;
@@ -4824,6 +4871,22 @@ $as_echo "#define WITH_WINDOWS2000 1" >>confdefs.h
 
 fi
 
+
+ if test "$uml" = true; then
+  UML_TRUE=
+  UML_FALSE='#'
+else
+  UML_TRUE='#'
+  UML_FALSE=
+fi
+
+ if test "$vde" = true; then
+  VDE_TRUE=
+  VDE_FALSE='#'
+else
+  VDE_TRUE='#'
+  VDE_FALSE=
+fi
 
  if test "$tunemu" = true; then
   TUNEMU_TRUE=
@@ -5054,7 +5117,7 @@ fi
 
 done
 
-for ac_header in net/if.h net/if_types.h linux/if_tun.h net/if_tun.h net/tun/if_tun.h net/if_tap.h net/tap/if_tap.h net/ethernet.h net/if_arp.h netinet/in_systm.h netinet/in.h netinet/in6.h
+for ac_header in net/if.h net/if_types.h linux/if_tun.h net/if_tun.h net/tun/if_tun.h net/if_tap.h net/tap/if_tap.h net/ethernet.h net/if_arp.h netinet/in_systm.h netinet/in.h netinet/in6.h netpacket/packet.h
 do :
   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
 ac_fn_c_check_header_compile "$LINENO" "$ac_header" "$as_ac_Header" "#include \"have.h\"
@@ -6766,6 +6829,14 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${am__fastdepCC_TRUE}" && test -z "${am__fastdepCC_FALSE}"; then
   as_fn_error $? "conditional \"am__fastdepCC\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${UML_TRUE}" && test -z "${UML_FALSE}"; then
+  as_fn_error $? "conditional \"UML\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${VDE_TRUE}" && test -z "${VDE_FALSE}"; then
+  as_fn_error $? "conditional \"VDE\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${TUNEMU_TRUE}" && test -z "${TUNEMU_FALSE}"; then

@@ -1,6 +1,6 @@
 /*
     connection.c -- connection list management
-    Copyright (C) 2000-2009 Guus Sliepen <guus@tinc-vpn.org>,
+    Copyright (C) 2000-2012 Guus Sliepen <guus@tinc-vpn.org>,
                   2000-2005 Ivo Timmermans
                   2008      Max Rijevski <maksuf@gmail.com>
 
@@ -29,7 +29,7 @@
 #include "xalloc.h"
 
 avl_tree_t *connection_tree;	/* Meta connections */
-connection_t *broadcast;
+connection_t *everyone;
 
 static int connection_compare(const connection_t *a, const connection_t *b) {
 	return a < b ? -1 : a == b ? 0 : 1;
@@ -37,14 +37,14 @@ static int connection_compare(const connection_t *a, const connection_t *b) {
 
 void init_connections(void) {
 	connection_tree = avl_alloc_tree((avl_compare_t) connection_compare, (avl_action_t) free_connection);
-	broadcast = new_connection();
-	broadcast->name = xstrdup("everyone");
-	broadcast->hostname = xstrdup("BROADCAST");
+	everyone = new_connection();
+	everyone->name = xstrdup("everyone");
+	everyone->hostname = xstrdup("BROADCAST");
 }
 
 void exit_connections(void) {
 	avl_delete_tree(connection_tree);
-	free_connection(broadcast);
+	free_connection(everyone);
 }
 
 connection_t *new_connection(void) {

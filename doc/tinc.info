@@ -5,10 +5,10 @@ START-INFO-DIR-ENTRY
 * tinc: (tinc).              The tinc Manual.
 END-INFO-DIR-ENTRY
 
-   This is the info manual for tinc version 1.0.15, a Virtual Private
+   This is the info manual for tinc version 1.0.17, a Virtual Private
 Network daemon.
 
-   Copyright (C) 1998-2011 Ivo Timmermans, Guus Sliepen
+   Copyright (C) 1998-2012 Ivo Timmermans, Guus Sliepen
 <guus@tinc-vpn.org> and Wessel Dankers <wsl@tinc-vpn.org>.
 
    Permission is granted to make and distribute verbatim copies of this
@@ -686,8 +686,9 @@ AddressFamily = <ipv4|ipv6|any> (any)
 
 BindToAddress = <ADDRESS> [experimental]
      If your computer has more than one IPv4 or IPv6 address, tinc will
-     by default listen on all of them for incoming connections.  It is
-     possible to bind only to a single address with this variable.
+     by default listen on all of them for incoming connections.
+     Multiple BindToAddress variables may be specified, in which case
+     listening sockets for each specified address are made.
 
      This option may not work on all platforms.
 
@@ -698,6 +699,10 @@ BindToInterface = <INTERFACE> [experimental]
      ppp0 with this variable.
 
      This option may not work on all platforms.
+
+Broadcast = <yes | no> (yes) [experimental]
+     When disabled, tinc will drop all broadcast and multicast packets,
+     in both router and switch mode.
 
 ConnectTo = <NAME>
      Specifies which other tinc daemon to connect to on startup.
@@ -710,6 +715,13 @@ ConnectTo = <NAME>
      connect to other daemons at all, and will instead just listen for
      incoming connections.
 
+DecrementTTL = <yes | no> (yes)
+     When enabled, tinc will decrement the Time To Live field in IPv4
+     packets, or the Hop Limit field in IPv6 packets, before forwarding
+     a received packet to the virtual network device or to another node,
+     and will drop packets that have a TTL value of zero, in which case
+     it will send an ICMP Time Exceeded packet back.
+
 Device = <DEVICE> (`/dev/tap0', `/dev/net/tun' or other depending on platform)
      The virtual network device to use.  Tinc will automatically detect
      what kind of device it is.  Note that you can only use one device
@@ -717,31 +729,57 @@ Device = <DEVICE> (`/dev/tap0', `/dev/net/tun' or other depending on platform)
      that you can only use one device per daemon.  See also *note
      Device files::.
 
-DeviceType = <tun|tunnohead|tunifhead|tap> (only supported on BSD platforms)
+DeviceType = <TYPE> (platform dependent)
      The type of the virtual network device.  Tinc will normally
-     automatically select the right type, and this option should not be
-     used.  However, in case tinc does not seem to correctly interpret
-     packets received from the virtual network device, using this
-     option might help.
+     automatically select the right type of tun/tap interface, and this
+     option should not be used.  However, this option can be used to
+     select one of the special interface types, if support for them is
+     compiled in.
 
-    tun
+    dummy
+          Use a dummy interface.  No packets are ever read or written
+          to a virtual network device.  Useful for testing, or when
+          setting up a node that only forwards packets for other nodes.
+
+    raw_socket
+          Open a raw socket, and bind it to a pre-existing INTERFACE
+          (eth0 by default).  All packets are read from this interface.
+          Packets received for the local node are written to the raw
+          socket.  However, at least on Linux, the operating system
+          does not process IP packets destined for the local host.
+
+    uml (not compiled in by default)
+          Create a UNIX socket with the filename specified by DEVICE,
+          or `/var/run/NETNAME.umlsocket' if not specified.  Tinc will
+          wait for a User Mode Linux instance to connect to this socket.
+
+    vde (not compiled in by default)
+          Uses the libvdeplug library to connect to a Virtual
+          Distributed Ethernet switch, using the UNIX socket specified
+          by DEVICE, or `/var/run/vde.ctl' if not specified.
+
+     Also, in case tinc does not seem to correctly interpret packets
+     received from the virtual network device, it can be used to change
+     the way packets are interpreted:
+
+    tun (BSD and Linux)
           Set type to tun.  Depending on the platform, this can either
           be with or without an address family header (see below).
 
-    tunnohead
+    tunnohead (BSD)
           Set type to tun without an address family header.  Tinc will
           expect packets read from the virtual network device to start
           with an IP header.  On some platforms IPv6 packets cannot be
           read from or written to the device in this mode.
 
-    tunifhead
+    tunifhead (BSD)
           Set type to tun with an address family header.  Tinc will
           expect packets read from the virtual network device to start
           with a four byte header containing the address family,
           followed by an IP header.  This mode should support both IPv4
           and IPv6 packets.
 
-    tap
+    tap (BSD and Linux)
           Set type to tap.  Tinc will expect packets read from the
           virtual network device to start with an Ethernet header.
 
@@ -797,6 +835,17 @@ Interface = <INTERFACE>
      Under Windows, this variable is used to select which network
      interface will be used.  If you specified a Device, this variable
      is almost always already correctly set.
+
+LocalDiscovery = <yes | no> (no) [experimental]
+     When enabled, tinc will try to detect peers that are on the same
+     local network.  This will allow direct communication using LAN
+     addresses, even if both peers are behind a NAT and they only
+     ConnectTo a third node outside the NAT, which normally would
+     prevent the peers from learning each other's LAN address.
+
+     Currently, local discovery is implemented by sending broadcast
+     packets to the LAN during path MTU discovery.  This feature may
+     not work in all possible situations.
 
 Mode = <router|switch|hub> (router)
      This option selects the way packets are routed to other daemons.
@@ -1442,6 +1491,13 @@ command line options.
      store the files, but will default to the configuration directory
      (you can use the -c or -n option in combination with -K). After
      that, tinc will quit.
+
+`-o, --option=[HOST.]KEY=VALUE'
+     Without specifying a HOST, this will set server configuration
+     variable KEY to VALUE.  If specified as HOST.KEY=VALUE, this will
+     set the host configuration variable KEY of the host named HOST to
+     VALUE.  This option can be used more than once to specify multiple
+     configuration variables.
 
 `-L, --mlock'
      Lock tinc into main memory.  This will prevent sensitive data like
@@ -2290,7 +2346,9 @@ Concept Index
 * BindToAddress:                         Main configuration variables.
                                                               (line  12)
 * BindToInterface:                       Main configuration variables.
-                                                              (line  19)
+                                                              (line  20)
+* Broadcast:                             Main configuration variables.
+                                                              (line  28)
 * Cabal:                                 Security.            (line   6)
 * CHAL_REPLY:                            Authentication protocol.
                                                               (line  10)
@@ -2309,23 +2367,27 @@ Concept Index
                                                               (line  24)
 * connection:                            The connection.      (line   6)
 * ConnectTo:                             Main configuration variables.
-                                                              (line  27)
+                                                              (line  32)
 * daemon:                                Running tinc.        (line  11)
 * data-protocol:                         The meta-connection. (line  18)
 * debug level:                           Runtime options.     (line  17)
 * debug levels:                          Debug levels.        (line   6)
+* DecrementTTL:                          Main configuration variables.
+                                                              (line  43)
 * DEL_EDGE:                              The meta-protocol.   (line  47)
 * DEL_SUBNET:                            The meta-protocol.   (line  47)
 * DEVICE:                                Scripts.             (line  55)
 * Device:                                Main configuration variables.
-                                                              (line  38)
+                                                              (line  50)
 * device files:                          Device files.        (line   6)
 * DeviceType:                            Main configuration variables.
-                                                              (line  45)
+                                                              (line  57)
 * Digest:                                Host configuration variables.
                                                               (line  29)
 * DirectOnly:                            Main configuration variables.
-                                                              (line  73)
+                                                              (line 111)
+* dummy:                                 Main configuration variables.
+                                                              (line  64)
 * encapsulating:                         The UDP tunnel.      (line  30)
 * encryption:                            Encryption of network packets.
                                                               (line   6)
@@ -2333,42 +2395,44 @@ Concept Index
 * example:                               Example configuration.
                                                               (line   6)
 * Forwarding:                            Main configuration variables.
-                                                              (line  80)
+                                                              (line 118)
 * frame type:                            The UDP tunnel.      (line   6)
 * GraphDumpFile:                         Main configuration variables.
-                                                              (line 100)
+                                                              (line 138)
 * Hostnames:                             Main configuration variables.
-                                                              (line 108)
+                                                              (line 146)
 * hub:                                   Main configuration variables.
-                                                              (line 149)
+                                                              (line 198)
 * ID:                                    Authentication protocol.
                                                               (line  10)
 * IndirectData:                          Host configuration variables.
                                                               (line  34)
 * INTERFACE:                             Scripts.             (line  58)
 * Interface:                             Main configuration variables.
-                                                              (line 118)
+                                                              (line 156)
 * IRC:                                   Contact information. (line   9)
 * key generation:                        Generating keypairs. (line   6)
 * KEY_CHANGED:                           The meta-protocol.   (line  64)
 * KeyExpire:                             Main configuration variables.
-                                                              (line 154)
+                                                              (line 203)
 * libraries:                             Libraries.           (line   6)
 * license:                               OpenSSL.             (line  36)
+* LocalDiscovery:                        Main configuration variables.
+                                                              (line 164)
 * lzo:                                   lzo.                 (line   6)
 * MACExpire:                             Main configuration variables.
-                                                              (line 160)
+                                                              (line 209)
 * MACLength:                             Host configuration variables.
                                                               (line  42)
 * meta-protocol:                         The meta-connection. (line  18)
 * META_KEY:                              Authentication protocol.
                                                               (line  10)
 * Mode:                                  Main configuration variables.
-                                                              (line 126)
+                                                              (line 175)
 * multiple networks:                     Multiple networks.   (line   6)
 * NAME:                                  Scripts.             (line  52)
 * Name:                                  Main configuration variables.
-                                                              (line 165)
+                                                              (line 214)
 * netmask:                               Network interfaces.  (line  34)
 * NETNAME:                               Scripts.             (line  49)
 * netname:                               Multiple networks.   (line   6)
@@ -2381,9 +2445,9 @@ Concept Index
                                                               (line  67)
 * PING:                                  The meta-protocol.   (line  89)
 * PingInterval:                          Main configuration variables.
-                                                              (line 170)
+                                                              (line 219)
 * PingTimeout:                           Main configuration variables.
-                                                              (line 174)
+                                                              (line 223)
 * platforms:                             Supported platforms. (line   6)
 * PMTU:                                  Host configuration variables.
                                                               (line  47)
@@ -2394,28 +2458,30 @@ Concept Index
                                                               (line  55)
 * port numbers:                          Other files.         (line  17)
 * PriorityInheritance:                   Main configuration variables.
-                                                              (line 180)
+                                                              (line 229)
 * private:                               Virtual Private Networks.
                                                               (line  10)
 * PrivateKey:                            Main configuration variables.
-                                                              (line 185)
+                                                              (line 234)
 * PrivateKeyFile:                        Main configuration variables.
-                                                              (line 191)
+                                                              (line 240)
 * ProcessPriority:                       Main configuration variables.
-                                                              (line 199)
+                                                              (line 248)
 * PublicKey:                             Host configuration variables.
                                                               (line  59)
 * PublicKeyFile:                         Host configuration variables.
                                                               (line  62)
+* raw_socket:                            Main configuration variables.
+                                                              (line  69)
 * release:                               Supported platforms. (line  14)
 * REMOTEADDRESS:                         Scripts.             (line  67)
 * REMOTEPORT:                            Scripts.             (line  70)
 * ReplayWindow:                          Main configuration variables.
-                                                              (line 204)
+                                                              (line 253)
 * REQ_KEY:                               The meta-protocol.   (line  64)
 * requirements:                          Libraries.           (line   6)
 * router:                                Main configuration variables.
-                                                              (line 129)
+                                                              (line 178)
 * runtime options:                       Runtime options.     (line   9)
 * scalability:                           tinc.                (line  19)
 * scripts:                               Scripts.             (line   6)
@@ -2423,7 +2489,7 @@ Concept Index
                                                               (line  18)
 * signals:                               Signals.             (line   6)
 * StrictSubnets:                         Main configuration variables.
-                                                              (line 215)
+                                                              (line 264)
 * SUBNET:                                Scripts.             (line  74)
 * Subnet:                                Host configuration variables.
                                                               (line  74)
@@ -2431,7 +2497,7 @@ Concept Index
                                                               (line  97)
 * SVPN:                                  Security.            (line  11)
 * switch:                                Main configuration variables.
-                                                              (line 138)
+                                                              (line 187)
 * TCP:                                   The meta-connection. (line  10)
 * TCPonly:                               Host configuration variables.
                                                               (line 104)
@@ -2443,20 +2509,24 @@ Concept Index
 * tincd:                                 tinc.                (line  14)
 * traditional VPNs:                      tinc.                (line  19)
 * tunifhead:                             Main configuration variables.
-                                                              (line  62)
+                                                              (line 100)
 * TunnelServer:                          Main configuration variables.
-                                                              (line 220)
+                                                              (line 269)
 * tunnohead:                             Main configuration variables.
-                                                              (line  56)
+                                                              (line  94)
 * UDP <1>:                               Encryption of network packets.
                                                               (line  12)
 * UDP:                                   The UDP tunnel.      (line  30)
 * UDPRcvBuf:                             Main configuration variables.
-                                                              (line 227)
+                                                              (line 276)
 * UDPSndBuf:                             Main configuration variables.
-                                                              (line 232)
+                                                              (line 281)
+* UML:                                   Main configuration variables.
+                                                              (line  76)
 * Universal tun/tap:                     Configuration of Linux kernels.
                                                               (line   6)
+* VDE:                                   Main configuration variables.
+                                                              (line  81)
 * virtual:                               Virtual Private Networks.
                                                               (line  18)
 * virtual network device:                The UDP tunnel.      (line   6)
@@ -2502,34 +2572,34 @@ Node: Multiple networks21169
 Node: How connections work22595
 Node: Configuration files23817
 Node: Main configuration variables25204
-Node: Host configuration variables35709
-Node: Scripts41120
-Node: How to configure43890
-Node: Generating keypairs45153
-Node: Network interfaces45652
-Node: Example configuration47500
-Node: Running tinc52823
-Node: Runtime options53413
-Node: Signals56369
-Node: Debug levels57561
-Node: Solving problems58497
-Node: Error messages60049
-Node: Sending bug reports64062
-Node: Technical information65014
-Node: The connection65245
-Node: The UDP tunnel65557
-Node: The meta-connection68618
-Node: The meta-protocol70087
-Node: Security75096
-Node: Authentication protocol76226
-Node: Encryption of network packets81230
-Node: Security issues82603
-Node: Platform specific information84220
-Node: Interface configuration84448
-Node: Routes86347
-Node: About us88263
-Node: Contact information88438
-Node: Authors88842
-Node: Concept Index89247
+Node: Host configuration variables38105
+Node: Scripts43516
+Node: How to configure46286
+Node: Generating keypairs47549
+Node: Network interfaces48048
+Node: Example configuration49896
+Node: Running tinc55219
+Node: Runtime options55809
+Node: Signals59109
+Node: Debug levels60301
+Node: Solving problems61237
+Node: Error messages62789
+Node: Sending bug reports66802
+Node: Technical information67754
+Node: The connection67985
+Node: The UDP tunnel68297
+Node: The meta-connection71358
+Node: The meta-protocol72827
+Node: Security77836
+Node: Authentication protocol78966
+Node: Encryption of network packets83970
+Node: Security issues85343
+Node: Platform specific information86960
+Node: Interface configuration87188
+Node: Routes89087
+Node: About us91003
+Node: Contact information91178
+Node: Authors91582
+Node: Concept Index91987
 
 End Tag Table

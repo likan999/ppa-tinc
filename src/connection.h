@@ -1,6 +1,6 @@
 /*
     connection.h -- header for connection.c
-    Copyright (C) 2000-2010 Guus Sliepen <guus@tinc-vpn.org>,
+    Copyright (C) 2000-2012 Guus Sliepen <guus@tinc-vpn.org>,
                   2000-2005 Ivo Timmermans
 
     This program is free software; you can redistribute it and/or modify
@@ -101,7 +101,7 @@ typedef struct connection_t {
 } connection_t;
 
 extern avl_tree_t *connection_tree;
-extern connection_t *broadcast;
+extern connection_t *everyone;
 
 extern void init_connections(void);
 extern void exit_connections(void);
