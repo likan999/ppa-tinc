@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: tinc-devel@tinc-vpn.org\n"
-"POT-Creation-Date: 2004-11-11 13:40+0100\n"
+"POT-Creation-Date: 2005-05-04 20:25+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -260,7 +260,7 @@ msgstr ""
 msgid "Setting outgoing packet priority to %d"
 msgstr ""
 
-#: src/net_packet.c:392 src/net_setup.c:477 src/net_socket.c:73
+#: src/net_packet.c:392 src/net_setup.c:481 src/net_socket.c:73
 #: src/net_socket.c:124 src/net_socket.c:153 src/tincd.c:434 src/tincd.c:468
 #: src/process.c:198 src/process.c:231 src/process.c:428 src/bsd/device.c:93
 #: src/bsd/device.c:112 src/cygwin/device.c:140 src/cygwin/device.c:171
@@ -298,17 +298,17 @@ msgstr ""
 msgid "Broadcasting packet of %d bytes from %s (%s)"
 msgstr ""
 
-#: src/net_packet.c:474
+#: src/net_packet.c:480
 #, c-format
 msgid "Flushing queue for %s (%s)"
 msgstr ""
 
-#: src/net_packet.c:496
+#: src/net_packet.c:502
 #, c-format
 msgid "Receiving packet failed: %s"
 msgstr ""
 
-#: src/net_packet.c:506
+#: src/net_packet.c:512
 #, c-format
 msgid "Received UDP packet from unknown source %s"
 msgstr ""
@@ -388,7 +388,7 @@ msgstr ""
 msgid "Unrecognized cipher type!"
 msgstr ""
 
-#: src/net_setup.c:383 src/protocol_auth.c:189
+#: src/net_setup.c:383 src/protocol_auth.c:192
 #, c-format
 msgid "Error during initialisation of cipher for %s (%s): %s"
 msgstr ""
@@ -409,16 +409,16 @@ msgstr ""
 msgid "Bogus compression level!"
 msgstr ""
 
-#: src/net_setup.c:499
+#: src/net_setup.c:503
 #, c-format
 msgid "Listening on %s"
 msgstr ""
 
-#: src/net_setup.c:510
+#: src/net_setup.c:514
 msgid "Ready"
 msgstr ""
 
-#: src/net_setup.c:512
+#: src/net_setup.c:516
 msgid "Unable to create any listening socket!"
 msgstr ""
 
@@ -461,7 +461,7 @@ msgstr ""
 msgid "Connected to %s (%s)"
 msgstr ""
 
-#: src/net_socket.c:249 src/net_socket.c:333 src/net_socket.c:444
+#: src/net_socket.c:249 src/net_socket.c:333 src/net_socket.c:445
 #, c-format
 msgid "fcntl for %s: %s"
 msgstr ""
@@ -501,7 +501,7 @@ msgstr ""
 msgid "Accepting a new connection failed: %s"
 msgstr ""
 
-#: src/net_socket.c:437
+#: src/net_socket.c:438
 #, c-format
 msgid "Connection from %s"
 msgstr ""
@@ -605,19 +605,19 @@ msgstr ""
 msgid "Aging past requests: deleted %d, left %d"
 msgstr ""
 
-#: src/protocol_auth.c:58 src/protocol_auth.c:209 src/protocol_auth.c:338
-#: src/protocol_auth.c:405 src/protocol_auth.c:531 src/protocol_edge.c:73
+#: src/protocol_auth.c:58 src/protocol_auth.c:212 src/protocol_auth.c:341
+#: src/protocol_auth.c:408 src/protocol_auth.c:534 src/protocol_edge.c:73
 #: src/protocol_edge.c:188 src/protocol_key.c:62 src/protocol_key.c:105
 #: src/protocol_key.c:172 src/protocol_misc.c:54 src/protocol_misc.c:83
-#: src/protocol_misc.c:171 src/protocol_subnet.c:58 src/protocol_subnet.c:167
+#: src/protocol_misc.c:171 src/protocol_subnet.c:58 src/protocol_subnet.c:170
 #, c-format
 msgid "Got bad %s from %s (%s)"
 msgstr ""
 
 #: src/protocol_auth.c:66 src/protocol_edge.c:81 src/protocol_edge.c:87
 #: src/protocol_edge.c:196 src/protocol_edge.c:202 src/protocol_subnet.c:66
-#: src/protocol_subnet.c:74 src/protocol_subnet.c:175
-#: src/protocol_subnet.c:196
+#: src/protocol_subnet.c:74 src/protocol_subnet.c:178
+#: src/protocol_subnet.c:199
 #, c-format
 msgid "Got bad %s from %s (%s): %s"
 msgstr ""
@@ -627,92 +627,92 @@ msgstr ""
 msgid "Peer %s is %s instead of %s"
 msgstr ""
 
-#: src/protocol_auth.c:85
+#: src/protocol_auth.c:88
 #, c-format
 msgid "Peer %s (%s) uses incompatible version %d"
 msgstr ""
 
-#: src/protocol_auth.c:101
+#: src/protocol_auth.c:104
 #, c-format
 msgid "Peer %s had unknown identity (%s)"
 msgstr ""
 
-#: src/protocol_auth.c:153
+#: src/protocol_auth.c:156
 #, c-format
 msgid "Generated random meta key (unencrypted): %s"
 msgstr ""
 
-#: src/protocol_auth.c:165 src/protocol_auth.c:238
+#: src/protocol_auth.c:168 src/protocol_auth.c:241
 #, c-format
 msgid "Error during encryption of meta key for %s (%s)"
 msgstr ""
 
-#: src/protocol_auth.c:219 src/protocol_auth.c:348 src/protocol_auth.c:413
-#: src/protocol_auth.c:435
+#: src/protocol_auth.c:222 src/protocol_auth.c:351 src/protocol_auth.c:416
+#: src/protocol_auth.c:438
 #, c-format
 msgid "Possible intruder %s (%s): %s"
 msgstr ""
 
-#: src/protocol_auth.c:246
+#: src/protocol_auth.c:249
 #, c-format
 msgid "Received random meta key (unencrypted): %s"
 msgstr ""
 
-#: src/protocol_auth.c:257
+#: src/protocol_auth.c:260
 #, c-format
 msgid "%s (%s) uses unknown cipher!"
 msgstr ""
 
-#: src/protocol_auth.c:265
+#: src/protocol_auth.c:268
 #, c-format
 msgid "Error during initialisation of cipher from %s (%s): %s"
 msgstr ""
 
-#: src/protocol_auth.c:281 src/protocol_key.c:242
+#: src/protocol_auth.c:284 src/protocol_key.c:242
 #, c-format
 msgid "Node %s (%s) uses unknown digest!"
 msgstr ""
 
-#: src/protocol_auth.c:286
+#: src/protocol_auth.c:289
 #, c-format
 msgid "%s (%s) uses bogus MAC length!"
 msgstr ""
 
-#: src/protocol_auth.c:381
+#: src/protocol_auth.c:384
 #, c-format
 msgid "Error during calculation of response for %s (%s): %s"
 msgstr ""
 
-#: src/protocol_auth.c:414
+#: src/protocol_auth.c:417
 msgid "wrong challenge reply length"
 msgstr ""
 
-#: src/protocol_auth.c:427
+#: src/protocol_auth.c:430
 #, c-format
 msgid "Error during calculation of response from %s (%s): %s"
 msgstr ""
 
-#: src/protocol_auth.c:436
+#: src/protocol_auth.c:439
 msgid "wrong challenge reply"
 msgstr ""
 
-#: src/protocol_auth.c:441
+#: src/protocol_auth.c:444
 #, c-format
 msgid "Expected challenge reply: %s"
 msgstr ""
 
-#: src/protocol_auth.c:547
+#: src/protocol_auth.c:550
 #, c-format
 msgid "Established a second connection with %s (%s), closing old connection"
 msgstr ""
 
-#: src/protocol_auth.c:570
+#: src/protocol_auth.c:573
 #, c-format
 msgid "Connection with %s (%s) activated"
 msgstr ""
 
 #: src/protocol_edge.c:82 src/protocol_edge.c:88 src/protocol_edge.c:197
-#: src/protocol_edge.c:203 src/protocol_subnet.c:67 src/protocol_subnet.c:176
+#: src/protocol_edge.c:203 src/protocol_subnet.c:67 src/protocol_subnet.c:179
 msgid "invalid name"
 msgstr ""
 
@@ -736,7 +736,7 @@ msgstr ""
 msgid "Got %s from %s (%s) which does not appear in the edge tree"
 msgstr ""
 
-#: src/protocol_edge.c:242 src/protocol_subnet.c:103 src/protocol_subnet.c:219
+#: src/protocol_edge.c:242 src/protocol_subnet.c:103 src/protocol_subnet.c:222
 #, c-format
 msgid "Got %s from %s (%s) for ourself"
 msgstr ""
@@ -794,40 +794,45 @@ msgstr ""
 msgid "Error message from %s (%s): %d: %s"
 msgstr ""
 
-#: src/protocol_subnet.c:75 src/protocol_subnet.c:197
+#: src/protocol_subnet.c:75 src/protocol_subnet.c:200
 msgid "invalid subnet string"
 msgstr ""
 
-#: src/protocol_subnet.c:185
+#: src/protocol_subnet.c:188
 #, c-format
 msgid "Got %s from %s (%s) for %s which is not in our node tree"
 msgstr ""
 
-#: src/protocol_subnet.c:211
+#: src/protocol_subnet.c:214
 #, c-format
 msgid "Got %s from %s (%s) for %s which does not appear in his subnet tree"
 msgstr ""
 
-#: src/subnet.c:103
+#: src/subnet.c:105
 #, c-format
 msgid "subnet_compare() was called with unknown subnet type %d, exitting!"
 msgstr ""
 
-#: src/subnet.c:281
+#: src/subnet.c:251
+#, c-format
+msgid "net2str() was called with netstr=%p, subnet=%p!\n"
+msgstr ""
+
+#: src/subnet.c:288
 #, c-format
 msgid "net2str() was called with unknown subnet type %d, exiting!"
 msgstr ""
 
-#: src/subnet.c:396
+#: src/subnet.c:449
 msgid "Subnet list:"
 msgstr ""
 
-#: src/subnet.c:402
+#: src/subnet.c:455
 #, c-format
 msgid " %s owner %s"
 msgstr ""
 
-#: src/subnet.c:405
+#: src/subnet.c:458
 msgid "End of subnet list."
 msgstr ""
 
@@ -920,7 +925,7 @@ msgstr ""
 #: src/tincd.c:410
 #, c-format
 msgid ""
-"Copyright (C) 1998-2004 Ivo Timmermans, Guus Sliepen and others.\n"
+"Copyright (C) 1998-2005 Ivo Timmermans, Guus Sliepen and others.\n"
 "See the AUTHORS file for a complete list.\n"
 "\n"
 "tinc comes with ABSOLUTELY NO WARRANTY.  This is free software,\n"
@@ -1215,18 +1220,18 @@ msgstr ""
 msgid "Cannot route packet from %s (%s): unknown type %hx"
 msgstr ""
 
-#: src/node.c:183
+#: src/node.c:181
 msgid "Nodes:"
 msgstr ""
 
-#: src/node.c:187
+#: src/node.c:185
 #, c-format
 msgid ""
 " %s at %s cipher %d digest %d maclength %d compression %d options %lx status "
 "%04x nexthop %s via %s pmtu %d (min %d max %d)"
 msgstr ""
 
-#: src/node.c:194
+#: src/node.c:192
 msgid "End of nodes."
 msgstr ""
 
@@ -1243,12 +1248,12 @@ msgstr ""
 msgid "End of edges."
 msgstr ""
 
-#: src/graph.c:263
+#: src/graph.c:261
 #, c-format
 msgid "Node %s (%s) became reachable"
 msgstr ""
 
-#: src/graph.c:266
+#: src/graph.c:265
 #, c-format
 msgid "Node %s (%s) became unreachable"
 msgstr ""

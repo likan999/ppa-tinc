@@ -1,9 +1,9 @@
 /*
     avl_tree.c -- avl_ tree and linked list convenience
     Copyright (C) 1998 Michael H. Buselli
-                  2000-2004 Ivo Timmermans <ivo@tinc-vpn.org>,
-                  2000-2004 Guus Sliepen <guus@tinc-vpn.org>
-                  2000-2004 Wessel Dankers <wsl@tinc-vpn.org>
+                  2000-2005 Ivo Timmermans <ivo@tinc-vpn.org>,
+                  2000-2005 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2005 Wessel Dankers <wsl@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -29,7 +29,7 @@
     library for inclusion into tinc (http://www.tinc-vpn.org/) by
     Guus Sliepen <guus@tinc-vpn.org>.
 
-    $Id: avl_tree.c 1374 2004-03-21 14:21:22Z guus $
+    $Id: avl_tree.c 1439 2005-05-04 18:09:30Z guus $
 */
 
 #include "system.h"

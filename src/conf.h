@@ -1,7 +1,7 @@
 /*
     conf.h -- header for conf.c
-    Copyright (C) 1998-2004 Ivo Timmermans <ivo@tinc-vpn.org>
-                  2000-2004 Guus Sliepen <guus@tinc-vpn.org>
+    Copyright (C) 1998-2005 Ivo Timmermans <ivo@tinc-vpn.org>
+                  2000-2005 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.h 1374 2004-03-21 14:21:22Z guus $
+    $Id: conf.h 1439 2005-05-04 18:09:30Z guus $
 */
 
 #ifndef __TINC_CONF_H__
@@ -47,8 +47,8 @@ extern void exit_configuration(avl_tree_t **);
 extern config_t *new_config(void) __attribute__ ((__malloc__));
 extern void free_config(config_t *);
 extern void config_add(avl_tree_t *, config_t *);
-extern config_t *lookup_config(const avl_tree_t *, char *);
-extern config_t *lookup_config_next(const avl_tree_t *, const config_t *);
+extern config_t *lookup_config(avl_tree_t *, char *);
+extern config_t *lookup_config_next(avl_tree_t *, const config_t *);
 extern bool get_config_bool(const config_t *, bool *);
 extern bool get_config_int(const config_t *, int *);
 extern bool get_config_string(const config_t *, char **);

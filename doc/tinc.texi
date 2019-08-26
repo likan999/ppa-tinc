@@ -1,5 +1,5 @@
 \input texinfo   @c -*-texinfo-*-
-@c $Id: tinc.texi 1416 2004-11-10 23:21:41Z guus $
+@c $Id: tinc.texi 1439 2005-05-04 18:09:30Z guus $
 @c %**start of header
 @setfilename tinc.info
 @settitle tinc Manual
@@ -16,11 +16,11 @@
 
 This is the info manual for @value{PACKAGE} version @value{VERSION}, a Virtual Private Network daemon.
 
-Copyright @copyright{} 1998-2004 Ivo Timmermans
+Copyright @copyright{} 1998-2005 Ivo Timmermans
 <ivo@@tinc-vpn.org>, Guus Sliepen <guus@@tinc-vpn.org> and
 Wessel Dankers <wsl@@tinc-vpn.org>.
 
-$Id: tinc.texi 1416 2004-11-10 23:21:41Z guus $
+$Id: tinc.texi 1439 2005-05-04 18:09:30Z guus $
 
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -43,11 +43,11 @@ permission notice identical to this one.
 @cindex copyright
 This is the info manual for @value{PACKAGE} version @value{VERSION}, a Virtual Private Network daemon.
 
-Copyright @copyright{} 1998-2004 Ivo Timmermans
+Copyright @copyright{} 1998-2005 Ivo Timmermans
 <ivo@@tinc-vpn.org>, Guus Sliepen <guus@@tinc-vpn.org> and
 Wessel Dankers <wsl@@tinc-vpn.org>.
 
-$Id: tinc.texi 1416 2004-11-10 23:21:41Z guus $
+$Id: tinc.texi 1439 2005-05-04 18:09:30Z guus $
 
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -1100,6 +1100,13 @@ This script is started when the tinc daemon with name @var{host} becomes reachab
 
 @item @value{sysconfdir}/tinc/@var{netname}/hosts/@var{host}-down
 This script is started when the tinc daemon with name @var{host} becomes unreachable.
+
+@item @value{sysconfdir}/tinc/@var{netname}/subnet-up
+This script is started when a Subnet becomes reachable.
+The Subnet and the node it belongs to are passed in environment variables.
+
+@item @value{sysconfdir}/tinc/@var{netname}/subnet-down
+This script is started when a Subnet becomes unreachable.
 @end table
 
 @cindex environment variables
@@ -1129,6 +1136,7 @@ This should be used for commands like ifconfig.
 @cindex NODE
 @item NODE
 When a host becomes (un)reachable, this is set to its name.
+If a subnet becomes (un)reachable, this is set to the owner of that subnet.
 
 @cindex REMOTEADDRESS
 @item REMOTEADDRESS
@@ -1138,6 +1146,11 @@ When a host becomes (un)reachable, this is set to its real address.
 @item REMOTEPORT
 When a host becomes (un)reachable,
 this is set to the port number it uses for communication with other tinc daemons.
+
+@cindex SUBNET
+@item SUBNET
+When a subnet becomes (un)reachable, this is set to the subnet.
+
 @end table
 
 

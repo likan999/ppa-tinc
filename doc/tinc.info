@@ -5,13 +5,13 @@ START-INFO-DIR-ENTRY
 * tinc: (tinc).              The tinc Manual.
 END-INFO-DIR-ENTRY
 
-   This is the info manual for tinc version 1.0.3, a Virtual Private
+   This is the info manual for tinc version 1.0.4, a Virtual Private
 Network daemon.
 
-   Copyright (C) 1998-2004 Ivo Timmermans <ivo@tinc-vpn.org>, Guus
+   Copyright (C) 1998-2005 Ivo Timmermans <ivo@tinc-vpn.org>, Guus
 Sliepen <guus@tinc-vpn.org> and Wessel Dankers <wsl@tinc-vpn.org>.
 
-   $Id: tinc.texi 1416 2004-11-10 23:21:41Z guus $
+   $Id: tinc.texi 1439 2005-05-04 18:09:30Z guus $
 
    Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -998,6 +998,14 @@ scripts should have the extension .bat.
      This script is started when the tinc daemon with name HOST becomes
      unreachable.
 
+`/usr/local/etc/tinc/NETNAME/subnet-up'
+     This script is started when a Subnet becomes reachable.  The
+     Subnet and the node it belongs to are passed in environment
+     variables.
+
+`/usr/local/etc/tinc/NETNAME/subnet-down'
+     This script is started when a Subnet becomes unreachable.
+
    The scripts are started without command line arguments, but can make
 use of certain environment variables.  Under UNIX like operating
 systems the names of environment variables must be preceded by a $ in
@@ -1018,7 +1026,9 @@ signs.
      This should be used for commands like ifconfig.
 
 `NODE'
-     When a host becomes (un)reachable, this is set to its name.
+     When a host becomes (un)reachable, this is set to its name.  If a
+     subnet becomes (un)reachable, this is set to the owner of that
+     subnet.
 
 `REMOTEADDRESS'
      When a host becomes (un)reachable, this is set to its real address.
@@ -1026,6 +1036,10 @@ signs.
 `REMOTEPORT'
      When a host becomes (un)reachable, this is set to the port number
      it uses for communication with other tinc daemons.
+
+`SUBNET'
+     When a subnet becomes (un)reachable, this is set to the subnet.
+
 
 
 File: tinc.info,  Node: How to configure,  Prev: Scripts,  Up: Configuration files
@@ -2217,7 +2231,7 @@ Concept Index
 * debug levels:                          Debug levels.        (line   6)
 * DEL_EDGE:                              The meta-protocol.   (line  47)
 * DEL_SUBNET:                            The meta-protocol.   (line  47)
-* DEVICE:                                Scripts.             (line  41)
+* DEVICE:                                Scripts.             (line  49)
 * Device:                                Main configuration variables.
                                                               (line  47)
 * device files:                          Device files.        (line   6)
@@ -2226,7 +2240,7 @@ Concept Index
 * encapsulating:                         The UDP tunnel.      (line  30)
 * encryption:                            Encryption of network packets.
                                                               (line   6)
-* environment variables:                 Scripts.             (line  29)
+* environment variables:                 Scripts.             (line  37)
 * ethertap:                              Configuration of Linux kernels 2.1.60 up to 2.4.0.
                                                               (line   6)
 * example:                               Example configuration.
@@ -2240,7 +2254,7 @@ Concept Index
                                                               (line  10)
 * IndirectData:                          Host configuration variables.
                                                               (line  27)
-* INTERFACE:                             Scripts.             (line  44)
+* INTERFACE:                             Scripts.             (line  52)
 * Interface:                             Main configuration variables.
                                                               (line  64)
 * IRC:                                   Contact information. (line   9)
@@ -2261,15 +2275,15 @@ Concept Index
 * Mode:                                  Main configuration variables.
                                                               (line  72)
 * multiple networks:                     Multiple networks.   (line   6)
-* NAME:                                  Scripts.             (line  38)
+* NAME:                                  Scripts.             (line  46)
 * Name:                                  Main configuration variables.
                                                               (line 111)
 * netmask:                               Network interfaces.  (line  34)
-* NETNAME:                               Scripts.             (line  35)
+* NETNAME:                               Scripts.             (line  43)
 * netname:                               Multiple networks.   (line   6)
 * Network Administrators Guide:          Configuration introduction.
                                                               (line  15)
-* NODE:                                  Scripts.             (line  48)
+* NODE:                                  Scripts.             (line  56)
 * OpenSSL:                               OpenSSL.             (line   6)
 * options:                               Runtime options.     (line   9)
 * PEM format:                            Host configuration variables.
@@ -2295,8 +2309,8 @@ Concept Index
 * PublicKeyFile:                         Host configuration variables.
                                                               (line  47)
 * release:                               Supported platforms. (line  14)
-* REMOTEADDRESS:                         Scripts.             (line  51)
-* REMOTEPORT:                            Scripts.             (line  54)
+* REMOTEADDRESS:                         Scripts.             (line  61)
+* REMOTEPORT:                            Scripts.             (line  64)
 * REQ_KEY:                               The meta-protocol.   (line  64)
 * requirements:                          Libraries.           (line   6)
 * router:                                Main configuration variables.
@@ -2307,6 +2321,7 @@ Concept Index
 * server:                                How connections work.
                                                               (line  18)
 * signals:                               Signals.             (line   6)
+* SUBNET:                                Scripts.             (line  68)
 * Subnet:                                Host configuration variables.
                                                               (line  59)
 * SVPN:                                  Security.            (line  11)
@@ -2376,32 +2391,32 @@ Node: Configuration files26448
 Node: Main configuration variables27475
 Node: Host configuration variables33939
 Node: Scripts38235
-Node: How to configure40329
-Node: Generating keypairs41612
-Node: Network interfaces42111
-Node: Example configuration43979
-Node: Running tinc49431
-Node: Runtime options50021
-Node: Signals52058
-Node: Debug levels53127
-Node: Solving problems54063
-Node: Error messages55493
-Node: Sending bug reports59815
-Node: Technical information60767
-Node: The connection60998
-Node: The UDP tunnel61310
-Node: The meta-connection64371
-Node: The meta-protocol65840
-Node: Security70849
-Node: Authentication protocol71979
-Node: Encryption of network packets76983
-Node: Security issues78356
-Node: Platform specific information79973
-Node: Interface configuration80201
-Node: Routes82100
-Node: About us84016
-Node: Contact information84191
-Node: Authors84595
-Node: Concept Index85021
+Node: How to configure40790
+Node: Generating keypairs42073
+Node: Network interfaces42572
+Node: Example configuration44440
+Node: Running tinc49892
+Node: Runtime options50482
+Node: Signals52519
+Node: Debug levels53588
+Node: Solving problems54524
+Node: Error messages55954
+Node: Sending bug reports60276
+Node: Technical information61228
+Node: The connection61459
+Node: The UDP tunnel61771
+Node: The meta-connection64832
+Node: The meta-protocol66301
+Node: Security71310
+Node: Authentication protocol72440
+Node: Encryption of network packets77444
+Node: Security issues78817
+Node: Platform specific information80434
+Node: Interface configuration80662
+Node: Routes82561
+Node: About us84477
+Node: Contact information84652
+Node: Authors85056
+Node: Concept Index85482
 
 End Tag Table
