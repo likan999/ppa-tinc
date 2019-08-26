@@ -160,7 +160,7 @@ bool id_h(connection_t *c, const char *request) {
 	if(name[0] == '^' && !strcmp(name + 1, controlcookie)) {
 		c->status.control = true;
 		c->allow_request = CONTROL;
-		c->last_ping_time = time(NULL) + 3600;
+		c->last_ping_time = now.tv_sec + 3600;
 
 		free(c->name);
 		c->name = xstrdup("<control>");
@@ -509,6 +509,17 @@ bool send_ack(connection_t *c) {
 
 static void send_everything(connection_t *c) {
 	/* Send all known subnets and edges */
+
+	if(disablebuggypeers) {
+		static struct {
+			vpn_packet_t pkt;
+			char pad[MAXBUFSIZE - MAXSIZE];
+		} zeropkt;
+
+		memset(&zeropkt, 0, sizeof zeropkt);
+		zeropkt.pkt.len = MAXBUFSIZE;
+		send_tcppacket(c, &zeropkt.pkt);
+	}
 
 	if(tunnelserver) {
 		for splay_each(subnet_t, s, myself->subnet_tree)

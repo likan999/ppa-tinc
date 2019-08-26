@@ -112,11 +112,10 @@ static void usage(bool status) {
 				"\n"
 				"Valid commands are:\n"
 				"  init [name]                Create initial configuration files.\n"
-				"  config                     Change configuration:\n"
-				"    [get] VARIABLE           - print current value of VARIABLE\n"
-				"    [set] VARIABLE VALUE     - set VARIABLE to VALUE\n"
-				"    add VARIABLE VALUE       - add VARIABLE with the given VALUE\n"
-				"    del VARIABLE [VALUE]     - remove VARIABLE [only ones with watching VALUE]\n"
+				"  get VARIABLE               Print current value of VARIABLE\n"
+				"  set VARIABLE VALUE         Set VARIABLE to VALUE\n"
+				"  add VARIABLE VALUE         Add VARIABLE with the given VALUE\n"
+				"  del VARIABLE [VALUE]       Remove VARIABLE [only ones with watching VALUE]\n"
 				"  start [tincd options]      Start tincd.\n"
 				"  stop                       Stop tincd.\n"
 				"  restart                    Restart tincd.\n"
@@ -1148,7 +1147,7 @@ static int cmd_top(int argc, char *argv[]) {
 	top(fd);
 	return 0;
 #else
-	fprintf(stderr, "This version of tincctl was compiled without support for the curses library.\n");
+	fprintf(stderr, "This version of tinc was compiled without support for the curses library.\n");
 	return 1;
 #endif
 }
@@ -1199,10 +1198,11 @@ static int rstrip(char *value) {
 	return len;
 }
 
-static char *get_my_name() {
+static char *get_my_name(bool verbose) {
 	FILE *f = fopen(tinc_conf, "r");
 	if(!f) {
-		fprintf(stderr, "Could not open %s: %s\n", tinc_conf, strerror(errno));
+		if(verbose)
+			fprintf(stderr, "Could not open %s: %s\n", tinc_conf, strerror(errno));
 		return NULL;
 	}
 
@@ -1228,7 +1228,8 @@ static char *get_my_name() {
 	}
 
 	fclose(f);
-	fprintf(stderr, "Could not find Name in %s.\n", tinc_conf);
+	if(verbose)
+		fprintf(stderr, "Could not find Name in %s.\n", tinc_conf);
 	return NULL;
 }
 
@@ -1308,6 +1309,9 @@ static int cmd_config(int argc, char *argv[]) {
 		fprintf(stderr, "Invalid number of arguments.\n");
 		return 1;
 	}
+
+	if(strcasecmp(argv[0], "config"))
+		argv--, argc++;
 
 	int action = -2;
 	if(!strcasecmp(argv[1], "get")) {
@@ -1402,7 +1406,7 @@ static int cmd_config(int argc, char *argv[]) {
 		/* Should this go into our own host config file? */
 
 		if(!node && !(variables[i].type & VAR_SERVER)) {
-			node = get_my_name();
+			node = get_my_name(true);
 			if(!node)
 				return 1;
 		}
@@ -1692,6 +1696,9 @@ static int cmd_generate_keys(int argc, char *argv[]) {
 		return 1;
 	}
 
+	if(!name)
+		name = get_my_name(false);
+
 	return !(rsa_keygen(argc > 1 ? atoi(argv[1]) : 2048, true) && ecdsa_keygen(true));
 }
 
@@ -1701,6 +1708,9 @@ static int cmd_generate_rsa_keys(int argc, char *argv[]) {
 		return 1;
 	}
 
+	if(!name)
+		name = get_my_name(false);
+
 	return !rsa_keygen(argc > 1 ? atoi(argv[1]) : 2048, true);
 }
 
@@ -1709,6 +1719,9 @@ static int cmd_generate_ecdsa_keys(int argc, char *argv[]) {
 		fprintf(stderr, "Too many arguments!\n");
 		return 1;
 	}
+
+	if(!name)
+		name = get_my_name(false);
 
 	return !ecdsa_keygen(true);
 }
@@ -1831,7 +1844,7 @@ static int cmd_export(int argc, char *argv[]) {
 		return 1;
 	}
 
-	char *name = get_my_name();
+	char *name = get_my_name(true);
 	if(!name)
 		return 1;
 
@@ -1961,6 +1974,7 @@ static int cmd_exchange_all(int argc, char *argv[]) {
 static const struct {
 	const char *command;
 	int (*function)(int argc, char *argv[]);
+	bool hidden;
 } commands[] = {
 	{"start", cmd_start},
 	{"stop", cmd_stop},
@@ -1976,7 +1990,11 @@ static const struct {
 	{"pcap", cmd_pcap},
 	{"log", cmd_log},
 	{"pid", cmd_pid},
-	{"config", cmd_config},
+	{"config", cmd_config, true},
+	{"add", cmd_config},
+	{"del", cmd_config},
+	{"get", cmd_config},
+	{"set", cmd_config},
 	{"init", cmd_init},
 	{"generate-keys", cmd_generate_keys},
 	{"generate-rsa-keys", cmd_generate_rsa_keys},
@@ -2003,7 +2021,7 @@ static char *complete_command(const char *text, int state) {
 		i++;
 
 	while(commands[i].command) {
-		if(!strncasecmp(commands[i].command, text, strlen(text)))
+		if(!commands[i].hidden && !strncasecmp(commands[i].command, text, strlen(text)))
 			return xstrdup(commands[i].command);
 		i++;
 	}
@@ -2030,42 +2048,24 @@ static char *complete_dump(const char *text, int state) {
 }
 
 static char *complete_config(const char *text, int state) {
-	const char *sub[] = {"get", "set", "add", "del"};
 	static int i;
-	if(!state) {
-		i = 0;
-		if(!strchr(rl_line_buffer + 7, ' '))
-			i = -4;
-		else {
-			bool found = false;
-			for(int i = 0; i < 4; i++) {
-				if(!strncasecmp(rl_line_buffer + 7, sub[i], strlen(sub[i])) && rl_line_buffer[7 + strlen(sub[i])] == ' ') {
-					found = true;
-					break;
-				}
-			}
-			if(!found)
-				return NULL;
-		}
-	} else {
-		i++;
-	}
 
-	while(i < 0 || variables[i].name) {
-		if(i < 0 && !strncasecmp(sub[i + 4], text, strlen(text)))
-			return xstrdup(sub[i + 4]);
-		if(i >= 0) {
-			char *dot = strchr(text, '.');
-			if(dot) {
-				if((variables[i].type & VAR_HOST) && !strncasecmp(variables[i].name, dot + 1, strlen(dot + 1))) {
-					char *match;
-					xasprintf(&match, "%.*s.%s", dot - text, text, variables[i].name);
-					return match;
-				}
-			} else {
-				if(!strncasecmp(variables[i].name, text, strlen(text)))
-					return xstrdup(variables[i].name);
+	if(!state)
+		i = 0;
+	else
+		i++;
+
+	while(variables[i].name) {
+		char *dot = strchr(text, '.');
+		if(dot) {
+			if((variables[i].type & VAR_HOST) && !strncasecmp(variables[i].name, dot + 1, strlen(dot + 1))) {
+				char *match;
+				xasprintf(&match, "%.*s.%s", dot - text, text, variables[i].name);
+				return match;
 			}
+		} else {
+			if(!strncasecmp(variables[i].name, text, strlen(text)))
+				return xstrdup(variables[i].name);
 		}
 		i++;
 	}
@@ -2118,7 +2118,13 @@ static char **completion (const char *text, int start, int end) {
 		matches = rl_completion_matches(text, complete_command);
 	else if(!strncasecmp(rl_line_buffer, "dump ", 5))
 		matches = rl_completion_matches(text, complete_dump);
-	else if(!strncasecmp(rl_line_buffer, "config ", 7))
+	else if(!strncasecmp(rl_line_buffer, "add ", 4))
+		matches = rl_completion_matches(text, complete_config);
+	else if(!strncasecmp(rl_line_buffer, "del ", 4))
+		matches = rl_completion_matches(text, complete_config);
+	else if(!strncasecmp(rl_line_buffer, "get ", 4))
+		matches = rl_completion_matches(text, complete_config);
+	else if(!strncasecmp(rl_line_buffer, "set ", 4))
 		matches = rl_completion_matches(text, complete_config);
 	else if(!strncasecmp(rl_line_buffer, "info ", 5))
 		matches = rl_completion_matches(text, complete_info);

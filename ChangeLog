@@ -1,3 +1,20 @@
+Version 1.1pre7                                            April 22 2013
+------------------------------------------------------------------------
+
+Guus Sliepen (12):
+      Use UDP when using sptps_test in datagram mode.
+      Flush output buffers in the tap reader thread on Windows.
+      Better default output file for generated public keys.
+      Allow changing configuration with tincctl without the "config" keyword.
+      Avoid calling time(NULL).
+      Include README.android in the tarballs.
+      Rename tincctl to tinc.
+      Remove references to the config keyword.
+      Describe the SPTPS protocol in the manual.
+      Fix completion of add/del/get/set commands.
+      Drop packets forwarded via TCP if they are too big (CVE-2013-1428).
+      Releasing 1.1pre7.
+
 Version 1.1pre6                                         February 20 2013
 ------------------------------------------------------------------------
 
