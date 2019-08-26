@@ -1,7 +1,7 @@
 /*
     net_socket.c -- Handle various kinds of sockets.
     Copyright (C) 1998-2005 Ivo Timmermans,
-                  2000-2013 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2014 Guus Sliepen <guus@tinc-vpn.org>
                   2006      Scott Lamb <slamb@slamb.org>
                   2009      Florian Forster <octo@verplant.org>
 
@@ -87,20 +87,21 @@ static bool bind_to_interface(int sd) {
 	int status;
 #endif /* defined(SOL_SOCKET) && defined(SO_BINDTODEVICE) */
 
-	if(!get_config_string (lookup_config (config_tree, "BindToInterface"), &iface))
+	if(!get_config_string(lookup_config (config_tree, "BindToInterface"), &iface))
 		return true;
 
 #if defined(SOL_SOCKET) && defined(SO_BINDTODEVICE)
 	memset(&ifr, 0, sizeof(ifr));
 	strncpy(ifr.ifr_ifrn.ifrn_name, iface, IFNAMSIZ);
 	ifr.ifr_ifrn.ifrn_name[IFNAMSIZ - 1] = 0;
+	free(iface);
 
 	status = setsockopt(sd, SOL_SOCKET, SO_BINDTODEVICE, (void *)&ifr, sizeof(ifr));
 	if(status) {
-		logger(LOG_ERR, "Can't bind to interface %s: %s", iface,
-				strerror(errno));
+		logger(LOG_ERR, "Can't bind to interface %s: %s", ifr.ifr_ifrn.ifrn_name, strerror(errno));
 		return false;
 	}
+
 #else /* if !defined(SOL_SOCKET) || !defined(SO_BINDTODEVICE) */
 	logger(LOG_WARNING, "%s not supported on this platform", "BindToInterface");
 #endif
@@ -135,20 +136,21 @@ int setup_listen_socket(const sockaddr_t *sa) {
 		setsockopt(nfd, SOL_IPV6, IPV6_V6ONLY, (void *)&option, sizeof option);
 #endif
 
-	if(get_config_string
-	   (lookup_config(config_tree, "BindToInterface"), &iface)) {
+	if(get_config_string(lookup_config(config_tree, "BindToInterface"), &iface)) {
 #if defined(SOL_SOCKET) && defined(SO_BINDTODEVICE)
 		struct ifreq ifr;
 
 		memset(&ifr, 0, sizeof(ifr));
 		strncpy(ifr.ifr_ifrn.ifrn_name, iface, IFNAMSIZ);
+		ifr.ifr_ifrn.ifrn_name[IFNAMSIZ - 1] = 0;
+		free(iface);
 
 		if(setsockopt(nfd, SOL_SOCKET, SO_BINDTODEVICE, (void *)&ifr, sizeof(ifr))) {
 			closesocket(nfd);
-			logger(LOG_ERR, "Can't bind to interface %s: %s", iface,
-				   strerror(sockerrno));
+			logger(LOG_ERR, "Can't bind to interface %s: %s", ifr.ifr_ifrn.ifrn_name, strerror(sockerrno));
 			return -1;
 		}
+
 #else
 		logger(LOG_WARNING, "%s not supported on this platform", "BindToInterface");
 #endif
@@ -238,8 +240,6 @@ int setup_vpn_in_socket(const sockaddr_t *sa) {
 		option = 1;
 		setsockopt(nfd, IPPROTO_IP, IP_DONTFRAGMENT, (void *)&option, sizeof(option));
 	}
-#else
-#warning No way to disable IPv4 fragmentation
 #endif
 
 #if defined(SOL_IPV6) && defined(IPV6_MTU_DISCOVER) && defined(IPV6_PMTUDISC_DO)
@@ -252,8 +252,6 @@ int setup_vpn_in_socket(const sockaddr_t *sa) {
 		option = 1;
 		setsockopt(nfd, IPPROTO_IPV6, IPV6_DONTFRAG, (void *)&option, sizeof(option));
 	}
-#else
-#warning No way to disable IPv6 fragmentation
 #endif
 
 	if (!bind_to_interface(nfd)) {
@@ -311,7 +309,7 @@ static void do_outgoing_pipe(connection_t *c, char *command) {
 	if(fork()) {
 		c->socket = fd[0];
 		close(fd[1]);
-		logger(LOG_DEBUG, "Using proxy %s", command);
+		ifdebug(CONNECTIONS) logger(LOG_DEBUG, "Using proxy %s", command);
 		return;
 	}
 
@@ -407,7 +405,6 @@ begin:
 
 	if(!proxytype) {
 		c->socket = socket(c->address.sa.sa_family, SOCK_STREAM, IPPROTO_TCP);
-		configure_tcp(c);
 	} else if(proxytype == PROXY_EXEC) {
 		do_outgoing_pipe(c, proxyhost);
 	} else {
@@ -416,13 +413,15 @@ begin:
 			goto begin;
 		ifdebug(CONNECTIONS) logger(LOG_INFO, "Using proxy at %s port %s", proxyhost, proxyport);
 		c->socket = socket(proxyai->ai_family, SOCK_STREAM, IPPROTO_TCP);
-		configure_tcp(c);
 	}
 
 	if(c->socket == -1) {
 		ifdebug(CONNECTIONS) logger(LOG_ERR, "Creating socket for %s failed: %s", c->hostname, sockstrerror(sockerrno));
 		goto begin;
 	}
+
+	if(proxytype != PROXY_EXEC)
+		configure_tcp(c);
 
 #ifdef FD_CLOEXEC
 	fcntl(c->socket, F_SETFD, FD_CLOEXEC);

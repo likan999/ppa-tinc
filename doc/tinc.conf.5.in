@@ -1,4 +1,4 @@
-.Dd 2010-01-16
+.Dd 2014-05-11
 .Dt TINC.CONF 5
 .\" Manual page created by:
 .\" Ivo Timmermans
@@ -416,7 +416,7 @@ and
 are available.
 .El
 .It Va ReplayWindow Li = Ar bytes Pq 16
-vhis is the size of the replay tracking window for each remote node, in bytes.
+This is the size of the replay tracking window for each remote node, in bytes.
 The window is a bitfield which tracks 1 packet per bit, so for example
 the default setting of 16 will track up to 128 packets in the window.  In high
 bandwidth scenarios, setting this to a higher value can reduce packet loss from
@@ -428,7 +428,8 @@ traffic.
 When this option is enabled tinc will only use Subnet statements which are
 present in the host config files in the local
 .Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /hosts/
-directory.
+directory. Subnets learned via connections to other nodes and which are not
+present in the local host config files are ignored.
 .It Va TunnelServer Li = yes | no Po no Pc Bq experimental
 When this option is enabled tinc will no longer forward information between other tinc daemons,
 and will only allow connections with nodes for which host config files are present in the local
@@ -631,6 +632,8 @@ The top directory for configuration files.
 .It Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /tinc.conf
 The default name of the server configuration file for net
 .Ar NETNAME .
+.It Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /conf.d/
+Optional directory from which any *.conf file will be loaded
 .It Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /hosts/
 Host configuration files are kept in this directory.
 .It Pa @sysconfdir@/tinc/ Ns Ar NETNAME Ns Pa /tinc-up

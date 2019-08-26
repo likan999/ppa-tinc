@@ -1,7 +1,7 @@
 /*
     protocol_auth.c -- handle the meta-protocol, authentication
     Copyright (C) 1999-2005 Ivo Timmermans,
-                  2000-2013 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2014 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -107,7 +107,7 @@ static bool send_proxyrequest(connection_t *c) {
 				i += 2;
 				c->tcplen += 22;
 			} else {
-				logger(LOG_ERR, "Address family %hx not supported for SOCKS 5 proxies!", c->address.sa.sa_family);
+				logger(LOG_ERR, "Address family %x not supported for SOCKS 5 proxies!", c->address.sa.sa_family);
 				return false;
 			}
 			if(i > len)
@@ -215,7 +215,12 @@ bool send_metakey(connection_t *c) {
 
 	/* Copy random data to the buffer */
 
-	RAND_pseudo_bytes((unsigned char *)c->outkey, len);
+	if (1 != RAND_bytes((unsigned char *)c->outkey, len)) {
+		int err = ERR_get_error();
+		logger(LOG_ERR, "Failed to generate meta key (%s)", ERR_error_string(err, NULL));
+		return false;
+	}
+
 
 	/* The message we send must be smaller than the modulus of the RSA key.
 	   By definition, for a key of k bits, the following formula holds:
@@ -391,7 +396,11 @@ bool send_challenge(connection_t *c) {
 
 	/* Copy random data to the buffer */
 
-	RAND_pseudo_bytes((unsigned char *)c->hischallenge, len);
+	if (1 != RAND_bytes((unsigned char *)c->hischallenge, len)) {
+		int err = ERR_get_error();
+		logger(LOG_ERR, "Failed to generate challenge (%s)", ERR_error_string(err, NULL));
+		return false; // Do not send predictable challenges, let connection attempt fail.
+	}
 
 	/* Convert to hex */
 

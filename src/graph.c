@@ -1,6 +1,6 @@
 /*
     graph.c -- graph algorithms
-    Copyright (C) 2001-2013 Guus Sliepen <guus@tinc-vpn.org>,
+    Copyright (C) 2001-2014 Guus Sliepen <guus@tinc-vpn.org>,
                   2001-2005 Ivo Timmermans
 
     This program is free software; you can redistribute it and/or modify
@@ -212,9 +212,13 @@ static void sssp_bfs(void) {
 			   && (!e->to->status.indirect || indirect))
 				continue;
 
+			// Only update nexthop the first time we visit this node.
+
+			if(!e->to->status.visited)
+				e->to->nexthop = (n->nexthop == myself) ? e->to : n->nexthop;
+
 			e->to->status.visited = true;
 			e->to->status.indirect = indirect;
-			e->to->nexthop = (n->nexthop == myself) ? e->to : n->nexthop;
 			e->to->prevedge = e;
 			e->to->via = indirect ? n->via : e->to;
 			e->to->options = e->options;
@@ -336,6 +340,7 @@ void dump_graph(void) {
 
 	if(!file) {
 		logger(LOG_ERR, "Unable to open graph dump file %s: %s", filename, strerror(errno));
+		free(filename);
 		free(tmpname);
 		return;
 	}
@@ -363,7 +368,10 @@ void dump_graph(void) {
 #ifdef HAVE_MINGW
 		unlink(filename);
 #endif
-		rename(tmpname, filename);
+		if(rename(tmpname, filename))
+			logger(LOG_ERR, "Could not rename %s to %s: %s\n", tmpname, filename, strerror(errno));
 		free(tmpname);
 	}
+
+	free(filename);
 }

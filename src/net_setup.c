@@ -1,7 +1,7 @@
 /*
     net_setup.c -- Setup.
     Copyright (C) 1998-2005 Ivo Timmermans,
-                  2000-2013 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2014 Guus Sliepen <guus@tinc-vpn.org>
                   2006      Scott Lamb <slamb@slamb.org>
                   2010      Brandon Black <blblack@gmail.com>
 
@@ -165,23 +165,25 @@ static bool read_rsa_private_key(void) {
 	char *fname, *key, *pubkey;
 
 	if(get_config_string(lookup_config(config_tree, "PrivateKey"), &key)) {
-		if(!get_config_string(lookup_config(config_tree, "PublicKey"), &pubkey)) {
-			logger(LOG_ERR, "PrivateKey used but no PublicKey found!");
-			return false;
-		}
 		myself->connection->rsa_key = RSA_new();
 //		RSA_blinding_on(myself->connection->rsa_key, NULL);
 		if(BN_hex2bn(&myself->connection->rsa_key->d, key) != strlen(key)) {
 			logger(LOG_ERR, "Invalid PrivateKey for myself!");
+			free(key);
+			return false;
+		}
+		free(key);
+		if(!get_config_string(lookup_config(config_tree, "PublicKey"), &pubkey)) {
+			logger(LOG_ERR, "PrivateKey used but no PublicKey found!");
 			return false;
 		}
 		if(BN_hex2bn(&myself->connection->rsa_key->n, pubkey) != strlen(pubkey)) {
 			logger(LOG_ERR, "Invalid PublicKey for myself!");
+			free(pubkey);
 			return false;
 		}
-		BN_hex2bn(&myself->connection->rsa_key->e, "FFFF");
-		free(key);
 		free(pubkey);
+		BN_hex2bn(&myself->connection->rsa_key->e, "FFFF");
 		return true;
 	}
 
@@ -200,15 +202,12 @@ static bool read_rsa_private_key(void) {
 #if !defined(HAVE_MINGW) && !defined(HAVE_CYGWIN)
 	struct stat s;
 
-	if(fstat(fileno(fp), &s)) {
-		logger(LOG_ERR, "Could not stat RSA private key file `%s': %s'",
-				fname, strerror(errno));
-		free(fname);
-		return false;
+	if(!fstat(fileno(fp), &s)) {
+		if(s.st_mode & ~0100700)
+			logger(LOG_WARNING, "Warning: insecure file permissions for RSA private key file `%s'!", fname);
+	} else {
+		logger(LOG_WARNING, "Could not stat RSA private key file `%s': %s'", fname, strerror(errno));
 	}
-
-	if(s.st_mode & ~0100700)
-		logger(LOG_WARNING, "Warning: insecure file permissions for RSA private key file `%s'!", fname);
 #endif
 
 	myself->connection->rsa_key = PEM_read_RSAPrivateKey(fp, NULL, NULL, NULL);
@@ -299,10 +298,12 @@ char *get_name(void) {
 		if(!envname) {
 			if(strcmp(name + 1, "HOST")) {
 				fprintf(stderr, "Invalid Name: environment variable %s does not exist\n", name + 1);
+				free(name);
 				return false;
 			}
 			if(gethostname(hostname, sizeof hostname) || !*hostname) {
 				fprintf(stderr, "Could not get hostname: %s\n", strerror(errno));
+				free(name);
 				return false;
 			}
 			hostname[31] = 0;
@@ -340,6 +341,7 @@ static bool setup_myself(void) {
 	bool choice;
 	int i, err;
 	int replaywin_int;
+	bool port_specified = false;
 
 	myself = new_node();
 	myself->connection = new_connection();
@@ -355,6 +357,8 @@ static bool setup_myself(void) {
 		return false;
 	}
 
+	/* Read tinc.conf and our own host config file */
+
 	myself->name = name;
 	myself->connection->name = xstrdup(name);
 	xasprintf(&fname, "%s/hosts/%s", confbase, name);
@@ -367,6 +371,10 @@ static bool setup_myself(void) {
 
 	if(!get_config_string(lookup_config(config_tree, "Port"), &myport))
 		myport = xstrdup("655");
+	else
+		port_specified = true;
+
+	/* Ensure myport is numeric */
 
 	if(!atoi(myport)) {
 		struct addrinfo *ai = str2addrinfo("localhost", myport, SOCK_DGRAM);
@@ -378,8 +386,7 @@ static bool setup_myself(void) {
 		sockaddr2str(&sa, NULL, &myport);
 	}
 
-	get_config_string(lookup_config(config_tree, "Proxy"), &proxy);
-	if(proxy) {
+	if(get_config_string(lookup_config(config_tree, "Proxy"), &proxy)) {
 		if((space = strchr(proxy, ' ')))
 			*space++ = 0;
 
@@ -397,6 +404,7 @@ static bool setup_myself(void) {
 			proxytype = PROXY_EXEC;
 		} else {
 			logger(LOG_ERR, "Unknown proxy type %s!", proxy);
+			free(proxy);
 			return false;
 		}
 
@@ -408,6 +416,7 @@ static bool setup_myself(void) {
 			case PROXY_EXEC:
 				if(!space || !*space) {
 					logger(LOG_ERR, "Argument expected for proxy type exec!");
+					free(proxy);
 					return false;
 				}
 				proxyhost =  xstrdup(space);
@@ -426,6 +435,7 @@ static bool setup_myself(void) {
 					*space++ = 0, proxypass = space;
 				if(!proxyhost || !*proxyhost || !proxyport || !*proxyport) {
 					logger(LOG_ERR, "Host and port argument expected for proxy!");
+					free(proxy);
 					return false;
 				}
 				proxyhost = xstrdup(proxyhost);
@@ -479,6 +489,7 @@ static bool setup_myself(void) {
 			routing_mode = RMODE_HUB;
 		else {
 			logger(LOG_ERR, "Invalid routing mode!");
+			free(mode);
 			return false;
 		}
 		free(mode);
@@ -493,6 +504,7 @@ static bool setup_myself(void) {
 			forwarding_mode = FMODE_KERNEL;
 		else {
 			logger(LOG_ERR, "Invalid forwarding mode!");
+			free(mode);
 			return false;
 		}
 		free(mode);
@@ -519,6 +531,7 @@ static bool setup_myself(void) {
 			broadcast_mode = BMODE_DIRECT;
 		else {
 			logger(LOG_ERR, "Invalid broadcast mode!");
+			free(mode);
 			return false;
 		}
 		free(mode);
@@ -571,6 +584,7 @@ static bool setup_myself(void) {
 			addressfamily = AF_UNSPEC;
 		else {
 			logger(LOG_ERR, "Invalid address family!");
+			free(afname);
 			return false;
 		}
 		free(afname);
@@ -580,8 +594,7 @@ static bool setup_myself(void) {
 
 	/* Generate packet encryption key */
 
-	if(get_config_string
-	   (lookup_config(config_tree, "Cipher"), &cipher)) {
+	if(get_config_string(lookup_config(config_tree, "Cipher"), &cipher)) {
 		if(!strcasecmp(cipher, "none")) {
 			myself->incipher = NULL;
 		} else {
@@ -589,9 +602,11 @@ static bool setup_myself(void) {
 
 			if(!myself->incipher) {
 				logger(LOG_ERR, "Unrecognized cipher type!");
+				free(cipher);
 				return false;
 			}
 		}
+		free(cipher);
 	} else
 		myself->incipher = EVP_bf_cbc();
 
@@ -617,9 +632,12 @@ static bool setup_myself(void) {
 
 			if(!myself->indigest) {
 				logger(LOG_ERR, "Unrecognized digest type!");
+				free(digest);
 				return false;
 			}
 		}
+
+		free(digest);
 	} else
 		myself->indigest = EVP_sha1();
 
@@ -683,6 +701,7 @@ static bool setup_myself(void) {
 		else if(!strcasecmp(type, "vde"))
 			devops = vde_devops;
 #endif
+		free(type);
 	}
 
 	if(!devops.setup())
@@ -812,13 +831,27 @@ static bool setup_myself(void) {
 		} while(cfg);
 	}
 
-	if(listen_sockets)
-		logger(LOG_NOTICE, "Ready");
-	else {
+	if(!listen_sockets) {
 		logger(LOG_ERR, "Unable to create any listening socket!");
 		return false;
 	}
 
+	/* If no Port option was specified, set myport to the port used by the first listening socket. */
+
+	if(!port_specified) {
+		sockaddr_t sa;
+		socklen_t salen = sizeof sa;
+		if(!getsockname(listen_socket[0].udp, &sa.sa, &salen)) {
+			free(myport);
+			sockaddr2str(&sa, NULL, &myport);
+			if(!myport)
+				myport = xstrdup("655");
+		}
+	}
+
+	/* Done. */
+
+	logger(LOG_NOTICE, "Ready");
 	return true;
 }
 

@@ -1,7 +1,7 @@
 /*
     protocol_key.c -- handle the meta-protocol, key exchange
     Copyright (C) 1999-2005 Ivo Timmermans,
-                  2000-2012 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2014 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -127,7 +127,8 @@ bool req_key_h(connection_t *c) {
 	/* Check if this key request is for us */
 
 	if(to == myself) {			/* Yes, send our own key back */
-		send_ans_key(from);
+		if (!send_ans_key(from))
+			return false;
 	} else {
 		if(tunnelserver)
 			return true;
@@ -156,7 +157,12 @@ bool send_ans_key(node_t *to) {
 	to->inkey = xrealloc(to->inkey, to->inkeylength);
 
 	// Create a new key
-	RAND_pseudo_bytes((unsigned char *)to->inkey, to->inkeylength);
+	if (1 != RAND_bytes((unsigned char *)to->inkey, to->inkeylength)) {
+		int err = ERR_get_error();
+		logger(LOG_ERR, "Failed to generate random for key (%s)", ERR_error_string(err, NULL));
+		return false; // Do not send insecure keys, let connection attempt fail.
+	}
+
 	if(to->incipher)
 		EVP_DecryptInit_ex(&to->inctx, to->incipher, NULL, (unsigned char *)to->inkey, (unsigned char *)to->inkey + to->incipher->key_len);
 
