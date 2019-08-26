@@ -4,13 +4,114 @@ sbin_PROGRAMS = tincd tinc sptps_test
 
 EXTRA_DIST = linux bsd solaris cygwin mingw openssl gcrypt
 
+DEFAULT_INCLUDES =
+
 tincd_SOURCES = \
-	utils.c getopt.c getopt1.c list.c splay_tree.c dropin.c fake-getaddrinfo.c fake-getnameinfo.c hash.c \
-	buffer.c conf.c connection.c control.c edge.c graph.c logger.c meta.c net.c net_packet.c net_setup.c \
-	net_socket.c netutl.c node.c process.c protocol.c protocol_auth.c protocol_edge.c protocol_misc.c \
-	protocol_key.c protocol_subnet.c route.c sptps.c subnet.c subnet_parse.c event.c tincd.c \
-	dummy_device.c raw_socket_device.c multicast_device.c names.c
+	buffer.c buffer.h \
+	cipher.h \
+	conf.c conf.h \
+	connection.c connection.h \
+	control.c control.h \
+	control_common.h \
+	crypto.h \
+	device.h \
+	digest.h \
+	dropin.c dropin.h \
+	dummy_device.c \
+	ecdh.h \
+	ecdsa.h \
+	ecdsagen.h \
+	edge.c edge.h \
+	ethernet.h \
+	event.c event.h \
+	fake-gai-errnos.h \
+	fake-getaddrinfo.c fake-getaddrinfo.h \
+	fake-getnameinfo.c fake-getnameinfo.h \
+	getopt.c getopt.h \
+	getopt1.c \
+	graph.c graph.h \
+	hash.c hash.h \
+	have.h \
+	ipv4.h \
+	ipv6.h \
+	list.c list.h \
+	logger.c logger.h \
+	meta.c meta.h \
+	multicast_device.c \
+	names.c names.h \
+	net.c net.h \
+	net_packet.c \
+	net_setup.c \
+	net_socket.c \
+	netutl.c netutl.h \
+	node.c node.h \
+	prf.h \
+	process.c process.h \
+	protocol.c protocol.h \
+	protocol_auth.c \
+	protocol_edge.c \
+	protocol_key.c \
+	protocol_misc.c \
+	protocol_subnet.c \
+	raw_socket_device.c \
+	route.c route.h \
+	rsa.h \
+	rsagen.h \
+	splay_tree.c splay_tree.h \
+	sptps.c sptps.h \
+	subnet.c subnet.h \
+	subnet_parse.c \
+	system.h \
+	tincd.c \
+	utils.c utils.h \
+	xalloc.h
+
+tinc_SOURCES = \
+	dropin.c dropin.h \
+	getopt.c getopt.h \
+	getopt1.c \
+	info.c info.h \
+	invitation.c invitation.h \
+	list.c list.h \
+	names.c names.h \
+	netutl.c netutl.h \
+	sptps.c sptps.h \
+	subnet_parse.c subnet.h \
+	tincctl.c tincctl.h \
+	top.c top.h \
+	utils.c utils.h
+
+sptps_test_SOURCES = \
+	logger.c logger.h \
+	sptps.c sptps.h \
+	sptps_test.c \
+	utils.c utils.h
+
+## Conditionally compile device drivers
 	
+if LINUX
+tincd_SOURCES += linux/device.c
+endif
+
+if BSD
+tincd_SOURCES += bsd/device.c
+if TUNEMU
+tincd_SOURCES += bsd/tunemu.c
+endif
+endif
+
+if SOLARIS
+tincd_SOURCES += solaris/device.c
+endif
+
+if MINGW
+tincd_SOURCES += mingw/device.c
+endif
+
+if CYGWIN
+tincd_SOURCES += cygwin/device.c
+endif
+
 if UML
 tincd_SOURCES += uml_device.c
 endif
@@ -19,37 +120,63 @@ if VDE
 tincd_SOURCES += vde_device.c
 endif
 
-nodist_tincd_SOURCES = \
-	device.c cipher.c crypto.c ecdh.c ecdsa.c digest.c prf.c rsa.c
+if OPENSSL
+tincd_SOURCES += \
+	openssl/cipher.c \
+	openssl/crypto.c \
+	openssl/digest.c \
+	openssl/ecdh.c \
+	openssl/ecdsa.c \
+	openssl/prf.c \
+	openssl/rsa.c
+tinc_SOURCES += \
+	openssl/cipher.c \
+	openssl/crypto.c \
+	openssl/digest.c \
+	openssl/ecdh.c \
+	openssl/ecdsa.c \
+	openssl/ecdsagen.c \
+	openssl/prf.c \
+	openssl/rsa.c \
+	openssl/rsagen.c
+sptps_test_SOURCES += \
+	openssl/cipher.c \
+	openssl/crypto.c \
+	openssl/digest.c \
+	openssl/ecdh.c \
+	openssl/ecdsa.c \
+	openssl/prf.c
+endif
 
-tinc_SOURCES = \
-	utils.c getopt.c getopt1.c dropin.c \
-	info.c list.c subnet_parse.c tincctl.c top.c names.c
-
-nodist_tinc_SOURCES = \
-	ecdsagen.c rsagen.c
-
-sptps_test_SOURCES = \
-	logger.c cipher.c crypto.c ecdh.c ecdsa.c digest.c prf.c \
-	sptps.c sptps_test.c utils.c
-
-if TUNEMU
-tincd_SOURCES += bsd/tunemu.c
+if GCRYPT
+tincd_SOURCES += \
+	gcrypt/cipher.c \
+	gcrypt/crypto.c \
+	gcrypt/digest.c \
+	gcrypt/ecdh.c \
+	gcrypt/ecdsa.c \
+	gcrypt/prf.c \
+	gcrypt/rsa.c
+tinc_SOURCES += \
+	gcrypt/cipher.c \
+	gcrypt/crypto.c \
+	gcrypt/digest.c \
+	gcrypt/ecdh.c \
+	gcrypt/ecdsa.c \
+	gcrypt/ecdsagen.c \
+	gcrypt/prf.c \
+	gcrypt/rsa.c \
+	gcrypt/rsagen.c
+sptps_test_SOURCES += \
+	gcrypt/cipher.c \
+	gcrypt/crypto.c \
+	gcrypt/digest.c \
+	gcrypt/ecdh.c \
+	gcrypt/ecdsa.c \
+	gcrypt/prf.c
 endif
 
 tinc_LDADD = $(READLINE_LIBS) $(CURSES_LIBS)
-
-DEFAULT_INCLUDES =
-
-INCLUDES = @INCLUDES@ -I$(top_builddir)
-
-noinst_HEADERS = \
-	xalloc.h utils.h getopt.h list.h splay_tree.h dropin.h fake-getaddrinfo.h fake-getnameinfo.h fake-gai-errnos.h ipv6.h ipv4.h ethernet.h \
-	buffer.h conf.h connection.h control.h control_common.h device.h edge.h graph.h info.h logger.h meta.h net.h netutl.h node.h process.h \
-	protocol.h route.h subnet.h sptps.h tincctl.h top.h bsd/tunemu.h hash.h event.h names.h
-
-nodist_noinst_HEADERS = \
-	cipher.h crypto.h ecdh.h ecdsa.h digest.h prf.h rsa.h ecdsagen.h rsagen.h
 
 LIBS = @LIBS@ @LIBGCRYPT_LIBS@
 

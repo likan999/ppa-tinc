@@ -29,8 +29,10 @@
 #include "xalloc.h"
 #include "protocol.h"
 #include "control_common.h"
+#include "crypto.h"
 #include "ecdsagen.h"
 #include "info.h"
+#include "invitation.h"
 #include "names.h"
 #include "rsagen.h"
 #include "utils.h"
@@ -38,7 +40,9 @@
 #include "top.h"
 
 #ifdef HAVE_MINGW
-#define mkdir(a, b) mkdir(a)
+#define SCRIPTEXTENSION ".bat"
+#else
+#define SCRIPTEXTENSION ""
 #endif
 
 static char **orig_argv;
@@ -52,19 +56,21 @@ static bool show_version = false;
 
 static char *name = NULL;
 static char controlcookie[1025];
-static char *tinc_conf = NULL;
-static char *hosts_dir = NULL;
+char *tinc_conf = NULL;
+char *hosts_dir = NULL;
 struct timeval now;
 
 // Horrible global variables...
 static int pid = 0;
-static int fd = -1;
-static char line[4096];
+int fd = -1;
+char line[4096];
 static int code;
 static int req;
 static int result;
 static bool force = false;
-static bool tty = true;
+bool tty = true;
+bool confbasegiven = false;
+bool netnamegiven = false;
 
 #ifdef HAVE_MINGW
 static struct WSAData wsa_state;
@@ -72,19 +78,11 @@ static struct WSAData wsa_state;
 
 static struct option const long_options[] = {
 	{"config", required_argument, NULL, 'c'},
-	{"debug", optional_argument, NULL, 0},
-	{"no-detach", no_argument, NULL, 0},
-	{"mlock", no_argument, NULL, 0},
 	{"net", required_argument, NULL, 'n'},
 	{"help", no_argument, NULL, 1},
 	{"version", no_argument, NULL, 2},
-	{"pidfile", required_argument, NULL, 5},
-	{"logfile", required_argument, NULL, 0},
-	{"bypass-security", no_argument, NULL, 0},
-	{"chroot", no_argument, NULL, 0},
-	{"user", required_argument, NULL, 0},
-	{"option", required_argument, NULL, 0},
-	{"force", no_argument, NULL, 6},
+	{"pidfile", required_argument, NULL, 3},
+	{"force", no_argument, NULL, 4},
 	{NULL, 0, NULL, 0}
 };
 
@@ -118,7 +116,7 @@ static void usage(bool status) {
 				"  del VARIABLE [VALUE]       Remove VARIABLE [only ones with watching VALUE]\n"
 				"  start [tincd options]      Start tincd.\n"
 				"  stop                       Stop tincd.\n"
-				"  restart                    Restart tincd.\n"
+				"  restart [tincd options]    Restart tincd.\n"
 				"  reload                     Partially reload configuration of running tincd.\n"
 				"  pid                        Show PID of currently running tincd.\n"
 				"  generate-keys [bits]       Generate new RSA and ECDSA public/private keypairs.\n"
@@ -145,6 +143,8 @@ static void usage(bool status) {
 				"  import [--force]           Import host configuration file(s) from standard input\n"
 				"  exchange [--force]         Same as export followed by import\n"
 				"  exchange-all [--force]     Same as export-all followed by import\n"
+				"  invite NODE [...]          Generate an invitation for NODE\n"
+				"  join INVITATION            Join a VPN using an INVITIATION\n"
 				"\n");
 		printf("Report bugs to tinc@tinc-vpn.org.\n");
 	}
@@ -154,13 +154,14 @@ static bool parse_options(int argc, char **argv) {
 	int r;
 	int option_index = 0;
 
-	while((r = getopt_long(argc, argv, "c:n:Dd::Lo:RU:", long_options, &option_index)) != EOF) {
+	while((r = getopt_long(argc, argv, "+c:n:", long_options, &option_index)) != EOF) {
 		switch (r) {
 			case 0:   /* long option */
 				break;
 
 			case 'c': /* config file */
 				confbase = xstrdup(optarg);
+				confbasegiven = true;
 				break;
 
 			case 'n': /* net name given */
@@ -175,11 +176,11 @@ static bool parse_options(int argc, char **argv) {
 				show_version = true;
 				break;
 
-			case 5:   /* open control socket here */
+			case 3:   /* open control socket here */
 				pidfilename = xstrdup(optarg);
 				break;
 
-			case 6:   /* force */
+			case 4:   /* force */
 				force = true;
 				break;
 
@@ -210,6 +211,23 @@ static bool parse_options(int argc, char **argv) {
 	return true;
 }
 
+/* Open a file with the desired permissions, minus the umask.
+   Also, if we want to create an executable file, we call fchmod()
+   to set the executable bits. */
+
+FILE *fopenmask(const char *filename, const char *mode, mode_t perms) {
+	mode_t mask = umask(0);
+	perms &= ~mask;
+	umask(~perms);
+	FILE *f = fopen(filename, mode);
+#ifdef HAVE_FCHMOD
+	if((perms & 0444) && f)
+		fchmod(fileno(f), perms);
+#endif
+	umask(mask);
+	return f;
+}
+
 static void disable_old_keys(const char *filename, const char *what) {
 	char tmpfile[PATH_MAX] = "";
 	char buf[1024];
@@ -224,7 +242,9 @@ static void disable_old_keys(const char *filename, const char *what) {
 
 	snprintf(tmpfile, sizeof tmpfile, "%s.tmp", filename);
 
-	w = fopen(tmpfile, "w");
+	struct stat st = {.st_mode = 0600};
+	fstat(fileno(r), &st);
+	w = fopenmask(tmpfile, "w", st.st_mode);
 
 	while(fgets(buf, sizeof buf, r)) {
 		if(!block && !strncmp(buf, "-----BEGIN ", 11)) {
@@ -287,7 +307,7 @@ static void disable_old_keys(const char *filename, const char *what) {
 	unlink(tmpfile);
 }
 
-static FILE *ask_and_open(const char *filename, const char *what, const char *mode, bool ask) {
+static FILE *ask_and_open(const char *filename, const char *what, const char *mode, bool ask, mode_t perms) {
 	FILE *r;
 	char *directory;
 	char buf[PATH_MAX];
@@ -296,13 +316,11 @@ static FILE *ask_and_open(const char *filename, const char *what, const char *mo
 	/* Check stdin and stdout */
 	if(ask && tty) {
 		/* Ask for a file and/or directory name. */
-		fprintf(stdout, "Please enter a file to save %s to [%s]: ",
-				what, filename);
+		fprintf(stdout, "Please enter a file to save %s to [%s]: ", what, filename);
 		fflush(stdout);
 
 		if(fgets(buf, sizeof buf, stdin) == NULL) {
-			fprintf(stderr, "Error while reading stdin: %s\n",
-					strerror(errno));
+			fprintf(stderr, "Error while reading stdin: %s\n", strerror(errno));
 			return NULL;
 		}
 
@@ -325,13 +343,11 @@ static FILE *ask_and_open(const char *filename, const char *what, const char *mo
 		filename = buf2;
 	}
 
-	umask(0077); /* Disallow everything for group and other */
-
 	disable_old_keys(filename, what);
 
 	/* Open it first to keep the inode busy */
 
-	r = fopen(filename, mode);
+	r = fopenmask(filename, mode, perms);
 
 	if(!r) {
 		fprintf(stderr, "Error opening file `%s': %s\n", filename, strerror(errno));
@@ -346,31 +362,31 @@ static FILE *ask_and_open(const char *filename, const char *what, const char *mo
   them in.
 */
 static bool ecdsa_keygen(bool ask) {
-	ecdsa_t key;
+	ecdsa_t *key;
 	FILE *f;
 	char *pubname, *privname;
 
 	fprintf(stderr, "Generating ECDSA keypair:\n");
 
-	if(!ecdsa_generate(&key)) {
+	if(!(key = ecdsa_generate())) {
 		fprintf(stderr, "Error during key generation!\n");
 		return false;
 	} else
 		fprintf(stderr, "Done.\n");
 
 	xasprintf(&privname, "%s" SLASH "ecdsa_key.priv", confbase);
-	f = ask_and_open(privname, "private ECDSA key", "a", ask);
+	f = ask_and_open(privname, "private ECDSA key", "a", ask, 0600);
 	free(privname);
 
 	if(!f)
 		return false;
 
-#ifdef HAVE_FCHMOD
-	/* Make it unreadable for others. */
-	fchmod(fileno(f), 0600);
-#endif
-
-	ecdsa_write_pem_private_key(&key, f);
+	if(!ecdsa_write_pem_private_key(key, f)) {
+		fprintf(stderr, "Error writing private key!\n");
+		ecdsa_free(key);
+		fclose(f);
+		return false;
+	}
 
 	fclose(f);
 
@@ -379,17 +395,18 @@ static bool ecdsa_keygen(bool ask) {
 	else
 		xasprintf(&pubname, "%s" SLASH "ecdsa_key.pub", confbase);
 
-	f = ask_and_open(pubname, "public ECDSA key", "a", ask);
+	f = ask_and_open(pubname, "public ECDSA key", "a", ask, 0666);
 	free(pubname);
 
 	if(!f)
 		return false;
 
-	char *pubkey = ecdsa_get_base64_public_key(&key);
+	char *pubkey = ecdsa_get_base64_public_key(key);
 	fprintf(f, "ECDSAPublicKey = %s\n", pubkey);
 	free(pubkey);
 
 	fclose(f);
+	ecdsa_free(key);
 
 	return true;
 }
@@ -399,31 +416,31 @@ static bool ecdsa_keygen(bool ask) {
   them in.
 */
 static bool rsa_keygen(int bits, bool ask) {
-	rsa_t key;
+	rsa_t *key;
 	FILE *f;
 	char *pubname, *privname;
 
 	fprintf(stderr, "Generating %d bits keys:\n", bits);
 
-	if(!rsa_generate(&key, bits, 0x10001)) {
+	if(!(key = rsa_generate(bits, 0x10001))) {
 		fprintf(stderr, "Error during key generation!\n");
 		return false;
 	} else
 		fprintf(stderr, "Done.\n");
 
 	xasprintf(&privname, "%s" SLASH "rsa_key.priv", confbase);
-	f = ask_and_open(privname, "private RSA key", "a", ask);
+	f = ask_and_open(privname, "private RSA key", "a", ask, 0600);
 	free(privname);
 
 	if(!f)
 		return false;
 
-#ifdef HAVE_FCHMOD
-	/* Make it unreadable for others. */
-	fchmod(fileno(f), 0600);
-#endif
-
-	rsa_write_pem_private_key(&key, f);
+	if(!rsa_write_pem_private_key(key, f)) {
+		fprintf(stderr, "Error writing private key!\n");
+		fclose(f);
+		rsa_free(key);
+		return false;
+	}
 
 	fclose(f);
 
@@ -432,24 +449,33 @@ static bool rsa_keygen(int bits, bool ask) {
 	else
 		xasprintf(&pubname, "%s" SLASH "rsa_key.pub", confbase);
 
-	f = ask_and_open(pubname, "public RSA key", "a", ask);
+	f = ask_and_open(pubname, "public RSA key", "a", ask, 0666);
 	free(pubname);
 
 	if(!f)
 		return false;
 
-	rsa_write_pem_public_key(&key, f);
+	if(!rsa_write_pem_public_key(key, f)) {
+		fprintf(stderr, "Error writing public key!\n");
+		fclose(f);
+		rsa_free(key);
+		return false;
+	}
 
 	fclose(f);
+	rsa_free(key);
 
 	return true;
 }
 
-static char buffer[4096];
-static size_t blen = 0;
+char buffer[4096];
+size_t blen = 0;
 
 bool recvline(int fd, char *line, size_t len) {
 	char *newline = NULL;
+
+	if(!fd)
+		abort();
 
 	while(!(newline = memchr(buffer, '\n', blen))) {
 		int result = recv(fd, buffer + blen, sizeof buffer - blen, 0);
@@ -473,7 +499,10 @@ bool recvline(int fd, char *line, size_t len) {
 	return true;
 }
 
-static bool recvdata(int fd, char *data, size_t len) {
+bool recvdata(int fd, char *data, size_t len) {
+	if(len == -1)
+		len = blen;
+
 	while(blen < len) {
 		int result = recv(fd, buffer + blen, sizeof buffer - blen, 0);
 		if(result == -1 && errno == EINTR)
@@ -623,7 +652,7 @@ static bool remove_service(void) {
 }
 #endif
 
-static bool connect_tincd(bool verbose) {
+bool connect_tincd(bool verbose) {
 	if(fd >= 0) {
 		fd_set r;
 		FD_ZERO(&r);
@@ -775,7 +804,7 @@ static int cmd_start(int argc, char *argv[]) {
 		c = "tincd";
 
 	int nargc = 0;
-	char **nargv = xmalloc_and_zero((optind + argc) * sizeof *nargv);
+	char **nargv = xzalloc((optind + argc) * sizeof *nargv);
 
 	nargv[nargc++] = c;
 	for(int i = 1; i < optind; i++)
@@ -800,8 +829,16 @@ static int cmd_start(int argc, char *argv[]) {
 
 	free(nargv);
 
-	int status = -1;
-	if(waitpid(pid, &status, 0) != pid || !WIFEXITED(status) || WEXITSTATUS(status)) {
+	int status = -1, result;
+#ifdef SIGINT
+	signal(SIGINT, SIG_IGN);
+#endif
+	result = waitpid(pid, &status, 0);
+#ifdef SIGINT
+	signal(SIGINT, SIG_DFL);
+#endif
+
+	if(result != pid || !WIFEXITED(status) || WEXITSTATUS(status)) {
 		fprintf(stderr, "Error starting %s\n", c);
 		return 1;
 	}
@@ -849,7 +886,7 @@ static int cmd_stop(int argc, char *argv[]) {
 }
 
 static int cmd_restart(int argc, char *argv[]) {
-	cmd_stop(argc, argv);
+	cmd_stop(1, argv);
 	return cmd_start(argc, argv);
 }
 
@@ -1165,6 +1202,13 @@ static int cmd_pcap(int argc, char *argv[]) {
 	return 0;
 }
 
+#ifdef SIGINT
+static void sigint_handler(int sig) {
+	fprintf(stderr, "\n");
+	shutdown(fd, SHUT_RDWR);
+}
+#endif
+
 static int cmd_log(int argc, char *argv[]) {
 	if(argc > 2) {
 		fprintf(stderr, "Too many arguments!\n");
@@ -1174,7 +1218,18 @@ static int cmd_log(int argc, char *argv[]) {
 	if(!connect_tincd(true))
 		return 1;
 
+#ifdef SIGINT
+	signal(SIGINT, sigint_handler);
+#endif
+
 	logcontrol(fd, stdout, argc > 1 ? atoi(argv[1]) : -1);
+
+#ifdef SIGINT
+	signal(SIGINT, SIG_DFL);
+#endif
+
+	close(fd);
+	fd = -1;
 	return 0;
 }
 
@@ -1191,14 +1246,14 @@ static int cmd_pid(int argc, char *argv[]) {
 	return 0;
 }
 
-static int rstrip(char *value) {
+int rstrip(char *value) {
 	int len = strlen(value);
 	while(len && strchr("\t\r\n ", value[len - 1]))
 		value[--len] = 0;
 	return len;
 }
 
-static char *get_my_name(bool verbose) {
+char *get_my_name(bool verbose) {
 	FILE *f = fopen(tinc_conf, "r");
 	if(!f) {
 		if(verbose)
@@ -1233,22 +1288,14 @@ static char *get_my_name(bool verbose) {
 	return NULL;
 }
 
-#define VAR_SERVER 1    /* Should be in tinc.conf */
-#define VAR_HOST 2      /* Can be in host config file */
-#define VAR_MULTIPLE 4  /* Multiple statements allowed */
-#define VAR_OBSOLETE 8  /* Should not be used anymore */
-
-static struct {
-	const char *name;
-	int type;
-} const variables[] = {
+const var_t variables[] = {
 	/* Server configuration */
 	{"AddressFamily", VAR_SERVER},
-	{"AutoConnect", VAR_SERVER},
+	{"AutoConnect", VAR_SERVER | VAR_SAFE},
 	{"BindToAddress", VAR_SERVER | VAR_MULTIPLE},
 	{"BindToInterface", VAR_SERVER},
-	{"Broadcast", VAR_SERVER},
-	{"ConnectTo", VAR_SERVER | VAR_MULTIPLE},
+	{"Broadcast", VAR_SERVER | VAR_SAFE},
+	{"ConnectTo", VAR_SERVER | VAR_MULTIPLE | VAR_SAFE},
 	{"DecrementTTL", VAR_SERVER},
 	{"Device", VAR_SERVER},
 	{"DeviceType", VAR_SERVER},
@@ -1263,9 +1310,10 @@ static struct {
 	{"KeyExpire", VAR_SERVER},
 	{"LocalDiscovery", VAR_SERVER},
 	{"MACExpire", VAR_SERVER},
+	{"MaxConnectionBurst", VAR_SERVER},
 	{"MaxOutputBufferSize", VAR_SERVER},
 	{"MaxTimeout", VAR_SERVER},
-	{"Mode", VAR_SERVER},
+	{"Mode", VAR_SERVER | VAR_SAFE},
 	{"Name", VAR_SERVER},
 	{"PingInterval", VAR_SERVER},
 	{"PingTimeout", VAR_SERVER},
@@ -1298,9 +1346,9 @@ static struct {
 	{"Port", VAR_HOST},
 	{"PublicKey", VAR_HOST | VAR_OBSOLETE},
 	{"PublicKeyFile", VAR_SERVER | VAR_HOST | VAR_OBSOLETE},
-	{"Subnet", VAR_HOST | VAR_MULTIPLE},
+	{"Subnet", VAR_HOST | VAR_MULTIPLE | VAR_SAFE},
 	{"TCPOnly", VAR_SERVER | VAR_HOST},
-	{"Weight", VAR_HOST},
+	{"Weight", VAR_HOST | VAR_SAFE},
 	{NULL, 0}
 };
 
@@ -1373,6 +1421,7 @@ static int cmd_config(int argc, char *argv[]) {
 
 	/* Some simple checks. */
 	bool found = false;
+	bool warnonremove = false;
 
 	for(int i = 0; variables[i].name; i++) {
 		if(strcasecmp(variables[i].name, variable))
@@ -1411,6 +1460,16 @@ static int cmd_config(int argc, char *argv[]) {
 				return 1;
 		}
 
+		/* Change "add" into "set" for variables that do not allow multiple occurences.
+		   Turn on warnings when it seems variables might be removed unintentionally. */
+
+		if(action == 1 && !(variables[i].type & VAR_MULTIPLE)) {
+			warnonremove = true;
+			action = 0;
+		} else if(action == 0 && (variables[i].type & VAR_MULTIPLE)) {
+			warnonremove = true;
+		}
+
 		break;
 	}
 
@@ -1437,19 +1496,8 @@ static int cmd_config(int argc, char *argv[]) {
 
 	FILE *f = fopen(filename, "r");
 	if(!f) {
-		if(action < 0 || errno != ENOENT) {
-			fprintf(stderr, "Could not open configuration file %s: %s\n", filename, strerror(errno));
-			return 1;
-		}
-
-		// If it doesn't exist, create it.
-		f = fopen(filename, "a+");
-		if(!f) {
-			fprintf(stderr, "Could not create configuration file %s: %s\n", filename, strerror(errno));
-			return 1;
-		} else {
-			fprintf(stderr, "Created configuration file %s.\n", filename);
-		}
+		fprintf(stderr, "Could not open configuration file %s: %s\n", filename, strerror(errno));
+		return 1;
 	}
 
 	char *tmpfile = NULL;
@@ -1504,9 +1552,14 @@ static int cmd_config(int argc, char *argv[]) {
 				}
 			// Set
 			} else if(action == 0) {
+				// Warn if "set" was used for variables that can occur multiple times
+				if(warnonremove && strcasecmp(bvalue, value))
+					fprintf(stderr, "Warning: removing %s = %s\n", variable, bvalue);
+
 				// Already set? Delete the rest...
 				if(set)
 					continue;
+
 				// Otherwise, replace.
 				if(fprintf(tf, "%s = %s\n", variable, value) < 0) {
 					fprintf(stderr, "Error writing to temporary file %s: %s\n", tmpfile, strerror(errno));
@@ -1603,6 +1656,64 @@ bool check_id(const char *name) {
 	return true;
 }
 
+static bool try_bind(int port) {
+	struct addrinfo *ai = NULL;
+	struct addrinfo hint = {
+		.ai_flags = AI_PASSIVE,
+		.ai_family = AF_UNSPEC,
+		.ai_socktype = SOCK_STREAM,
+		.ai_protocol = IPPROTO_TCP,
+	};
+
+	char portstr[16];
+	snprintf(portstr, sizeof portstr, "%d", port);
+
+	if(getaddrinfo(NULL, portstr, &hint, &ai) || !ai)
+		return false;
+
+	while(ai) {
+		int fd = socket(ai->ai_family, SOCK_STREAM, IPPROTO_TCP);
+		if(!fd)
+			return false;
+		int result = bind(fd, ai->ai_addr, ai->ai_addrlen);
+		closesocket(fd);
+		if(result)
+			return false;
+		ai = ai->ai_next;
+	}
+
+	return true;
+}
+
+int check_port(char *name) {
+	if(try_bind(655))
+		return 655;
+
+	fprintf(stderr, "Warning: could not bind to port 655. ");
+
+	for(int i = 0; i < 100; i++) {
+		int port = 0x1000 + (rand() & 0x7fff);
+		if(try_bind(port)) {
+			char *filename;
+			xasprintf(&filename, "%s" SLASH "hosts" SLASH "%s", confbase, name);
+			FILE *f = fopen(filename, "a");
+			free(filename);
+			if(!f) {
+				fprintf(stderr, "Please change tinc's Port manually.\n");
+				return 0;
+			}
+
+			fprintf(f, "Port = %d\n", port);
+			fclose(f);
+			fprintf(stderr, "Tinc will instead listen on port %d.\n", port);
+			return port;
+		}
+	}
+
+	fprintf(stderr, "Please change tinc's Port manually.\n");
+	return 0;
+}
+
 static int cmd_init(int argc, char *argv[]) {
 	if(!access(tinc_conf, F_OK)) {
 		fprintf(stderr, "Configuration file %s already exists!\n", tinc_conf);
@@ -1644,17 +1755,17 @@ static int cmd_init(int argc, char *argv[]) {
 		return 1;
 	}
 
-	if(mkdir(confdir, 0755) && errno != EEXIST) {
-		fprintf(stderr, "Could not create directory %s: %s\n", CONFDIR, strerror(errno));
+	if(strcmp(confdir, confbase) && mkdir(confdir, 0755) && errno != EEXIST) {
+		fprintf(stderr, "Could not create directory %s: %s\n", confdir, strerror(errno));
 		return 1;
 	}
 
-	if(mkdir(confbase, 0755) && errno != EEXIST) {
+	if(mkdir(confbase, 0777) && errno != EEXIST) {
 		fprintf(stderr, "Could not create directory %s: %s\n", confbase, strerror(errno));
 		return 1;
 	}
 
-	if(mkdir(hosts_dir, 0755) && errno != EEXIST) {
+	if(mkdir(hosts_dir, 0777) && errno != EEXIST) {
 		fprintf(stderr, "Could not create directory %s: %s\n", hosts_dir, strerror(errno));
 		return 1;
 	}
@@ -1671,16 +1782,17 @@ static int cmd_init(int argc, char *argv[]) {
 	if(!rsa_keygen(2048, false) || !ecdsa_keygen(false))
 		return 1;
 
+	check_port(name);
+
 #ifndef HAVE_MINGW
 	char *filename;
 	xasprintf(&filename, "%s" SLASH "tinc-up", confbase);
 	if(access(filename, F_OK)) {
-		FILE *f = fopen(filename, "w");
+		FILE *f = fopenmask(filename, "w", 0777);
 		if(!f) {
 			fprintf(stderr, "Could not create file %s: %s\n", filename, strerror(errno));
 			return 1;
 		}
-		fchmod(fileno(f), 0755);
 		fprintf(f, "#!/bin/sh\n\necho 'Unconfigured tinc-up script, please edit!'\n\n#ifconfig $INTERFACE <your vpn IP address> netmask <netmask of whole VPN>\n");
 		fclose(f);
 	}
@@ -2008,6 +2120,8 @@ static const struct {
 	{"import", cmd_import},
 	{"exchange", cmd_exchange},
 	{"exchange-all", cmd_exchange_all},
+	{"invite", cmd_invite},
+	{"join", cmd_join},
 	{NULL, NULL},
 };
 
@@ -2060,7 +2174,7 @@ static char *complete_config(const char *text, int state) {
 		if(dot) {
 			if((variables[i].type & VAR_HOST) && !strncasecmp(variables[i].name, dot + 1, strlen(dot + 1))) {
 				char *match;
-				xasprintf(&match, "%.*s.%s", dot - text, text, variables[i].name);
+				xasprintf(&match, "%.*s.%s", (int)(dot - text), text, variables[i].name);
 				return match;
 			}
 		} else {
@@ -2255,6 +2369,9 @@ int main(int argc, char *argv[]) {
 		usage(false);
 		return 0;
 	}
+
+	srand(time(NULL));
+	crypto_init();
 
 	tty = isatty(0) && isatty(1);
 

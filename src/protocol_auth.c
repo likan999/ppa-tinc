@@ -1,7 +1,7 @@
 /*
     protocol_auth.c -- handle the meta-protocol, authentication
     Copyright (C) 1999-2005 Ivo Timmermans,
-                  2000-2012 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2013 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -27,10 +27,12 @@
 #include "cipher.h"
 #include "crypto.h"
 #include "digest.h"
+#include "ecdsa.h"
 #include "edge.h"
 #include "graph.h"
 #include "logger.h"
 #include "meta.h"
+#include "names.h"
 #include "net.h"
 #include "netutl.h"
 #include "node.h"
@@ -40,6 +42,8 @@
 #include "sptps.h"
 #include "utils.h"
 #include "xalloc.h"
+
+ecdsa_t *invitation_key = NULL;
 
 static bool send_proxyrequest(connection_t *c) {
 	switch(proxytype) {
@@ -133,7 +137,7 @@ bool send_id(connection_t *c) {
 	int minor = 0;
 
 	if(experimental) {
-		if(c->config_tree && !read_ecdsa_public_key(c))
+		if(c->outgoing && !read_ecdsa_public_key(c))
 			minor = 1;
 		else
 			minor = myself->connection->protocol_minor;
@@ -144,6 +148,107 @@ bool send_id(connection_t *c) {
 			return false;
 
 	return send_request(c, "%d %s %d.%d", ID, myself->connection->name, myself->connection->protocol_major, minor);
+}
+
+static bool finalize_invitation(connection_t *c, const char *data, uint16_t len) {
+	if(strchr(data, '\n')) {
+		logger(DEBUG_ALWAYS, LOG_ERR, "Received invalid key from invited node %s (%s)!\n", c->name, c->hostname);
+		return false;
+	}
+
+	// Create a new host config file
+	char filename[PATH_MAX];
+	snprintf(filename, sizeof filename, "%s" SLASH "hosts" SLASH "%s", confbase, c->name);
+	if(!access(filename, F_OK)) {
+		logger(DEBUG_ALWAYS, LOG_ERR, "Host config file for %s (%s) already exists!\n", c->name, c->hostname);
+		return false;
+	}
+
+	FILE *f = fopen(filename, "w");
+	if(!f) {
+		logger(DEBUG_ALWAYS, LOG_ERR, "Error trying to create %s: %s\n", filename, strerror(errno));
+		return false;
+	}
+
+	fprintf(f, "ECDSAPublicKey = %s\n", data);
+	fclose(f);
+
+	logger(DEBUG_CONNECTIONS, LOG_INFO, "Key succesfully received from %s (%s)", c->name, c->hostname);
+	return true;
+}
+
+static bool receive_invitation_sptps(void *handle, uint8_t type, const char *data, uint16_t len) {
+	connection_t *c = handle;
+
+	if(type == 128)
+		return true;
+
+	if(type == 1 && c->status.invitation_used)
+		return finalize_invitation(c, data, len);
+
+	if(type != 0 || len != 18 || c->status.invitation_used)
+		return false;
+
+	char cookie[25];
+	b64encode_urlsafe(data, cookie, 18);
+
+	char filename[PATH_MAX], usedname[PATH_MAX];
+	snprintf(filename, sizeof filename, "%s" SLASH "invitations" SLASH "%s", confbase, cookie);
+	snprintf(usedname, sizeof usedname, "%s" SLASH "invitations" SLASH "%s.used", confbase, cookie);
+
+	// Atomically rename the invitation file
+	if(rename(filename, usedname)) {
+		if(errno == ENOENT)
+			logger(DEBUG_ALWAYS, LOG_ERR, "Peer %s tried to use non-existing invitation %s\n", c->hostname, cookie);
+		else
+			logger(DEBUG_ALWAYS, LOG_ERR, "Error trying to rename invitation %s\n", cookie);
+		return false;
+	}
+
+	// Open the renamed file
+	FILE *f = fopen(usedname, "r");
+	if(!f) {
+		logger(DEBUG_ALWAYS, LOG_ERR, "Error trying to open invitation %s\n", cookie);
+		return false;
+	}
+
+	// Read the new node's Name from the file
+	char buf[1024];
+	fgets(buf, sizeof buf, f);
+	if(*buf)
+		buf[strlen(buf) - 1] = 0;
+
+	len = strcspn(buf, " \t=");
+	char *name = buf + len;
+	name += strspn(name, " \t");
+	if(*name == '=') {
+		name++;
+		name += strspn(name, " \t");
+	}
+	buf[len] = 0;
+
+	if(!*buf || !*name || strcasecmp(buf, "Name") || !check_id(name)) {
+		logger(DEBUG_ALWAYS, LOG_ERR, "Invalid invitation file %s\n", cookie);
+		fclose(f);
+		return false;
+	}
+
+	free(c->name);
+	c->name = xstrdup(name);
+
+	// Send the node the contents of the invitation file
+	rewind(f);
+	size_t result;
+	while((result = fread(buf, 1, sizeof buf, f)))
+		sptps_send_record(&c->sptps, 0, buf, result);
+	sptps_send_record(&c->sptps, 1, buf, 0);
+	fclose(f);
+	unlink(usedname);
+
+	c->status.invitation_used = true;
+
+	logger(DEBUG_CONNECTIONS, LOG_INFO, "Invitation %s succesfully sent to %s (%s)", cookie, c->name, c->hostname);
+	return true;
 }
 
 bool id_h(connection_t *c, const char *request) {
@@ -166,6 +271,31 @@ bool id_h(connection_t *c, const char *request) {
 		c->name = xstrdup("<control>");
 
 		return send_request(c, "%d %d %d", ACK, TINC_CTL_VERSION_CURRENT, getpid());
+	}
+
+	if(name[0] == '?') {
+		if(!invitation_key) {
+			logger(DEBUG_ALWAYS, LOG_ERR, "Got invitation from %s but we don't have an invitation key", c->hostname);
+			return false;
+		}
+
+		c->ecdsa = ecdsa_set_base64_public_key(name + 1);
+		if(!c->ecdsa) {
+			logger(DEBUG_ALWAYS, LOG_ERR, "Got bad invitation from %s", c->hostname);
+			return false;
+		}
+
+		c->status.invitation = true;
+		char *mykey = ecdsa_get_base64_public_key(invitation_key);
+		if(!mykey)
+			return false;
+		if(!send_request(c, "%d %s", ACK, mykey))
+			return false;
+		free(mykey);
+
+		c->protocol_minor = 2;
+
+		return sptps_start(&c->sptps, c, false, false, invitation_key, c->ecdsa, "tinc invitation", 15, send_meta_sptps, receive_invitation_sptps);
 	}
 
 	/* Check if identity is a valid name */
@@ -194,7 +324,7 @@ bool id_h(connection_t *c, const char *request) {
 
 	if(c->protocol_major != myself->connection->protocol_major) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Peer %s (%s) uses incompatible version %d.%d",
-			   c->name, c->hostname, c->protocol_major, c->protocol_minor);
+			c->name, c->hostname, c->protocol_major, c->protocol_minor);
 		return false;
 	}
 
@@ -216,13 +346,19 @@ bool id_h(connection_t *c, const char *request) {
 			return false;
 		}
 
-		if(experimental && c->protocol_minor >= 2) {
-			if(!read_ecdsa_public_key(c))
-				return false;
-		}
+		if(experimental)
+			read_ecdsa_public_key(c);
 	} else {
-		if(c->protocol_minor && !ecdsa_active(&c->ecdsa))
+		if(c->protocol_minor && !ecdsa_active(c->ecdsa))
 			c->protocol_minor = 1;
+	}
+
+	/* Forbid version rollback for nodes whose ECDSA key we know */
+
+	if(ecdsa_active(c->ecdsa) && c->protocol_minor < 2) {
+		logger(DEBUG_ALWAYS, LOG_ERR, "Peer %s (%s) tries to roll back protocol version to %d.%d",
+			c->name, c->hostname, c->protocol_major, c->protocol_minor);
+		return false;
 	}
 
 	c->allow_request = METAKEY;
@@ -246,13 +382,13 @@ bool send_metakey(connection_t *c) {
 	if(!read_rsa_public_key(c))
 		return false;
 
-	if(!cipher_open_blowfish_ofb(&c->outcipher))
+	if(!(c->outcipher = cipher_open_blowfish_ofb()))
 		return false;
 
-	if(!digest_open_sha1(&c->outdigest, -1))
+	if(!(c->outdigest = digest_open_sha1(-1)))
 		return false;
 
-	size_t len = rsa_size(&c->rsa);
+	size_t len = rsa_size(c->rsa);
 	char key[len];
 	char enckey[len];
 	char hexkey[2 * len + 1];
@@ -273,7 +409,8 @@ bool send_metakey(connection_t *c) {
 
 	key[0] &= 0x7F;
 
-	cipher_set_key_from_rsa(&c->outcipher, key, len, true);
+	if(!cipher_set_key_from_rsa(c->outcipher, key, len, true))
+		return false;
 
 	if(debug_level >= DEBUG_SCARY_THINGS) {
 		bin2hex(key, hexkey, len);
@@ -287,7 +424,7 @@ bool send_metakey(connection_t *c) {
 	   with a length equal to that of the modulus of the RSA key.
 	 */
 
-	if(!rsa_public_encrypt(&c->rsa, key, len, enckey)) {
+	if(!rsa_public_encrypt(c->rsa, key, len, enckey)) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Error during encryption of meta key for %s (%s)", c->name, c->hostname);
 		return false;
 	}
@@ -299,8 +436,8 @@ bool send_metakey(connection_t *c) {
 	/* Send the meta key */
 
 	bool result = send_request(c, "%d %d %d %d %d %s", METAKEY,
-			 cipher_get_nid(&c->outcipher),
-			 digest_get_nid(&c->outdigest), c->outmaclength,
+			 cipher_get_nid(c->outcipher),
+			 digest_get_nid(c->outdigest), c->outmaclength,
 			 c->outcompression, hexkey);
 
 	c->status.encryptout = true;
@@ -310,7 +447,7 @@ bool send_metakey(connection_t *c) {
 bool metakey_h(connection_t *c, const char *request) {
 	char hexkey[MAX_STRING_SIZE];
 	int cipher, digest, maclength, compression;
-	size_t len = rsa_size(&myself->connection->rsa);
+	size_t len = rsa_size(myself->connection->rsa);
 	char enckey[len];
 	char key[len];
 
@@ -332,7 +469,7 @@ bool metakey_h(connection_t *c, const char *request) {
 
 	/* Decrypt the meta key */
 
-	if(!rsa_private_decrypt(&myself->connection->rsa, enckey, len, key)) {
+	if(!rsa_private_decrypt(myself->connection->rsa, enckey, len, key)) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Error during decryption of meta key for %s (%s)", c->name, c->hostname);
 		return false;
 	}
@@ -344,12 +481,12 @@ bool metakey_h(connection_t *c, const char *request) {
 
 	/* Check and lookup cipher and digest algorithms */
 
-	if(!cipher_open_by_nid(&c->incipher, cipher) || !cipher_set_key_from_rsa(&c->incipher, key, len, false)) {
+	if(!(c->incipher = cipher_open_by_nid(cipher)) || !cipher_set_key_from_rsa(c->incipher, key, len, false)) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Error during initialisation of cipher from %s (%s)", c->name, c->hostname);
 		return false;
 	}
 
-	if(!digest_open_by_nid(&c->indigest, digest, -1)) {
+	if(!(c->indigest = digest_open_by_nid(digest, -1))) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Error during initialisation of digest from %s (%s)", c->name, c->hostname);
 		return false;
 	}
@@ -362,7 +499,7 @@ bool metakey_h(connection_t *c, const char *request) {
 }
 
 bool send_challenge(connection_t *c) {
-	size_t len = rsa_size(&c->rsa);
+	size_t len = rsa_size(c->rsa);
 	char buffer[len * 2 + 1];
 
 	if(!c->hischallenge)
@@ -383,8 +520,8 @@ bool send_challenge(connection_t *c) {
 
 bool challenge_h(connection_t *c, const char *request) {
 	char buffer[MAX_STRING_SIZE];
-	size_t len = rsa_size(&myself->connection->rsa);
-	size_t digestlen = digest_length(&c->indigest);
+	size_t len = rsa_size(myself->connection->rsa);
+	size_t digestlen = digest_length(c->indigest);
 	char digest[digestlen];
 
 	if(sscanf(request, "%*d " MAX_STRING, buffer) != 1) {
@@ -403,17 +540,18 @@ bool challenge_h(connection_t *c, const char *request) {
 		return false;
 	}
 
-	c->allow_request = CHAL_REPLY;
-
 	/* Calculate the hash from the challenge we received */
 
-	digest_create(&c->indigest, buffer, len, digest);
+	if(!digest_create(c->indigest, buffer, len, digest))
+		return false;
 
 	/* Convert the hash to a hexadecimal formatted string */
 
 	bin2hex(digest, buffer, digestlen);
 
 	/* Send the reply */
+
+	c->allow_request = CHAL_REPLY;
 
 	return send_request(c, "%d %s", CHAL_REPLY, buffer);
 }
@@ -433,7 +571,7 @@ bool chal_reply_h(connection_t *c, const char *request) {
 
 	/* Check if the length of the hash is all right */
 
-	if(inlen != digest_length(&c->outdigest)) {
+	if(inlen != digest_length(c->outdigest)) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Possible intruder %s (%s): %s", c->name, c->hostname, "wrong challenge reply length");
 		return false;
 	}
@@ -441,7 +579,7 @@ bool chal_reply_h(connection_t *c, const char *request) {
 
 	/* Verify the hash */
 
-	if(!digest_verify(&c->outdigest, c->hischallenge, rsa_size(&c->rsa), hishash)) {
+	if(!digest_verify(c->outdigest, c->hischallenge, rsa_size(c->rsa), hishash)) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Possible intruder %s (%s): %s", c->name, c->hostname, "wrong challenge reply");
 		return false;
 	}
@@ -461,7 +599,7 @@ static bool send_upgrade(connection_t *c) {
 	/* Special case when protocol_minor is 1: the other end is ECDSA capable,
 	 * but doesn't know our key yet. So send it now. */
 
-	char *pubkey = ecdsa_get_base64_public_key(&myself->connection->ecdsa);
+	char *pubkey = ecdsa_get_base64_public_key(myself->connection->ecdsa);
 
 	if(!pubkey)
 		return false;
@@ -545,7 +683,7 @@ static bool upgrade_h(connection_t *c, const char *request) {
 		return false;
 	}
 
-	if(ecdsa_active(&c->ecdsa) || read_ecdsa_public_key(c)) {
+	if(ecdsa_active(c->ecdsa) || read_ecdsa_public_key(c)) {
 		logger(DEBUG_ALWAYS, LOG_INFO, "Already have ECDSA public key from %s (%s), not upgrading.", c->name, c->hostname);
 		return false;
 	}

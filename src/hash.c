@@ -1,6 +1,6 @@
 /*
     hash.c -- hash table management
-    Copyright (C) 2012 Guus Sliepen <guus@tinc-vpn.org>
+    Copyright (C) 2012-2013 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -29,7 +29,7 @@ static uint32_t hash_function(const void *p, size_t len) {
 	uint32_t hash = 0;
 	while(true) {
 		for(int i = len > 4 ? 4 : len; --i;)
-			hash += q[i] << (8 * i);
+			hash += q[len - i] << (8 * i);
 		hash *= 0x9e370001UL; // Golden ratio prime.
 		if(len <= 4)
 			break;
@@ -52,11 +52,11 @@ static uint32_t modulo(uint32_t hash, size_t n) {
 /* (De)allocation */
 
 hash_t *hash_alloc(size_t n, size_t size) {
-	hash_t *hash = xmalloc_and_zero(sizeof *hash);
+	hash_t *hash = xzalloc(sizeof *hash);
 	hash->n = n;
 	hash->size = size;
-	hash->keys = xmalloc_and_zero(hash->n * hash->size);
-	hash->values = xmalloc_and_zero(hash->n * sizeof *hash->values);
+	hash->keys = xzalloc(hash->n * hash->size);
+	hash->values = xzalloc(hash->n * sizeof *hash->values);
 	return hash;
 }
 

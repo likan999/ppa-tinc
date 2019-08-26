@@ -1,4 +1,4 @@
-/* config.h.in.  Generated from configure.in by autoheader.  */
+/* config.h.in.  Generated from configure.ac by autoheader.  */
 
 /* Support for jumbograms (packets up to 9000 bytes) */
 #undef ENABLE_JUMBOGRAMS
@@ -382,6 +382,9 @@
 /* Location of lzo1x.h */
 #undef LZO1X_H
 
+/* Define to 1 if your C compiler doesn't accept -c and -o together. */
+#undef NO_MINUS_C_MINUS_O
+
 /* Name of package */
 #undef PACKAGE
 
@@ -458,6 +461,9 @@
 
 /* Defined if the __malloc__ attribute is not supported. */
 #undef __malloc__
+
+/* Defined if the __warn_unused_result__ attribute is not supported. */
+#undef __warn_unused_result__
 
 /* Define to empty if `const' does not conform to ANSI C. */
 #undef const

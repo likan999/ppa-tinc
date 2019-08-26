@@ -1,3 +1,74 @@
+Version 1.1pre8                                           August 13 2013
+------------------------------------------------------------------------
+
+Guus Sliepen (56):
+      Don't try to create tinc.conf when using set or add commands.
+      Modernize the configure script a bit.
+      Use conditional compilation for device.c.
+      Use conditional compilation for cryptographic functions.
+      Rename xmalloc_and_zero() to xzalloc().
+      Add generic crypto headers.
+      Add more __attribute__((malloc)) where appropriate.
+      Add __attribute__((warn_unused_result)) to crypto functions.
+      Fix warnings for functions marked __attribute((warn_unused_result)).
+      Add a few more checks and warnings in the crypto functions.
+      Enable the SPTPS protocol by default.
+      Fix check for presence of ECDSA public key for outgoing connections.
+      Use read_host_config() where appropriate.
+      Don't free ephemeral ECDH keys twice.
+      Fix potential NULL pointer dereferences.
+      Don't try to handle incoming data if sptps_start() has not been called yet.
+      Enable and fix warnings from automake.
+      Send a new key when we receive packets from a node we don't have a valid key for.
+      Annotate the xalloc functions.
+      Improve base64 encoding/decoding, add URL-safe variant.
+      Add a newline when logging to stderr in the tinc binary.
+      Fix port number in pidfile.
+      Add an invitation protocol.
+      Better optional argument handling.
+      Allow the log output to be stopped with control-C in tinc's shell.
+      Use strerror() instead of gai_strerror() when err == EAI_SYSTEM.
+      Add the LocalDiscoveryAddress option.
+      Set $NAME when calling host-up/down and subnet-up/down scripts.
+      Add connection rate limiting.
+      Fix warning "Both netname and configuration directory given" on Windows.
+      Add missing definitions on Windows.
+      Don't search in local directories for include files.
+      Don't use vasprintf() anymore on Windows.
+      Attribution for Etienne Dechamps.
+      Forbid protocol version rollback.
+      Allow extra options to be passed to "tinc restart" again.
+      Honour umask, let temporary key files inherit original's permissions.
+      Fix compression when using the SPTPS protocol.
+      Warn when incorrect use of add or set causes variables to be removed.
+      Allow control-C to stop tincd without stopping the tinc shell.
+      Don't forget the Port variable when creating an invitation URL.
+      Choose a different Port when 655 isn't available when doing "tinc init".
+      Choose a different Port when 655 isn't available when doing "tinc join".
+      Make absolutely sure we can write config files before accepting an invitation.
+      Defer handling netname conflicts when accepting an invitation.
+      Use umask() to set file and UNIX socket permissions without race conditions.
+      Clean up the SIGINT handler.
+      Really retry outgoing connections immediately if requested.
+      Non-zero exit code when reloading config file fails after SIGHUP.
+      Fix a typo.
+      Don't echo broadcast packets back when Broadcast = direct.
+      Move .h files from noinst_HEADERS to tincd_SOURCES.
+      Build .tar.gz instead of .tar.xz.
+      Update copyright notices.
+      Don't typedef the same struct in two header files.
+      Releasing 1.1pre8.
+
+Etienne Dechamps (5):
+      Fix combination of Mode = router and DeviceType = tap on Linux.
+      Fix hash_function().
+      Disable PMTU discovery when TCPOnly is set.
+      Introduce lightweight PMTU probe replies.
+      Further improve bandwidth estimation for type 2 MTU probe replies.
+
+Sven-Haegar Koch (1):
+      Modified some error messages in src/sptps.c.
+
 Version 1.1pre7                                            April 22 2013
 ------------------------------------------------------------------------
 

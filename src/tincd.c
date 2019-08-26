@@ -167,7 +167,9 @@ static bool parse_options(int argc, char **argv) {
 				break;
 #endif
 
-			case 'd': /* inc debug level */
+			case 'd': /* increase debug level */
+				if(!optarg && optind < argc && *argv[optind] != '-')
+					optarg = argv[optind++];
 				if(optarg)
 					debug_level = atoi(optarg);
 				else
@@ -214,6 +216,8 @@ static bool parse_options(int argc, char **argv) {
 
 			case 4:   /* write log entries to a file */
 				use_logfile = true;
+				if(!optarg && optind < argc && *argv[optind] != '-')
+					optarg = argv[optind++];
 				if(optarg)
 					logfilename = xstrdup(optarg);
 				break;
@@ -229,6 +233,12 @@ static bool parse_options(int argc, char **argv) {
 			default:
 				break;
 		}
+	}
+
+	if(optind < argc) {
+		fprintf(stderr, "%s: unrecognized argument '%s'\n", argv[0], argv[optind]);
+		usage(true);
+		return false;
 	}
 
 	if(!netname && (netname = getenv("NETNAME")))
@@ -311,7 +321,7 @@ int main(int argc, char **argv) {
 	if(show_version) {
 		printf("%s version %s (built %s %s, protocol %d.%d)\n", PACKAGE,
 			   VERSION, __DATE__, __TIME__, PROT_MAJOR, PROT_MINOR);
-		printf("Copyright (C) 1998-2012 Ivo Timmermans, Guus Sliepen and others.\n"
+		printf("Copyright (C) 1998-2013 Ivo Timmermans, Guus Sliepen and others.\n"
 				"See the AUTHORS file for a complete list.\n\n"
 				"tinc comes with ABSOLUTELY NO WARRANTY.  This is free software,\n"
 				"and you are welcome to redistribute it under certain conditions;\n"

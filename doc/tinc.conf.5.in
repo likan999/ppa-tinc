@@ -274,14 +274,12 @@ The file in which the private ECDSA key of this tinc daemon resides.
 This is only used if
 .Va ExperimentalProtocol
 is enabled.
-.It Va ExperimentalProtocol Li = yes | no Po no Pc Bq experimental
-When this option is enabled, experimental protocol enhancements will be used.
+.It Va ExperimentalProtocol Li = yes | no Pq yes
+When this option is enabled, the SPTPS protocol will be used when connecting to nodes that also support it.
 Ephemeral ECDH will be used for key exchanges,
 and ECDSA will be used instead of RSA for authentication.
 When enabled, an ECDSA key must have been generated before with
 .Nm tinc generate-ecdsa-keys .
-The experimental protocol may change at any time,
-and there is no guarantee that tinc will run stable when it is used.
 .It Va Forwarding Li = off | internal | kernel Po internal Pc Bq experimental
 This option selects the way indirect packets are forwarded.
 .Bl -tag -width indent
@@ -328,12 +326,20 @@ which normally would prevent the peers from learning each other's LAN address.
 .Pp
 Currently, local discovery is implemented by sending broadcast packets to the LAN during path MTU discovery.
 This feature may not work in all possible situations.
+.It Va LocalDiscoveryAddress Li = Ar address
+If this variable is specified, local discovery packets are sent to the given
+.Ar address .
 .It Va MACExpire Li = Ar seconds Pq 600
 This option controls the amount of time MAC addresses are kept before they are removed.
 This only has effect when
 .Va Mode
 is set to
 .Qq switch .
+.It Va MaxConnectionBurst Li = Ar count Pq 100
+This option controls how many connections tinc accepts in quick succession.
+If there are more connections than the given number in a short time interval,
+tinc will reduce the number of accepted connections to only one per second,
+until the burst has passed.
 .It Va MaxTimeout Li = Ar seconds Pq 900
 This is the maximum delay before trying to reconnect to other tinc daemons.
 .It Va Mode Li = router | switch | hub Pq router

@@ -1002,14 +1002,12 @@ The file in which the private ECDSA key of this tinc daemon resides.
 This is only used if ExperimentalProtocol is enabled.
 
 @cindex ExperimentalProtocol
-@item ExperimentalProtocol = <yes|no> (no) [experimental]
-When this option is enabled, experimental protocol enhancements will be used.
+@item ExperimentalProtocol = <yes|no> (yes)
+When this option is enabled, the SPTPS protocol will be used when connecting to nodes that also support it.
 Ephemeral ECDH will be used for key exchanges,
 and ECDSA will be used instead of RSA for authentication.
 When enabled, an ECDSA key must have been generated before with
 @samp{tinc generate-ecdsa-keys}.
-The experimental protocol may change at any time,
-and there is no guarantee that tinc will run stable when it is used.
 
 @cindex Forwarding
 @item Forwarding = <off|internal|kernel> (internal) [experimental]
@@ -1058,6 +1056,10 @@ which normally would prevent the peers from learning each other's LAN address.
 Currently, local discovery is implemented by sending broadcast packets to the LAN during path MTU discovery.
 This feature may not work in all possible situations.
 
+@cindex LocalDiscoveryAddress
+@item LocalDiscoveryAddress <@var{address}>
+If this variable is specified, local discovery packets are sent to the given @var{address}.
+
 @cindex Mode
 @item Mode = <router|switch|hub> (router)
 This option selects the way packets are routed to other daemons.
@@ -1098,6 +1100,13 @@ impossible to crack a single key.
 @item MACExpire = <@var{seconds}> (600)
 This option controls the amount of time MAC addresses are kept before they are removed.
 This only has effect when Mode is set to "switch".
+
+@cindex MaxConnectionBurst
+@item MaxConnectionBurst = <@var{count}> (100)
+This option controls how many connections tinc accepts in quick succession.
+If there are more connections than the given number in a short time interval,
+tinc will reduce the number of accepted connections to only one per second,
+until the burst has passed.
 
 @cindex Name
 @item Name = <@var{name}> [required]
@@ -1179,7 +1188,6 @@ the interaction of replay tracking with underlying real packet loss and/or
 reordering. Setting this to zero will disable replay tracking completely and
 pass all traffic, but leaves tinc vulnerable to replay-based attacks on your
 traffic.
-
 
 @cindex StrictSubnets
 @item StrictSubnets <yes|no> (no) [experimental]
@@ -2216,14 +2224,22 @@ The same as export followed by import.
 @item exchange-all [--force]
 The same as export-all followed by import.
 
+@item invite @var{name}
+Prepares an invitation for a new node with the given @var{name},
+and prints a short invitation URL that can be used with the join command.
+
+@item join [@var{URL}]
+Join an existing VPN using an invitation URL created using the invite command.
+If no @var{URL} is given, it will be read from standard input.
+
 @item start [tincd options]
 Start @samp{tincd}, optionally with the given extra options.
 
 @item stop
 Stop @samp{tincd}.
 
-@item restart
-Restart @samp{tincd}.
+@item restart [tincd options]
+Restart @samp{tincd}, optionally with the given extra options.
 
 @item reload
 Partially rereads configuration files. Connections to hosts whose host
@@ -2234,10 +2250,17 @@ in @file{tinc.conf} will be made.
 Shows the PID of the currently running @samp{tincd}.
 
 @item generate-keys [@var{bits}]
-Generate public/private keypair of @var{bits} length. If @var{bits} is not specified,
-1024 is the default. tinc will ask where you want to store the files,
-but will default to the configuration directory (you can use the -c or -n
-option).
+Generate both RSA and ECDSA keypairs (see below) and exit.
+tinc will ask where you want to store the files, but will default to the
+configuration directory (you can use the -c or -n option).
+
+@item generate-ecdsa-keys
+Generate public/private ECDSA keypair and exit.
+
+@item generate-rsa-keys [@var{bits}]
+Generate public/private RSA keypair and exit.  If @var{bits} is omitted, the
+default length will be 2048 bits.  When saving keys to existing files, tinc
+will not delete the old keys; you have to remove them manually.
 
 @item dump [reachable] nodes
 Dump a list of all known nodes in the VPN.
