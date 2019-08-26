@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: route.c 1461 2006-08-09 22:31:10Z guus $
+    $Id: route.c 1601 2008-12-26 12:46:45Z guus $
 */
 
 #include "system.h"
@@ -376,7 +376,14 @@ static void route_ipv4(node_t *source, vpn_packet_t *packet)
 	if(!checklength(source, packet, ether_size + ip_size))
 		return;
 
-	route_ipv4_unicast(source, packet);
+	if(((packet->data[30] & 0xf0) == 0xe0) ||
+			packet->data[30] == 255 &&
+			packet->data[31] == 255 &&
+			packet->data[32] == 255 &&
+			packet->data[33] == 255)
+		broadcast_packet(source, packet);
+	else
+		route_ipv4_unicast(source, packet);
 }
 
 /* RFC 2463 */
@@ -645,7 +652,10 @@ static void route_ipv6(node_t *source, vpn_packet_t *packet)
 		return;
 	}
 
-	route_ipv6_unicast(source, packet);
+	if(packet->data[38] == 255)
+		broadcast_packet(source, packet);
+	else
+		route_ipv6_unicast(source, packet);
 }
 
 /* RFC 826 */

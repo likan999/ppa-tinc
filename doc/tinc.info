@@ -1,17 +1,17 @@
-This is tinc.info, produced by makeinfo version 4.8 from tinc.texi.
+This is tinc.info, produced by makeinfo version 4.11 from tinc.texi.
 
 INFO-DIR-SECTION Networking tools
 START-INFO-DIR-ENTRY
 * tinc: (tinc).              The tinc Manual.
 END-INFO-DIR-ENTRY
 
-   This is the info manual for tinc version 1.0.8, a Virtual Private
+   This is the info manual for tinc version 1.0.9, a Virtual Private
 Network daemon.
 
-   Copyright (C) 1998-2006 Ivo Timmermans, Guus Sliepen
+   Copyright (C) 1998-2008 Ivo Timmermans, Guus Sliepen
 <guus@tinc-vpn.org> and Wessel Dankers <wsl@tinc-vpn.org>.
 
-   $Id: tinc.texi 1467 2006-11-11 20:37:58Z guus $
+   $Id: tinc.texi 1597 2008-12-22 21:29:21Z guus $
 
    Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -173,8 +173,7 @@ File: tinc.info,  Node: Configuring the kernel,  Next: Libraries,  Up: Preparati
 
 * Menu:
 
-* Configuration of Linux kernels 2.1.60 up to 2.4.0::
-* Configuration of Linux kernels 2.4.0 and higher::
+* Configuration of Linux kernels::
 * Configuration of FreeBSD kernels::
 * Configuration of OpenBSD kernels::
 * Configuration of NetBSD kernels::
@@ -183,53 +182,14 @@ File: tinc.info,  Node: Configuring the kernel,  Next: Libraries,  Up: Preparati
 * Configuration of Windows::
 
 
-File: tinc.info,  Node: Configuration of Linux kernels 2.1.60 up to 2.4.0,  Next: Configuration of Linux kernels 2.4.0 and higher,  Up: Configuring the kernel
+File: tinc.info,  Node: Configuration of Linux kernels,  Next: Configuration of FreeBSD kernels,  Up: Configuring the kernel
 
-2.1.1 Configuration of Linux kernels 2.1.60 up to 2.4.0
--------------------------------------------------------
+2.1.1 Configuration of Linux kernels
+------------------------------------
 
-For kernels up to 2.4.0, you need a kernel that supports the ethertap
+For tinc to work, you need a kernel that supports the Universal tun/tap
 device.  Most distributions come with kernels that already support this.
-If not, here are the options you have to turn on when configuring a new
-kernel:
-
-     Code maturity level options
-     [*] Prompt for development and/or incomplete code/drivers
-     Networking options
-     [*] Kernel/User netlink socket
-     <M> Netlink device emulation
-     Network device support
-     <M> Ethertap network tap
-
-   If you want to run more than one instance of tinc or other programs
-that use the ethertap, you have to compile the ethertap driver as a
-module, otherwise you can also choose to compile it directly into the
-kernel.
-
-   If you decide to build any of these as dynamic kernel modules, it's
-a good idea to add these lines to `/etc/modules.conf':
-
-     alias char-major-36 netlink_dev
-     alias tap0 ethertap
-     options tap0 -o tap0 unit=0
-     alias tap1 ethertap
-     options tap1 -o tap1 unit=1
-     ...
-     alias tap_N_ ethertap
-     options tap_N_ -o tap_N_ unit=_N_
-
-   Add as much alias/options lines as necessary.
-
-
-File: tinc.info,  Node: Configuration of Linux kernels 2.4.0 and higher,  Next: Configuration of FreeBSD kernels,  Prev: Configuration of Linux kernels 2.1.60 up to 2.4.0,  Up: Configuring the kernel
-
-2.1.2 Configuration of Linux kernels 2.4.0 and higher
------------------------------------------------------
-
-For kernels 2.4.0 and higher, you need a kernel that supports the
-Universal tun/tap device.  Most distributions come with kernels that
-already support this.  Here are the options you have to turn on when
-configuring a new kernel:
+Here are the options you have to turn on when configuring a new kernel:
 
      Code maturity level options
      [*] Prompt for development and/or incomplete code/drivers
@@ -239,20 +199,15 @@ configuring a new kernel:
    It's not necessary to compile this driver as a module, even if you
 are going to run more than one instance of tinc.
 
-   If you have an early 2.4 kernel, you can choose both the tun/tap
-driver and the `Ethertap network tap' device.  This latter is marked
-obsolete, and chances are that it won't even function correctly
-anymore.  Make sure you select the universal tun/tap driver.
-
    If you decide to build the tun/tap driver as a kernel module, add
 these lines to `/etc/modules.conf':
 
      alias char-major-10-200 tun
 
 
-File: tinc.info,  Node: Configuration of FreeBSD kernels,  Next: Configuration of OpenBSD kernels,  Prev: Configuration of Linux kernels 2.4.0 and higher,  Up: Configuring the kernel
+File: tinc.info,  Node: Configuration of FreeBSD kernels,  Next: Configuration of OpenBSD kernels,  Prev: Configuration of Linux kernels,  Up: Configuring the kernel
 
-2.1.3 Configuration of FreeBSD kernels
+2.1.2 Configuration of FreeBSD kernels
 --------------------------------------
 
 For FreeBSD version 4.1 and higher, tun and tap drivers are included in
@@ -261,18 +216,20 @@ the default kernel configuration.  Using tap devices is recommended.
 
 File: tinc.info,  Node: Configuration of OpenBSD kernels,  Next: Configuration of NetBSD kernels,  Prev: Configuration of FreeBSD kernels,  Up: Configuring the kernel
 
-2.1.4 Configuration of OpenBSD kernels
+2.1.3 Configuration of OpenBSD kernels
 --------------------------------------
 
 For OpenBSD version 2.9 and higher, the tun driver is included in the
 default kernel configuration.  There is also a kernel patch from
 `http://diehard.n-r-g.com/stuff/openbsd/' which adds a tap device to
-OpenBSD.  This should work with tinc.
+OpenBSD which should work with tinc, but with recent versions of
+OpenBSD, a tun device can act as a tap device by setting the link0
+option with ifconfig.
 
 
 File: tinc.info,  Node: Configuration of NetBSD kernels,  Next: Configuration of Solaris kernels,  Prev: Configuration of OpenBSD kernels,  Up: Configuring the kernel
 
-2.1.5 Configuration of NetBSD kernels
+2.1.4 Configuration of NetBSD kernels
 -------------------------------------
 
 For NetBSD version 1.5.2 and higher, the tun driver is included in the
@@ -283,7 +240,7 @@ default kernel configuration.
 
 File: tinc.info,  Node: Configuration of Solaris kernels,  Next: Configuration of Darwin (MacOS/X) kernels,  Prev: Configuration of NetBSD kernels,  Up: Configuring the kernel
 
-2.1.6 Configuration of Solaris kernels
+2.1.5 Configuration of Solaris kernels
 --------------------------------------
 
 For Solaris 8 (SunOS 5.8) and higher, the tun driver may or may not be
@@ -296,7 +253,7 @@ header file is missing, install it from the source package.
 
 File: tinc.info,  Node: Configuration of Darwin (MacOS/X) kernels,  Next: Configuration of Windows,  Prev: Configuration of Solaris kernels,  Up: Configuring the kernel
 
-2.1.7 Configuration of Darwin (MacOS/X) kernels
+2.1.6 Configuration of Darwin (MacOS/X) kernels
 -----------------------------------------------
 
 Tinc on Darwin relies on a tunnel driver for its data acquisition from
@@ -312,7 +269,7 @@ with the following command:
 
 File: tinc.info,  Node: Configuration of Windows,  Prev: Configuration of Darwin (MacOS/X) kernels,  Up: Configuring the kernel
 
-2.1.8 Configuration of Windows
+2.1.7 Configuration of Windows
 ------------------------------
 
 You will need to install the latest TAP-Win32 driver from OpenVPN.  You
@@ -550,35 +507,13 @@ File: tinc.info,  Node: Device files,  Next: Other files,  Up: System files
 3.2.1 Device files
 ------------------
 
-First, you'll need the special device file(s) that form the interface
-between the kernel and the daemon.
+Most operating systems nowadays come with the necessary device files by
+default, or they have a mechanism to create them on demand.
 
-   The permissions for these files have to be such that only the super
-user may read/write to this file.  You'd want this, because otherwise
-eavesdropping would become a bit too easy.  This does, however, imply
-that you'd have to run tincd as root.
+   If you use Linux and do not have udev installed, you may need to
+create the following device file if it does not exist:
 
-   If you use Linux and have a kernel version prior to 2.4.0, you have
-to make the ethertap devices:
-
-     mknod -m 600 /dev/tap0 c 36 16
-     mknod -m 600 /dev/tap1 c 36 17
-     ...
-     mknod -m 600 /dev/tap_N_ c 36 _N+16_
-
-   There is a maximum of 16 ethertap devices.
-
-   If you use the universal tun/tap driver, you have to create the
-following device file (unless it already exist):
-
-     mknod -m 600 /dev/tun c 10 200
-
-   If you use Linux, and you run the new 2.4 kernel using the devfs
-filesystem, then the tun/tap device will probably be automatically
-generated as `/dev/net/tun'.
-
-   Unlike the ethertap device, you do not need multiple device files if
-you are planning to run multiple tinc daemons.
+     mknod -m 600 /dev/net/tun c 10 200
 
 
 File: tinc.info,  Node: Other files,  Prev: Device files,  Up: System files
@@ -774,8 +709,36 @@ Device = <DEVICE> (`/dev/tap0', `/dev/net/tun' or other depending on platform)
      The virtual network device to use.  Tinc will automatically detect
      what kind of device it is.  Note that you can only use one device
      per daemon.  Under Windows, use INTERFACE instead of DEVICE.  Note
-     that you can only use one device per daemon.  See also *Note
+     that you can only use one device per daemon.  See also *note
      Device files::.
+
+DeviceType = <tun|tunnohead|tunifhead|tap> (only supported on BSD platforms)
+     The type of the virtual network device.  Tinc will normally
+     automatically select the right type, and this option should not be
+     used.  However, in case tinc does not seem to correctly interpret
+     packets received from the virtual network device, using this
+     option might help.
+
+    tun
+          Set type to tun.  Depending on the platform, this can either
+          be with or without an address family header (see below).
+
+    tunnohead
+          Set type to tun without an address family header.  Tinc will
+          expect packets read from the virtual network device to start
+          with an IP header.  On some platforms IPv6 packets cannot be
+          read from or written to the device in this mode.
+
+    tunifhead
+          Set type to tun with an address family header.  Tinc will
+          expect packets read from the virtual network device to start
+          with a four byte header containing the address family,
+          followed by an IP header.  This mode should support both IPv4
+          and IPv6 packets.
+
+    tap
+          Set type to tap.  Tinc will expect packets read from the
+          virtual network device to start with an Ethernet header.
 
 GraphDumpFile = <FILENAME> [experimental]
      If this option is present, tinc will dump the current network
@@ -843,7 +806,9 @@ MACExpire = <SECONDS> (600)
      "switch".
 
 Name = <NAME> [required]
-     This is a symbolic name for this connection.  It can be anything
+     This is a symbolic name for this connection.  The name should
+     consist only of alfanumeric and underscore characters (a-z, A-Z,
+     0-9 and _).
 
 PingInterval = <SECONDS> (60)
      The number of seconds of inactivity that tinc will wait before
@@ -921,6 +886,14 @@ MACLength = <BYTES> (4)
      UDP packets.  Can be anything from 0 up to the length of the
      digest produced by the digest algorithm.
 
+PMTU = <MTU> (1514)
+     This option controls the initial path MTU to this node.
+
+PMTUDiscovery = <yes|no> (yes)
+     When this option is enabled, tinc will try to discover the path
+     MTU to this node.  After the path MTU has been discovered, it will
+     be enforced on the VPN.
+
 Port = <PORT> (655)
      This is the port this tinc daemon listens on.  You can use decimal
      portnumbers or symbolic names (as listed in `/etc/services').
@@ -963,7 +936,7 @@ Subnet = <ADDRESS[/PREFIXLENGTH]>
      becomes /22. This conforms to standard CIDR notation as described
      in RFC1519 (ftp://ftp.isi.edu/in-notes/rfc1519.txt)
 
-TCPonly = <yes|no> (no) [experimental]
+TCPonly = <yes|no> (no)
      If this variable is set to yes, then the packets are tunnelled
      over a TCP connection instead of a UDP connection.  This is
      especially useful for those who want to run a tinc daemon from
@@ -1140,7 +1113,7 @@ subnet.
 
    The exact syntax of the ifconfig and route commands differs from
 platform to platform.  You can look up the commands for setting
-addresses and adding routes in *Note Platform specific information::,
+addresses and adding routes in *note Platform specific information::,
 but it is best to consult the manpages of those utilities on your
 platform.
 
@@ -1618,7 +1591,7 @@ File: tinc.info,  Node: Sending bug reports,  Prev: Error messages,  Up: Running
 =======================
 
 If you really can't find the cause of a problem, or if you suspect tinc
-is not working right, you can send us a bugreport, see *Note Contact
+is not working right, you can send us a bugreport, see *note Contact
 information::.  Be sure to include the following information in your
 bugreport:
 
@@ -1774,7 +1747,7 @@ possible to use tools such as telnet or netcat to connect to a tinc
 daemon started with the -bypass-security option and to read and write
 requests by hand, provided that one understands the numeric codes sent.
 
-   The authentication scheme is described in *Note Authentication
+   The authentication scheme is described in *note Authentication
 protocol::. After a successful authentication, the server and the
 client will exchange all the information about other tinc daemons and
 subnets they know of, so that both sides (and all the other tinc
@@ -2219,7 +2192,7 @@ Concept Index
 * CHALLENGE:                             Authentication protocol.
                                                               (line  10)
 * CIDR notation:                         Host configuration variables.
-                                                              (line  77)
+                                                              (line  85)
 * Cipher:                                Host configuration variables.
                                                               (line  11)
 * client:                                How connections work.
@@ -2240,51 +2213,51 @@ Concept Index
 * Device:                                Main configuration variables.
                                                               (line  38)
 * device files:                          Device files.        (line   6)
+* DeviceType:                            Main configuration variables.
+                                                              (line  45)
 * Digest:                                Host configuration variables.
                                                               (line  22)
 * encapsulating:                         The UDP tunnel.      (line  30)
 * encryption:                            Encryption of network packets.
                                                               (line   6)
 * environment variables:                 Scripts.             (line  43)
-* ethertap:                              Configuration of Linux kernels 2.1.60 up to 2.4.0.
-                                                              (line   6)
 * example:                               Example configuration.
                                                               (line   6)
 * frame type:                            The UDP tunnel.      (line   6)
 * GraphDumpFile:                         Main configuration variables.
-                                                              (line  45)
+                                                              (line  73)
 * Hostnames:                             Main configuration variables.
-                                                              (line  53)
+                                                              (line  81)
 * hub:                                   Main configuration variables.
-                                                              (line  94)
+                                                              (line 122)
 * ID:                                    Authentication protocol.
                                                               (line  10)
 * IndirectData:                          Host configuration variables.
                                                               (line  27)
 * INTERFACE:                             Scripts.             (line  58)
 * Interface:                             Main configuration variables.
-                                                              (line  63)
+                                                              (line  91)
 * IRC:                                   Contact information. (line   9)
 * key generation:                        Generating keypairs. (line   6)
 * KEY_CHANGED:                           The meta-protocol.   (line  64)
 * KeyExpire:                             Main configuration variables.
-                                                              (line  99)
+                                                              (line 127)
 * libraries:                             Libraries.           (line   6)
 * license:                               OpenSSL.             (line  36)
 * lzo:                                   lzo.                 (line   6)
 * MACExpire:                             Main configuration variables.
-                                                              (line 105)
+                                                              (line 133)
 * MACLength:                             Host configuration variables.
                                                               (line  35)
 * meta-protocol:                         The meta-connection. (line  18)
 * META_KEY:                              Authentication protocol.
                                                               (line  10)
 * Mode:                                  Main configuration variables.
-                                                              (line  71)
+                                                              (line  99)
 * multiple networks:                     Multiple networks.   (line   6)
 * NAME:                                  Scripts.             (line  52)
 * Name:                                  Main configuration variables.
-                                                              (line 110)
+                                                              (line 138)
 * netmask:                               Network interfaces.  (line  34)
 * NETNAME:                               Scripts.             (line  49)
 * netname:                               Multiple networks.   (line   6)
@@ -2294,36 +2267,40 @@ Concept Index
 * OpenSSL:                               OpenSSL.             (line   6)
 * options:                               Runtime options.     (line   9)
 * PEM format:                            Host configuration variables.
-                                                              (line  52)
+                                                              (line  60)
 * PING:                                  The meta-protocol.   (line  89)
 * PingInterval:                          Main configuration variables.
-                                                              (line 113)
+                                                              (line 143)
 * PingTimeout:                           Main configuration variables.
-                                                              (line 117)
+                                                              (line 147)
 * platforms:                             Supported platforms. (line   6)
+* PMTU:                                  Host configuration variables.
+                                                              (line  40)
+* PMTUDiscovery:                         Host configuration variables.
+                                                              (line  43)
 * PONG:                                  The meta-protocol.   (line  89)
 * Port:                                  Host configuration variables.
-                                                              (line  40)
+                                                              (line  48)
 * port numbers:                          Other files.         (line  17)
 * PriorityInheritance:                   Main configuration variables.
-                                                              (line 123)
+                                                              (line 153)
 * private:                               Virtual Private Networks.
                                                               (line  10)
 * PrivateKey:                            Main configuration variables.
-                                                              (line 128)
+                                                              (line 158)
 * PrivateKeyFile:                        Main configuration variables.
-                                                              (line 134)
+                                                              (line 164)
 * PublicKey:                             Host configuration variables.
-                                                              (line  44)
+                                                              (line  52)
 * PublicKeyFile:                         Host configuration variables.
-                                                              (line  47)
+                                                              (line  55)
 * release:                               Supported platforms. (line  14)
 * REMOTEADDRESS:                         Scripts.             (line  67)
 * REMOTEPORT:                            Scripts.             (line  70)
 * REQ_KEY:                               The meta-protocol.   (line  64)
 * requirements:                          Libraries.           (line   6)
 * router:                                Main configuration variables.
-                                                              (line  74)
+                                                              (line 102)
 * runtime options:                       Runtime options.     (line   9)
 * scalability:                           tinc.                (line  19)
 * scripts:                               Scripts.             (line   6)
@@ -2332,13 +2309,13 @@ Concept Index
 * signals:                               Signals.             (line   6)
 * SUBNET:                                Scripts.             (line  74)
 * Subnet:                                Host configuration variables.
-                                                              (line  59)
+                                                              (line  67)
 * SVPN:                                  Security.            (line  11)
 * switch:                                Main configuration variables.
-                                                              (line  83)
+                                                              (line 111)
 * TCP:                                   The meta-connection. (line  10)
 * TCPonly:                               Host configuration variables.
-                                                              (line  82)
+                                                              (line  90)
 * TINC:                                  Security.            (line   6)
 * tinc:                                  Introduction.        (line   6)
 * tinc-down:                             Scripts.             (line  18)
@@ -2346,12 +2323,16 @@ Concept Index
 * tinc-up:                               Scripts.             (line  10)
 * tincd:                                 tinc.                (line  14)
 * traditional VPNs:                      tinc.                (line  19)
+* tunifhead:                             Main configuration variables.
+                                                              (line  62)
 * TunnelServer:                          Main configuration variables.
-                                                              (line 142)
+                                                              (line 172)
+* tunnohead:                             Main configuration variables.
+                                                              (line  56)
 * UDP <1>:                               Encryption of network packets.
                                                               (line  12)
 * UDP:                                   The UDP tunnel.      (line  30)
-* Universal tun/tap:                     Configuration of Linux kernels 2.4.0 and higher.
+* Universal tun/tap:                     Configuration of Linux kernels.
                                                               (line   6)
 * virtual:                               Virtual Private Networks.
                                                               (line  18)
@@ -2365,67 +2346,66 @@ Concept Index
 
 
 Tag Table:
-Node: Top860
-Node: Introduction1159
-Node: Virtual Private Networks1969
-Node: tinc3694
-Node: Supported platforms5221
-Node: Preparations5919
-Node: Configuring the kernel6175
-Node: Configuration of Linux kernels 2.1.60 up to 2.4.06655
-Node: Configuration of Linux kernels 2.4.0 and higher8027
-Node: Configuration of FreeBSD kernels9267
-Node: Configuration of OpenBSD kernels9674
-Node: Configuration of NetBSD kernels10166
-Node: Configuration of Solaris kernels10571
-Node: Configuration of Darwin (MacOS/X) kernels11232
-Node: Configuration of Windows11935
-Node: Libraries12449
-Node: OpenSSL12837
-Node: zlib15113
-Node: lzo15942
-Node: Installation16729
-Node: Building and installing tinc17744
-Node: Darwin (MacOS/X) build environment18403
-Node: Cygwin (Windows) build environment18971
-Node: MinGW (Windows) build environment19559
-Node: System files20083
-Node: Device files20348
-Node: Other files21534
-Node: Configuration22147
-Node: Configuration introduction22458
-Node: Multiple networks23731
-Node: How connections work25157
-Node: Configuration files26379
-Node: Main configuration variables27386
-Node: Host configuration variables33863
-Node: Scripts38159
-Node: How to configure40838
-Node: Generating keypairs42101
-Node: Network interfaces42600
-Node: Example configuration44448
-Node: Running tinc49760
-Node: Runtime options50350
-Node: Signals52357
-Node: Debug levels53426
-Node: Solving problems54362
-Node: Error messages55792
-Node: Sending bug reports60114
-Node: Technical information61066
-Node: The connection61297
-Node: The UDP tunnel61609
-Node: The meta-connection64670
-Node: The meta-protocol66139
-Node: Security71148
-Node: Authentication protocol72278
-Node: Encryption of network packets77282
-Node: Security issues78655
-Node: Platform specific information80272
-Node: Interface configuration80500
-Node: Routes82399
-Node: About us84315
-Node: Contact information84490
-Node: Authors84894
-Node: Concept Index85320
+Node: Top861
+Node: Introduction1160
+Node: Virtual Private Networks1970
+Node: tinc3695
+Node: Supported platforms5222
+Node: Preparations5920
+Node: Configuring the kernel6176
+Node: Configuration of Linux kernels6585
+Node: Configuration of FreeBSD kernels7440
+Node: Configuration of OpenBSD kernels7830
+Node: Configuration of NetBSD kernels8438
+Node: Configuration of Solaris kernels8843
+Node: Configuration of Darwin (MacOS/X) kernels9504
+Node: Configuration of Windows10207
+Node: Libraries10721
+Node: OpenSSL11109
+Node: zlib13385
+Node: lzo14214
+Node: Installation15001
+Node: Building and installing tinc16016
+Node: Darwin (MacOS/X) build environment16675
+Node: Cygwin (Windows) build environment17243
+Node: MinGW (Windows) build environment17831
+Node: System files18355
+Node: Device files18620
+Node: Other files19036
+Node: Configuration19649
+Node: Configuration introduction19960
+Node: Multiple networks21233
+Node: How connections work22659
+Node: Configuration files23881
+Node: Main configuration variables24888
+Node: Host configuration variables32721
+Node: Scripts37286
+Node: How to configure39965
+Node: Generating keypairs41228
+Node: Network interfaces41727
+Node: Example configuration43575
+Node: Running tinc48887
+Node: Runtime options49477
+Node: Signals51484
+Node: Debug levels52553
+Node: Solving problems53489
+Node: Error messages54919
+Node: Sending bug reports59241
+Node: Technical information60193
+Node: The connection60424
+Node: The UDP tunnel60736
+Node: The meta-connection63797
+Node: The meta-protocol65266
+Node: Security70275
+Node: Authentication protocol71405
+Node: Encryption of network packets76409
+Node: Security issues77782
+Node: Platform specific information79399
+Node: Interface configuration79627
+Node: Routes81526
+Node: About us83442
+Node: Contact information83617
+Node: Authors84021
+Node: Concept Index84447
 
 End Tag Table

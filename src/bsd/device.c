@@ -1,7 +1,7 @@
 /*
     device.c -- Interaction BSD tun/tap device
     Copyright (C) 2001-2005 Ivo Timmermans,
-                  2001-2007 Guus Sliepen <guus@tinc-vpn.org>
+                  2001-2008 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -42,7 +42,7 @@ char *iface;
 char *device_info;
 static int device_total_in = 0;
 static int device_total_out = 0;
-#ifdef HAVE_OPENBSD
+#if defined(HAVE_OPENBSD) || defined(HAVE_FREEBSD)
 static device_type_t device_type = DEVICE_TYPE_TUNIFHEAD;
 #else
 static device_type_t device_type = DEVICE_TYPE_TUN;
@@ -78,7 +78,7 @@ bool setup_device(void) {
 			return false;
 		}
 	} else {
-		if(strstr(device, "tap"))
+		if(strstr(device, "tap") || routing_mode != RMODE_ROUTER)
 			device_type = DEVICE_TYPE_TAP;
 	}
 

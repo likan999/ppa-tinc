@@ -2,7 +2,7 @@
     conf.c -- configuration code
     Copyright (C) 1998 Robert van der Meulen
                   1998-2005 Ivo Timmermans
-                  2000-2006 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2008 Guus Sliepen <guus@tinc-vpn.org>
 		  2000 Cris van Pelt
 
     This program is free software; you can redistribute it and/or modify
@@ -19,7 +19,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: conf.c 1452 2006-04-26 13:52:58Z guus $
+    $Id: conf.c 1595 2008-12-22 20:27:52Z guus $
 */
 
 #include "system.h"
@@ -343,15 +343,15 @@ int read_config_file(avl_tree_t *config_tree, const char *fname)
 	buffer = xmalloc(bufsize);
 
 	for(;;) {
+		if(feof(fp)) {
+			err = 0;
+			break;
+		}
+
 		line = readline(fp, &buffer, &bufsize);
 
 		if(!line) {
 			err = -1;
-			break;
-		}
-
-		if(feof(fp)) {
-			err = 0;
 			break;
 		}
 

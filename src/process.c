@@ -1,7 +1,7 @@
 /*
     process.c -- process management functions
     Copyright (C) 1999-2005 Ivo Timmermans,
-                  2000-2006 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2007 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: process.c 1499 2007-02-14 09:21:34Z guus $
+    $Id: process.c 1595 2008-12-22 20:27:52Z guus $
 */
 
 #include "system.h"
@@ -154,6 +154,9 @@ bool remove_service(void) {
 
 DWORD WINAPI controlhandler(DWORD request, DWORD type, LPVOID boe, LPVOID bah) {
 	switch(request) {
+		case SERVICE_CONTROL_INTERROGATE:
+			SetServiceStatus(statushandle, &status);
+			return NO_ERROR;
 		case SERVICE_CONTROL_STOP:
 			logger(LOG_NOTICE, _("Got %s request"), "SERVICE_CONTROL_STOP");
 			break;

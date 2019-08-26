@@ -1,7 +1,7 @@
 /*
     protocol_key.c -- handle the meta-protocol, key exchange
     Copyright (C) 1999-2005 Ivo Timmermans,
-                  2000-2006 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2008 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_key.c 1452 2006-04-26 13:52:58Z guus $
+    $Id: protocol_key.c 1595 2008-12-22 20:27:52Z guus $
 */
 
 #include "system.h"
@@ -134,6 +134,12 @@ bool req_key_h(connection_t *c)
 		if(tunnelserver)
 			return false;
 
+		if(!to->status.reachable) {
+			logger(LOG_WARNING, _("Got %s from %s (%s) destination %s which is not reachable"),
+				"REQ_KEY", c->name, c->hostname, to_name);
+			return true;
+		}
+
 		send_req_key(to->nexthop->connection, from, to);
 	}
 
@@ -196,6 +202,12 @@ bool ans_key_h(connection_t *c)
 	if(to != myself) {
 		if(tunnelserver)
 			return false;
+
+		if(!to->status.reachable) {
+			logger(LOG_WARNING, _("Got %s from %s (%s) destination %s which is not reachable"),
+				"ANS_KEY", c->name, c->hostname, to_name);
+			return true;
+		}
 
 		return send_request(to->nexthop->connection, "%s", c->buffer);
 	}

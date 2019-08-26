@@ -1,6 +1,6 @@
 /*
     subnet.c -- handle subnet lookups and lists
-    Copyright (C) 2000-2006 Guus Sliepen <guus@tinc-vpn.org>,
+    Copyright (C) 2000-2007 Guus Sliepen <guus@tinc-vpn.org>,
                   2000-2005 Ivo Timmermans
 
     This program is free software; you can redistribute it and/or modify
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: subnet.c 1459 2006-08-08 13:44:37Z guus $
+    $Id: subnet.c 1595 2008-12-22 20:27:52Z guus $
 */
 
 #include "system.h"
@@ -188,11 +188,17 @@ bool str2net(subnet_t *subnet, const char *subnetstr)
 
 	if(sscanf(subnetstr, "%hu.%hu.%hu.%hu/%d",
 			  &x[0], &x[1], &x[2], &x[3], &l) == 5) {
+		if(l < 0 || l > 32)
+			return false;
+
 		subnet->type = SUBNET_IPV4;
 		subnet->net.ipv4.prefixlength = l;
 
-		for(i = 0; i < 4; i++)
+		for(i = 0; i < 4; i++) {
+			if(x[i] > 255)
+				return false;
 			subnet->net.ipv4.address.x[i] = x[i];
+		}
 
 		return true;
 	}
@@ -200,6 +206,9 @@ bool str2net(subnet_t *subnet, const char *subnetstr)
 	if(sscanf(subnetstr, "%hx:%hx:%hx:%hx:%hx:%hx:%hx:%hx/%d",
 			  &x[0], &x[1], &x[2], &x[3], &x[4], &x[5], &x[6], &x[7],
 			  &l) == 9) {
+		if(l < 0 || l > 128)
+			return false;
+
 		subnet->type = SUBNET_IPV6;
 		subnet->net.ipv6.prefixlength = l;
 
@@ -213,8 +222,11 @@ bool str2net(subnet_t *subnet, const char *subnetstr)
 		subnet->type = SUBNET_IPV4;
 		subnet->net.ipv4.prefixlength = 32;
 
-		for(i = 0; i < 4; i++)
+		for(i = 0; i < 4; i++) {
+			if(x[i] > 255)
+				return false;
 			subnet->net.ipv4.address.x[i] = x[i];
+		}
 
 		return true;
 	}
@@ -348,6 +360,8 @@ subnet_t *lookup_subnet_ipv4(const ipv4_t *address)
 				/* Otherwise, see if there is a bigger enclosing subnet */
 
 				subnet.net.ipv4.prefixlength = p->net.ipv4.prefixlength - 1;
+				if(subnet.net.ipv4.prefixlength < 0 || subnet.net.ipv4.prefixlength > 32)
+					return NULL;
 				maskcpy(&subnet.net.ipv4.address, &p->net.ipv4.address, subnet.net.ipv4.prefixlength, sizeof(ipv4_t));
 			}
 		}
@@ -384,6 +398,8 @@ subnet_t *lookup_subnet_ipv6(const ipv6_t *address)
 				/* Otherwise, see if there is a bigger enclosing subnet */
 
 				subnet.net.ipv6.prefixlength = p->net.ipv6.prefixlength - 1;
+				if(subnet.net.ipv6.prefixlength < 0 || subnet.net.ipv6.prefixlength > 128)
+					return NULL;
 				maskcpy(&subnet.net.ipv6.address, &p->net.ipv6.address, subnet.net.ipv6.prefixlength, sizeof(ipv6_t));
 			}
 		}

@@ -1,7 +1,7 @@
 /*
     protocol_auth.c -- handle the meta-protocol, authentication
     Copyright (C) 1999-2005 Ivo Timmermans,
-                  2000-2007 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2008 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: protocol_auth.c 1508 2007-05-16 14:42:08Z guus $
+    $Id: protocol_auth.c 1596 2008-12-22 20:35:45Z guus $
 */
 
 #include "system.h"
@@ -240,7 +240,7 @@ bool metakey_h(connection_t *c)
 	/* Decrypt the meta key */
 
 	if(RSA_private_decrypt(len, (unsigned char *)buffer, (unsigned char *)c->inkey, myself->connection->rsa_key, RSA_NO_PADDING) != len) {	/* See challenge() */
-		logger(LOG_ERR, _("Error during encryption of meta key for %s (%s)"),
+		logger(LOG_ERR, _("Error during decryption of meta key for %s (%s)"),
 			   c->name, c->hostname);
 		return false;
 	}
@@ -483,7 +483,7 @@ bool send_ack(connection_t *c)
 	if((get_config_bool(lookup_config(c->config_tree, "TCPOnly"), &choice) && choice) || myself->options & OPTION_TCPONLY)
 		c->options |= OPTION_TCPONLY | OPTION_INDIRECT;
 
-	if((get_config_bool(lookup_config(c->config_tree, "PMTUDiscovery"), &choice) && choice) || myself->options & OPTION_PMTU_DISCOVERY)
+	if((!get_config_bool(lookup_config(c->config_tree, "PMTUDiscovery"), &choice) || choice) || myself->options & OPTION_PMTU_DISCOVERY)
 		c->options |= OPTION_PMTU_DISCOVERY;
 
 	get_config_int(lookup_config(c->config_tree, "Weight"), &c->estimated_weight);

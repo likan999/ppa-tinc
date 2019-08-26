@@ -1,6 +1,6 @@
 /*
     event.c -- event queue
-    Copyright (C) 2002-2006 Guus Sliepen <guus@tinc-vpn.org>,
+    Copyright (C) 2002-2007 Guus Sliepen <guus@tinc-vpn.org>,
                   2002-2005 Ivo Timmermans
 
     This program is free software; you can redistribute it and/or modify
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: event.c 1498 2007-02-14 09:20:20Z guus $
+    $Id: event.c 1595 2008-12-22 20:27:52Z guus $
 */
 
 #include "system.h"
