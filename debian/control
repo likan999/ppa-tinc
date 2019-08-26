@@ -5,6 +5,8 @@ Maintainer: Guus Sliepen <guus@debian.org>
 Standards-Version: 4.3.0
 Build-Depends: libssl-dev, debhelper-compat (= 12), gettext, texinfo, zlib1g-dev, liblzo2-dev, libvdeplug-dev
 Homepage: http://www.tinc-vpn.org/
+Vcs-Browser: https://salsa.debian.org/guus/tinc
+Vcs-Git: https://salsa.debian.org/guus/tinc.git
 Rules-Requires-Root: no
 
 Package: tinc
