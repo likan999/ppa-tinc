@@ -1,3 +1,81 @@
+Version 1.1pre11             December 27 2014
+
+ * Added a "network" command to list or switch networks.
+
+ * Switched to Ed25519 keys and the ChaCha-Poly1305 cipher for the new protocol.
+
+ * AutoConnect is now a boolean option, when enabled tinc always tries to keep
+   at least three meta-connections open.
+
+ * The new protocol now uses UDP much more often.
+
+ * Tinc "del" and "get" commands now return a non-zero exit code when they
+   don't find the requested variable.
+
+ * Updated documentation.
+
+ * Added a "DeviceStandby" option to defer running tinc-up until a working
+   connection is made, and which on Windows will also change the network
+   interface link status accordingly.
+
+ * Tinc now tells the resolver to reload /etc/resolv.conf when it receives
+   SIGALRM.
+
+ * Improved error messages and event loop handling on Windows.
+
+ * LocalDiscovery now uses local address learned from other nodes, and is
+   enabled by default.
+
+ * Added a "BroadcastSubnet" option to change the behavior of broadcast packets
+   in router mode.
+
+ * Added support for dotted quad notation in IPv6 (e.g. ::1.2.3.4).
+
+ * Improved format of printed Subnets, MAC and IPv6 addresses.
+
+ * Added a "--batch" option to force the tinc CLI to run in non-interactive
+   mode.
+
+ * Improve default Device selection on *BSD and Mac OS X.
+
+ * Allow running tinc without RSA keys.
+
+Thanks to Etienne Dechamps, Sven-Haegar Koch, William A. Kennington III,
+Baptiste Jonglez, Alexis Hildebrandt, Armin Fisslthaler, Franz Pletz, Alexander
+Ried and Saverio Proto for their contributions to this version of tinc.
+
+Version 1.1pre10             February 7 2014
+
+ * Added a benchmark tool (sptps_speed) for the new protocol.
+
+ * Fixed a crash when using Name = $HOST while $HOST is not set.
+
+ * Use AES-256-GCM for the new protocol.
+
+ * Updated support for Solaris.
+
+ * Allow running tincd without a private ECDSA key present when
+   ExperimentalProtocol is not explicitly set.
+
+ * Enable various compiler hardening flags by default.
+
+ * Added support for a "conf.d" configuration directory.
+
+ * Fix tinc-gui on Windows, also allowing it to connect to a 32-bits tincd when
+   tinc-gui is run in a 64-bits Python environment.
+
+ * Added a "ListenAddress" option, which like BindToAddress adds more listening
+   address/ports, but doesn't bind to them for outgoing sockets.
+
+ * Make invitations work better when the "invite" and "join" commands are not
+   run interactively.
+
+ * When creating meta-connections to a node for which no Address statement is
+   specified, try to use addresses learned from other nodes.
+
+Thanks to Dennis Joachimsthaler and Florent Clairambault for their contribution
+to this version of tinc.
+
 Version 1.1pre9              September 8 2013
 
  * The UNIX socket is now created before tinc-up is called.

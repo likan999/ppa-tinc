@@ -1,6 +1,6 @@
 /*
     sptps_test.c -- Simple Peer-to-Peer Security test program
-    Copyright (C) 2011-2013 Guus Sliepen <guus@tinc-vpn.org>,
+    Copyright (C) 2011-2014 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -19,6 +19,10 @@
 
 #include "system.h"
 
+#ifdef HAVE_LINUX
+#include <linux/if_tun.h>
+#endif
+
 #include <getopt.h>
 
 #include "crypto.h"
@@ -33,23 +37,28 @@ bool send_meta(void *c, const char *msg , int len) { return false; }
 char *logfilename = NULL;
 struct timeval now;
 
+static bool verbose;
 static bool readonly;
 static bool writeonly;
+static int in = 0;
+static int out = 1;
 
-static bool send_data(void *handle, uint8_t type, const char *data, size_t len) {
+static bool send_data(void *handle, uint8_t type, const void *data, size_t len) {
 	char hex[len * 2 + 1];
 	bin2hex(data, hex, len);
-	fprintf(stderr, "Sending %d bytes of data:\n%s\n", (int)len, hex);
+	if(verbose)
+		fprintf(stderr, "Sending %d bytes of data:\n%s\n", (int)len, hex);
 	const int *sock = handle;
 	if(send(*sock, data, len, 0) != len)
 		return false;
 	return true;
 }
 
-static bool receive_record(void *handle, uint8_t type, const char *data, uint16_t len) {
-	fprintf(stderr, "Received type %d record of %hu bytes:\n", type, len);
+static bool receive_record(void *handle, uint8_t type, const void *data, uint16_t len) {
+	if(verbose)
+		fprintf(stderr, "Received type %d record of %hu bytes:\n", type, len);
 	if(!writeonly)
-		fwrite(data, len, 1, stdout);
+		write(out, data, len);
 	return true;
 }
 
@@ -60,6 +69,7 @@ static struct option const long_options[] = {
 	{"writeonly", no_argument, NULL, 'w'},
 	{"packet-loss", required_argument, NULL, 'L'},
 	{"replay-window", required_argument, NULL, 'W'},
+	{"verbose", required_argument, NULL, 'v'},
 	{"help", no_argument, NULL, 1},
 	{NULL, 0, NULL, 0}
 };
@@ -67,14 +77,18 @@ static struct option const long_options[] = {
 const char *program_name;
 
 static void usage() {
-	fprintf(stderr, "Usage: %s [options] my_ecdsa_key_file his_ecdsa_key_file [host] port\n\n", program_name);
+	fprintf(stderr, "Usage: %s [options] my_ed25519_key_file his_ed25519_key_file [host] port\n\n", program_name);
 	fprintf(stderr, "Valid options are:\n"
 			"  -d, --datagram          Enable datagram mode.\n"
 			"  -q, --quit              Quit when EOF occurs on stdin.\n"
 			"  -r, --readonly          Only send data from the socket to stdout.\n"
+#ifdef HAVE_LINUX
+			"  -t, --tun               Use a tun device instead of stdio.\n"
+#endif
 			"  -w, --writeonly         Only send data from stdin to the socket.\n"
 			"  -L, --packet-loss RATE  Fake packet loss of RATE percent.\n"
 			"  -R, --replay-window N   Set replay window to N bytes.\n"
+			"  -v, --verbose           Display debug messages.\n"
 			"\n");
 	fprintf(stderr, "Report bugs to tinc@tinc-vpn.org.\n");
 }
@@ -83,13 +97,16 @@ int main(int argc, char *argv[]) {
 	program_name = argv[0];
 	bool initiator = false;
 	bool datagram = false;
+#ifdef HAVE_LINUX
+	bool tun = false;
+#endif
 	int packetloss = 0;
 	int r;
 	int option_index = 0;
 	ecdsa_t *mykey = NULL, *hiskey = NULL;
 	bool quit = false;
 
-	while((r = getopt_long(argc, argv, "dqrwL:W:", long_options, &option_index)) != EOF) {
+	while((r = getopt_long(argc, argv, "dqrtwL:W:v", long_options, &option_index)) != EOF) {
 		switch (r) {
 			case 0:   /* long option */
 				break;
@@ -106,6 +123,16 @@ int main(int argc, char *argv[]) {
 				readonly = true;
 				break;
 
+			case 't': /* read only */
+#ifdef HAVE_LINUX
+				tun = true;
+#else
+				fprintf(stderr, "--tun is only supported on Linux.\n");
+				usage();
+				return 1;
+#endif
+				break;
+
 			case 'w': /* write only */
 				writeonly = true;
 				break;
@@ -116,6 +143,10 @@ int main(int argc, char *argv[]) {
 
 			case 'W': /* replay window size */
 				sptps_replaywin = atoi(optarg);
+				break;
+
+			case 'v': /* be verbose */
+				verbose = true;
 				break;
 
 			case '?': /* wrong options */
@@ -145,6 +176,25 @@ int main(int argc, char *argv[]) {
 
 	srand(time(NULL));
 
+#ifdef HAVE_LINUX
+	if(tun) {
+		in = out = open("/dev/net/tun", O_RDWR | O_NONBLOCK);
+		if(in < 0) {
+			fprintf(stderr, "Could not open tun device: %s\n", strerror(errno));
+			return 1;
+		}
+		struct ifreq ifr = {
+			.ifr_flags = IFF_TUN
+		};
+		if(ioctl(in, TUNSETIFF, &ifr)) {
+			fprintf(stderr, "Could not configure tun interface: %s\n", strerror(errno));
+			return 1;
+		}
+		ifr.ifr_name[IFNAMSIZ - 1] = 0;
+		fprintf(stderr, "Using tun interface %s\n", ifr.ifr_name);
+	}
+#endif
+
 #ifdef HAVE_MINGW
 	static struct WSAData wsa_state;
 	if(WSAStartup(MAKEWORD(2, 2), &wsa_state))
@@ -160,13 +210,13 @@ int main(int argc, char *argv[]) {
 	hint.ai_flags = initiator ? 0 : AI_PASSIVE;
 
 	if(getaddrinfo(initiator ? argv[3] : NULL, initiator ? argv[4] : argv[3], &hint, &ai) || !ai) {
-		fprintf(stderr, "getaddrinfo() failed: %s\n", strerror(errno));
+		fprintf(stderr, "getaddrinfo() failed: %s\n", sockstrerror(sockerrno));
 		return 1;
 	}
 
 	int sock = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
 	if(sock < 0) {
-		fprintf(stderr, "Could not create socket: %s\n", strerror(errno));
+		fprintf(stderr, "Could not create socket: %s\n", sockstrerror(sockerrno));
 		return 1;
 	}
 
@@ -175,26 +225,26 @@ int main(int argc, char *argv[]) {
 
 	if(initiator) {
 		if(connect(sock, ai->ai_addr, ai->ai_addrlen)) {
-			fprintf(stderr, "Could not connect to peer: %s\n", strerror(errno));
+			fprintf(stderr, "Could not connect to peer: %s\n", sockstrerror(sockerrno));
 			return 1;
 		}
 		fprintf(stderr, "Connected\n");
 	} else {
 		if(bind(sock, ai->ai_addr, ai->ai_addrlen)) {
-			fprintf(stderr, "Could not bind socket: %s\n", strerror(errno));
+			fprintf(stderr, "Could not bind socket: %s\n", sockstrerror(sockerrno));
 			return 1;
 		}
 
 		if(!datagram) {
 			if(listen(sock, 1)) {
-				fprintf(stderr, "Could not listen on socket: %s\n", strerror(errno));
+				fprintf(stderr, "Could not listen on socket: %s\n", sockstrerror(sockerrno));
 				return 1;
 			}
 			fprintf(stderr, "Listening...\n");
 
 			sock = accept(sock, NULL, NULL);
 			if(sock < 0) {
-				fprintf(stderr, "Could not accept connection: %s\n", strerror(errno));
+				fprintf(stderr, "Could not accept connection: %s\n", sockstrerror(sockerrno));
 				return 1;
 			}
 		} else {
@@ -205,12 +255,12 @@ int main(int argc, char *argv[]) {
 			socklen_t addrlen = sizeof addr;
 
 			if(recvfrom(sock, buf, sizeof buf, MSG_PEEK, &addr, &addrlen) <= 0) {
-				fprintf(stderr, "Could not read from socket: %s\n", strerror(errno));
+				fprintf(stderr, "Could not read from socket: %s\n", sockstrerror(sockerrno));
 				return 1;
 			}
 
 			if(connect(sock, &addr, addrlen)) {
-				fprintf(stderr, "Could not accept connection: %s\n", strerror(errno));
+				fprintf(stderr, "Could not accept connection: %s\n", sockstrerror(sockerrno));
 				return 1;
 			}
 		}
@@ -230,7 +280,8 @@ int main(int argc, char *argv[]) {
 		return 1;
 	fclose(fp);
 
-	fprintf(stderr, "Keys loaded\n");
+	if(verbose)
+		fprintf(stderr, "Keys loaded\n");
 
 	sptps_t s;
 	if(!sptps_start(&s, &sock, initiator, datagram, mykey, hiskey, "sptps_test", 10, send_data, receive_record))
@@ -246,15 +297,14 @@ int main(int argc, char *argv[]) {
 		FD_ZERO(&fds);
 #ifndef HAVE_MINGW
 		if(!readonly && s.instate)
-			FD_SET(0, &fds);
+			FD_SET(in, &fds);
 #endif
 		FD_SET(sock, &fds);
 		if(select(sock + 1, &fds, NULL, NULL, NULL) <= 0)
 			return 1;
 
-		if(FD_ISSET(0, &fds)) {
-			ssize_t len = read(0, buf, sizeof buf);
-			fprintf(stderr, "%zd\n", len);
+		if(FD_ISSET(in, &fds)) {
+			ssize_t len = read(in, buf, sizeof buf);
 			if(len < 0) {
 				fprintf(stderr, "Could not read from stdin: %s\n", strerror(errno));
 				return 1;
@@ -274,25 +324,28 @@ int main(int argc, char *argv[]) {
 				if(len > 1)
 					sptps_send_record(&s, 0, buf, len);
 			} else
-			if(!sptps_send_record(&s, buf[0] == '!' ? 1 : 0, buf, buf[0] == '\n' ? 0 : buf[0] == '*' ? sizeof buf : len))
+			if(!sptps_send_record(&s, buf[0] == '!' ? 1 : 0, buf, (len == 1 && buf[0] == '\n') ? 0 : buf[0] == '*' ? sizeof buf : len))
 				return 1;
 		}
 
 		if(FD_ISSET(sock, &fds)) {
 			ssize_t len = recv(sock, buf, sizeof buf, 0);
 			if(len < 0) {
-				fprintf(stderr, "Could not read from socket: %s\n", strerror(errno));
+				fprintf(stderr, "Could not read from socket: %s\n", sockstrerror(sockerrno));
 				return 1;
 			}
 			if(len == 0) {
 				fprintf(stderr, "Connection terminated by peer.\n");
 				break;
 			}
-			char hex[len * 2 + 1];
-			bin2hex(buf, hex, len);
-			fprintf(stderr, "Received %d bytes of data:\n%s\n", (int)len, hex);
-			if((rand() % 100) < packetloss) {
-				fprintf(stderr, "Dropped.\n");
+			if(verbose) {
+				char hex[len * 2 + 1];
+				bin2hex(buf, hex, len);
+				fprintf(stderr, "Received %d bytes of data:\n%s\n", (int)len, hex);
+			}
+			if(packetloss && (rand() % 100) < packetloss) {
+				if(verbose)
+					fprintf(stderr, "Dropped.\n");
 				continue;
 			}
 			if(!sptps_receive_data(&s, buf, len) && !datagram)

@@ -1,4 +1,4 @@
-# generated automatically by aclocal 1.14 -*- Autoconf -*-
+# generated automatically by aclocal 1.14.1 -*- Autoconf -*-
 
 # Copyright (C) 1996-2013 Free Software Foundation, Inc.
 
@@ -20,130 +20,6 @@ You have another version of autoconf.  It may work, but is not guaranteed to.
 If you have problems, you may need to regenerate the build system entirely.
 To do so, use the procedure documented by the package, typically 'autoreconf'.])])
 
-dnl Autoconf macros for libgcrypt
-dnl       Copyright (C) 2002, 2004 Free Software Foundation, Inc.
-dnl
-dnl This file is free software; as a special exception the author gives
-dnl unlimited permission to copy and/or distribute it, with or without
-dnl modifications, as long as this notice is preserved.
-dnl
-dnl This file is distributed in the hope that it will be useful, but
-dnl WITHOUT ANY WARRANTY, to the extent permitted by law; without even the
-dnl implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-
-
-dnl AM_PATH_LIBGCRYPT([MINIMUM-VERSION,
-dnl                   [ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND ]]])
-dnl Test for libgcrypt and define LIBGCRYPT_CFLAGS and LIBGCRYPT_LIBS.
-dnl MINIMUN-VERSION is a string with the version number optionalliy prefixed
-dnl with the API version to also check the API compatibility. Example:
-dnl a MINIMUN-VERSION of 1:1.2.5 won't pass the test unless the installed
-dnl version of libgcrypt is at least 1.2.5 *and* the API number is 1.  Using
-dnl this features allows to prevent build against newer versions of libgcrypt
-dnl with a changed API.
-dnl
-AC_DEFUN([AM_PATH_LIBGCRYPT],
-[ AC_ARG_WITH(libgcrypt-prefix,
-            AC_HELP_STRING([--with-libgcrypt-prefix=PFX],
-                           [prefix where LIBGCRYPT is installed (optional)]),
-     libgcrypt_config_prefix="$withval", libgcrypt_config_prefix="")
-  if test x$libgcrypt_config_prefix != x ; then
-     if test x${LIBGCRYPT_CONFIG+set} != xset ; then
-        LIBGCRYPT_CONFIG=$libgcrypt_config_prefix/bin/libgcrypt-config
-     fi
-  fi
-
-  AC_PATH_TOOL(LIBGCRYPT_CONFIG, libgcrypt-config, no)
-  tmp=ifelse([$1], ,1:1.2.0,$1)
-  if echo "$tmp" | grep ':' >/dev/null 2>/dev/null ; then
-     req_libgcrypt_api=`echo "$tmp"     | sed 's/\(.*\):\(.*\)/\1/'`
-     min_libgcrypt_version=`echo "$tmp" | sed 's/\(.*\):\(.*\)/\2/'`
-  else
-     req_libgcrypt_api=0
-     min_libgcrypt_version="$tmp"
-  fi
-
-  AC_MSG_CHECKING(for LIBGCRYPT - version >= $min_libgcrypt_version)
-  ok=no
-  if test "$LIBGCRYPT_CONFIG" != "no" ; then
-    req_major=`echo $min_libgcrypt_version | \
-               sed 's/\([[0-9]]*\)\.\([[0-9]]*\)\.\([[0-9]]*\)/\1/'`
-    req_minor=`echo $min_libgcrypt_version | \
-               sed 's/\([[0-9]]*\)\.\([[0-9]]*\)\.\([[0-9]]*\)/\2/'`
-    req_micro=`echo $min_libgcrypt_version | \
-               sed 's/\([[0-9]]*\)\.\([[0-9]]*\)\.\([[0-9]]*\)/\3/'`
-    libgcrypt_config_version=`$LIBGCRYPT_CONFIG --version`
-    major=`echo $libgcrypt_config_version | \
-               sed 's/\([[0-9]]*\)\.\([[0-9]]*\)\.\([[0-9]]*\).*/\1/'`
-    minor=`echo $libgcrypt_config_version | \
-               sed 's/\([[0-9]]*\)\.\([[0-9]]*\)\.\([[0-9]]*\).*/\2/'`
-    micro=`echo $libgcrypt_config_version | \
-               sed 's/\([[0-9]]*\)\.\([[0-9]]*\)\.\([[0-9]]*\).*/\3/'`
-    if test "$major" -gt "$req_major"; then
-        ok=yes
-    else
-        if test "$major" -eq "$req_major"; then
-            if test "$minor" -gt "$req_minor"; then
-               ok=yes
-            else
-               if test "$minor" -eq "$req_minor"; then
-                   if test "$micro" -ge "$req_micro"; then
-                     ok=yes
-                   fi
-               fi
-            fi
-        fi
-    fi
-  fi
-  if test $ok = yes; then
-    AC_MSG_RESULT([yes ($libgcrypt_config_version)])
-  else
-    AC_MSG_RESULT(no)
-  fi
-  if test $ok = yes; then
-     # If we have a recent libgcrypt, we should also check that the
-     # API is compatible
-     if test "$req_libgcrypt_api" -gt 0 ; then
-        tmp=`$LIBGCRYPT_CONFIG --api-version 2>/dev/null || echo 0`
-        if test "$tmp" -gt 0 ; then
-           AC_MSG_CHECKING([LIBGCRYPT API version])
-           if test "$req_libgcrypt_api" -eq "$tmp" ; then
-             AC_MSG_RESULT([okay])
-           else
-             ok=no
-             AC_MSG_RESULT([does not match. want=$req_libgcrypt_api got=$tmp])
-           fi
-        fi
-     fi
-  fi
-  if test $ok = yes; then
-    LIBGCRYPT_CFLAGS=`$LIBGCRYPT_CONFIG --cflags`
-    LIBGCRYPT_LIBS=`$LIBGCRYPT_CONFIG --libs`
-    ifelse([$2], , :, [$2])
-    if test x"$host" != x ; then
-      libgcrypt_config_host=`$LIBGCRYPT_CONFIG --host 2>/dev/null || echo none`
-      if test x"$libgcrypt_config_host" != xnone ; then
-        if test x"$libgcrypt_config_host" != x"$host" ; then
-  AC_MSG_WARN([[
-***
-*** The config script $LIBGCRYPT_CONFIG was
-*** built for $libgcrypt_config_host and thus may not match the
-*** used host $host.
-*** You may want to use the configure option --with-libgcrypt-prefix
-*** to specify a matching config script.
-***]])
-        fi
-      fi
-    fi
-  else
-    LIBGCRYPT_CFLAGS=""
-    LIBGCRYPT_LIBS=""
-    ifelse([$3], , :, [$3])
-  fi
-  AC_SUBST(LIBGCRYPT_CFLAGS)
-  AC_SUBST(LIBGCRYPT_LIBS)
-])
-
 # Copyright (C) 2002-2013 Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
@@ -159,7 +35,7 @@ AC_DEFUN([AM_AUTOMAKE_VERSION],
 [am__api_version='1.14'
 dnl Some users find AM_AUTOMAKE_VERSION and mistake it for a way to
 dnl require some minimum version.  Point them to the right macro.
-m4_if([$1], [1.14], [],
+m4_if([$1], [1.14.1], [],
       [AC_FATAL([Do not call $0, use AM_INIT_AUTOMAKE([$1]).])])dnl
 ])
 
@@ -175,7 +51,7 @@ m4_define([_AM_AUTOCONF_VERSION], [])
 # Call AM_AUTOMAKE_VERSION and AM_AUTOMAKE_VERSION so they can be traced.
 # This function is AC_REQUIREd by AM_INIT_AUTOMAKE.
 AC_DEFUN([AM_SET_CURRENT_AUTOMAKE_VERSION],
-[AM_AUTOMAKE_VERSION([1.14])dnl
+[AM_AUTOMAKE_VERSION([1.14.1])dnl
 m4_ifndef([AC_AUTOCONF_VERSION],
   [m4_copy([m4_PACKAGE_VERSION], [AC_AUTOCONF_VERSION])])dnl
 _AM_AUTOCONF_VERSION(m4_defn([AC_AUTOCONF_VERSION]))])
@@ -227,10 +103,9 @@ _AM_AUTOCONF_VERSION(m4_defn([AC_AUTOCONF_VERSION]))])
 # configured tree to be moved without reconfiguration.
 
 AC_DEFUN([AM_AUX_DIR_EXPAND],
-[dnl Rely on autoconf to set up CDPATH properly.
-AC_PREREQ([2.50])dnl
-# expand $ac_aux_dir to an absolute path
-am_aux_dir=`cd $ac_aux_dir && pwd`
+[AC_REQUIRE([AC_CONFIG_AUX_DIR_DEFAULT])dnl
+# Expand $ac_aux_dir to an absolute path.
+am_aux_dir=`cd "$ac_aux_dir" && pwd`
 ])
 
 # AM_CONDITIONAL                                            -*- Autoconf -*-
@@ -697,7 +572,8 @@ to "yes", and re-run configure.
 END
     AC_MSG_ERROR([Your 'rm' program is bad, sorry.])
   fi
-fi])
+fi
+])
 
 dnl Hook into '_AC_COMPILER_EXEEXT' early to learn its expansion.  Do not
 dnl add the conditional right here, as _AC_COMPILER_EXEEXT may be further
@@ -1272,7 +1148,10 @@ AC_SUBST([am__untar])
 ]) # _AM_PROG_TAR
 
 m4_include([m4/attribute.m4])
+m4_include([m4/ax_check_compile_flag.m4])
+m4_include([m4/ax_check_link_flag.m4])
 m4_include([m4/curses.m4])
+m4_include([m4/libgcrypt.m4])
 m4_include([m4/lzo.m4])
 m4_include([m4/openssl.m4])
 m4_include([m4/readline.m4])

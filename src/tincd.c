@@ -1,7 +1,7 @@
 /*
     tincd.c -- the main file for tincd
     Copyright (C) 1998-2005 Ivo Timmermans
-                  2000-2013 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2014 Guus Sliepen <guus@tinc-vpn.org>
                   2008      Max Rijevski <maksuf@gmail.com>
                   2009      Michael Tokarev <mjt@tls.msk.ru>
                   2010      Julien Muchembled <jm@jmuchemb.eu>
@@ -49,6 +49,7 @@
 #include "control.h"
 #include "crypto.h"
 #include "device.h"
+#include "event.h"
 #include "logger.h"
 #include "names.h"
 #include "net.h"
@@ -57,6 +58,7 @@
 #include "protocol.h"
 #include "utils.h"
 #include "xalloc.h"
+#include "version.h"
 
 /* If nonzero, display usage information and exit. */
 static bool show_help = false;
@@ -106,7 +108,6 @@ static struct option const long_options[] = {
 
 #ifdef HAVE_MINGW
 static struct WSAData wsa_state;
-CRITICAL_SECTION mutex;
 int main2(int argc, char **argv);
 #endif
 
@@ -303,6 +304,17 @@ static bool drop_privs(void) {
 
 #ifdef HAVE_MINGW
 # define setpriority(level) !SetPriorityClass(GetCurrentProcess(), (level))
+
+static void stop_handler(void *data, int flags) {
+	event_exit();
+}
+
+static BOOL WINAPI console_ctrl_handler(DWORD type) {
+	logger(DEBUG_ALWAYS, LOG_NOTICE, "Got console shutdown request");
+	if (WSASetEvent(stop_io.event) == FALSE)
+		abort();
+	return TRUE;
+}
 #else
 # define NORMAL_PRIORITY_CLASS 0
 # define BELOW_NORMAL_PRIORITY_CLASS 10
@@ -320,8 +332,8 @@ int main(int argc, char **argv) {
 
 	if(show_version) {
 		printf("%s version %s (built %s %s, protocol %d.%d)\n", PACKAGE,
-			   VERSION, __DATE__, __TIME__, PROT_MAJOR, PROT_MINOR);
-		printf("Copyright (C) 1998-2013 Ivo Timmermans, Guus Sliepen and others.\n"
+			   VERSION, BUILD_DATE, BUILD_TIME, PROT_MAJOR, PROT_MINOR);
+		printf("Copyright (C) 1998-2014 Ivo Timmermans, Guus Sliepen and others.\n"
 				"See the AUTHORS file for a complete list.\n\n"
 				"tinc comes with ABSOLUTELY NO WARRANTY.  This is free software,\n"
 				"and you are welcome to redistribute it under certain conditions;\n"
@@ -371,15 +383,24 @@ int main(int argc, char **argv) {
 #endif
 
 #ifdef HAVE_MINGW
-	if(!do_detach || !init_service())
-		return main2(argc, argv);
-	else
-		return 1;
+	io_add_event(&stop_io, stop_handler, NULL, WSACreateEvent());
+	if (stop_io.event == FALSE)
+		abort();
+
+	int result;
+	if(!do_detach || !init_service()) {
+		SetConsoleCtrlHandler(console_ctrl_handler, TRUE);
+		result = main2(argc, argv);
+	} else
+		result = 1;
+
+	if (WSACloseEvent(stop_io.event) == FALSE)
+		abort();
+	io_del(&stop_io);
+	return result;
 }
 
 int main2(int argc, char **argv) {
-	InitializeCriticalSection(&mutex);
-	EnterCriticalSection(&mutex);
 #endif
 	char *priority = NULL;
 
@@ -439,9 +460,6 @@ int main2(int argc, char **argv) {
 	status = main_loop();
 
 	/* Shutdown properly. */
-
-	if(debug_level >= DEBUG_CONNECTIONS)
-		devops.dump_stats();
 
 end:
 	close_network_connections();

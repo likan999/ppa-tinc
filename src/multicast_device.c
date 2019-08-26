@@ -31,9 +31,6 @@
 
 static char *device_info;
 
-static uint64_t device_total_in = 0;
-static uint64_t device_total_out = 0;
-
 static struct addrinfo *ai = NULL;
 static mac_t ignore_src = {{0}};
 
@@ -132,7 +129,7 @@ static bool setup_device(void) {
 #endif
 
 		default:
-			logger(DEBUG_ALWAYS, LOG_ERR, "Multicast for address family %hx unsupported", ai->ai_family);
+			logger(DEBUG_ALWAYS, LOG_ERR, "Multicast for address family %x unsupported", ai->ai_family);
 			goto error;
 	}
 
@@ -151,32 +148,32 @@ error:
 }
 
 static void close_device(void) {
-	close(device_fd);
+	close(device_fd); device_fd = -1;
 
-	free(device);
-	free(iface);
+	free(device); device = NULL;
+	free(iface); iface = NULL;
 
-	if(ai)
-		freeaddrinfo(ai);
+	if(ai) {
+		freeaddrinfo(ai); ai = NULL;
+	}
+	device_info = NULL;
 }
 
 static bool read_packet(vpn_packet_t *packet) {
 	int lenin;
 
-	if((lenin = recv(device_fd, (void *)packet->data, MTU, 0)) <= 0) {
+	if((lenin = recv(device_fd, DATA(packet), MTU, 0)) <= 0) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Error while reading from %s %s: %s", device_info,
-			   device, strerror(errno));
+			   device, sockstrerror(sockerrno));
 		return false;
 	}
 
-	if(!memcmp(&ignore_src, packet->data + 6, sizeof ignore_src)) {
+	if(!memcmp(&ignore_src, DATA(packet) + 6, sizeof ignore_src)) {
 		logger(DEBUG_SCARY_THINGS, LOG_DEBUG, "Ignoring loopback packet of %d bytes from %s", lenin, device_info);
 		return false;
 	}
 
 	packet->len = lenin;
-
-	device_total_in += packet->len;
 
 	logger(DEBUG_TRAFFIC, LOG_DEBUG, "Read packet of %d bytes from %s", packet->len,
 			   device_info);
@@ -188,23 +185,15 @@ static bool write_packet(vpn_packet_t *packet) {
 	logger(DEBUG_TRAFFIC, LOG_DEBUG, "Writing packet of %d bytes to %s",
 			   packet->len, device_info);
 
-	if(sendto(device_fd, (void *)packet->data, packet->len, 0, ai->ai_addr, ai->ai_addrlen) < 0) {
+	if(sendto(device_fd, DATA(packet), packet->len, 0, ai->ai_addr, ai->ai_addrlen) < 0) {
 		logger(DEBUG_ALWAYS, LOG_ERR, "Can't write to %s %s: %s", device_info, device,
-			   strerror(errno));
+			   sockstrerror(sockerrno));
 		return false;
 	}
 
-	device_total_out += packet->len;
-
-	memcpy(&ignore_src, packet->data + 6, sizeof ignore_src);
+	memcpy(&ignore_src, DATA(packet) + 6, sizeof ignore_src);
 
 	return true;
-}
-
-static void dump_device_stats(void) {
-	logger(DEBUG_ALWAYS, LOG_DEBUG, "Statistics for %s %s:", device_info, device);
-	logger(DEBUG_ALWAYS, LOG_DEBUG, " total bytes in:  %10"PRIu64, device_total_in);
-	logger(DEBUG_ALWAYS, LOG_DEBUG, " total bytes out: %10"PRIu64, device_total_out);
 }
 
 const devops_t multicast_devops = {
@@ -212,21 +201,4 @@ const devops_t multicast_devops = {
 	.close = close_device,
 	.read = read_packet,
 	.write = write_packet,
-	.dump_stats = dump_device_stats,
 };
-
-#if 0
-
-static bool not_supported(void) {
-	logger(DEBUG_ALWAYS, LOG_ERR, "Raw socket device not supported on this platform");
-	return false;
-}
-
-const devops_t multicast_devops = {
-	.setup = not_supported,
-	.close = NULL,
-	.read = NULL,
-	.write = NULL,
-	.dump_stats = NULL,
-};
-#endif

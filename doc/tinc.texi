@@ -15,7 +15,7 @@
 
 This is the info manual for @value{PACKAGE} version @value{VERSION}, a Virtual Private Network daemon.
 
-Copyright @copyright{} 1998-2013 Ivo Timmermans,
+Copyright @copyright{} 1998-2014 Ivo Timmermans,
 Guus Sliepen <guus@@tinc-vpn.org> and
 Wessel Dankers <wsl@@tinc-vpn.org>.
 
@@ -43,7 +43,7 @@ permission notice identical to this one.
 @vskip 0pt plus 1filll
 This is the info manual for @value{PACKAGE} version @value{VERSION}, a Virtual Private Network daemon.
 
-Copyright @copyright{} 1998-2013 Ivo Timmermans,
+Copyright @copyright{} 1998-2014 Ivo Timmermans,
 Guus Sliepen <guus@@tinc-vpn.org> and
 Wessel Dankers <wsl@@tinc-vpn.org>.
 
@@ -335,9 +335,10 @@ as explained in the rest of the documentation.
 
 @cindex requirements
 @cindex libraries
-Before you can configure or build tinc, you need to have the OpenSSL,
-zlib and lzo libraries installed on your system.  If you try to configure tinc without
-having them installed, configure will give you an error message, and stop.
+Before you can configure or build tinc, you need to have the OpenSSL, zlib,
+lzo, curses and readline libraries installed on your system.  If you try to
+configure tinc without having them installed, configure will give you an error
+message, and stop.
 
 @menu
 * OpenSSL::
@@ -793,6 +794,9 @@ The actual configuration of the daemon is done in the file
 @file{@value{sysconfdir}/tinc/@var{netname}/tinc.conf} and at least one other file in the directory
 @file{@value{sysconfdir}/tinc/@var{netname}/hosts/}.
 
+An optionnal directory @file{@value{sysconfdir}/tinc/@var{netname}/conf.d} can be added from which
+any .conf file will be read.
+
 These file consists of comments (lines started with a #) or assignments
 in the form of
 
@@ -839,23 +843,16 @@ If any is selected, then depending on the operating system
 both IPv4 and IPv6 or just IPv6 listening sockets will be created.
 
 @cindex AutoConnect
-@item AutoConnect = <count> (0) [experimental]
-If set to a non-zero value,
-tinc will try to only have count meta connections to other nodes,
-by automatically making or breaking connections to known nodes.
-Higher values increase redundancy but also increase meta data overhead.
-When using this option, a good value is 3.
+@item AutoConnect = <yes|no> (no) [experimental]
+If set to yes, tinc will automatically set up meta connections to other nodes,
+without requiring @var{ConnectTo} variables.
 
 @cindex BindToAddress
 @item BindToAddress = <@var{address}> [<@var{port}>]
-If your computer has more than one IPv4 or IPv6 address, tinc
-will by default listen on all of them for incoming connections.
-Multiple BindToAddress variables may be specified,
-in which case listening sockets for each specified address are made.
-
-If no @var{port} is specified, the socket will be bound to the port specified by the Port option,
-or to port 655 if neither is given.
-To only bind to a specific port but not to a specific address, use "*" for the @var{address}.
+This is the same as ListenAddress, however the address given with the BindToAddress option
+will also be used for outgoing connections.
+This is useful if your computer has more than one IPv4 or IPv6 address,
+and you want tinc to only use a specific one for outgoing packets.
 
 @cindex BindToInterface
 @item BindToInterface = <@var{interface}> [experimental]
@@ -887,6 +884,18 @@ Broadcast packets received from other nodes are never forwarded.
 If the IndirectData option is also set, broadcast packets will only be sent to nodes which we have a meta connection to.
 @end table
 
+@cindex BroadcastSubnet
+@item BroadcastSubnet = @var{address}[/@var{prefixlength}]
+Declares a broadcast subnet.
+Any packet with a destination address falling into such a subnet will be routed as a broadcast
+(provided all nodes have it declared).
+This is most useful to declare subnet broadcast addresses (e.g. 10.42.255.255),
+otherwise tinc won't know what to do with them.
+
+Note that global broadcast addresses (MAC ff:ff:ff:ff:ff:ff, IPv4 255.255.255.255),
+as well as multicast space (IPv4 224.0.0.0/4, IPv6 ff00::/8)
+are always considered broadcast addresses and don't need to be declared.
+
 @cindex ConnectTo
 @item ConnectTo = <@var{name}>
 Specifies which other tinc daemon to connect to on startup.
@@ -895,7 +904,7 @@ in which case outgoing connections to each specified tinc daemon are made.
 The names should be known to this tinc daemon
 (i.e., there should be a host configuration file for the name on the ConnectTo line).
 
-If you don't specify a host with ConnectTo,
+If you don't specify a host with ConnectTo and don't enable AutoConnect,
 tinc won't try to connect to other daemons at all,
 and will instead just listen for incoming connections.
 
@@ -916,6 +925,13 @@ Note that you can only use one device per daemon.
 Under Windows, use @var{Interface} instead of @var{Device}.
 Note that you can only use one device per daemon.
 See also @ref{Device files}.
+
+@cindex DeviceStandby
+@item DeviceStandby = <yes | no> (no)
+When disabled, tinc calls @file{tinc-up} on startup, and @file{tinc-down} on shutdown.
+When enabled, tinc will only call @file{tinc-up} when at least one node is reachable,
+and will call @file{tinc-down} as soon as no nodes are reachable.
+On Windows, this also determines when the virtual network interface "cable" is "plugged".
 
 @cindex DeviceType
 @item DeviceType = <@var{type}> (platform dependent)
@@ -996,18 +1012,18 @@ but which would have to be forwarded by an intermediate node, are dropped instea
 When combined with the IndirectData option,
 packets for nodes for which we do not have a meta connection with are also dropped.
 
-@cindex ECDSAPrivateKeyFile
-@item ECDSAPrivateKeyFile = <@var{path}> (@file{@value{sysconfdir}/tinc/@var{netname}/ecdsa_key.priv})
-The file in which the private ECDSA key of this tinc daemon resides.
+@cindex Ed25519PrivateKeyFile
+@item Ed25519PrivateKeyFile = <@var{path}> (@file{@value{sysconfdir}/tinc/@var{netname}/ed25519_key.priv})
+The file in which the private Ed25519 key of this tinc daemon resides.
 This is only used if ExperimentalProtocol is enabled.
 
 @cindex ExperimentalProtocol
 @item ExperimentalProtocol = <yes|no> (yes)
 When this option is enabled, the SPTPS protocol will be used when connecting to nodes that also support it.
 Ephemeral ECDH will be used for key exchanges,
-and ECDSA will be used instead of RSA for authentication.
-When enabled, an ECDSA key must have been generated before with
-@samp{tinc generate-ecdsa-keys}.
+and Ed25519 will be used instead of RSA for authentication.
+When enabled, an Ed25519 key must have been generated before with
+@samp{tinc generate-ed25519-keys}.
 
 @cindex Forwarding
 @item Forwarding = <off|internal|kernel> (internal) [experimental]
@@ -1045,6 +1061,18 @@ Defines the name of the interface corresponding to the virtual network device.
 Depending on the operating system and the type of device this may or may not actually set the name of the interface.
 Under Windows, this variable is used to select which network interface will be used.
 If you specified a Device, this variable is almost always already correctly set.
+
+@cindex ListenAddress
+@item ListenAddress = <@var{address}> [<@var{port}>]
+If your computer has more than one IPv4 or IPv6 address, tinc
+will by default listen on all of them for incoming connections.
+This option can be used to restrict which addresses tinc listens on.
+Multiple ListenAddress variables may be specified,
+in which case listening sockets for each specified address are made.
+
+If no @var{port} is specified, the socket will listen on the port specified by the Port option,
+or to port 655 if neither is given.
+To only listen on a specific port but not to a specific address, use "*" for the @var{address}.
 
 @cindex LocalDiscovery
 @item LocalDiscovery = <yes | no> (no)
@@ -1152,7 +1180,7 @@ When this option is used the priority of the tincd process will be adjusted.
 Increasing the priority may help to reduce latency and packet loss on the VPN.
 
 @cindex Proxy
-@item Proxy = socks4 | socks4 | http | exec @var{...} [experimental]
+@item Proxy = socks4 | socks5 | http | exec @var{...} [experimental]
 Use a proxy when making outgoing connections.
 The following proxy types are currently supported:
 
@@ -1163,7 +1191,7 @@ Connects to the proxy using the SOCKS version 4 protocol.
 Optionally, a @var{username} can be supplied which will be passed on to the proxy server.
 
 @cindex socks5
-@item socks4 <@var{address}> <@var{port}> [<@var{username}> <@var{password}>]
+@item socks5 <@var{address}> <@var{port}> [<@var{username}> <@var{password}>]
 Connect to the proxy using the SOCKS version 5 protocol.
 If a @var{username} and @var{password} are given, basic username/password authentication will be used,
 otherwise no authentication will be used.
@@ -1190,10 +1218,12 @@ pass all traffic, but leaves tinc vulnerable to replay-based attacks on your
 traffic.
 
 @cindex StrictSubnets
-@item StrictSubnets <yes|no> (no) [experimental]
+@item StrictSubnets = <yes|no> (no) [experimental]
 When this option is enabled tinc will only use Subnet statements which are
 present in the host config files in the local
 @file{@value{sysconfdir}/tinc/@var{netname}/hosts/} directory.
+Subnets learned via connections to other nodes and which are not
+present in the local host config files are ignored.
 
 @cindex TunnelServer
 @item TunnelServer = <yes|no> (no) [experimental]
@@ -1226,6 +1256,8 @@ This variable is only required if you want to connect to this host.  It
 must resolve to the external IP address where the host can be reached,
 not the one that is internal to the VPN.
 If no port is specified, the default Port is used.
+Multiple Address variables can be specified, in which case each address will be
+tried until a working connection has been established.
 
 @cindex Cipher
 @item Cipher = <@var{cipher}> (blowfish)
@@ -1336,6 +1368,12 @@ TCP connection instead of a UDP connection.  This is especially useful
 for those who want to run a tinc daemon from behind a masquerading
 firewall, or if UDP packet routing is disabled somehow.
 Setting this options also implicitly sets IndirectData.
+
+@cindex Weight
+@item Weight = <weight>
+If this variable is set, it overrides the weight given to connections made with
+another host. A higher weight means a lower priority is given to this
+connection when broadcasting or forwarding packets.
 @end table
 
 
@@ -1471,9 +1509,9 @@ In the configuration directory, it will create the file @file{tinc.conf} with th
 Name = @var{name}
 @end example
 
-It will also create private RSA and ECDSA keys, which will be stored in the files @file{rsa_key.priv} and @file{ecdsa_key.priv}.
+It will also create private RSA and Ed25519 keys, which will be stored in the files @file{rsa_key.priv} and @file{ed25519_key.priv}.
 It will also create a host configuration file @file{hosts/@var{name}},
-which will contain the corresponding public RSA and ECDSA keys.
+which will contain the corresponding public RSA and Ed25519 keys.
 
 Finally, on UNIX operating systems, it will create an executable script @file{tinc-up},
 which will initially not do anything except warning that you should edit it.
@@ -1492,7 +1530,7 @@ tinc -n @var{netname} add subnet 192.168.2.0/24
 
 This will add a Subnet statement to your host configuration file.
 Try opening the file @file{@value{sysconfdir}/tinc/@var{netname}/hosts/@var{name}} in an editor.
-You should now see a file containing the public RSA and ECDSA keys (which looks like a bunch of random characters),
+You should now see a file containing the public RSA and Ed25519 keys (which looks like a bunch of random characters),
 and the following line at the bottom:
 
 @example
@@ -1803,8 +1841,8 @@ Address = 4.5.6.7
 A, B, C and D all have their own public/private keypairs:
 
 The private RSA key is stored in @file{@value{sysconfdir}/tinc/company/rsa_key.priv},
-the private ECDSA key is stored in @file{@value{sysconfdir}/tinc/company/ecdsa_key.priv},
-and the public RSA and ECDSA keys are put into the host configuration file in the @file{@value{sysconfdir}/tinc/company/hosts/} directory.
+the private Ed25519 key is stored in @file{@value{sysconfdir}/tinc/company/ed25519_key.priv},
+and the public RSA and Ed25519 keys are put into the host configuration file in the @file{@value{sysconfdir}/tinc/company/hosts/} directory.
 
 @subsubheading Starting
 
@@ -2146,12 +2184,20 @@ Be sure to include the following information in your bugreport:
 @node    Controlling tinc
 @chapter Controlling tinc
 
-You can control and inspect a running tincd through the tinc
+@cindex command line interface
+You can start, stop, control and inspect a running tincd through the tinc
 command. A quick example:
 
 @example
 tinc -n @var{netname} reload
 @end example
+
+@cindex shell
+If tinc is started without a command, it will act as a shell; it will display a
+prompt, and commands can be entered on the prompt. If tinc is compiled with
+libreadline, history and command completion are available on the prompt. One
+can also pipe a script containing commands through tinc. In that case, lines
+starting with a # symbol will be ignored.
 
 @menu
 * tinc runtime options::
@@ -2206,85 +2252,107 @@ the value of this environment variable is used.
 @c from the manpage
 @table @code
 
+@cindex init
 @item init [@var{name}]
-Create initial configuration files and RSA and ECDSA keypairs with default length.
+Create initial configuration files and RSA and Ed25519 keypairs with default length.
 If no @var{name} for this node is given, it will be asked for.
 
+@cindex get
 @item get @var{variable}
 Print the current value of configuration variable @var{variable}.
 If more than one variable with the same name exists,
 the value of each of them will be printed on a separate line.
 
+@cindex set
 @item set @var{variable} @var{value}
 Set configuration variable @var{variable} to the given @var{value}.
 All previously existing configuration variables with the same name are removed.
 To set a variable for a specific host, use the notation @var{host}.@var{variable}.
 
+@cindex add
 @item add @var{variable} @var{value}
 As above, but without removing any previously existing configuration variables.
 
+@cindex del
 @item del @var{variable} [@var{value}]
 Remove configuration variables with the same name and @var{value}.
 If no @var{value} is given, all configuration variables with the same name will be removed.
 
+@cindex edit
 @item edit @var{filename}
 Start an editor for the given configuration file.
 You do not need to specify the full path to the file.
 
+@cindex export
 @item export
 Export the host configuration file of the local node to standard output.
 
+@cindex export-all
 @item export-all
 Export all host configuration files to standard output.
 
+@cindex import
 @item import [--force]
 Import host configuration file(s) generated by the tinc export command from standard input.
 Already existing host configuration files are not overwritten unless the option --force is used.
 
+@cindex exchange
 @item exchange [--force]
 The same as export followed by import.
 
+@cindex exchange-all
 @item exchange-all [--force]
 The same as export-all followed by import.
 
+@cindex invite
 @item invite @var{name}
 Prepares an invitation for a new node with the given @var{name},
 and prints a short invitation URL that can be used with the join command.
 
+@cindex join
 @item join [@var{URL}]
 Join an existing VPN using an invitation URL created using the invite command.
 If no @var{URL} is given, it will be read from standard input.
 
+@cindex start
 @item start [tincd options]
 Start @samp{tincd}, optionally with the given extra options.
 
+@cindex stop
 @item stop
 Stop @samp{tincd}.
 
+@cindex restart
 @item restart [tincd options]
 Restart @samp{tincd}, optionally with the given extra options.
 
+@cindex reload
 @item reload
 Partially rereads configuration files. Connections to hosts whose host
 config files are removed are closed. New outgoing connections specified
 in @file{tinc.conf} will be made.
 
+@cindex pid
 @item pid
 Shows the PID of the currently running @samp{tincd}.
 
+@cindex generate-keys
 @item generate-keys [@var{bits}]
-Generate both RSA and ECDSA keypairs (see below) and exit.
+Generate both RSA and Ed25519 keypairs (see below) and exit.
 tinc will ask where you want to store the files, but will default to the
 configuration directory (you can use the -c or -n option).
 
-@item generate-ecdsa-keys
-Generate public/private ECDSA keypair and exit.
+@cindex generate-ed25519-keys
+@item generate-ed25519-keys
+Generate public/private Ed25519 keypair and exit.
 
+@cindex generate-rsa-keys
 @item generate-rsa-keys [@var{bits}]
 Generate public/private RSA keypair and exit.  If @var{bits} is omitted, the
 default length will be 2048 bits.  When saving keys to existing files, tinc
 will not delete the old keys; you have to remove them manually.
 
+@cindex dump
 @item dump [reachable] nodes
 Dump a list of all known nodes in the VPN.
 If the reachable keyword is used, only lists reachable nodes.
@@ -2298,26 +2366,32 @@ Dump a list of all known subnets in the VPN.
 @item dump connections
 Dump a list of all meta connections with ourself.
 
+@cindex graph
 @item dump graph | digraph
 Dump a graph of the VPN in dotty format.
 Nodes are colored according to their reachability:
 red nodes are unreachable, orange nodes are indirectly reachable, green nodes are directly reachable.
 Black nodes are either directly or indirectly reachable, but direct reachability has not been tried yet.
 
+@cindex info
 @item info @var{node} | @var{subnet} | @var{address}
 Show information about a particular @var{node}, @var{subnet} or @var{address}.
 If an @var{address} is given, any matching subnet will be shown.
 
+@cindex purge
 @item purge
 Purges all information remembered about unreachable nodes.
 
+@cindex debug
 @item debug @var{level}
 Sets debug level to @var{level}.
 
+@cindex log
 @item log [@var{level}]
 Capture log messages from a running tinc daemon.
 An optional debug level can be given that will be applied only for log messages sent to tinc.
 
+@cindex retry
 @item retry
 Forces tinc to try to connect to all uplinks immediately.
 Usually tinc attempts to do this itself,
@@ -2325,18 +2399,26 @@ but increases the time it waits between the attempts each time it failed,
 and if tinc didn't succeed to connect to an uplink the first time after it started,
 it defaults to the maximum time of 15 minutes.
 
+@cindex disconnect
 @item disconnect @var{node}
 Closes the meta connection with the given @var{node}.
 
+@cindex top
 @item top
 If tinc is compiled with libcurses support, this will display live traffic statistics for all the known nodes,
 similar to the UNIX top command.
 See below for more information.
 
+@cindex pcap
 @item pcap
 Dump VPN traffic going through the local tinc node in pcap-savefile format to standard output,
 from where it can be redirected to a file or piped through a program that can parse it directly,
 such as tcpdump.
+
+@cindex network [@var{netname}]
+@item network
+If @var{netname} is given, switch to that network.
+Otherwise, display a list of all networks for which configuration files exist.
 
 @end table
 
@@ -2352,7 +2434,7 @@ tinc -n vpn pcap | tcpdump -r -
 tinc -n vpn top
 @end example
 
-Example of configuring tinc using the tinc command:
+Examples of changing the configuration using tinc:
 
 @example
 tinc -n vpn init foo
@@ -2366,6 +2448,7 @@ tinc -n vpn export | gpg --clearsign | mail -s "My config" vpnmaster@@example.co
 @node    tinc top
 @section tinc top
 
+@cindex top
 The top command connects to a running tinc daemon and repeatedly queries its per-node traffic counters.
 It displays a list of all the known nodes in the left-most column,
 and the amount of bytes and packets read from and sent to each node in the other columns.
@@ -2946,12 +3029,12 @@ The expanded key is used as follows:
 Where initiator_cipher_key is the key used by session initiator to encrypt
 messages sent to the responder.
 
-When using 521 bits EC keys, the AES-256-CTR cipher and HMAC-SHA-256 digest algorithm,
+When using 256 bits Ed25519 keys, the AES-256-CTR cipher and HMAC-SHA-256 digest algorithm,
 the sizes are as follows:
 
 @example
-ECDH_SIZE:       67 (= ceil(521/8) + 1)
-ECDSA_SIZE:     141 (= 2 * ceil(521/8) + 9)
+ECDH_SIZE:       32 (= 256/8)
+ECDSA_SIZE:      64 (= 2 * 256/8)
 CIPHER_KEYSIZE:  48 (= 256/8 + 128/8)
 DIGEST_KEYSIZE:  32 (= 256/8)
 @end example
