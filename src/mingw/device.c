@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: device.c 1496 2007-01-05 13:18:36Z guus $
+    $Id: device.c 1510 2007-05-16 14:46:25Z guus $
 */
 
 #include "system.h"
@@ -76,17 +76,19 @@ DWORD WINAPI tapreader(void *bla) {
 
 	sock = socket(ai->ai_family, SOCK_STREAM, IPPROTO_TCP);
 
-	freeaddrinfo(ai);
-
 	if(sock < 0) {
 		logger(LOG_ERR, _("System call `%s' failed: %s"), "socket", strerror(errno));
+		freeaddrinfo(ai);
 		return -1;
 	}
 
 	if(connect(sock, ai->ai_addr, ai->ai_addrlen)) {
 		logger(LOG_ERR, _("System call `%s' failed: %s"), "connect", strerror(errno));
+		freeaddrinfo(ai);
 		return -1;
 	}
+
+	freeaddrinfo(ai);
 
 	logger(LOG_DEBUG, _("Tap reader running"));
 

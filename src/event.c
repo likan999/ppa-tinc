@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: event.c 1469 2006-11-11 22:44:15Z guus $
+    $Id: event.c 1498 2007-02-14 09:20:20Z guus $
 */
 
 #include "system.h"
@@ -55,6 +55,28 @@ void exit_events(void)
 	cp();
 
 	avl_delete_tree(event_tree);
+}
+
+void flush_events(void)
+{
+	avl_tree_t *to_flush;
+	event_t *event;
+
+	/*
+	 * Events can be inserted from event handlers, so only flush events
+	 * already in the priority queue.
+	 */
+
+	cp();
+
+	to_flush = event_tree;
+	init_events();
+	while (to_flush->head) {
+		event = to_flush->head->data;
+		event->handler(event->data);
+		avl_delete(to_flush, event);
+	}
+	avl_delete_tree(to_flush);
 }
 
 event_t *new_event(void)

@@ -1,6 +1,6 @@
 /*
     connection.c -- connection list management
-    Copyright (C) 2000-2006 Guus Sliepen <guus@tinc-vpn.org>,
+    Copyright (C) 2000-2007 Guus Sliepen <guus@tinc-vpn.org>,
                   2000-2005 Ivo Timmermans
 
     This program is free software; you can redistribute it and/or modify
@@ -17,7 +17,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Id: connection.c 1456 2006-08-08 13:21:08Z guus $
+    $Id: connection.c 1508 2007-05-16 14:42:08Z guus $
 */
 
 #include "system.h"
@@ -77,6 +77,9 @@ connection_t *new_connection(void)
 void free_connection(connection_t *c)
 {
 	cp();
+
+	if(c->name)
+		free(c->name);
 
 	if(c->hostname)
 		free(c->hostname);
