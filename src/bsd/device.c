@@ -1,7 +1,7 @@
 /*
     device.c -- Interaction BSD tun/tap device
     Copyright (C) 2001-2005 Ivo Timmermans,
-                  2001-2009 Guus Sliepen <guus@tinc-vpn.org>
+                  2001-2011 Guus Sliepen <guus@tinc-vpn.org>
                   2009      Grzegorz Dymarek <gregd72002@googlemail.com>
 
     This program is free software; you can redistribute it and/or modify
@@ -47,11 +47,11 @@ int device_fd = -1;
 char *device = NULL;
 char *iface = NULL;
 static char *device_info = NULL;
-static int device_total_in = 0;
-static int device_total_out = 0;
+static uint64_t device_total_in = 0;
+static uint64_t device_total_out = 0;
 #if defined(TUNEMU)
 static device_type_t device_type = DEVICE_TYPE_TUNEMU;
-#elif defined(HAVE_OPENBSD) || defined(HAVE_FREEBSD)
+#elif defined(HAVE_OPENBSD) || defined(HAVE_FREEBSD) || defined(HAVE_DRAGONFLY)
 static device_type_t device_type = DEVICE_TYPE_TUNIFHEAD;
 #else
 static device_type_t device_type = DEVICE_TYPE_TUN;
@@ -64,7 +64,7 @@ bool setup_device(void) {
 		device = xstrdup(DEFAULT_DEVICE);
 
 	if(!get_config_string(lookup_config(config_tree, "Interface"), &iface))
-		iface = xstrdup(rindex(device, '/') ? rindex(device, '/') + 1 : device);
+		iface = xstrdup(strrchr(device, '/') ? strrchr(device, '/') + 1 : device);
 
 	if(get_config_string(lookup_config(config_tree, "DeviceType"), &type)) {
 		if(!strcasecmp(type, "tun"))
@@ -199,9 +199,8 @@ bool read_packet(vpn_packet_t *packet) {
 			if(device_type == DEVICE_TYPE_TUNEMU)
 				lenin = tunemu_read(device_fd, packet->data + 14, MTU - 14);
 			else
-#else
-				lenin = read(device_fd, packet->data + 14, MTU - 14);
 #endif
+				lenin = read(device_fd, packet->data + 14, MTU - 14);
 
 			if(lenin <= 0) {
 				logger(LOG_ERR, "Error while reading from %s %s: %s", device_info,
@@ -353,6 +352,6 @@ bool write_packet(vpn_packet_t *packet) {
 
 void dump_device_stats(void) {
 	logger(LOG_DEBUG, "Statistics for %s %s:", device_info, device);
-	logger(LOG_DEBUG, " total bytes in:  %10d", device_total_in);
-	logger(LOG_DEBUG, " total bytes out: %10d", device_total_out);
+	logger(LOG_DEBUG, " total bytes in:  %10"PRIu64, device_total_in);
+	logger(LOG_DEBUG, " total bytes out: %10"PRIu64, device_total_out);
 }

@@ -1,7 +1,7 @@
 /*
     net.c -- most of the network code
     Copyright (C) 1998-2005 Ivo Timmermans,
-                  2000-2010 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2011 Guus Sliepen <guus@tinc-vpn.org>
                   2006      Scott Lamb <slamb@slamb.org>
 
     This program is free software; you can redistribute it and/or modify
@@ -44,6 +44,8 @@ bool do_purge = false;
 volatile bool running = false;
 
 time_t now = 0;
+int contradicting_add_edge = 0;
+int contradicting_del_edge = 0;
 
 /* Purge edges and subnets of unreachable nodes. Use carefully. */
 
@@ -278,12 +280,21 @@ static void check_network_activity(fd_set * readset, fd_set * writeset) {
 	int result, i;
 	socklen_t len = sizeof(result);
 	vpn_packet_t packet;
+	static int errors = 0;
 
 	/* check input from kernel */
 	if(device_fd >= 0 && FD_ISSET(device_fd, readset)) {
 		if(read_packet(&packet)) {
+			errors = 0;
 			packet.priority = 0;
 			route(myself, &packet);
+		} else {
+			usleep(errors * 50000);
+			errors++;
+			if(errors > 10) {
+				logger(LOG_ERR, "Too many errors from %s, exiting!", device);
+				running = false;
+			}
 		}
 	}
 
@@ -297,7 +308,7 @@ static void check_network_activity(fd_set * readset, fd_set * writeset) {
 		if(FD_ISSET(c->socket, readset)) {
 			if(c->status.connecting) {
 				c->status.connecting = false;
-				getsockopt(c->socket, SOL_SOCKET, SO_ERROR, &result, &len);
+				getsockopt(c->socket, SOL_SOCKET, SO_ERROR, (void *)&result, &len);
 
 				if(!result)
 					finish_connecting(c);
@@ -414,6 +425,19 @@ int main_loop(void) {
 
 				send_key_changed(broadcast, myself);
 				keyexpires = now + keylifetime;
+			}
+
+			if(contradicting_del_edge > 10 && contradicting_add_edge > 10) {
+				logger(LOG_WARNING, "Possible node with same Name as us!");
+
+				if(rand() % 3 == 0) {
+					logger(LOG_ERR, "Shutting down, check configuration of all nodes for duplicate Names!");
+					running = false;
+					break;
+				}
+
+				contradicting_add_edge = 0;
+				contradicting_del_edge = 0;
 			}
 		}
 

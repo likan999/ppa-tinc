@@ -1,7 +1,7 @@
 /*
     dropin.c -- a set of drop-in replacements for libc functions
     Copyright (C) 2000-2005 Ivo Timmermans,
-                  2000-2009 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2011 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -160,6 +160,14 @@ int vasprintf(char **buf, const char *fmt, va_list ap) {
 int gettimeofday(struct timeval *tv, void *tz) {
 	tv->tv_sec = time(NULL);
 	tv->tv_usec = 0;
+	return 0;
+}
+#endif
+
+#ifndef HAVE_USLEEP
+int usleep(long usec) {
+	struct timeval tv = {usec / 1000000, (usec / 1000) % 1000};
+	select(0, NULL, NULL, NULL, &tv);
 	return 0;
 }
 #endif

@@ -1,7 +1,7 @@
 /*
     protocol_key.c -- handle the meta-protocol, key exchange
     Copyright (C) 1999-2005 Ivo Timmermans,
-                  2000-2010 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2011 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -145,8 +145,6 @@ bool req_key_h(connection_t *c) {
 }
 
 bool send_ans_key(node_t *to) {
-	char *key;
-
 	// Set key parameters
 	to->incipher = myself->incipher;
 	to->inkeylength = myself->inkeylength;
@@ -165,10 +163,10 @@ bool send_ans_key(node_t *to) {
 	// Reset sequence number and late packet window
 	mykeyused = true;
 	to->received_seqno = 0;
-	memset(to->late, 0, sizeof(to->late));
+	if(replaywin) memset(to->late, 0, replaywin);
 
 	// Convert to hexadecimal and send
-	key = alloca(2 * to->inkeylength + 1);
+	char key[2 * to->inkeylength + 1];
 	bin2hex(to->inkey, key, to->inkeylength);
 	key[to->inkeylength * 2] = '\0';
 
@@ -229,7 +227,7 @@ bool ans_key_h(connection_t *c) {
 			return true;
 		}
 
-		if(!*address) {
+		if(!*address && from->address.sa.sa_family != AF_UNSPEC) {
 			char *address, *port;
 			ifdebug(PROTOCOL) logger(LOG_DEBUG, "Appending reflexive UDP address to ANS_KEY from %s to %s", from->name, to->name);
 			sockaddr2str(&from->address, &address, &port);
@@ -312,7 +310,7 @@ bool ans_key_h(connection_t *c) {
 		update_node_udp(from, &sa);
 	}
 
-	if(from->options & OPTION_PMTU_DISCOVERY && !from->mtuprobes)
+	if(from->options & OPTION_PMTU_DISCOVERY && !from->mtuevent)
 		send_mtu_probe(from);
 
 	return true;

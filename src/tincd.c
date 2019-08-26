@@ -1,9 +1,11 @@
 /*
     tincd.c -- the main file for tincd
     Copyright (C) 1998-2005 Ivo Timmermans
-                  2000-2010 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2011 Guus Sliepen <guus@tinc-vpn.org>
                   2008      Max Rijevski <maksuf@gmail.com>
                   2009      Michael Tokarev <mjt@tls.msk.ru>
+                  2010      Julien Muchembled <jm@jmuchemb.eu>
+                  2010      Timothy Redaelli <timothy@redaelli.eu>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -118,6 +120,7 @@ static struct option const long_options[] = {
 #ifdef HAVE_MINGW
 static struct WSAData wsa_state;
 CRITICAL_SECTION mutex;
+int main2(int argc, char **argv);
 #endif
 
 static void usage(bool status) {
@@ -135,6 +138,7 @@ static void usage(bool status) {
 				"  -L, --mlock                Lock tinc into main memory.\n"
 				"      --logfile[=FILENAME]   Write log entries to a logfile.\n"
 				"      --pidfile=FILENAME     Write PID to FILENAME.\n"
+				"  -o [HOST.]KEY=VALUE        Set global/host configuration value.\n"
 				"  -R, --chroot               chroot to NET dir at startup.\n"
 				"  -U, --user=USER            setuid to given USER at startup.\n"
 				"      --help                 Display this help and exit.\n"
@@ -144,10 +148,14 @@ static void usage(bool status) {
 }
 
 static bool parse_options(int argc, char **argv) {
+	config_t *cfg;
 	int r;
 	int option_index = 0;
+	int lineno = 0;
 
-	while((r = getopt_long(argc, argv, "c:DLd::k::n:K::RU:", long_options, &option_index)) != EOF) {
+	cmdline_conf = list_alloc((list_action_t)free_config);
+
+	while((r = getopt_long(argc, argv, "c:DLd::k::n:o:K::RU:", long_options, &option_index)) != EOF) {
 		switch (r) {
 			case 0:				/* long option */
 				break;
@@ -195,6 +203,8 @@ static bool parse_options(int argc, char **argv) {
 						kill_tincd = SIGINT;
 					else if(!strcasecmp(optarg, "ALRM"))
 						kill_tincd = SIGALRM;
+					else if(!strcasecmp(optarg, "ABRT"))
+						kill_tincd = SIGABRT;
 					else {
 						kill_tincd = atoi(optarg);
 
@@ -213,7 +223,16 @@ static bool parse_options(int argc, char **argv) {
 				break;
 
 			case 'n':				/* net name given */
-				netname = xstrdup(optarg);
+				/* netname "." is special: a "top-level name" */
+				netname = strcmp(optarg, ".") != 0 ?
+						xstrdup(optarg) : NULL;
+				break;
+
+			case 'o':				/* option */
+				cfg = parse_config_line(optarg, NULL, ++lineno);
+				if (!cfg)
+					return false;
+				list_insert_tail(cmdline_conf, cfg);
 				break;
 
 			case 'K':				/* generate public/private keypair */
@@ -350,6 +369,7 @@ static bool keygen(int bits) {
 	fchmod(fileno(f), 0600);
 #endif
 		
+	fputc('\n', f);
 	PEM_write_RSAPrivateKey(f, rsa_key, NULL, NULL, 0, NULL, NULL);
 	fclose(f);
 	free(filename);
@@ -367,6 +387,7 @@ static bool keygen(int bits) {
 	if(disable_old_keys(f))
 		fprintf(stderr, "Warning: old key(s) found and disabled.\n");
 
+	fputc('\n', f);
 	PEM_write_RSAPublicKey(f, rsa_key);
 	fclose(f);
 	free(filename);
@@ -483,12 +504,12 @@ static bool drop_privs() {
 }
 
 #ifdef HAVE_MINGW
-# define setpriority(level) SetPriorityClass(GetCurrentProcess(), level)
+# define setpriority(level) SetPriorityClass(GetCurrentProcess(), (level))
 #else
 # define NORMAL_PRIORITY_CLASS 0
 # define BELOW_NORMAL_PRIORITY_CLASS 10
 # define HIGH_PRIORITY_CLASS -10
-# define setpriority(level) nice(level)
+# define setpriority(level) (setpriority(PRIO_PROCESS, 0, (level)))
 #endif
 
 int main(int argc, char **argv) {
@@ -502,7 +523,7 @@ int main(int argc, char **argv) {
 	if(show_version) {
 		printf("%s version %s (built %s %s, protocol %d)\n", PACKAGE,
 			   VERSION, __DATE__, __TIME__, PROT_CURRENT);
-		printf("Copyright (C) 1998-2010 Ivo Timmermans, Guus Sliepen and others.\n"
+		printf("Copyright (C) 1998-2011 Ivo Timmermans, Guus Sliepen and others.\n"
 				"See the AUTHORS file for a complete list.\n\n"
 				"tinc comes with ABSOLUTELY NO WARRANTY.  This is free software,\n"
 				"and you are welcome to redistribute it under certain conditions;\n"
@@ -594,13 +615,25 @@ int main2(int argc, char **argv) {
         char *priority = 0;
 
         if(get_config_string(lookup_config(config_tree, "ProcessPriority"), &priority)) {
-                if(!strcasecmp(priority, "Normal"))
-                        setpriority(NORMAL_PRIORITY_CLASS);
-                else if(!strcasecmp(priority, "Low"))
-                        setpriority(BELOW_NORMAL_PRIORITY_CLASS);
-                else if(!strcasecmp(priority, "High"))
-                        setpriority(HIGH_PRIORITY_CLASS);
-                else {
+                if(!strcasecmp(priority, "Normal")) {
+                        if (setpriority(NORMAL_PRIORITY_CLASS) != 0) {
+                                logger(LOG_ERR, "System call `%s' failed: %s",
+                                       "setpriority", strerror(errno));
+                                goto end;
+                        }
+                } else if(!strcasecmp(priority, "Low")) {
+                        if (setpriority(BELOW_NORMAL_PRIORITY_CLASS) != 0) {
+                                       logger(LOG_ERR, "System call `%s' failed: %s",
+                                       "setpriority", strerror(errno));
+                                goto end;
+                        }
+                } else if(!strcasecmp(priority, "High")) {
+                        if (setpriority(HIGH_PRIORITY_CLASS) != 0) {
+                                logger(LOG_ERR, "System call `%s' failed: %s",
+                                       "setpriority", strerror(errno));
+                                goto end;
+                        }
+                } else {
                         logger(LOG_ERR, "Invalid priority `%s`!", priority);
                         goto end;
                 }
