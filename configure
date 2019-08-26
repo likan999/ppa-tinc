@@ -2731,7 +2731,7 @@ fi
 
 # Define the identity of the package.
  PACKAGE=tinc
- VERSION=1.0.15
+ VERSION=1.0.16
 
 
 cat >>confdefs.h <<_ACEOF

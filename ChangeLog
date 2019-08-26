@@ -1,3 +1,41 @@
+commit 0f2aa4bd8b698608876bec141c5aef1aa619730b
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sat Jul 23 14:12:23 2011 +0200
+
+    Releasing 1.0.16.
+
+commit e16ead8dd9d4600664058069f0695832dfe068b2
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sat Jul 23 14:11:44 2011 +0200
+
+    Use usleep() instead of sleep(), MinGW complained.
+
+commit 50fcfea127c9d2fdf8894498a9fdcc6fb3bbb2ce
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sun Jul 17 19:34:01 2011 +0200
+
+    Flush output buffer in send_tcppacket().
+    
+    This is mainly important for Windows, where the select() call in the
+    main thread is not being woken up when the tapreader thread calls
+    route(), causing a delay of up to 1 second before the output buffer is
+    flushed. This would cause bad performance when UDP communication is not
+    possible.
+
+commit be2fc8b0458b1e2ced3b5de410356d8d8639acff
+Author: Guus Sliepen <guus@tinc-vpn.org>
+Date:   Sat Jul 16 10:47:35 2011 +0200
+
+    Make code to detect two nodes with the same Name less triggerhappy.
+    
+    First of all, if there really are two nodes with the same name, much
+    more than 10 contradicting ADD_EDGE and DEL_EDGE messages will be sent.
+    Also, we forgot to reset the counters when nothing happened.
+    
+    In case there is a ADD_EDGE/DEL_EDGE storm, we do not shut down, but
+    sleep an increasing amount of time, allowing tinc to recover gracefully
+    from temporary failures.
+
 commit 05260f941c2a24eb3f09070a2550cf15e431266a
 Author: Guus Sliepen <guus@tinc-vpn.org>
 Date:   Fri Jun 24 14:50:20 2011 +0200
