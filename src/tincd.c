@@ -1,7 +1,7 @@
 /*
     tincd.c -- the main file for tincd
     Copyright (C) 1998-2005 Ivo Timmermans
-                  2000-2018 Guus Sliepen <guus@tinc-vpn.org>
+                  2000-2019 Guus Sliepen <guus@tinc-vpn.org>
                   2008      Max Rijevski <maksuf@gmail.com>
                   2009      Michael Tokarev <mjt@tls.msk.ru>
                   2010      Julien Muchembled <jm@jmuchemb.eu>
@@ -37,7 +37,10 @@
 #include <openssl/rsa.h>
 #include <openssl/pem.h>
 #include <openssl/evp.h>
+#ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
+#endif
+#include <openssl/bn.h>
 
 #ifdef HAVE_LZO
 #include LZO1X_H
@@ -651,7 +654,7 @@ int main(int argc, char **argv) {
 
 	if(show_version) {
 		printf("%s version %s\n", PACKAGE, VERSION);
-		printf("Copyright (C) 1998-2018 Ivo Timmermans, Guus Sliepen and others.\n"
+		printf("Copyright (C) 1998-2019 Ivo Timmermans, Guus Sliepen and others.\n"
 		       "See the AUTHORS file for a complete list.\n\n"
 		       "tinc comes with ABSOLUTELY NO WARRANTY.  This is free software,\n"
 		       "and you are welcome to redistribute it under certain conditions;\n"
@@ -685,17 +688,14 @@ int main(int argc, char **argv) {
 
 	init_configuration(&config_tree);
 
-	/* Slllluuuuuuurrrrp! */
-
-	if(RAND_load_file("/dev/urandom", 1024) != 1024) {
-		logger(LOG_ERR, "Error initializing RNG!");
-		return 1;
-	}
-
+#ifndef OPENSSL_NO_ENGINE
 	ENGINE_load_builtin_engines();
 	ENGINE_register_all_complete();
+#endif
 
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
 	OpenSSL_add_all_algorithms();
+#endif
 
 	if(generate_keys) {
 		read_server_config();
@@ -814,9 +814,13 @@ end:
 
 	free(priority);
 
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
 	EVP_cleanup();
 	ERR_free_strings();
+#ifndef OPENSSL_NO_ENGINE
 	ENGINE_cleanup();
+#endif
+#endif
 
 	exit_configuration(&config_tree);
 	list_delete_list(cmdline_conf);

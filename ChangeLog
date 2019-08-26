@@ -1,3 +1,26 @@
+Version 1.0.36                                            August 26 2019
+------------------------------------------------------------------------
+
+Guus Sliepen (8):
+      Remove the call to RAND_load_file().
+      Update THANKS.
+      Backport tinc 1.1's str2net() function.
+      Update THANKS.
+      Fix spelling errors found by codespell.
+      Reformat all code using astyle.
+      Add a missing check for a pathname being too long.
+      Releasing 1.0.36.
+
+Rosen Penev (2):
+      Fix compilation when OpenSSL has no ENGINE support
+      Fix compilation without deprecated OpenSSL APIs
+
+Quentin Rameau (1):
+      Double-quote nodes in graphviz network file
+
+Werner Schreiber (1):
+      Fix segfault when dest->mtu is 0.
+
 Version 1.0.35                                           October 05 2018
 ------------------------------------------------------------------------
 

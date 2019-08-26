@@ -1,14 +1,14 @@
-This is tinc.info, produced by makeinfo version 6.5 from tinc.texi.
+This is tinc.info, produced by makeinfo version 6.6 from tinc.texi.
 
 INFO-DIR-SECTION Networking tools
 START-INFO-DIR-ENTRY
 * tinc: (tinc).              The tinc Manual.
 END-INFO-DIR-ENTRY
 
-This is the info manual for tinc version 1.0.35, a Virtual Private
+This is the info manual for tinc version 1.0.36, a Virtual Private
 Network daemon.
 
-   Copyright (C) 1998-2018 Ivo Timmermans, Guus Sliepen
+   Copyright (C) 1998-2019 Ivo Timmermans, Guus Sliepen
 <guus@tinc-vpn.org> and Wessel Dankers <wsl@tinc-vpn.org>.
 
    Permission is granted to make and distribute verbatim copies of this
@@ -117,10 +117,10 @@ for both the receiving and sending end, it has become largely
 runtime-configurable--in short, it has become a full-fledged
 professional package.
 
-   Tinc also allows more than two sites to connect to eachother and form
-a single VPN. Traditionally VPNs are created by making tunnels, which
-only have two endpoints.  Larger VPNs with more sites are created by
-adding more tunnels.  Tinc takes another approach: only endpoints are
+   Tinc also allows more than two sites to connect to each other and
+form a single VPN. Traditionally VPNs are created by making tunnels,
+which only have two endpoints.  Larger VPNs with more sites are created
+by adding more tunnels.  Tinc takes another approach: only endpoints are
 specified, the software itself will take care of creating the tunnels.
 This allows for easier configuration and improved scalability.
 
@@ -2278,7 +2278,7 @@ address these issues in tinc 2.0.
    Cryptography is a hard thing to get right.  We cannot make any
 guarantees.  Time, review and feedback are the only things that can
 prove the security of any cryptographic product.  If you wish to review
-tinc or give us feedback, you are stronly encouraged to do so.
+tinc or give us feedback, you are strongly encouraged to do so.
 
 
 File: tinc.info,  Node: Platform specific information,  Next: About us,  Prev: Technical information,  Up: Top
@@ -2720,66 +2720,66 @@ Node: Top806
 Node: Introduction1105
 Node: Virtual Private Networks1915
 Node: tinc3639
-Node: Supported platforms5166
-Node: Preparations5867
-Node: Configuring the kernel6123
-Node: Configuration of Linux kernels6533
-Node: Configuration of FreeBSD kernels7388
-Node: Configuration of OpenBSD kernels7853
-Node: Configuration of NetBSD kernels8210
-Node: Configuration of Solaris kernels8615
-Node: Configuration of Darwin (Mac OS X) kernels9278
-Node: Configuration of Windows10097
-Node: Libraries10637
-Node: LibreSSL/OpenSSL11046
-Node: zlib13588
-Node: lzo14617
-Node: Installation15600
-Node: Building and installing tinc16510
-Node: Darwin (Mac OS X) build environment17170
-Node: Cygwin (Windows) build environment17735
-Node: MinGW (Windows) build environment18324
-Node: System files18918
-Node: Device files19183
-Node: Other files19599
-Node: Configuration20212
-Node: Configuration introduction20523
-Node: Multiple networks21791
-Node: How connections work23217
-Node: Configuration files24439
-Node: Main configuration variables25933
-Node: Host configuration variables42189
-Node: Scripts47721
-Node: How to configure50987
-Node: Generating keypairs52245
-Node: Network interfaces52744
-Node: Example configuration54592
-Node: Running tinc59917
-Node: Runtime options60507
-Node: Signals64136
-Node: Debug levels65327
-Node: Solving problems66263
-Node: Error messages67815
-Node: Sending bug reports71824
-Node: Technical information72771
-Node: The connection73002
-Node: The UDP tunnel73314
-Node: The meta-connection76366
-Node: The meta-protocol77835
-Node: Security82852
-Node: Authentication protocol83994
-Node: Encryption of network packets89039
-Node: Security issues90415
-Node: Platform specific information92054
-Node: Interface configuration92314
-Node: Routes94610
-Node: Automatically starting tinc96660
-Node: Linux96883
-Node: Windows98104
-Node: Other platforms98609
-Node: About us98891
-Node: Contact information99066
-Node: Authors99469
-Node: Concept Index99874
+Node: Supported platforms5167
+Node: Preparations5868
+Node: Configuring the kernel6124
+Node: Configuration of Linux kernels6534
+Node: Configuration of FreeBSD kernels7389
+Node: Configuration of OpenBSD kernels7854
+Node: Configuration of NetBSD kernels8211
+Node: Configuration of Solaris kernels8616
+Node: Configuration of Darwin (Mac OS X) kernels9279
+Node: Configuration of Windows10098
+Node: Libraries10638
+Node: LibreSSL/OpenSSL11047
+Node: zlib13589
+Node: lzo14618
+Node: Installation15601
+Node: Building and installing tinc16511
+Node: Darwin (Mac OS X) build environment17171
+Node: Cygwin (Windows) build environment17736
+Node: MinGW (Windows) build environment18325
+Node: System files18919
+Node: Device files19184
+Node: Other files19600
+Node: Configuration20213
+Node: Configuration introduction20524
+Node: Multiple networks21792
+Node: How connections work23218
+Node: Configuration files24440
+Node: Main configuration variables25934
+Node: Host configuration variables42190
+Node: Scripts47722
+Node: How to configure50988
+Node: Generating keypairs52246
+Node: Network interfaces52745
+Node: Example configuration54593
+Node: Running tinc59918
+Node: Runtime options60508
+Node: Signals64137
+Node: Debug levels65328
+Node: Solving problems66264
+Node: Error messages67816
+Node: Sending bug reports71825
+Node: Technical information72772
+Node: The connection73003
+Node: The UDP tunnel73315
+Node: The meta-connection76367
+Node: The meta-protocol77836
+Node: Security82853
+Node: Authentication protocol83995
+Node: Encryption of network packets89040
+Node: Security issues90416
+Node: Platform specific information92056
+Node: Interface configuration92316
+Node: Routes94612
+Node: Automatically starting tinc96662
+Node: Linux96885
+Node: Windows98106
+Node: Other platforms98611
+Node: About us98893
+Node: Contact information99068
+Node: Authors99471
+Node: Concept Index99876
 
 End Tag Table
