@@ -434,7 +434,10 @@ static bool keygen(int bits) {
 	BN_GENCB_set(cb, indicator, NULL);
 
 	rsa_key = RSA_new();
-	BN_hex2bn(&e, "10001");
+
+	if(BN_hex2bn(&e, "10001") == 0) {
+		abort();
+	}
 
 	if(!rsa_key || !e) {
 		abort();
@@ -559,25 +562,11 @@ static void make_names(void) {
 }
 
 static void free_names() {
-	if(identname) {
-		free(identname);
-	}
-
-	if(netname) {
-		free(netname);
-	}
-
-	if(pidfilename) {
-		free(pidfilename);
-	}
-
-	if(logfilename) {
-		free(logfilename);
-	}
-
-	if(confbase) {
-		free(confbase);
-	}
+	free(identname);
+	free(netname);
+	free(pidfilename);
+	free(logfilename);
+	free(confbase);
 }
 
 static bool drop_privs() {
@@ -698,7 +687,10 @@ int main(int argc, char **argv) {
 
 	/* Slllluuuuuuurrrrp! */
 
-	RAND_load_file("/dev/urandom", 1024);
+	if(RAND_load_file("/dev/urandom", 1024) != 1024) {
+		logger(LOG_ERR, "Error initializing RNG!");
+		return 1;
+	}
 
 	ENGINE_load_builtin_engines();
 	ENGINE_register_all_complete();

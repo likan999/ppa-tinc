@@ -5,7 +5,7 @@ START-INFO-DIR-ENTRY
 * tinc: (tinc).              The tinc Manual.
 END-INFO-DIR-ENTRY
 
-This is the info manual for tinc version 1.0.34, a Virtual Private
+This is the info manual for tinc version 1.0.35, a Virtual Private
 Network daemon.
 
    Copyright (C) 1998-2018 Ivo Timmermans, Guus Sliepen
@@ -373,9 +373,9 @@ if available.  Make sure you install the development AND runtime
 versions of this package.
 
    If you have to install zlib manually, you can get the source code
-from <http://www.zlib.net/>.  Instructions on how to configure, build
-and install this package are included within the package.  Please make
-sure you build development and runtime libraries (which is the default).
+from <https://zlib.net/>.  Instructions on how to configure, build and
+install this package are included within the package.  Please make sure
+you build development and runtime libraries (which is the default).
 
 
 File: tinc.info,  Node: lzo,  Prev: zlib,  Up: Libraries
@@ -1939,8 +1939,7 @@ correct destination MAC address.  In those modes every interface should
 have a unique MAC address, so make sure they are not the same.  Because
 switch and hub modes rely on MAC addresses to function correctly, these
 modes cannot be used on the following operating systems which don't have
-a 'tap' style virtual network device: OpenBSD, NetBSD, Darwin and
-Solaris.
+a 'tap' style virtual network device: NetBSD, Darwin and Solaris.
 
 
 File: tinc.info,  Node: The meta-connection,  Prev: The UDP tunnel,  Up: The connection
@@ -2329,11 +2328,6 @@ Solaris             'ifconfig' INTERFACE 'inet6 plumb up'
                     'ifconfig' INTERFACE 'inet6 addif' ADDRESS ADDRESS
 Darwin (Mac OS X)   'ifconfig' INTERFACE 'inet6' ADDRESS 'prefixlen' PREFIXLENGTH
 Windows             'netsh interface ipv6 add address' INTERFACE 'static' ADDRESS/PREFIXLENGTH
-
-   On some platforms, when running tinc in switch mode, the VPN
-interface must be set to tap mode with an ifconfig command:
-
-OpenBSD             'ifconfig' INTERFACE 'link0'
 
    On Linux, it is possible to create a persistent tun/tap interface
 which will continue to exist even if tinc quit, although this is
@@ -2739,53 +2733,53 @@ Node: Configuration of Windows10097
 Node: Libraries10637
 Node: LibreSSL/OpenSSL11046
 Node: zlib13588
-Node: lzo14620
-Node: Installation15603
-Node: Building and installing tinc16513
-Node: Darwin (Mac OS X) build environment17173
-Node: Cygwin (Windows) build environment17738
-Node: MinGW (Windows) build environment18327
-Node: System files18921
-Node: Device files19186
-Node: Other files19602
-Node: Configuration20215
-Node: Configuration introduction20526
-Node: Multiple networks21794
-Node: How connections work23220
-Node: Configuration files24442
-Node: Main configuration variables25936
-Node: Host configuration variables42192
-Node: Scripts47724
-Node: How to configure50990
-Node: Generating keypairs52248
-Node: Network interfaces52747
-Node: Example configuration54595
-Node: Running tinc59920
-Node: Runtime options60510
-Node: Signals64139
-Node: Debug levels65330
-Node: Solving problems66266
-Node: Error messages67818
-Node: Sending bug reports71827
-Node: Technical information72774
-Node: The connection73005
-Node: The UDP tunnel73317
-Node: The meta-connection76378
-Node: The meta-protocol77847
-Node: Security82864
-Node: Authentication protocol84006
-Node: Encryption of network packets89051
-Node: Security issues90427
-Node: Platform specific information92066
-Node: Interface configuration92326
-Node: Routes94797
-Node: Automatically starting tinc96847
-Node: Linux97070
-Node: Windows98291
-Node: Other platforms98796
-Node: About us99078
-Node: Contact information99253
-Node: Authors99656
-Node: Concept Index100061
+Node: lzo14617
+Node: Installation15600
+Node: Building and installing tinc16510
+Node: Darwin (Mac OS X) build environment17170
+Node: Cygwin (Windows) build environment17735
+Node: MinGW (Windows) build environment18324
+Node: System files18918
+Node: Device files19183
+Node: Other files19599
+Node: Configuration20212
+Node: Configuration introduction20523
+Node: Multiple networks21791
+Node: How connections work23217
+Node: Configuration files24439
+Node: Main configuration variables25933
+Node: Host configuration variables42189
+Node: Scripts47721
+Node: How to configure50987
+Node: Generating keypairs52245
+Node: Network interfaces52744
+Node: Example configuration54592
+Node: Running tinc59917
+Node: Runtime options60507
+Node: Signals64136
+Node: Debug levels65327
+Node: Solving problems66263
+Node: Error messages67815
+Node: Sending bug reports71824
+Node: Technical information72771
+Node: The connection73002
+Node: The UDP tunnel73314
+Node: The meta-connection76366
+Node: The meta-protocol77835
+Node: Security82852
+Node: Authentication protocol83994
+Node: Encryption of network packets89039
+Node: Security issues90415
+Node: Platform specific information92054
+Node: Interface configuration92314
+Node: Routes94610
+Node: Automatically starting tinc96660
+Node: Linux96883
+Node: Windows98104
+Node: Other platforms98609
+Node: About us98891
+Node: Contact information99066
+Node: Authors99469
+Node: Concept Index99874
 
 End Tag Table
