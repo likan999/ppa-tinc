@@ -57,11 +57,13 @@ static int sortmode = 0;
 static bool cumulative = false;
 
 static list_t node_list;
-static struct timeval now, prev, diff;
+static struct timeval cur, prev, diff;
 static int delay = 1000;
 static bool changed = true;
-static const char *unit = "bytes";
-static float scale = 1;
+static const char *bunit = "bytes";
+static float bscale = 1;
+static const char *punit = "pkts";
+static float pscale = 1;
 
 #ifndef timersub
 #define timersub(a, b, c) do {(c)->tv_sec = (a)->tv_sec - (b)->tv_sec; (c)->tv_usec = (a)->tv_usec = (b)->tv_usec;} while(0)
@@ -69,10 +71,10 @@ static float scale = 1;
 
 static void update(int fd) {
 	sendline(fd, "%d %d", CONTROL, REQ_DUMP_TRAFFIC);
-	gettimeofday(&now, NULL);
+	gettimeofday(&cur, NULL);
 
-	timersub(&now, &prev, &diff);
-	prev = now;
+	timersub(&cur, &prev, &diff);
+	prev = cur;
 	float interval = diff.tv_sec + diff.tv_usec * 1e-6;
 
 	char line[4096];
@@ -136,12 +138,69 @@ static void update(int fd) {
 	}
 }
 
+static int cmpfloat(float a, float b) {
+	if(a < b)
+		return -1;
+	else if(a > b)
+		return 1;
+	else
+		return 0;
+}
+
+static int cmpu64(uint64_t a, uint64_t b) {
+	if(a < b)
+		return -1;
+	else if(a > b)
+		return 1;
+	else
+		return 0;
+}
+
+static int sortfunc(const void *a, const void *b) {
+	const nodestats_t *na = *(const nodestats_t **)a;
+	const nodestats_t *nb = *(const nodestats_t **)b;
+	switch(sortmode) {
+		case 1:
+			if(cumulative)
+				return -cmpu64(na->in_packets, nb->in_packets) ?: na->i - nb->i;
+			else
+				return -cmpfloat(na->in_packets_rate, nb->in_packets_rate) ?: na->i - nb->i;
+		case 2:
+			if(cumulative)
+				return -cmpu64(na->in_bytes, nb->in_bytes) ?: na->i - nb->i;
+			else
+				return -cmpfloat(na->in_bytes_rate, nb->in_bytes_rate) ?: na->i - nb->i;
+		case 3:
+			if(cumulative)
+				return -cmpu64(na->out_packets, nb->out_packets) ?: na->i - nb->i;
+			else
+				return -cmpfloat(na->out_packets_rate, nb->out_packets_rate) ?: na->i - nb->i;
+		case 4:
+			if(cumulative)
+				return -cmpu64(na->out_bytes, nb->out_bytes) ?: na->i - nb->i;
+			else
+				return -cmpfloat(na->out_bytes_rate, nb->out_bytes_rate) ?: na->i - nb->i;
+		case 5:
+			if(cumulative)
+				return -cmpu64(na->in_packets + na->out_packets, nb->in_packets + nb->out_packets) ?: na->i - nb->i;
+			else
+				return -cmpfloat(na->in_packets_rate + na->out_packets_rate, nb->in_packets_rate + nb->out_packets_rate) ?: na->i - nb->i;
+		case 6:
+			if(cumulative)
+				return -cmpu64(na->in_bytes + na->out_bytes, nb->in_bytes + nb->out_bytes) ?: na->i - nb->i;
+			else
+				return -cmpfloat(na->in_bytes_rate + na->out_bytes_rate, nb->in_bytes_rate + nb->out_bytes_rate) ?: na->i - nb->i;
+		default:
+			return strcmp(na->name, nb->name) ?: na->i - nb->i;
+	}
+}
+
 static void redraw(void) {
 	erase();
 
 	mvprintw(0, 0, "Tinc %-16s  Nodes: %4d  Sort: %-10s  %s", netname ?: "", node_list.count, sortname[sortmode], cumulative ? "Cumulative" : "Current");
 	attrset(A_REVERSE);
-	mvprintw(2, 0, "Node                IN pkts   IN %s   OUT pkts  OUT %s", unit, unit);
+	mvprintw(2, 0, "Node                IN %s   IN %s   OUT %s  OUT %s", punit, bunit, punit, bunit);
 	chgat(-1, A_REVERSE, 0, NULL);
 
 	static nodestats_t **sorted = 0;
@@ -157,63 +216,6 @@ static void redraw(void) {
 	for(int i = 0; i < n; i++)
 		sorted[i]->i = i;
 
-	int cmpfloat(float a, float b) {
-		if(a < b)
-			return -1;
-		else if(a > b)
-			return 1;
-		else
-			return 0;
-	}
-
-	int cmpu64(uint64_t a, uint64_t b) {
-		if(a < b)
-			return -1;
-		else if(a > b)
-			return 1;
-		else
-			return 0;
-	}
-
-	int sortfunc(const void *a, const void *b) {
-		const nodestats_t *na = *(const nodestats_t **)a;
-		const nodestats_t *nb = *(const nodestats_t **)b;
-		switch(sortmode) {
-			case 1:
-				if(cumulative)
-					return -cmpu64(na->in_packets, nb->in_packets) ?: na->i - nb->i;
-				else
-					return -cmpfloat(na->in_packets_rate, nb->in_packets_rate) ?: na->i - nb->i;
-			case 2:
-				if(cumulative)
-					return -cmpu64(na->in_bytes, nb->in_bytes) ?: na->i - nb->i;
-				else
-					return -cmpfloat(na->in_bytes_rate, nb->in_bytes_rate) ?: na->i - nb->i;
-			case 3:
-				if(cumulative)
-					return -cmpu64(na->out_packets, nb->out_packets) ?: na->i - nb->i;
-				else
-					return -cmpfloat(na->out_packets_rate, nb->out_packets_rate) ?: na->i - nb->i;
-			case 4:
-				if(cumulative)
-					return -cmpu64(na->out_bytes, nb->out_bytes) ?: na->i - nb->i;
-				else
-					return -cmpfloat(na->out_bytes_rate, nb->out_bytes_rate) ?: na->i - nb->i;
-			case 5:
-				if(cumulative)
-					return -cmpu64(na->in_packets + na->out_packets, nb->in_packets + nb->out_packets) ?: na->i - nb->i;
-				else
-					return -cmpfloat(na->in_packets_rate + na->out_packets_rate, nb->in_packets_rate + nb->out_packets_rate) ?: na->i - nb->i;
-			case 6:
-				if(cumulative)
-					return -cmpu64(na->in_bytes + na->out_bytes, nb->in_bytes + nb->out_bytes) ?: na->i - nb->i;
-				else
-					return -cmpfloat(na->in_bytes_rate + na->out_bytes_rate, nb->in_bytes_rate + nb->out_bytes_rate) ?: na->i - nb->i;
-			default:
-				return strcmp(na->name, nb->name) ?: na->i - nb->i;
-		}
-	}
-
 	qsort(sorted, n, sizeof *sorted, sortfunc);
 
 	for(int i = 0, row = 3; i < n; i++, row++) {
@@ -228,10 +230,10 @@ static void redraw(void) {
 
 		if(cumulative)
 			mvprintw(row, 0, "%-16s %10"PRIu64" %10.0f %10"PRIu64" %10.0f",
-					node->name, node->in_packets, node->in_bytes * scale, node->out_packets, node->out_bytes * scale);
+					node->name, node->in_packets * pscale, node->in_bytes * bscale, node->out_packets * pscale, node->out_bytes * bscale);
 		else
 			mvprintw(row, 0, "%-16s %10.0f %10.0f %10.0f %10.0f",
-					node->name, node->in_packets_rate, node->in_bytes_rate * scale, node->out_packets_rate, node->out_bytes_rate * scale);
+					node->name, node->in_packets_rate * pscale, node->in_bytes_rate * bscale, node->out_packets_rate * pscale, node->out_bytes_rate * bscale);
 	}
 
 	attrset(A_NORMAL);
@@ -262,45 +264,53 @@ void top(int fd) {
 				break;
 			}
 			case 'c':
-				  cumulative = !cumulative;
-				  break;
+				cumulative = !cumulative;
+				break;
 			case 'n':
-				  sortmode = 0;
-				  break;
+				sortmode = 0;
+				break;
 			case 'i':
-				  sortmode = 2;
-				  break;
+				sortmode = 2;
+				break;
 			case 'I':
-				  sortmode = 1;
-				  break;
+				sortmode = 1;
+				break;
 			case 'o':
-				  sortmode = 4;
-				  break;
+				sortmode = 4;
+				break;
 			case 'O':
-				  sortmode = 3;
-				  break;
+				sortmode = 3;
+				break;
 			case 't':
-				  sortmode = 6;
-				  break;
+				sortmode = 6;
+				break;
 			case 'T':
-				  sortmode = 5;
-				  break;
+				sortmode = 5;
+				break;
 			case 'b':
-				  unit = "bytes";
-				  scale = 1;
-				  break;
+				bunit = "bytes";
+				bscale = 1;
+				punit = "pkts";
+				pscale = 1;
+				break;
 			case 'k':
-				  unit = "kbyte";
-				  scale = 1e-3;
-				  break;
+				bunit = "kbyte";
+				bscale = 1e-3;
+				punit = "pkts";
+				pscale = 1;
+				break;
 			case 'M':
-				  unit = "Mbyte";
-				  scale = 1e-6;
-				  break;
+				bunit = "Mbyte";
+				bscale = 1e-6;
+				punit = "kpkt";
+				pscale = 1e-3;
+				break;
 			case 'G':
-				  unit = "Gbyte";
-				  scale = 1e-9;
-				  break;
+				bunit = "Gbyte";
+				bscale = 1e-9;
+				punit = "Mpkt";
+				pscale = 1e-6;
+				break;
 			case 'q':
 			case KEY_BREAK:
 				running = false;
