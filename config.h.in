@@ -36,6 +36,10 @@
 /* Darwin (MacOS/X) */
 #undef HAVE_DARWIN
 
+/* Define to 1 if you have the declaration of `EVP_aes_256_cfb', and to 0 if
+   you don't. */
+#undef HAVE_DECL_EVP_AES_256_CFB
+
 /* Define to 1 if you have the declaration of `freeaddrinfo', and to 0 if you
    don't. */
 #undef HAVE_DECL_FREEADDRINFO
@@ -51,6 +55,10 @@
 /* Define to 1 if you have the declaration of `getnameinfo', and to 0 if you
    don't. */
 #undef HAVE_DECL_GETNAMEINFO
+
+/* Define to 1 if you have the declaration of `OpenSSL_add_all_algorithms',
+   and to 0 if you don't. */
+#undef HAVE_DECL_OPENSSL_ADD_ALL_ALGORITHMS
 
 /* Define to 1 if you have the declaration of `res_init', and to 0 if you
    don't. */

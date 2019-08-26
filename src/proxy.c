@@ -1,6 +1,6 @@
 /*
     proxy.c -- Proxy handling functions.
-    Copyright (C) 2015 Guus Sliepen <guus@tinc-vpn.org>
+    Copyright (C) 2015-2016 Guus Sliepen <guus@tinc-vpn.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -194,6 +194,8 @@ int receive_proxy_meta(connection_t *c, int start, int lenin) {
 
 			ifdebug(CONNECTIONS) logger(LOG_DEBUG, "Proxy request granted");
 			c->allow_request = ID;
+			c->status.proxy_passed = true;
+			send_id(c);
 			return 8;
 		} else {
 			logger(LOG_ERR, "Proxy request rejected");
@@ -249,6 +251,8 @@ int receive_proxy_meta(connection_t *c, int start, int lenin) {
 		} else {
 			ifdebug(CONNECTIONS) logger(LOG_DEBUG, "Proxy request granted");
 			c->allow_request = ID;
+			c->status.proxy_passed = true;
+			send_id(c);
 			return replen;
 		}
 
@@ -256,7 +260,12 @@ int receive_proxy_meta(connection_t *c, int start, int lenin) {
 		char *p = memchr(c->buffer, '\n', c->buflen);
 		if(!p || p - c->buffer >= c->buflen)
 			return 0;
-		p = memchr(p + 1, '\n', c->buflen - (p + 1 - c->buffer));
+
+		while((p = memchr(p + 1, '\n', c->buflen - (p + 1 - c->buffer)))) {
+			if(p > c->buffer + 3 && !memcmp(p - 3, "\r\n\r\n", 4))
+				break;
+		}
+
 		if(!p)
 			return 0;
 
@@ -270,8 +279,12 @@ int receive_proxy_meta(connection_t *c, int start, int lenin) {
 				logger(LOG_DEBUG, "Proxy request granted");
 				replen = p  + 1 - c->buffer;
 				c->allow_request = ID;
+				c->status.proxy_passed = true;
+				send_id(c);
 				return replen;
 			} else {
+				p = memchr(c->buffer, '\n', c->buflen);
+				p[-1] = 0;
 				logger(LOG_ERR, "Proxy request rejected: %s", c->buffer + 9);
 				return false;
 			}

@@ -1,3 +1,28 @@
+Version 1.0.31                                           January 15 2017
+------------------------------------------------------------------------
+
+Guus Sliepen (1):
+      Releasing 1.0.31.
+
+Élie Bouttier (1):
+      Remove ExecStop in tinc@.service
+
+Version 1.0.30                                           October 30 2016
+------------------------------------------------------------------------
+
+Guus Sliepen (11):
+      Allow non-empty lines after status code from a HTTP proxy.
+      Fix proxy reply parsing broken by the previous commit.
+      Log only the first line of a proxy request rejection message.
+      Delay sending the real ID request until after a proxy request is granted.
+      Use AES256 and SHA256 by default, also for the meta-connections.
+      Enforce maximum amount of bytes sent/received on meta-connections.
+      Fix bit shifting arithmetic so the code actually does what the last commit message says.
+      Really fix byte budget calculation.
+      Use AES in CTR mode instead of OFB mode for meta-connections.
+      Use CFB mode for meta-connections to improve security.
+      Releasing 1.0.30.
+
 Version 1.0.29                                           October 09 2016
 ------------------------------------------------------------------------
 

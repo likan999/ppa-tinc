@@ -41,9 +41,8 @@
 #include "xalloc.h"
 
 bool send_id(connection_t *c) {
-	if(proxytype && c->outgoing)
-		if(!send_proxyrequest(c))
-			return false;
+	if(proxytype && c->outgoing && !c->status.proxy_passed)
+		return send_proxyrequest(c);
 
 	return send_request(c, "%d %s %d", ID, myself->connection->name,
 						myself->connection->protocol_version);
@@ -112,6 +111,21 @@ bool id_h(connection_t *c) {
 	c->allow_request = METAKEY;
 
 	return send_metakey(c);
+}
+
+static uint64_t byte_budget(const EVP_CIPHER *cipher) {
+	/* Hopefully some failsafe way to calculate the maximum amount of bytes to
+	   send/receive with a given cipher before we might run into birthday paradox
+	   attacks. Because we might use different modes, the block size of the mode
+	   might be 1 byte. In that case, use the IV length. Ensure the whole thing
+	   is limited to what can be represented with a 64 bits integer.
+	 */
+
+	int ivlen = EVP_CIPHER_iv_length(cipher);
+	int blklen = EVP_CIPHER_block_size(cipher);
+	int len = blklen > 1 ? blklen : ivlen > 1 ? ivlen : 8;
+	int bits = len * 4 - 1;
+	return bits < 64 ? UINT64_C(1) << bits : UINT64_MAX;
 }
 
 bool send_metakey(connection_t *c) {
@@ -196,6 +210,7 @@ bool send_metakey(connection_t *c) {
 			return false;
 		}
 
+		c->outbudget = byte_budget(c->outcipher);
 		c->status.encryptout = true;
 	}
 
@@ -274,6 +289,7 @@ bool metakey_h(connection_t *c) {
 			return false;
 		}
 
+		c->inbudget = byte_budget(c->incipher);
 		c->status.decryptin = true;
 	} else {
 		c->incipher = NULL;
