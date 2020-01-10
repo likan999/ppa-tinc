@@ -1,6 +1,6 @@
 Name:           tinc
-Version:        1.0.36
-Release:        2%{?dist}
+Version:        1.1pre17
+Release:        1%{?dist}
 Summary:        A virtual private network daemon
 
 License:        GPLv2+
@@ -12,6 +12,8 @@ BuildRequires:  openssl-devel
 BuildRequires:  lzo-devel
 BuildRequires:  systemd
 BuildRequires:  systemd-units
+BuildRequires:  ncurses-devel
+BuildRequires:  readline-devel
 
 Requires(post):   systemd
 Requires(preun):  systemd
@@ -51,6 +53,7 @@ rm -f %{buildroot}%{_infodir}/dir
 %license COPYING
 %{_mandir}/man*/%{name}*.*
 %{_infodir}/%{name}.info.*
+%{_sbindir}/%{name}
 %{_sbindir}/%{name}d
 %{_unitdir}/%{name}*.service
 
