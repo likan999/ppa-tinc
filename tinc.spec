@@ -13,9 +13,7 @@ BuildRequires:  lzo-devel
 BuildRequires:  systemd
 BuildRequires:  systemd-units
 
-Requires(post):   info
 Requires(post):   systemd
-Requires(preun):  info
 Requires(preun):  systemd
 Requires(postun): systemd
 
@@ -40,13 +38,9 @@ information to others.
 rm -f %{buildroot}%{_infodir}/dir
 
 %post
-/sbin/install-info %{_infodir}/%{name}.info %{_infodir}/dir || :
 %systemd_post %{name}@.service
 
 %preun
-if [ $1 = 0 ] ; then
-/sbin/install-info --delete %{_infodir}/%{name}.info %{_infodir}/dir || :
-fi
 %systemd_preun %{name}@.service
 
 %postun
@@ -56,13 +50,25 @@ fi
 %doc AUTHORS COPYING.README NEWS README THANKS doc/sample* doc/*.tex
 %license COPYING
 %{_mandir}/man*/%{name}*.*
-%{_infodir}/%{name}.info.gz
+%{_infodir}/%{name}.info.*
 %{_sbindir}/%{name}d
 %{_unitdir}/%{name}*.service
 
 %changelog
 * Tue Jun 02 2020 Fabian Affolter <mail@fabian-affolter.ch> - 1.0.36-1
 - Update to new upstream version 1.0.36
+
+* Fri Jan 31 2020 Fedora Release Engineering <releng@fedoraproject.org> - 1.0.35-5
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_32_Mass_Rebuild
+
+* Sat Jul 27 2019 Fedora Release Engineering <releng@fedoraproject.org> - 1.0.35-4
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_31_Mass_Rebuild
+
+* Wed Apr 24 2019 Björn Esser <besser82@fedoraproject.org> - 1.0.35-3
+- Remove hardcoded gzip suffix from GNU info pages
+
+* Sun Feb 03 2019 Fedora Release Engineering <releng@fedoraproject.org> - 1.0.35-2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_30_Mass_Rebuild
 
 * Tue Dec 18 2018 Fabian Affolter <mail@fabian-affolter.ch> - 1.0.35-1
 - Fix for CVE-2018-16737, CVE-2018-16738 and CVE-2018-16758 
