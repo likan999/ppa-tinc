@@ -1,5 +1,5 @@
 Name:           tinc
-Version:        1.0.35
+Version:        1.0.36
 Release:        1%{?dist}
 Summary:        A virtual private network daemon
 
@@ -61,6 +61,9 @@ fi
 %{_unitdir}/%{name}*.service
 
 %changelog
+* Tue Jun 02 2020 Fabian Affolter <mail@fabian-affolter.ch> - 1.0.36-1
+- Update to new upstream version 1.0.36
+
 * Tue Dec 18 2018 Fabian Affolter <mail@fabian-affolter.ch> - 1.0.35-1
 - Fix for CVE-2018-16737, CVE-2018-16738 and CVE-2018-16758 
 - Update to new upstream version 1.0.35
