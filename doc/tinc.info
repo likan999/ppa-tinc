@@ -1,4 +1,4 @@
-This is tinc.info, produced by makeinfo version 6.6 from tinc.texi.
+This is tinc.info, produced by makeinfo version 6.7 from tinc.texi.
 
 INFO-DIR-SECTION Networking tools
 START-INFO-DIR-ENTRY
@@ -791,13 +791,13 @@ DeviceType = <TYPE> (platform dependent)
 
      uml (not compiled in by default)
           Create a UNIX socket with the filename specified by DEVICE, or
-          '/var/run/NETNAME.umlsocket' if not specified.  Tinc will wait
-          for a User Mode Linux instance to connect to this socket.
+          '/run/NETNAME.umlsocket' if not specified.  Tinc will wait for
+          a User Mode Linux instance to connect to this socket.
 
      vde (not compiled in by default)
           Uses the libvdeplug library to connect to a Virtual
           Distributed Ethernet switch, using the UNIX socket specified
-          by DEVICE, or '/var/run/vde.ctl' if not specified.
+          by DEVICE, or '/run/vde.ctl' if not specified.
 
      Also, in case tinc does not seem to correctly interpret packets
      received from the virtual network device, it can be used to change
@@ -1597,7 +1597,7 @@ command line options.
      '/var/log/tinc.NETNAME.log'.
 
 '--pidfile=FILE'
-     Write PID to FILE instead of '/var/run/tinc.NETNAME.pid'.
+     Write PID to FILE instead of '/run/tinc.NETNAME.pid'.
 
 '--bypass-security'
      Disables encryption and authentication.  Only useful for debugging.
@@ -2748,38 +2748,43 @@ Node: Multiple networks21792
 Node: How connections work23218
 Node: Configuration files24440
 Node: Main configuration variables25934
-Node: Host configuration variables42190
-Node: Scripts47722
-Node: How to configure50988
-Node: Generating keypairs52246
-Node: Network interfaces52745
-Node: Example configuration54593
-Node: Running tinc59918
-Node: Runtime options60508
-Node: Signals64137
-Node: Debug levels65328
-Node: Solving problems66264
-Node: Error messages67816
-Node: Sending bug reports71825
-Node: Technical information72772
-Node: The connection73003
-Node: The UDP tunnel73315
-Node: The meta-connection76367
-Node: The meta-protocol77836
-Node: Security82853
-Node: Authentication protocol83995
-Node: Encryption of network packets89040
-Node: Security issues90416
-Node: Platform specific information92056
-Node: Interface configuration92316
-Node: Routes94612
-Node: Automatically starting tinc96662
-Node: Linux96885
-Node: Windows98106
-Node: Other platforms98611
-Node: About us98893
-Node: Contact information99068
-Node: Authors99471
-Node: Concept Index99876
+Node: Host configuration variables42182
+Node: Scripts47714
+Node: How to configure50980
+Node: Generating keypairs52238
+Node: Network interfaces52737
+Node: Example configuration54585
+Node: Running tinc59910
+Node: Runtime options60500
+Node: Signals64125
+Node: Debug levels65316
+Node: Solving problems66252
+Node: Error messages67804
+Node: Sending bug reports71813
+Node: Technical information72760
+Node: The connection72991
+Node: The UDP tunnel73303
+Node: The meta-connection76355
+Node: The meta-protocol77824
+Node: Security82841
+Node: Authentication protocol83983
+Node: Encryption of network packets89028
+Node: Security issues90404
+Node: Platform specific information92044
+Node: Interface configuration92304
+Node: Routes94600
+Node: Automatically starting tinc96650
+Node: Linux96873
+Node: Windows98094
+Node: Other platforms98599
+Node: About us98881
+Node: Contact information99056
+Node: Authors99459
+Node: Concept Index99864
 
 End Tag Table
+
+
+Local Variables:
+coding: utf-8
+End:

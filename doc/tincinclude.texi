@@ -2,4 +2,4 @@
 @set PACKAGE tinc
 @set sysconfdir /etc
 @set localstatedir /var
-@set runstatedir /var/run
+@set runstatedir /run
