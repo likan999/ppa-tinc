@@ -7,6 +7,7 @@ set -e
 case "$1" in
     configure)
 	if [ ! -e $NETSFILE ] ; then
+	    mkdir -p "$(dirname "$NETSFILE")"
 	    echo "## This file contains all names of the networks to be started on system startup." > $NETSFILE
 	fi
     ;;
