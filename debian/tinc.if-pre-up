@@ -1,0 +1,46 @@
+#!/bin/sh
+
+set -e
+
+test -n "$IF_TINC_NET" || exit 0
+
+# Read options from /etc/default
+
+if test -e /etc/default/tinc; then
+	. /etc/default/tinc
+fi
+
+# Set process limits
+
+setlimits() {
+  while [ $# -gt 0 ]; do
+    parm=$1 ; shift
+    if [ -n "$1" -a "${1#-}" = "$1" ]; then
+      value=$1 ; shift
+      ulimit $parm $value
+    else
+      ulimit $parm
+    fi
+  done
+}
+test -n "$LIMITS" && setlimits $LIMITS
+
+# Read options from /etc/network/interfaces
+
+test -z "$IF_TINC_CONFIG"  || EXTRA="$EXTRA -c $IF_TINC_CONFIG"
+test -z "$IF_TINC_DEBUG"   || EXTRA="$EXTRA -d$IF_TINC_DEBUG"
+test -z "$IF_TINC_MLOCK"   || EXTRA="$EXTRA --mlock"
+test -z "$IF_TINC_LOGFILE" || EXTRA="$EXTRA --logfile=$IF_TINC_LOGFILE"
+test -z "$IF_TINC_PIDFILE" || EXTRA="$EXTRA --pidfile=$IF_TINC_PIDFILE" || IF_TINC_PIDFILE=/var/run/tinc.$IF_TINC_NET.pid
+test -z "$IF_TINC_CHROOT"  || EXTRA="$EXTRA --chroot"
+test -z "$IF_TINC_USER"    || EXTRA="$EXTRA --user=$IF_TINC_USER"
+
+# Start tinc daemon
+
+if test -z "$IF_TINC_PIDFILE"; then
+	/usr/sbin/tinc -n "$IF_TINC_NET" start -o "Interface=$IFACE" $EXTRA
+else
+	/usr/sbin/tinc -n "$IF_TINC_NET" --pidfile="$IF_TINC_PIDFILE" start -o "Interface=$IFACE" $EXTRA
+fi
+
+exit 0

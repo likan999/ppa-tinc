@@ -1,0 +1,13 @@
+#!/bin/sh
+
+set -e
+
+test "$METHOD" != loopback -a -n "$IF_TINC_NET" || exit 0
+
+if test -z "$IF_TINC_PIDFILE"; then
+	/usr/sbin/tinc -n "$IF_TINC_NET" stop $EXTRA
+else
+	/usr/sbin/tinc -n "$IF_TINC_NET" --pidfile="$IF_TINC_PIDFILE" stop
+fi
+
+exit 0

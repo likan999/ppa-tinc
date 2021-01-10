@@ -1,0 +1,103 @@
+#! /bin/sh
+#
+### BEGIN INIT INFO
+# Provides:          tinc
+# Required-Start:    $remote_fs $network
+# Required-Stop:     $remote_fs $network
+# Should-Start:      $syslog $named
+# Should-Stop:       $syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Start tinc daemons
+# Description:       Create a file $NETSFILE (/etc/tinc/nets.boot),
+#                    and put all the names of the networks in there.
+#                    These names must be valid directory names under
+#                    $TCONF (/etc/tinc). Lines starting with a # will be
+#                    ignored in this file.
+### END INIT INFO
+#
+# Based on Lubomir Bulej's Redhat init script.
+
+. /lib/lsb/init-functions
+
+DAEMON="/usr/sbin/tincd"
+CONTROL="/usr/sbin/tinc"
+NAME="tinc"
+DESC="tinc daemons"
+TCONF="/etc/tinc"
+NETSFILE="$TCONF/nets.boot"
+NETS=""
+
+test -f $DAEMON || exit 0
+
+[ -r /etc/default/tinc ] && . /etc/default/tinc
+
+# foreach_net "what-to-say" action [arguments...]
+foreach_net() {
+  if [ ! -f $NETSFILE ] ; then
+    echo "Please create $NETSFILE."
+    exit 0
+  fi
+  echo -n "$1"
+  shift
+  egrep '^[ ]*[a-zA-Z0-9_-]+' $NETSFILE | while read net args; do
+    echo -n " $net"
+    case "$1" in
+      start|restart) $CONTROL -n $net $1 $EXTRA $args ;;
+      *) $CONTROL -n $net $1 ;;
+    esac
+  done
+  echo "."
+}
+
+signal_running() {
+  for i in /var/run/tinc.*pid; do
+    if [ -f "$i" ]; then
+      head -1 $i | while read pid junk; do
+        kill -$1 $pid
+      done
+    fi
+  done
+}
+
+setlimits() {
+  while [ $# -gt 0 ]; do
+    parm=$1 ; shift
+    if [ -n "$1" -a "${1#-}" = "$1" ]; then
+      value=$1 ; shift
+      ulimit $parm $value
+    else
+      ulimit $parm
+    fi
+  done
+}
+
+test -n "$LIMITS" && setlimits $LIMITS
+
+case "$1" in
+  start)
+    foreach_net "Starting $DESC:" start
+  ;;
+  stop)
+    foreach_net "Stopping $DESC:" stop
+  ;;
+  reload|force-reload)
+    foreach_net "Reloading $DESC configuration:" reload
+  ;;
+  restart)
+    foreach_net "Restarting $DESC:" restart
+  ;;
+  force-restart)
+    $0 stop
+    $0 start
+  ;;
+  retry)
+    signal_running ALRM
+  ;;
+  *)
+    echo "Usage: /etc/init.d/$NAME {start|stop|reload|restart|force-reload|retry}"
+    exit 1
+  ;;
+esac
+
+exit 0

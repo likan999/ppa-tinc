@@ -1,0 +1,23 @@
+#! /bin/sh
+
+NETSFILE="/etc/tinc/nets.boot"
+
+set -e
+
+case "$1" in
+    configure)
+	if [ ! -e $NETSFILE ] ; then
+	    echo "## This file contains all names of the networks to be started on system startup." > $NETSFILE
+	fi
+    ;;
+
+    abort-upgrade|abort-remove|abort-deconfigure)
+    ;;
+
+    *)
+        echo "postinst called with unknown argument \`$1'" >&2
+        exit 0
+    ;;
+esac
+
+#DEBHELPER#
